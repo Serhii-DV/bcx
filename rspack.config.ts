@@ -12,7 +12,7 @@ export default defineConfig({
   },
   resolve: {
     extensions: ['...', '.ts'],
-    tsConfig: path.resolve(__dirname, './tsconfig.json')
+    tsConfig: path.resolve(__dirname, './tsconfig.json'),
   },
   module: {
     rules: [
