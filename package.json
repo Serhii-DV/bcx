@@ -10,6 +10,7 @@
     "fix": "biome check --write --fix",
     "format": "biome format --write",
     "preview": "rspack preview",
+    "setup-git-hooks": "git config core.hooksPath .githooks",
     "test": "jest"
   },
   "keywords": [],
