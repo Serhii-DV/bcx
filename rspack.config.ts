@@ -8,6 +8,7 @@ const targets = ['last 2 versions', '> 0.2%', 'not dead', 'Firefox ESR'];
 export default defineConfig({
   entry: {
     popup: './src/popup/popup.ts',
+    background: './src/background.ts',
   },
   resolve: {
     extensions: ['...', '.ts'],
