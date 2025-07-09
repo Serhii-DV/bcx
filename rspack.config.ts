@@ -12,6 +12,7 @@ export default defineConfig({
   },
   resolve: {
     extensions: ['...', '.ts'],
+    tsConfig: path.resolve(__dirname, './tsconfig.json')
   },
   module: {
     rules: [
@@ -37,6 +38,7 @@ export default defineConfig({
       },
       {
         test: /\.ts$/,
+        exclude: [/node_modules/],
         use: [
           {
             loader: 'builtin:swc-loader',
@@ -68,7 +70,8 @@ export default defineConfig({
             const packageJson = require('./package.json');
             // Update the manifest version to match the package version
             manifest.version = packageJson.version;
-            manifest.description = packageJson.description || manifest.description;
+            manifest.description =
+              packageJson.description || manifest.description;
             return JSON.stringify(manifest, null, 2);
           },
         },

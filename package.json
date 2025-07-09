@@ -4,10 +4,10 @@
   "description": "Bandcamp Extension for browser",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && rspack build",
+    "dev": "rspack dev",
+    "build": "rspack build",
     "check": "biome check --write",
-    "fix": "biome check --write --unsafe",
-    "dev": "tsc && rspack dev",
+    "fix": "biome check --write --fix",
     "format": "biome format --write",
     "preview": "rspack preview",
     "test": "jest"
