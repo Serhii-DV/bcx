@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Bandcamp Extension",
+  "version": "0.0.0",
+  "description": "Browser extension for Bandcamp",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://*.bandcamp.com/*"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
