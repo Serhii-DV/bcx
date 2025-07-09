@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "rspack dev",
-    "build": "rspack build",
+    "build": "rspack build --env production",
     "check": "biome check --write",
     "fix": "biome check --write --fix",
     "format": "biome format --write",
