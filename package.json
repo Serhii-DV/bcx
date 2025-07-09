@@ -1,0 +1,21 @@
+{
+  "name": "bcx",
+  "version": "0.1.0",
+  "description": "Bandcamp browser extension",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.0.332",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.0.4",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3"
+  }
+}
