@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Bandcamp Extension",
+  "name": "Bandcamp Extension (BCX)",
   "version": "0.0.0",
-  "description": "Browser extension for Bandcamp",
+  "description": "",
   "background": {
     "service_worker": "background.js"
   },

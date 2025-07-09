@@ -65,8 +65,10 @@ export default defineConfig({
           to: 'manifest.json',
           transform: (content) => {
             const manifest = JSON.parse(content.toString());
+            const packageJson = require('./package.json');
             // Update the manifest version to match the package version
-            manifest.version = require('./package.json').version;
+            manifest.version = packageJson.version;
+            manifest.description = packageJson.description || manifest.description;
             return JSON.stringify(manifest, null, 2);
           },
         },

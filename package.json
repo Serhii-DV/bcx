@@ -1,7 +1,7 @@
 {
   "name": "bcx",
   "version": "0.1.0",
-  "description": "Bandcamp browser extension",
+  "description": "Bandcamp Extension for browser",
   "main": "index.js",
   "scripts": {
     "build": "tsc && rspack build",
