@@ -1,10 +1,10 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const button = document.getElementById("clickMeBtn");
-  const messageDiv = document.getElementById("message");
+document.addEventListener('DOMContentLoaded', () => {
+  const button = document.getElementById('clickMeBtn');
+  const messageDiv = document.getElementById('message');
 
-  button?.addEventListener("click", () => {
+  button?.addEventListener('click', () => {
     if (messageDiv) {
-      messageDiv.textContent = "Button clicked! 🎉";
+      messageDiv.textContent = 'Button clicked! 🎉';
     }
   });
 });

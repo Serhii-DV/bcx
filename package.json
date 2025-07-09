@@ -4,18 +4,26 @@
   "description": "Bandcamp browser extension",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc",
+    "build": "tsc && rspack build",
+    "check": "biome check --write",
+    "fix": "biome check --write --unsafe",
+    "dev": "tsc && rspack dev",
+    "format": "biome format --write",
+    "preview": "rspack preview",
     "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@biomejs/biome": "2.0.0",
+    "@rspack/cli": "^1.4.5",
+    "@rspack/core": "^1.4.5",
     "@types/chrome": "^0.0.332",
     "@types/jest": "^30.0.0",
     "jest": "^30.0.4",
     "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }
 }

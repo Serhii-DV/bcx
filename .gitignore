@@ -1,3 +1,7 @@
+# Local
+.DS_Store
+*.local
+
 # Node.js
 node_modules/
 dist/
@@ -7,7 +11,7 @@ built/
 npm-debug.log
 
 # Log files
-*.log
+*.log*
 logs/
 log/
 
@@ -15,28 +19,13 @@ log/
 jspm_packages/
 bower_components/
 
-# Output of 'npm pack'
-*.tgz
-
-# Yarn
-yarn-error.log
-.pnp.*
-.pnp.local.*
+# Profile
+.rspack-profile-*/
 
 # dotenv environment variables file
 .env
 
-# Visual Studio Code project folder
-.vscode/
-
-# User-specific files
-npm-debug.log.*
-pids
-logs
-yarn-error.log.*
-
-# Editor directories and files
-.vscode/
-
-# Ignore generated archives
-bandcamp-to-discogs-*.zip
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
