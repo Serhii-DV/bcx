@@ -82,6 +82,17 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
               const packageJson = require('./package.json');
               // Update the manifest version to match the package version
               manifest.version = packageJson.version;
+
+              if (isDevelopment) {
+                // version: MMDD.HHMMSS
+                const version = new Date()
+                  .toISOString()
+                  .slice(5, 19)
+                  .replace(/[-:T]/g, '')
+                  .replace(/(.{4})(.{6})/, '$1.$2');
+                manifest.name += ` [${version}]`;
+              }
+
               manifest.description =
                 packageJson.description || manifest.description;
               return JSON.stringify(manifest, null, 2);
