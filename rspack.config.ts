@@ -91,6 +91,12 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
                   .replace(/[-:T]/g, '')
                   .replace(/(.{4})(.{6})/, '$1.$2');
                 manifest.name += ` [${version}]`;
+
+                // Add looser CSP for development to support source maps
+                manifest.content_security_policy = {
+                  extension_pages:
+                    "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
+                };
               }
 
               manifest.description =
@@ -116,7 +122,7 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           ]
         : [],
     },
-    devtool: isDevelopment ? 'eval-cheap-module-source-map' : 'source-map',
+    devtool: isDevelopment ? 'cheap-module-source-map' : 'source-map',
     experiments: {
       css: true,
     },
