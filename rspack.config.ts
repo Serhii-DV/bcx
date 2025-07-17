@@ -107,16 +107,29 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           },
         ],
       }),
+      isProduction
+        ? new rspack.IgnorePlugin({
+            // Ignore console logs in production builds
+            resourceRegExp: /src\/utils\/console\.ts/,
+          })
+        : undefined,
     ],
     output: {
       path: path.resolve(__dirname, 'dist'),
       clean: true,
     },
     optimization: {
-      minimize: !isDevelopment,
-      minimizer: !isDevelopment
+      minimize: isProduction,
+      minimizer: isProduction
         ? [
-            new rspack.SwcJsMinimizerRspackPlugin(),
+            new rspack.SwcJsMinimizerRspackPlugin({
+              minimizerOptions: {
+                compress: {
+                  drop_console: true,
+                  drop_debugger: true,
+                },
+              },
+            }),
             new rspack.LightningCssMinimizerRspackPlugin({
               minimizerOptions: { targets },
             }),
