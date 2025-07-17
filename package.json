@@ -17,10 +17,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@biomejs/biome": "2.0.0",
+    "@biomejs/biome": "2.1.2",
     "@rspack/cli": "^1.4.5",
     "@rspack/core": "^1.4.5",
-    "@types/chrome": "^0.0.332",
+    "@types/chrome": "0.1.1",
     "@types/jest": "^30.0.0",
     "jest": "^30.0.4",
     "ts-jest": "^29.4.0",
