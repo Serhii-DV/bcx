@@ -70,6 +70,7 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
       new rspack.HtmlRspackPlugin({
         template: './src/popup/popup.html',
         filename: 'popup.html',
+        chunks: ['popup'],
         minify: !isDevelopment,
       }),
       new rspack.CopyRspackPlugin({
