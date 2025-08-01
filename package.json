@@ -1,6 +1,6 @@
 {
   "name": "bcx",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "BCX - Bandcamp Extension for browser",
   "private": true,
   "type": "module",
