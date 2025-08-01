@@ -1,0 +1,5 @@
+---
+"bcx": minor
+---
+
+rsbuild integration
