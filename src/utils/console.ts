@@ -1,4 +1,6 @@
-const PREFIX = '[bcx]';
+import pkg from '../../package.json';
+
+const PREFIX = `[${pkg.name}:${pkg.version}]`;
 type ConsoleMethod = 'log' | 'error' | 'debug' | 'warn' | 'info';
 const PATCHED = Symbol.for('__console_patched__');
 

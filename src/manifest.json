@@ -6,8 +6,15 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["storage"],
+  "permissions": ["activeTab", "storage", "scripting"],
   "host_permissions": ["https://*.bandcamp.com/*"],
+  "content_scripts": [
+    {
+      "js": ["bandcamp.content.js"],
+      "matches": ["https://*.bandcamp.com/*"],
+      "run_at": "document_end"
+    }
+  ],
   "action": {
     "default_popup": "popup.html"
   }

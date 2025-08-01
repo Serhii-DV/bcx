@@ -1,29 +1,32 @@
 {
   "name": "bcx",
   "version": "0.1.0",
-  "description": "Bandcamp Extension for browser",
-  "main": "index.js",
+  "description": "BCX - Bandcamp Extension for browser",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "rspack build && rspack dev",
-    "build": "rspack build --env production",
+    "build": "rsbuild build --env production",
+    "dev": "rsbuild dev --open",
+    "preview": "rsbuild preview",
     "check": "biome check --write",
     "fix": "biome check --write --fix",
     "format": "biome format --write",
-    "preview": "rspack preview",
+    "svelte-check": "svelte-check --tsconfig ./tsconfig.json",
     "setup-git-hooks": "git config core.hooksPath .githooks",
-    "test": "jest"
+    "test": "rstest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "svelte": "^5.37.1"
+  },
   "devDependencies": {
-    "@biomejs/biome": "2.1.2",
-    "@rspack/cli": "^1.4.5",
-    "@rspack/core": "^1.4.5",
+    "@rsbuild/core": "^1.4.11",
+    "@rsbuild/plugin-svelte": "^1.0.10",
+    "@rstest/core": "^0.0.10",
     "@types/chrome": "0.1.1",
-    "@types/jest": "^30.0.0",
-    "jest": "^30.0.4",
-    "ts-jest": "^29.4.0",
+    "svelte-check": "^4.3.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }
