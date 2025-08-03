@@ -15,6 +15,12 @@
       "run_at": "document_end"
     }
   ],
+  "web_accessible_resources": [
+    {
+      "resources": ["bandcamp.content.css"],
+      "matches": ["https://*.bandcamp.com/*"]
+    }
+  ],
   "action": {
     "default_popup": "popup.html"
   }

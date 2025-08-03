@@ -35,6 +35,7 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        $lib: path.resolve(__dirname, './src/lib'),
       },
     },
     output: {
@@ -65,6 +66,25 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
     dev: {
       writeToDisk: true, // Write files to disk for browser extension development
     },
-    tools: {},
+
+    tools: {
+      rspack: (config) => {
+        // Just ignore specific warning patterns
+        config.ignoreWarnings = [
+          /state_referenced_locally/,
+          /node_modules/,
+          /runed/,
+          /mode-watcher/,
+        ];
+
+        return config;
+      },
+
+      postcss: (opts) => {
+        opts.postcssOptions = {
+          plugins: ['@tailwindcss/postcss', 'autoprefixer'],
+        };
+      },
+    },
   });
 }

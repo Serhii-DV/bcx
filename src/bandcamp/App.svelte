@@ -1,27 +1,21 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { Button } from '$lib/components/ui/button/index.js';
 
 onMount(() => {
   console.log('✅ BCX extension injected at:', new Date().toLocaleTimeString());
 });
+
+function handleButtonClick() {
+  alert('🎵 BCX Extension Alert!\nButton clicked');
+}
 </script>
 
 <div class="bcx-extension">
+  <Button variant="destructive" onclick={handleButtonClick}>Test Button</Button>
   <p>BCX extension injected into Bandcamp page</p>
 </div>
 
 <style>
-  .bcx-extension {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #148105;
-    color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    z-index: 9999;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
+
 </style>
