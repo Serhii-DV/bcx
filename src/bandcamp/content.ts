@@ -38,3 +38,8 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+// Additional safety check for dynamic page loads
+if (document.readyState === 'complete') {
+  setTimeout(init, 100);
+}
