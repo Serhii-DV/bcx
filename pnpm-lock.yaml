@@ -66,6 +66,9 @@ importers:
       bits-ui:
         specifier: ^2.9.1
         version: 2.9.1(@internationalized/date@3.8.2)(svelte@5.37.1)
+      shadcn-svelte:
+        specifier: ^1.0.6
+        version: 1.0.6
       svelte-check:
         specifier: ^4.3.0
         version: 4.3.0(picomatch@4.0.3)(svelte@5.37.1)(typescript@5.8.3)
@@ -1089,6 +1092,10 @@ packages:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
 
+  commander@14.0.0:
+    resolution: {integrity: sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA==}
+    engines: {node: '>=20'}
+
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
@@ -1447,6 +1454,9 @@ packages:
   node-addon-api@7.1.1:
     resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
 
+  node-fetch-native@1.6.7:
+    resolution: {integrity: sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q==}
+
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
 
@@ -1593,6 +1603,10 @@ packages:
   semver@7.7.2:
     resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
     engines: {node: '>=10'}
+    hasBin: true
+
+  shadcn-svelte@1.0.6:
+    resolution: {integrity: sha512-9hQR84HkIK7pPkrbfs8ttYgoRip+NGrM9ojDXgMKft8PqhofqSi4VMmzyKZ91xzvwakFyRZKGXylKvfpITRtTA==}
     hasBin: true
 
   shebang-command@2.0.0:
@@ -2896,6 +2910,8 @@ snapshots:
 
   clsx@2.1.1: {}
 
+  commander@14.0.0: {}
+
   convert-source-map@2.0.0:
     optional: true
 
@@ -3212,6 +3228,8 @@ snapshots:
 
   node-addon-api@7.1.1: {}
 
+  node-fetch-native@1.6.7: {}
+
   node-releases@2.0.19: {}
 
   normalize-range@0.1.2: {}
@@ -3345,6 +3363,12 @@ snapshots:
     optional: true
 
   semver@7.7.2: {}
+
+  shadcn-svelte@1.0.6:
+    dependencies:
+      commander: 14.0.0
+      node-fetch-native: 1.6.7
+      postcss: 8.5.6
 
   shebang-command@2.0.0:
     dependencies:
