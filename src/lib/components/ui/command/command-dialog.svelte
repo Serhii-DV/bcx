@@ -8,7 +8,7 @@ import * as Dialog from '$lib/components/ui/dialog/index.js';
 import type { WithoutChildrenOrChild } from '$lib/utils.js';
 import Command from './command.svelte';
 
-const {
+let {
   open = $bindable(false),
   ref = $bindable(null),
   value = $bindable(''),
