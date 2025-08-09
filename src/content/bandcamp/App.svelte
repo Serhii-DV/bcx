@@ -1,11 +1,7 @@
 <script lang="ts">
-import CalculatorIcon from '@lucide/svelte/icons/calculator';
-import CalendarIcon from '@lucide/svelte/icons/calendar';
-import CreditCardIcon from '@lucide/svelte/icons/credit-card';
 import SettingsIcon from '@lucide/svelte/icons/settings';
-import SmileIcon from '@lucide/svelte/icons/smile';
 import UserIcon from '@lucide/svelte/icons/user';
-import { MoonIcon, SunIcon } from 'lucide-svelte';
+import { ListMusicIcon, MoonIcon, SunIcon } from 'lucide-svelte';
 import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { onMount } from 'svelte';
 import { Button } from '$lib/components/ui/button/index.js';
@@ -128,16 +124,9 @@ function handleButtonClick() {
   <Command.Empty>No results found.</Command.Empty>
   <Command.Group heading="Suggestions">
    <Command.Item>
-    <CalendarIcon class="mr-2 size-4" />
-    <span>Calendar</span>
-   </Command.Item>
-   <Command.Item>
-    <SmileIcon class="mr-2 size-4" />
-    <span>Search Emoji</span>
-   </Command.Item>
-   <Command.Item>
-    <CalculatorIcon class="mr-2 size-4" />
-    <span>Calculator</span>
+    <ListMusicIcon class="mr-2 size-4" />
+    <span>Search Artist/Album</span>
+    <Command.Shortcut>⌘A</Command.Shortcut>
    </Command.Item>
   </Command.Group>
   <Command.Separator />
@@ -146,11 +135,6 @@ function handleButtonClick() {
     <UserIcon class="mr-2 size-4" />
     <span>Profile</span>
     <Command.Shortcut>⌘P</Command.Shortcut>
-   </Command.Item>
-   <Command.Item>
-    <CreditCardIcon class="mr-2 size-4" />
-    <span>Billing</span>
-    <Command.Shortcut>⌘B</Command.Shortcut>
    </Command.Item>
    <Command.Item>
     <SettingsIcon class="mr-2 size-4" />
