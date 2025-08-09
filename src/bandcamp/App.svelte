@@ -5,6 +5,8 @@ import CreditCardIcon from '@lucide/svelte/icons/credit-card';
 import SettingsIcon from '@lucide/svelte/icons/settings';
 import SmileIcon from '@lucide/svelte/icons/smile';
 import UserIcon from '@lucide/svelte/icons/user';
+import { MoonIcon, SunIcon } from 'lucide-svelte';
+import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { onMount } from 'svelte';
 import { Button } from '$lib/components/ui/button/index.js';
 import * as Command from '$lib/components/ui/command/index.js';
@@ -38,6 +40,11 @@ onMount(() => {
       z-index: 999999;
       pointer-events: none;
     `;
+
+    // Add dark theme by default
+    portalContainer.classList.add('dark');
+    portalContainer.style.cssText += 'color-theme: dark;';
+
     bcxElement.shadowRoot.appendChild(portalContainer);
     shadowContainer = portalContainer;
   } else {
@@ -52,6 +59,8 @@ function handleButtonClick() {
 
 <svelte:document onkeydown={handleKeydown} />
 
+<ModeWatcher defaultMode="dark" />
+
 <div class="bcx-extension">
   <div class="bcx-header">
     <h3 class="bcx-title">🎵 BCX Extension</h3>
@@ -62,6 +71,12 @@ function handleButtonClick() {
   </div>
 
   <div class="bcx-controls">
+    <Button onclick={toggleMode} variant="outline" size="icon">
+      <SunIcon class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 !transition-all dark:-rotate-90 dark:scale-0" />
+      <MoonIcon class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 !transition-all dark:rotate-0 dark:scale-100" />
+      <span class="sr-only">Toggle theme</span>
+    </Button>
+
     <Button variant="destructive" onclick={handleButtonClick} class="bcx-button">
       🎵 Test Button
     </Button>
@@ -77,11 +92,35 @@ function handleButtonClick() {
 
   <div class="bcx-shortcuts">
     <span class="bcx-shortcut">
-      <kbd>Ctrl</kbd> + <kbd>/</kbd> - Toggle Dialog
+      <kbd>Ctrl</kbd> + <kbd>/</kbd> - Toggle Command Dialog
     </span>
   </div>
 
 <!-- Dialog with Shadow DOM Portal -->
+{#if shadowContainer}
+  <Dialog.Root bind:open={dialogOpen}>
+    <Dialog.Portal to={shadowContainer}>
+      <Dialog.Overlay class="bcx-dialog-overlay" />
+      <Dialog.Content class="bcx-dialog-content" portalProps={{to: shadowContainer}}>
+        <Dialog.Header class="bcx-dialog-header">
+          <Dialog.Title class="bcx-dialog-title">
+            🎵 BCX Extension Dialog
+          </Dialog.Title>
+          <Dialog.Description class="bcx-dialog-description">
+            This dialog is rendered inside the Shadow DOM
+            All styles are isolated from the main page.
+          </Dialog.Description>
+        </Dialog.Header>
+        <Dialog.Close class="bcx-dialog-close">
+          <span class="bcx-close-icon">✕</span>
+        </Dialog.Close>
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>
+{/if}
+
+</div>
+
 {#if shadowContainer}
 <Command.Dialog bind:open={commandOpen} portalProps={{to: shadowContainer}}>
  <Command.Input placeholder="Type a command or search..." />
@@ -121,29 +160,7 @@ function handleButtonClick() {
   </Command.Group>
  </Command.List>
 </Command.Dialog>
-
-  <Dialog.Root bind:open={dialogOpen}>
-    <Dialog.Portal to={shadowContainer}>
-      <Dialog.Overlay class="bcx-dialog-overlay" />
-      <Dialog.Content class="bcx-dialog-content" portalProps={{to: shadowContainer}}>
-        <Dialog.Header class="bcx-dialog-header">
-          <Dialog.Title class="bcx-dialog-title">
-            🎵 BCX Extension Dialog
-          </Dialog.Title>
-          <Dialog.Description class="bcx-dialog-description">
-            This dialog is rendered inside the Shadow DOM
-            All styles are isolated from the main page.
-          </Dialog.Description>
-        </Dialog.Header>
-        <Dialog.Close class="bcx-dialog-close">
-          <span class="bcx-close-icon">✕</span>
-        </Dialog.Close>
-      </Dialog.Content>
-    </Dialog.Portal>
-  </Dialog.Root>
 {/if}
-
-</div>
 
 <style>
   .bcx-extension {
