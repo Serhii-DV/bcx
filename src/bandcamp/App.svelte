@@ -1,13 +1,26 @@
 <script lang="ts">
+import CalculatorIcon from '@lucide/svelte/icons/calculator';
+import CalendarIcon from '@lucide/svelte/icons/calendar';
+import CreditCardIcon from '@lucide/svelte/icons/credit-card';
+import SettingsIcon from '@lucide/svelte/icons/settings';
+import SmileIcon from '@lucide/svelte/icons/smile';
+import UserIcon from '@lucide/svelte/icons/user';
 import { onMount } from 'svelte';
 import { Button } from '$lib/components/ui/button/index.js';
+import * as Command from '$lib/components/ui/command/index.js';
 import * as Dialog from '$lib/components/ui/dialog/index.js';
 
 let dialogOpen = $state(false);
 let shadowContainer: HTMLElement | null = $state(null);
+let commandOpen = $state(false);
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    commandOpen = !commandOpen;
+  }
+
+  if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
     e.preventDefault();
     dialogOpen = !dialogOpen;
   }
@@ -70,6 +83,45 @@ function handleButtonClick() {
 
 <!-- Dialog with Shadow DOM Portal -->
 {#if shadowContainer}
+<Command.Dialog bind:open={commandOpen} portalProps={{to: shadowContainer}}>
+ <Command.Input placeholder="Type a command or search..." />
+ <Command.List>
+  <Command.Empty>No results found.</Command.Empty>
+  <Command.Group heading="Suggestions">
+   <Command.Item>
+    <CalendarIcon class="mr-2 size-4" />
+    <span>Calendar</span>
+   </Command.Item>
+   <Command.Item>
+    <SmileIcon class="mr-2 size-4" />
+    <span>Search Emoji</span>
+   </Command.Item>
+   <Command.Item>
+    <CalculatorIcon class="mr-2 size-4" />
+    <span>Calculator</span>
+   </Command.Item>
+  </Command.Group>
+  <Command.Separator />
+  <Command.Group heading="Settings">
+   <Command.Item>
+    <UserIcon class="mr-2 size-4" />
+    <span>Profile</span>
+    <Command.Shortcut>⌘P</Command.Shortcut>
+   </Command.Item>
+   <Command.Item>
+    <CreditCardIcon class="mr-2 size-4" />
+    <span>Billing</span>
+    <Command.Shortcut>⌘B</Command.Shortcut>
+   </Command.Item>
+   <Command.Item>
+    <SettingsIcon class="mr-2 size-4" />
+    <span>Settings</span>
+    <Command.Shortcut>⌘S</Command.Shortcut>
+   </Command.Item>
+  </Command.Group>
+ </Command.List>
+</Command.Dialog>
+
   <Dialog.Root bind:open={dialogOpen}>
     <Dialog.Portal to={shadowContainer}>
       <Dialog.Overlay class="bcx-dialog-overlay" />
