@@ -27,7 +27,7 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           html: false,
         },
         'bandcamp.content': {
-          import: './src/bandcamp/content.ts',
+          import: './src/content/bandcamp/content.ts',
           html: false,
         },
       },
