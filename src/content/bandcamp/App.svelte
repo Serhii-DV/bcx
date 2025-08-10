@@ -13,7 +13,7 @@ let dialogOpen = $state(false);
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
-const musicData = $state({
+const musicData = {
   artists: [
     { id: '1', name: 'Atrium Carceri', albumCount: 15 },
     { id: '2', name: 'Lustmord', albumCount: 8 },
@@ -24,8 +24,7 @@ const musicData = $state({
     { id: '2', title: 'Seishinbyouin', artist: 'Atrium Carceri', year: 2007 },
     { id: '3', title: 'Muse in Arms', artist: 'Triarii', year: 2008 },
   ],
-});
-const bcxMusicFilterData = $state({ ...musicData });
+};
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
@@ -182,7 +181,7 @@ function handleAlbumSelect(album: any) {
 <BcxMusicFilterDialog
   bind:open={albumSearchOpen}
   {shadowContainer}
-  data={bcxMusicFilterData}
+  data={musicData}
   placeholder="Search for artists, albums, or tracks..."
   emptyMessage="No artists or albums found"
   onArtistSelect={handleArtistSelect}
