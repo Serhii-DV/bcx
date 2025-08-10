@@ -4,6 +4,7 @@ import UserIcon from '@lucide/svelte/icons/user';
 import { ListMusicIcon, MoonIcon, SunIcon } from 'lucide-svelte';
 import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { onMount } from 'svelte';
+import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
 import { Button } from '$lib/components/ui/button/index.js';
 import * as Command from '$lib/components/ui/command/index.js';
 import * as Dialog from '$lib/components/ui/dialog/index.js';
@@ -11,6 +12,20 @@ import * as Dialog from '$lib/components/ui/dialog/index.js';
 let dialogOpen = $state(false);
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
+let albumSearchOpen = $state(false);
+const musicData = $state({
+  artists: [
+    { id: '1', name: 'Atrium Carceri', albumCount: 15 },
+    { id: '2', name: 'Lustmord', albumCount: 8 },
+    { id: '3', name: 'Triarii', albumCount: 6 },
+  ],
+  albums: [
+    { id: '1', title: 'Cellblock', artist: 'Atrium Carceri', year: 2003 },
+    { id: '2', title: 'Seishinbyouin', artist: 'Atrium Carceri', year: 2007 },
+    { id: '3', title: 'Muse in Arms', artist: 'Triarii', year: 2008 },
+  ],
+});
+const bcxMusicFilterData = $state({ ...musicData });
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
@@ -21,6 +36,12 @@ function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
     e.preventDefault();
     dialogOpen = !dialogOpen;
+  }
+
+  // Ctrl+M
+  if (e.key === 'm' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    albumSearchOpen = !albumSearchOpen;
   }
 }
 
@@ -50,6 +71,16 @@ onMount(() => {
 
 function handleButtonClick() {
   alert('🎵 BCX Extension Alert!\nButton clicked');
+}
+
+function handleArtistSelect(artist: any) {
+  console.log(`🎵 BCX: Selected artist "${artist.name}"`);
+  alert(`🎵 BCX: Navigating to ${artist.name} discography`);
+}
+
+function handleAlbumSelect(album: any) {
+  console.log(`💿 BCX: Selected album "${album.title}"`);
+  alert(`💿 BCX: Opening ${album.title} by ${album.artist}`);
 }
 </script>
 
@@ -118,6 +149,7 @@ function handleButtonClick() {
 </div>
 
 {#if shadowContainer}
+<!-- Main Command Dialog -->
 <Command.Dialog bind:open={commandOpen} portalProps={{to: shadowContainer}}>
  <Command.Input placeholder="Type a command or search..." />
  <Command.List>
@@ -145,6 +177,17 @@ function handleButtonClick() {
  </Command.List>
 </Command.Dialog>
 {/if}
+
+<!-- Artist/Album Search Command Dialog -->
+<BcxMusicFilterDialog
+  bind:open={albumSearchOpen}
+  {shadowContainer}
+  data={bcxMusicFilterData}
+  placeholder="Search for artists, albums, or tracks..."
+  emptyMessage="No artists or albums found"
+  onArtistSelect={handleArtistSelect}
+  onAlbumSelect={handleAlbumSelect}
+/>
 
 <style>
   .bcx-extension {
