@@ -1,5 +1,5 @@
-import { Artist } from './artist';
-import { Url } from './url';
+import { Artist } from '../../artist';
+import { Url } from '../../url';
 
 export class MusicItem {
   constructor(
