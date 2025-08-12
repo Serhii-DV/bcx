@@ -5,26 +5,7 @@
  */
 
 import * as Command from '$lib/components/ui/command/index.js';
-
-// Types for search results
-interface Artist {
-  id: string;
-  name: string;
-  albumCount?: number;
-}
-
-interface Album {
-  id: string;
-  title: string;
-  artist: string;
-  year?: number;
-  url?: string;
-}
-
-interface Data {
-  artists: Artist[];
-  albums: Album[];
-}
+import type { Album, Artist, Data } from './types';
 
 let {
   open = $bindable(false),
@@ -44,7 +25,7 @@ let {
   onAlbumSelect?: ((album: Album) => void) | null;
 } = $props();
 
-let searchQuery = $state('');
+const searchQuery = $state('');
 
 function handleArtistSelect(artist: Artist) {
   console.log(`🎵 BCX: Artist selected "${artist.name}"`);
@@ -86,7 +67,7 @@ function handleKeydown(event: KeyboardEvent) {
         <!-- Artists Section -->
         {#if data.artists.length > 0}
           <Command.Group heading="Artists">
-            {#each data.artists as artist (artist.id)}
+            {#each data.artists as artist}
               <Command.Item onSelect={() => handleArtistSelect(artist)}>
                 <span>{artist.name}</span>
                 {#if artist.albumCount}
@@ -105,7 +86,7 @@ function handleKeydown(event: KeyboardEvent) {
         <!-- Albums Section -->
         {#if data.albums.length > 0}
           <Command.Group heading="Albums">
-            {#each data.albums as album (album.id)}
+            {#each data.albums as album}
               <Command.Item onSelect={() => handleAlbumSelect(album)}>
                 <span>{album.artist} - {album.title}{#if album.year} - {album.year}{/if}</span>
               </Command.Item>

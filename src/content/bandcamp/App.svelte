@@ -3,8 +3,12 @@ import SettingsIcon from '@lucide/svelte/icons/settings';
 import UserIcon from '@lucide/svelte/icons/user';
 import { ListMusicIcon, MoonIcon, SunIcon } from 'lucide-svelte';
 import { ModeWatcher, toggleMode } from 'mode-watcher';
+import { getMusicItems } from 'src/bandcamp/page/music/html';
+import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
+import { Url } from 'src/bandcamp/url';
 import { onMount } from 'svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
+import type { Album, Artist, Data } from '$lib/components/bcx/types';
 import { Button } from '$lib/components/ui/button/index.js';
 import * as Command from '$lib/components/ui/command/index.js';
 import * as Dialog from '$lib/components/ui/dialog/index.js';
@@ -13,18 +17,16 @@ let dialogOpen = $state(false);
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
-const musicData = {
-  artists: [
-    { id: '1', name: 'Atrium Carceri', albumCount: 15 },
-    { id: '2', name: 'Lustmord', albumCount: 8 },
-    { id: '3', name: 'Triarii', albumCount: 6 },
-  ],
-  albums: [
-    { id: '1', title: 'Cellblock', artist: 'Atrium Carceri', year: 2003 },
-    { id: '2', title: 'Seishinbyouin', artist: 'Atrium Carceri', year: 2007 },
-    { id: '3', title: 'Muse in Arms', artist: 'Triarii', year: 2008 },
-  ],
+let musicData: Data = {
+  artists: [],
+  albums: [],
 };
+
+const pageUrl = new Url(window.location.href);
+
+if (pageUrl.isMusic) {
+  musicData = getMusicDataFromMusicItems(getMusicItems());
+}
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
@@ -67,6 +69,36 @@ onMount(() => {
     console.warn('❌ BCX: Could not find #bcx-app shadow root');
   }
 });
+
+function getMusicDataFromMusicItems(musicItems: MusicItem[]): Data {
+  const artists: Artist[] = [];
+  const albums: Album[] = [];
+
+  // add artists
+  musicItems.forEach((item) => {
+    item.artist.names.forEach((name) => {
+      artists.push({
+        name,
+      });
+    });
+  });
+  // artists.sort();
+
+  // add albums
+  musicItems.forEach((item) =>
+    albums.push({
+      url: item.url.toString(),
+      artist: item.artist.toString(),
+      title: item.title,
+    }),
+  );
+  // albums.sort();
+
+  return {
+    artists,
+    albums,
+  };
+}
 
 function handleButtonClick() {
   alert('🎵 BCX Extension Alert!\nButton clicked');
