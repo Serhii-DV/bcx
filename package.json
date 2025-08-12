@@ -42,6 +42,7 @@
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
     "bits-ui": "^2.9.1",
+    "jsdom": "^26.1.0",
     "shadcn-svelte": "^1.0.6",
     "svelte-check": "^4.3.0",
     "tailwind-variants": "^1.0.0",
