@@ -16,6 +16,14 @@ describe('BandcampURL', () => {
     });
   });
 
+  describe('uuid', () => {
+    it('should return the UUID of the URL', () => {
+      const validUrl = 'https://artist.bandcamp.com/album/album-name';
+      const url = new Url(validUrl);
+      expect(url.uuid).toBe('b355ab9c-e629-58ee-a3ab-4a62c674798a');
+    });
+  });
+
   describe('hostname', () => {
     it('should return the hostname of the URL', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';

@@ -1,7 +1,10 @@
+import { v5 as uuid5 } from 'uuid';
+
 const host = 'bandcamp.com';
 
 export class Url {
   public url: URL;
+  public uuid: string;
 
   constructor(url: string) {
     if (!isValidBandcampUrl(url)) {
@@ -12,6 +15,7 @@ export class Url {
       url = removeQueryParams(url);
       url = removeBandcampMusicPath(url);
       this.url = new URL(url);
+      this.uuid = uuid5(url, uuid5.URL);
     } catch (error) {
       throw new Error(`Invalid URL: ${url}`);
     }
