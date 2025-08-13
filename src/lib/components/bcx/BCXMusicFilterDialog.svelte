@@ -25,7 +25,7 @@ let {
   onAlbumSelect?: ((album: Album) => void) | null;
 } = $props();
 
-const searchQuery = $state('');
+let searchQuery = $state('');
 
 function handleArtistSelect(artist: Artist) {
   console.log(`🎵 BCX: Artist selected "${artist.name}"`);
