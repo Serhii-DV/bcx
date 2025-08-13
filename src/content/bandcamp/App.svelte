@@ -4,6 +4,7 @@ import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { getMusicItems } from 'src/bandcamp/page/music/html';
 import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
 import { Url } from 'src/bandcamp/url';
+import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
@@ -27,21 +28,18 @@ if (pageUrl.isMusic) {
 }
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
-    e.preventDefault();
+  onCtrlKey('/', e, () => {
     commandOpen = !commandOpen;
-  }
+  });
 
-  if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
-    e.preventDefault();
+  onCtrlKey('d', e, () => {
     dialogOpen = !dialogOpen;
-  }
+  });
 
   // Ctrl+M
-  if (e.key === 'm' && (e.metaKey || e.ctrlKey)) {
-    e.preventDefault();
+  onCtrlKey('m', e, () => {
     albumSearchOpen = !albumSearchOpen;
-  }
+  });
 }
 
 onMount(() => {
