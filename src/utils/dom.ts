@@ -2,14 +2,14 @@ import { isString } from './utils';
 
 export function element(
   selector: string,
-  parent?: Element | null,
+  parent?: Element | ShadowRoot | null,
 ): HTMLElement | null {
   return (parent ? parent : document).querySelector(selector);
 }
 
 export function elements(
   selector: string,
-  parent?: Element | null,
+  parent?: Element | ShadowRoot | null,
 ): HTMLElement[] {
   return Array.from(
     (parent ? parent : document).querySelectorAll(selector),

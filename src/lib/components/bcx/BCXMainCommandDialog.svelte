@@ -8,6 +8,10 @@ import SettingsIcon from '@lucide/svelte/icons/settings';
 import UserIcon from '@lucide/svelte/icons/user';
 import type { Dialog as DialogPrimitive } from 'bits-ui';
 import { ListMusicIcon } from 'lucide-svelte';
+import {
+  getMenuBarCollectionButton,
+  getMenuBarFeedButton,
+} from 'src/bandcamp/page/menu-bar/html';
 import * as Command from '$lib/components/ui/command/index.js';
 
 let {
@@ -30,6 +34,16 @@ function handleSearchArtistAlbum() {
     onSearchArtistAlbum();
   }
   open = false;
+}
+
+function handleFeedSelect() {
+  open = false;
+  getMenuBarFeedButton()?.click();
+}
+
+function handleCollectionSelect() {
+  open = false;
+  getMenuBarCollectionButton()?.click();
 }
 
 function handleProfileSelect() {
@@ -62,6 +76,7 @@ function handleKeydown(event: KeyboardEvent) {
   <Command.Input placeholder="Type a command or search..." />
   <Command.List>
     <Command.Empty>No results found.</Command.Empty>
+
     <Command.Group heading="Suggestions">
       <Command.Item onSelect={handleSearchArtistAlbum}>
         <ListMusicIcon class="mr-2 size-4" />
@@ -70,7 +85,21 @@ function handleKeydown(event: KeyboardEvent) {
       </Command.Item>
     </Command.Group>
     <Command.Separator />
-    <Command.Group heading="Settings">
+
+    <Command.Group heading="Bandcamp">
+      <Command.Item onSelect={handleFeedSelect}>
+        <UserIcon class="mr-2 size-4" />
+        <span>Feed</span>
+        <Command.Shortcut>⌘F</Command.Shortcut>
+      </Command.Item>
+      <Command.Item onSelect={handleCollectionSelect}>
+        <SettingsIcon class="mr-2 size-4" />
+        <span>Collection</span>
+        <Command.Shortcut>⌘C</Command.Shortcut>
+      </Command.Item>
+    </Command.Group>
+
+    <Command.Group heading="BCX Extension">
       <Command.Item onSelect={handleProfileSelect}>
         <UserIcon class="mr-2 size-4" />
         <span>Profile</span>
@@ -82,6 +111,7 @@ function handleKeydown(event: KeyboardEvent) {
         <Command.Shortcut>⌘S</Command.Shortcut>
       </Command.Item>
     </Command.Group>
+
   </Command.List>
 </Command.Dialog>
 
