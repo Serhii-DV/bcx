@@ -1,16 +1,14 @@
 <script lang="ts">
-import SettingsIcon from '@lucide/svelte/icons/settings';
-import UserIcon from '@lucide/svelte/icons/user';
-import { ListMusicIcon, MoonIcon, SunIcon } from 'lucide-svelte';
+import { MoonIcon, SunIcon } from 'lucide-svelte';
 import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { getMusicItems } from 'src/bandcamp/page/music/html';
 import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
 import { Url } from 'src/bandcamp/url';
 import { onMount } from 'svelte';
+import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
 import type { Album, Artist, Data } from '$lib/components/bcx/types';
 import { Button } from '$lib/components/ui/button/index.js';
-import * as Command from '$lib/components/ui/command/index.js';
 import * as Dialog from '$lib/components/ui/dialog/index.js';
 
 let dialogOpen = $state(false);
@@ -113,6 +111,18 @@ function handleAlbumSelect(album: any) {
   console.log(`💿 BCX: Selected album "${album.title}"`);
   alert(`💿 BCX: Opening ${album.title} by ${album.artist}`);
 }
+
+function handleSearchArtistAlbum() {
+  albumSearchOpen = true;
+}
+
+function handleProfileSelect() {
+  alert('👤 BCX: Profile feature coming soon!');
+}
+
+function handleSettingsSelect() {
+  alert('⚙️ BCX: Settings feature coming soon!');
+}
 </script>
 
 <svelte:document onkeydown={handleKeydown} />
@@ -181,32 +191,13 @@ function handleAlbumSelect(album: any) {
 
 {#if shadowContainer}
 <!-- Main Command Dialog -->
-<Command.Dialog bind:open={commandOpen} portalProps={{to: shadowContainer}}>
- <Command.Input placeholder="Type a command or search..." />
- <Command.List>
-  <Command.Empty>No results found.</Command.Empty>
-  <Command.Group heading="Suggestions">
-   <Command.Item>
-    <ListMusicIcon class="mr-2 size-4" />
-    <span>Search Artist/Album</span>
-    <Command.Shortcut>⌘A</Command.Shortcut>
-   </Command.Item>
-  </Command.Group>
-  <Command.Separator />
-  <Command.Group heading="Settings">
-   <Command.Item>
-    <UserIcon class="mr-2 size-4" />
-    <span>Profile</span>
-    <Command.Shortcut>⌘P</Command.Shortcut>
-   </Command.Item>
-   <Command.Item>
-    <SettingsIcon class="mr-2 size-4" />
-    <span>Settings</span>
-    <Command.Shortcut>⌘S</Command.Shortcut>
-   </Command.Item>
-  </Command.Group>
- </Command.List>
-</Command.Dialog>
+<BcxMainCommandDialog
+  bind:open={commandOpen}
+  {shadowContainer}
+  onSearchArtistAlbum={handleSearchArtistAlbum}
+  onProfileSelect={handleProfileSelect}
+  onSettingsSelect={handleSettingsSelect}
+/>
 {/if}
 
 <!-- Artist/Album Search Command Dialog -->
