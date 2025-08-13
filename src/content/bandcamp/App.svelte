@@ -193,23 +193,23 @@ function handleSettingsSelect() {
 <!-- Main Command Dialog -->
 <BcxMainCommandDialog
   bind:open={commandOpen}
-  {shadowContainer}
+  portalProps={{ to: shadowContainer }}
   onSearchArtistAlbum={handleSearchArtistAlbum}
   onProfileSelect={handleProfileSelect}
   onSettingsSelect={handleSettingsSelect}
 />
-{/if}
-
 <!-- Artist/Album Search Command Dialog -->
 <BcxMusicFilterDialog
   bind:open={albumSearchOpen}
-  {shadowContainer}
+  portalProps={{ to: shadowContainer }}
   data={musicData}
   placeholder="Search for artists, albums, or tracks..."
   emptyMessage="No artists or albums found"
   onArtistSelect={handleArtistSelect}
   onAlbumSelect={handleAlbumSelect}
 />
+{/if}
+
 
 <style>
   .bcx-extension {
