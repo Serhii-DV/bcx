@@ -219,8 +219,9 @@ function handleSettingsSelect() {
       0 8px 32px rgba(0, 0, 0, 0.3),
       0 0 0 1px rgba(255, 255, 255, 0.1);
     position: fixed;
-    top: 20px;
+    top: auto;
     right: 20px;
+    bottom: 10px;
     z-index: 999999;
     padding: 1.5rem;
     min-width: 320px;
