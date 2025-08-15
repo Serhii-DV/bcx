@@ -4,6 +4,7 @@ import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { getMusicItems } from 'src/bandcamp/page/music/html';
 import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
 import { Url } from 'src/bandcamp/url';
+import { countOccurrences } from 'src/utils/array';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
@@ -67,33 +68,53 @@ onMount(() => {
 });
 
 function getMusicDataFromMusicItems(musicItems: MusicItem[]): Data {
-  const artists: Artist[] = [];
-  const albums: Album[] = [];
+  const values: string[] = [];
 
-  // add artists
   musicItems.forEach((item) => {
-    item.artist.names.forEach((name) => {
-      artists.push({
-        name,
-      });
-    });
+    values.push(...item.artist.names);
   });
-  // artists.sort();
-
-  // add albums
-  musicItems.forEach((item) =>
-    albums.push({
+  const counts = countOccurrences(values.sort());
+  const artists: Artist[] = mapToArtists(counts);
+  const albums: Album[] = musicItems
+    .map((item) => ({
       url: item.url.toString(),
       artist: item.artist.toString(),
       title: item.title,
-    }),
-  );
-  // albums.sort();
+    }))
+    .sort((a, b) => {
+      const aKey = `${a.artist} - ${a.title}`;
+      const bKey = `${b.artist} - ${b.title}`;
+      return aKey.localeCompare(bKey);
+    });
 
   return {
     artists,
     albums,
   };
+}
+
+/**
+ * Converts the result from countOccurrences to an array of Artist objects.
+ *
+ * @param countMap - The Map returned by countOccurrences method
+ * @returns An array of Artist objects with name and albumCount
+ *
+ * @example
+ * ```typescript
+ * const artists = ['Beatles', 'beatles', 'Queen', 'QUEEN', 'Beatles'];
+ * const counts = countOccurrences(artists);
+ * const artistObjects = mapToArtists(counts);
+ * // Result: [
+ * //   { name: 'beatles', albumCount: 3 },
+ * //   { name: 'queen', albumCount: 2 }
+ * // ]
+ * ```
+ */
+export function mapToArtists(countMap: Map<string, number>): Artist[] {
+  return Array.from(countMap.entries()).map(([name, count]) => ({
+    name: name,
+    albumCount: count,
+  }));
 }
 
 function handleButtonClick() {

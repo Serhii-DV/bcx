@@ -64,10 +64,7 @@ function handleKeydown(event: KeyboardEvent) {
         <Command.Group heading="Artists">
           {#each data.artists as artist}
             <Command.Item onSelect={() => handleArtistSelect(artist)}>
-              <span>{artist.name}</span>
-              {#if artist.albumCount}
-                <sup title="{artist.albumCount} albums">{artist.albumCount}</sup>
-              {/if}
+              <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span>
             </Command.Item>
           {/each}
         </Command.Group>
