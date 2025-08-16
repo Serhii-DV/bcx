@@ -2,25 +2,24 @@
 import { MoonIcon, SunIcon } from 'lucide-svelte';
 import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { getMusicItems } from 'src/bandcamp/page/music/html';
-import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
 import { Url } from 'src/bandcamp/url';
-import { countOccurrences } from 'src/utils/array';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
-import type { Album, Artist, Data } from '$lib/components/bcx/types';
+import type { Data } from '$lib/components/bcx/types';
 import { Button } from '$lib/components/ui/button/index.js';
 import * as Dialog from '$lib/components/ui/dialog/index.js';
+import { getMusicDataFromMusicItems } from './helper';
 
 let dialogOpen = $state(false);
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
-let musicData: Data = {
+let musicData: Data = $state({
   artists: [],
   albums: [],
-};
+});
 
 const pageUrl = new Url(window.location.href);
 
@@ -66,56 +65,6 @@ onMount(() => {
     console.warn('❌ BCX: Could not find #bcx-app shadow root');
   }
 });
-
-function getMusicDataFromMusicItems(musicItems: MusicItem[]): Data {
-  const values: string[] = [];
-
-  musicItems.forEach((item) => {
-    values.push(...item.artist.names);
-  });
-  const counts = countOccurrences(values.sort());
-  const artists: Artist[] = mapToArtists(counts);
-  const albums: Album[] = musicItems
-    .map((item) => ({
-      url: item.url.toString(),
-      artist: item.artist.toString(),
-      title: item.title,
-    }))
-    .sort((a, b) => {
-      const aKey = `${a.artist} - ${a.title}`;
-      const bKey = `${b.artist} - ${b.title}`;
-      return aKey.localeCompare(bKey);
-    });
-
-  return {
-    artists,
-    albums,
-  };
-}
-
-/**
- * Converts the result from countOccurrences to an array of Artist objects.
- *
- * @param countMap - The Map returned by countOccurrences method
- * @returns An array of Artist objects with name and albumCount
- *
- * @example
- * ```typescript
- * const artists = ['Beatles', 'beatles', 'Queen', 'QUEEN', 'Beatles'];
- * const counts = countOccurrences(artists);
- * const artistObjects = mapToArtists(counts);
- * // Result: [
- * //   { name: 'beatles', albumCount: 3 },
- * //   { name: 'queen', albumCount: 2 }
- * // ]
- * ```
- */
-export function mapToArtists(countMap: Map<string, number>): Artist[] {
-  return Array.from(countMap.entries()).map(([name, count]) => ({
-    name: name,
-    albumCount: count,
-  }));
-}
 
 function handleButtonClick() {
   alert('🎵 BCX Extension Alert!\nButton clicked');
