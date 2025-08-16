@@ -70,11 +70,6 @@ function handleButtonClick() {
   alert('🎵 BCX Extension Alert!\nButton clicked');
 }
 
-function handleArtistSelect(artist: any) {
-  console.log(`🎵 BCX: Selected artist "${artist.name}"`);
-  alert(`🎵 BCX: Navigating to ${artist.name} discography`);
-}
-
 function handleAlbumSelect(album: any) {
   console.log(`💿 BCX: Selected album "${album.title}"`);
   alert(`💿 BCX: Opening ${album.title} by ${album.artist}`);
@@ -173,7 +168,6 @@ function handleSettingsSelect() {
   data={musicData}
   placeholder="Search for artists, albums, or tracks..."
   emptyMessage="No artists or albums found"
-  onArtistSelect={handleArtistSelect}
   onAlbumSelect={handleAlbumSelect}
 />
 {/if}

@@ -34,7 +34,7 @@ function handleArtistSelect(artist: Artist) {
   if (onArtistSelect) {
     onArtistSelect(artist);
   }
-  open = false;
+  searchQuery = artist.name;
 }
 
 function handleAlbumSelect(album: Album) {
