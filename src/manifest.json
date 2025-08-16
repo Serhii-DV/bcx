@@ -10,14 +10,14 @@
   "host_permissions": ["https://*.bandcamp.com/*"],
   "content_scripts": [
     {
-      "js": ["bandcamp.content.js"],
+      "js": ["bandcamp.content.js", "bandcamp.content.app.js"],
       "matches": ["https://*.bandcamp.com/*"],
       "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["bandcamp.content.css"],
+      "resources": ["bandcamp.content.css", "bandcamp.content.app.css"],
       "matches": ["https://*.bandcamp.com/*"]
     }
   ],
