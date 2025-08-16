@@ -1,5 +1,5 @@
 import { mount } from 'svelte';
-import App from './App.svelte';
+import App from './app.svelte';
 import './app.css';
 import 'src/utils/console';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
