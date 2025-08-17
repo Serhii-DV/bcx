@@ -1,5 +1,7 @@
 import './musicFilter.css';
 import Isotope from 'isotope-layout';
+import { getMusicDataFromMusicItems } from 'src/bandcamp/content/helper';
+import { createDataListForInput } from 'src/utils/dom';
 import type { MusicItem } from './musicItem';
 
 interface MusicGridItem extends HTMLLIElement {
@@ -58,10 +60,24 @@ export class MusicFilter {
     label.className = 'bcx-filter-label';
     label.textContent = 'Filter albums by title:';
 
-    this.filterInput = document.createElement('input');
-    this.filterInput.type = 'text';
-    this.filterInput.className = 'bcx-filter-input';
-    this.filterInput.placeholder = 'Type to search albums...';
+    const filterInput = document.createElement('input');
+    filterInput.type = 'text';
+    filterInput.className = 'bcx-filter-input';
+    filterInput.placeholder = 'Type to search albums...';
+
+    const musicData = getMusicDataFromMusicItems(this.musicItems);
+    const options = musicData.artists.map((artist) =>
+      artist.albumCount && artist.albumCount > 1
+        ? artist.name + ` (${artist.albumCount})`
+        : artist.name,
+    );
+    musicData.albums.forEach((album) => {
+      options.push(album.artist + ' - ' + album.title);
+    });
+
+    createDataListForInput(options, filterInput);
+
+    this.filterInput = filterInput;
 
     const resultsCount = document.createElement('div');
     resultsCount.className = 'filter-results-count';
