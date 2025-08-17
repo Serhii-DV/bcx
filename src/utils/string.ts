@@ -23,6 +23,24 @@ export function removeInvisibleChars(inputString: string): string {
 }
 
 /**
+ * Removes all parentheses and their contents from a string and trims extra spaces.
+ *
+ * @param input The string to process
+ * @returns A new string with all parentheses and their contents removed and extra spaces trimmed
+ *
+ * @example
+ * // Returns "Hello world"
+ * removeParentheses("Hello (beautiful) world");
+ */
+export function removeParentheses(input: string): string {
+  // Remove parentheses and their contents
+  const withoutParentheses = input.replace(/\([^)]*\)/g, '');
+
+  // Replace multiple spaces with a single space and trim
+  return withoutParentheses.replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Splits a string into an array of substrings using specified delimiters, trims whitespace, and removes empty entries.
  *
  * @param inputString - The string to be split.

@@ -2,6 +2,7 @@ import './musicFilter.css';
 import Isotope from 'isotope-layout';
 import { getMusicDataFromMusicItems } from 'src/bandcamp/content/helper';
 import { createDataListForInput } from 'src/utils/dom';
+import { removeParentheses } from 'src/utils/string';
 import type { MusicItem } from './musicItem';
 
 interface MusicGridItem extends HTMLLIElement {
@@ -77,8 +78,6 @@ export class MusicFilter {
 
     createDataListForInput(options, filterInput);
 
-    this.filterInput = filterInput;
-
     const resultsCount = document.createElement('div');
     resultsCount.className = 'filter-results-count';
     resultsCount.textContent = `Showing ${this.items.length} of ${this.items.length} albums`;
@@ -86,7 +85,7 @@ export class MusicFilter {
     this.resultsCounter = resultsCount;
 
     filterContainer.appendChild(label);
-    filterContainer.appendChild(this.filterInput);
+    filterContainer.appendChild(filterInput);
     filterContainer.appendChild(resultsCount);
 
     // Insert before the music grid
@@ -95,15 +94,20 @@ export class MusicFilter {
     }
 
     // Setup filter event listener with debouncing
-    this.filterInput.addEventListener('input', (e: Event) => {
+    filterInput.addEventListener('input', (e: Event) => {
       const target = e.target as HTMLInputElement;
+      const query = removeParentheses(target.value);
+      target.value = query;
+
       if (this.debounceTimer !== null) {
         clearTimeout(this.debounceTimer);
       }
       this.debounceTimer = setTimeout(() => {
-        this.filterItems(target.value.toLowerCase().trim());
+        this.filterItems(query.toLowerCase());
       }, 300);
     });
+
+    this.filterInput = filterInput;
   }
 
   private initIsotope(): void {
@@ -117,7 +121,7 @@ export class MusicFilter {
 
       gridElement?.setAttribute(
         'data-filter-value',
-        (item.artist.toString() + ' ' + item.title).toLowerCase(),
+        (item.artist.toString() + ' - ' + item.title).toLowerCase(),
       );
     });
 
