@@ -20,6 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "clsx": "^2.1.1",
+    "isotope-layout": "^3.0.6",
     "lucide-svelte": "^0.536.0",
     "mode-watcher": "^1.1.0",
     "svelte": "^5.37.1",
@@ -39,6 +40,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.0.0",
     "@types/chrome": "0.1.1",
+    "@types/isotope-layout": "^3.0.15",
     "@types/node": "^24.1.0",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",

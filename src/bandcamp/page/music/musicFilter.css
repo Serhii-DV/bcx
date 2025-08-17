@@ -1,18 +1,17 @@
-/* Filter Search Box */
+/* Filter interface styling */
 .bcx-filter-container {
-  margin-bottom: 20px;
+  margin: 20px 0;
   padding: 15px;
 }
 
 .bcx-filter-input {
   width: 100%;
   max-width: 400px;
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  outline: none;
-  transition: border-color 0.3s ease;
+  margin-bottom: 10px;
 }
 
 .bcx-filter-input:focus {
@@ -26,14 +25,12 @@
   font-weight: bold;
 }
 
-/* Hidden items during filtering */
-.music-grid-item.filtered-hidden {
-  display: none !important;
+.filter-results-count {
+  font-size: 14px;
+  color: #666;
 }
 
-/* Results counter */
-.filter-results-count {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #666;
+/* Hide filtered out items */
+.filtered-hidden {
+  display: none !important;
 }

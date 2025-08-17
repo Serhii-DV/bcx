@@ -1,4 +1,6 @@
 import './musicFilter.css';
+import Isotope from 'isotope-layout';
+import type { MusicItem } from './musicItem';
 
 interface MusicGridItem extends HTMLLIElement {
   querySelector(selector: string): HTMLElement | null;
@@ -10,8 +12,9 @@ export class MusicFilter {
   private resultsCounter: HTMLElement | null = null;
   private items: MusicGridItem[] = [];
   private debounceTimer: NodeJS.Timeout | null = null;
+  private isotope: Isotope | null = null;
 
-  constructor() {
+  constructor(private readonly musicItems: MusicItem[]) {
     this.init();
   }
 
@@ -42,8 +45,7 @@ export class MusicFilter {
     }
 
     this.createFilterInterface();
-    this.setupMasonryLayout();
-    this.setupImageLoadHandlers();
+    this.initIsotope();
 
     console.log(`Bandcamp Filter initialized with ${this.items.length} items`);
   }
@@ -88,71 +90,39 @@ export class MusicFilter {
     });
   }
 
-  private setupMasonryLayout(): void {
-    // Apply masonry layout after images load
-    this.updateMasonryLayout();
-  }
+  private initIsotope(): void {
+    if (!this.musicGrid) return;
 
-  private setupImageLoadHandlers(): void {
-    this.items.forEach((item) => {
-      const img = item.querySelector('.art img') as HTMLImageElement;
-      if (img) {
-        if (img.complete) {
-          this.updateMasonryLayout();
-        } else {
-          img.addEventListener('load', () => {
-            this.updateMasonryLayout();
-          });
-        }
-      }
-    });
-  }
-
-  private updateMasonryLayout(): void {
-    // Calculate and apply grid row span for each visible item
-    requestAnimationFrame(() => {
-      const visibleItems = this.items.filter(
-        (item) => !item.classList.contains('filtered-hidden'),
+    // Setup items values for filtering
+    this.musicItems.forEach((item: MusicItem) => {
+      const gridElement = this.musicGrid?.querySelector(
+        '[data-item-id="album-' + item.id + '"]',
       );
 
-      visibleItems.forEach((item) => {
-        const content = item.querySelector('a');
-        if (content) {
-          const contentHeight = content.getBoundingClientRect().height;
-          const rowHeight = 10; // Must match grid-auto-rows in CSS
-          const rowSpan = Math.ceil(contentHeight / rowHeight);
-          (item as HTMLElement).style.gridRowEnd = `span ${rowSpan}`;
-        }
-      });
+      gridElement?.setAttribute(
+        'data-filter-value',
+        (item.artist.toString() + ' ' + item.title).toLowerCase(),
+      );
+    });
+
+    // Initialize Isotope with options
+    this.isotope = new Isotope(this.musicGrid as HTMLElement, {
+      itemSelector: '.music-grid-item',
+      layoutMode: 'fitRows',
     });
   }
 
   private filterItems(query: string): void {
     let visibleCount = 0;
 
-    this.items.forEach((item) => {
-      const titleElement = item.querySelector('.title');
-      const title = titleElement
-        ? titleElement.textContent?.toLowerCase() || ''
-        : '';
-
-      if (query === '' || title.includes(query)) {
-        item.classList.remove('filtered-hidden');
-        visibleCount++;
-      } else {
-        item.classList.add('filtered-hidden');
-      }
-    });
-
-    // Update results counter
     if (this.resultsCounter) {
       this.resultsCounter.textContent = `Showing ${visibleCount} of ${this.items.length} albums`;
     }
 
-    // Update masonry layout after filtering
-    setTimeout(() => {
-      this.updateMasonryLayout();
-    }, 50);
+    if (this.isotope) {
+      const filter = query ? `[data-filter-value*="${query}"]` : '*';
+      this.isotope.arrange({ filter });
+    }
   }
 
   public destroy(): void {
@@ -160,8 +130,18 @@ export class MusicFilter {
       clearTimeout(this.debounceTimer);
     }
 
-    if (this.filterInput) {
-      // this.filterInput.removeEventListener('input', this.filterItems);
+    // Clean up Isotope
+    if (this.isotope) {
+      this.isotope.destroy();
+      this.isotope = null;
+    }
+
+    // Remove added event listeners and DOM elements
+    if (this.filterInput && this.filterInput.parentNode) {
+      const filterContainer = this.filterInput.parentNode;
+      if (filterContainer.parentNode) {
+        filterContainer.parentNode.removeChild(filterContainer);
+      }
     }
   }
 }
