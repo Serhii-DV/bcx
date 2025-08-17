@@ -7,6 +7,7 @@ export class MusicItem {
     public artist: Artist,
     public title: string,
     public image: string,
+    public id: number,
   ) {}
 
   static create(
@@ -14,7 +15,14 @@ export class MusicItem {
     artist: string,
     title: string,
     image: string,
+    id: string,
   ): MusicItem {
-    return new MusicItem(new Url(url), Artist.fromString(artist), title, image);
+    return new MusicItem(
+      new Url(url),
+      Artist.fromString(artist),
+      title,
+      image,
+      parseInt(id.replace('album-', '')),
+    );
   }
 }
