@@ -183,27 +183,29 @@ function destroy(): void {
       placeholder="Type to search albums..."
     />
 
-    <button
-      type="button"
-      class="bcx-filter-clear-button"
-      onclick={clearFilter}
-      title="Clear search"
-      aria-label="Clear search"
-    >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+    {#if searchQuery.trim()}
+      <button
+        type="button"
+        class="bcx-filter-clear-button"
+        onclick={clearFilter}
+        title="Clear search"
+        aria-label="Clear search"
       >
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    {/if}
   </div>
 
   <div class="filter-results-count">
@@ -255,11 +257,11 @@ function destroy(): void {
   justify-content: center;
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   height: fit-content;
-  margin-bottom: 10px;
+  margin-top: 4px;
 }
 
 .bcx-filter-clear-button:hover {
-  color: #333;
+  color: #fff;
   background-color: rgba(0, 0, 0, 0.1);
   border-color: #999;
 }
