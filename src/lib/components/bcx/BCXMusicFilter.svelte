@@ -166,10 +166,6 @@ function destroy(): void {
 </script>
 
 <div class="bcx-filter-container">
-  <label for="bcx-filter-input" class="bcx-filter-label">
-    Filter albums by title:
-  </label>
-
   <div class="bcx-filter-input-container">
     <input
       id="bcx-filter-input"
@@ -265,12 +261,6 @@ function destroy(): void {
 .bcx-filter-clear-button:focus {
   outline: 2px solid #0070f3;
   outline-offset: 1px;
-}
-
-.bcx-filter-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
 }
 
 .filter-results-count {
