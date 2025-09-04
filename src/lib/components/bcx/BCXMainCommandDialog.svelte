@@ -12,7 +12,6 @@ import {
   getMenuBarCollectionButton,
   getMenuBarFeedButton,
 } from 'src/bandcamp/page/menu-bar/html';
-import { onCtrlKey } from 'src/utils/keyboard';
 import * as Command from '$lib/components/ui/command/index.js';
 
 let {
@@ -67,14 +66,6 @@ function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     open = false;
   }
-
-  onCtrlKey('e', event, () => {
-    handleFeedSelect();
-  });
-
-  onCtrlKey('c', event, () => {
-    handleCollectionSelect();
-  });
 }
 </script>
 
