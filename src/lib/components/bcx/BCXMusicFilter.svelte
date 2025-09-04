@@ -122,6 +122,11 @@ function handleFilterChange(query: string): void {
 
 function handleInput(event: Event): void {
   const target = event.target as HTMLInputElement;
+  searchQuery = target.value;
+}
+
+function handleChange(event: Event): void {
+  const target = event.target as HTMLInputElement;
   const cleanQuery = removeParentheses(target.value);
   target.value = cleanQuery;
   searchQuery = cleanQuery;
@@ -172,6 +177,7 @@ function destroy(): void {
       bind:this={filterInput}
       bind:value={searchQuery}
       oninput={handleInput}
+      onchange={handleChange}
       type="text"
       class="bcx-filter-input"
       placeholder="Type to search albums..."
