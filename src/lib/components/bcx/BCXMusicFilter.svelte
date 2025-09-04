@@ -145,6 +145,13 @@ function filterItems(query: string): void {
   }
 }
 
+function clearFilter(): void {
+  searchQuery = '';
+  if (filterInput) {
+    filterInput.value = '';
+  }
+}
+
 function destroy(): void {
   if (debounceTimer !== null) {
     clearTimeout(debounceTimer);
@@ -163,15 +170,39 @@ function destroy(): void {
     Filter albums by title:
   </label>
 
-  <input
-    id="bcx-filter-input"
-    bind:this={filterInput}
-    bind:value={searchQuery}
-    oninput={handleInput}
-    type="text"
-    class="bcx-filter-input"
-    placeholder="Type to search albums..."
-  />
+  <div class="bcx-filter-input-container">
+    <input
+      id="bcx-filter-input"
+      bind:this={filterInput}
+      bind:value={searchQuery}
+      oninput={handleInput}
+      type="text"
+      class="bcx-filter-input"
+      placeholder="Type to search albums..."
+    />
+
+    <button
+      type="button"
+      class="bcx-filter-clear-button"
+      onclick={clearFilter}
+      title="Clear search"
+      aria-label="Clear search"
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
 
   <div class="filter-results-count">
     Showing {visibleCount} of {totalCount} albums
@@ -185,9 +216,17 @@ function destroy(): void {
   padding: 15px;
 }
 
-.bcx-filter-input {
+.bcx-filter-input-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   width: 100%;
   max-width: 400px;
+}
+
+.bcx-filter-input {
+  flex: 1;
+  field-sizing: content;
   padding: 8px 12px;
   font-size: 16px;
   background-color: transparent;
@@ -200,6 +239,32 @@ function destroy(): void {
   border-color: #0070f3;
   box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.1);
   outline: none;
+}
+
+.bcx-filter-clear-button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  height: fit-content;
+  margin-bottom: 10px;
+}
+
+.bcx-filter-clear-button:hover {
+  color: #333;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-color: #999;
+}
+
+.bcx-filter-clear-button:focus {
+  outline: 2px solid #0070f3;
+  outline-offset: 1px;
 }
 
 .bcx-filter-label {
