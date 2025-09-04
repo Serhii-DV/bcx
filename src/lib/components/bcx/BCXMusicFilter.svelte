@@ -190,6 +190,7 @@ function destroy(): void {
   max-width: 400px;
   padding: 8px 12px;
   font-size: 16px;
+  background-color: transparent;
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-bottom: 10px;
