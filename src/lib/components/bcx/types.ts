@@ -15,3 +15,11 @@ export interface Data {
   artists: Artist[];
   albums: Album[];
 }
+
+// Music filter types
+export interface MusicFilterProps {
+  musicItems: import('src/bandcamp/page/music/musicItem').MusicItem[];
+}
+
+// Re-export MusicItem for convenience
+export type { MusicItem } from 'src/bandcamp/page/music/musicItem';
