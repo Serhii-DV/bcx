@@ -10,6 +10,7 @@ import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
+import filterStyles from './BCXMusicFilter.css?inline';
 
 interface MusicGridItem extends HTMLLIElement {
   querySelector(selector: string): HTMLElement | null;
@@ -41,6 +42,7 @@ $effect(() => {
 
 onMount(() => {
   setup();
+  injectStyles();
 
   // Subscribe to store updates
   storeUnsubscribe = musicFilterStore.subscribe((state) => {
@@ -174,6 +176,19 @@ function clearFilter(): void {
   }
 }
 
+function injectStyles(): void {
+  // Check if styles are already injected
+  if (document.getElementById('bcx-filter-styles')) {
+    return;
+  }
+
+  const styleSheet = document.createElement('style');
+  styleSheet.id = 'bcx-filter-styles';
+  styleSheet.textContent = filterStyles;
+
+  document.head.appendChild(styleSheet);
+}
+
 function destroy(): void {
   if (debounceTimer !== null) {
     clearTimeout(debounceTimer);
@@ -183,6 +198,12 @@ function destroy(): void {
   if (isotope) {
     isotope.destroy();
     isotope = null;
+  }
+
+  // Remove injected styles
+  const styleSheet = document.getElementById('bcx-filter-styles');
+  if (styleSheet) {
+    styleSheet.remove();
   }
 }
 </script>
@@ -229,72 +250,3 @@ function destroy(): void {
     Showing {visibleCount} of {totalCount} albums
   </div>
 </div>
-
-<style>
-/* Filter interface styling */
-.bcx-filter-container {
-  margin: 20px 0;
-  padding: 15px;
-}
-
-.bcx-filter-input-container {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.bcx-filter-input {
-  flex: 1;
-  field-sizing: content;
-  padding: 8px 12px;
-  font-size: 16px;
-  background-color: transparent;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.bcx-filter-input:focus {
-  border-color: #0070f3;
-  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.1);
-  outline: none;
-}
-
-.bcx-filter-clear-button {
-  background: none;
-  border: 0;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  color: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
-  height: fit-content;
-  margin-top: 4px;
-}
-
-.bcx-filter-clear-button:hover {
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-color: #999;
-}
-
-.bcx-filter-clear-button:focus {
-  outline: 2px solid #0070f3;
-  outline-offset: 1px;
-}
-
-.filter-results-count {
-  font-size: 14px;
-  color: #666;
-}
-
-/* Hide filtered out items */
-:global(.filtered-hidden) {
-  display: none !important;
-}
-</style>
