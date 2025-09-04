@@ -9,6 +9,7 @@ import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
+import { musicFilterStore } from '$lib/stores/musicFilter';
 
 interface MusicGridItem extends HTMLLIElement {
   querySelector(selector: string): HTMLElement | null;
@@ -29,6 +30,7 @@ let isotope: Isotope | null = null;
 let searchQuery = $state('');
 let visibleCount = $state(0);
 let totalCount = $state(0);
+let storeUnsubscribe: (() => void) | null = null;
 
 // Reactive values
 $effect(() => {
@@ -39,10 +41,25 @@ $effect(() => {
 
 onMount(() => {
   setup();
+
+  // Subscribe to store updates
+  storeUnsubscribe = musicFilterStore.subscribe((state) => {
+    if (state.searchQuery && state.searchQuery !== searchQuery) {
+      searchQuery = state.searchQuery;
+      if (filterInput) {
+        filterInput.value = state.searchQuery;
+      }
+    }
+  });
 });
 
 onDestroy(() => {
   destroy();
+
+  // Unsubscribe from store
+  if (storeUnsubscribe) {
+    storeUnsubscribe();
+  }
 });
 
 function setup(): void {
