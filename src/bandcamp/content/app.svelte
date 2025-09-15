@@ -1,6 +1,4 @@
 <script lang="ts">
-import { MoonIcon, SunIcon } from 'lucide-svelte';
-import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { getMusicItems } from 'src/bandcamp/page/music/html';
 import { Url } from 'src/bandcamp/url';
 import { onCtrlKey } from 'src/utils/keyboard';
@@ -104,8 +102,6 @@ function handleSettingsSelect() {
 
 <svelte:document onkeydown={handleKeydown} />
 
-<ModeWatcher defaultMode="dark" />
-
 <div class="bcx-extension">
   <div class="bcx-header">
     <h3 class="bcx-title">🎵 BCX Extension</h3>
@@ -116,12 +112,6 @@ function handleSettingsSelect() {
   </div>
 
   <div class="bcx-controls">
-    <Button onclick={toggleMode} variant="outline" size="icon">
-      <SunIcon class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 !transition-all dark:-rotate-90 dark:scale-0" />
-      <MoonIcon class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 !transition-all dark:rotate-0 dark:scale-100" />
-      <span class="sr-only">Toggle theme</span>
-    </Button>
-
     <Button variant="destructive" onclick={handleButtonClick} class="bcx-button">
       🎵 Test Button
     </Button>
