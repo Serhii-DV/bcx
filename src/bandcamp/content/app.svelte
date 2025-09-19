@@ -65,10 +65,6 @@ onMount(() => {
   }
 });
 
-function handleButtonClick() {
-  alert('🎵 BCX Extension Alert!\nButton clicked');
-}
-
 function handleArtistSelect(artist: Artist) {
   // Set the search query for the music filter using the store
   const searchValue = artist.name;
@@ -112,10 +108,6 @@ function handleSettingsSelect() {
   </div>
 
   <div class="bcx-controls">
-    <Button variant="destructive" onclick={handleButtonClick} class="bcx-button">
-      🎵 Test Button
-    </Button>
-
     <Button
       variant="outline"
       onclick={() => dialogOpen = true}
