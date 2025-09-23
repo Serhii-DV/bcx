@@ -1,5 +1,6 @@
 <script lang="ts">
 import { DropdownMenu } from 'bits-ui';
+import { ListMusicIcon, TerminalIcon } from 'lucide-svelte';
 import { getMusicItems } from 'src/bandcamp/page/music/html';
 import { Url } from 'src/bandcamp/url';
 import { onCtrlKey } from 'src/utils/keyboard';
@@ -96,8 +97,9 @@ function handleSettingsSelect() {
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
       class="bcx-dropdown-trigger"
+      title="BCX - Bandcamp Extension Menu"
     >
-      BCX
+      <ListMusicIcon />
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal to={shadowContainer}>
       <DropdownMenu.Content
@@ -108,7 +110,9 @@ function handleSettingsSelect() {
           class="bcx-dropdown-item"
           onSelect={() => commandOpen = true}
         >
-          <span class="bcx-dropdown-icon">🔧</span>
+          <span class="bcx-dropdown-icon">
+            <TerminalIcon />
+          </span>
           Main Command Dialog
           <div class="bcx-dropdown-shortcut">
             <kbd>Ctrl</kbd> + <kbd>/</kbd>
@@ -118,7 +122,9 @@ function handleSettingsSelect() {
           class="bcx-dropdown-item"
           onSelect={() => albumSearchOpen = true}
         >
-          <span class="bcx-dropdown-icon">🎵</span>
+          <span class="bcx-dropdown-icon">
+            <ListMusicIcon />
+          </span>
           Music Filter Dialog
           <div class="bcx-dropdown-shortcut">
             <kbd>Ctrl</kbd> + <kbd>M</kbd>
