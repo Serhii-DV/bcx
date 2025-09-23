@@ -113,7 +113,7 @@ function handleSettingsSelect() {
           <span class="bcx-dropdown-icon">
             <TerminalIcon />
           </span>
-          Main Command Dialog
+          Commands
           <div class="bcx-dropdown-shortcut">
             <kbd>Ctrl</kbd> + <kbd>/</kbd>
           </div>
@@ -125,7 +125,7 @@ function handleSettingsSelect() {
           <span class="bcx-dropdown-icon">
             <ListMusicIcon />
           </span>
-          Music Filter Dialog
+          Search music
           <div class="bcx-dropdown-shortcut">
             <kbd>Ctrl</kbd> + <kbd>M</kbd>
           </div>
