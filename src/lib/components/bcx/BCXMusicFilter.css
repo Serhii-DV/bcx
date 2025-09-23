@@ -18,15 +18,15 @@
   padding: 8px 12px;
   font-size: 16px;
   background-color: transparent;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border-width: 0 0 1px 0;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
   color: inherit;
   margin-bottom: 10px;
 }
 
 .bcx-filter-input:focus {
-  border-color: #0070f3;
-  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.1);
+  border-bottom-color: #0070f3;
   outline: none;
 }
 
