@@ -1,4 +1,4 @@
-import { mount, unmount } from 'svelte';
+import { mount } from 'svelte';
 import App from './app.svelte';
 import './app.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
@@ -89,11 +89,3 @@ if (document.readyState === 'loading') {
 if (document.readyState === 'complete') {
   setTimeout(init, 100);
 }
-
-// Cleanup music filter component on page unload
-window.addEventListener('beforeunload', () => {
-  if (musicFilterComponent) {
-    unmount(musicFilterComponent);
-    musicFilterComponent = null;
-  }
-});
