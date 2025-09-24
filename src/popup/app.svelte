@@ -3,6 +3,7 @@ import MoonIcon from '@lucide/svelte/icons/moon';
 import SunIcon from '@lucide/svelte/icons/sun';
 import { ModeWatcher, toggleMode } from 'mode-watcher';
 import { Button } from '$lib/components/ui/button/index.js';
+import * as Dialog from '$lib/components/ui/dialog/index.js';
 
 console.log('Running popup');
 </script>
@@ -18,6 +19,20 @@ console.log('Running popup');
     <h1>Google Chrome Extension</h1>
     <p>Rsbuild with Svelte</p>
     <Button variant="destructive">Destructive</Button>
+
+<Dialog.Root>
+ <Dialog.Trigger>Open</Dialog.Trigger>
+ <Dialog.Content>
+  <Dialog.Header>
+   <Dialog.Title>Are you sure absolutely sure?</Dialog.Title>
+   <Dialog.Description>
+    This action cannot be undone. This will permanently delete your account
+    and remove your data from our servers.
+   </Dialog.Description>
+  </Dialog.Header>
+ </Dialog.Content>
+</Dialog.Root>
+
   </div>
 </main>
 

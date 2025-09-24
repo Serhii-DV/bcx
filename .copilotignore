@@ -1,0 +1,21 @@
+# Dependencies and build outputs
+node_modules/
+pnpm-lock.yaml
+built/
+dist/
+
+# Logs and temporary files
+*.log
+.DS_Store
+.env*
+
+# Test coverage
+coverage/
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# Large data files
+*.min.js
+*.bundle.js

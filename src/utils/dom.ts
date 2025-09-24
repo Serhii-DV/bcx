@@ -1,3 +1,58 @@
+import { isString } from './utils';
+
+export function element(
+  selector: string,
+  parent?: Element | ShadowRoot | null,
+): HTMLElement | null {
+  return (parent ? parent : document).querySelector(selector);
+}
+
+export function elements(
+  selector: string,
+  parent?: Element | ShadowRoot | null,
+): HTMLElement[] {
+  return Array.from(
+    (parent ? parent : document).querySelectorAll(selector),
+  ) as HTMLElement[];
+}
+
+export function hasDataAttribute(
+  element: Element,
+  attributeName: string,
+): boolean {
+  return element.hasAttribute(`data-${attributeName}`);
+}
+
+export function getDataAttribute(
+  element: Element,
+  attributeName: string,
+  defaultValue: string = '',
+): string {
+  if (hasDataAttribute(element, attributeName)) {
+    const value = element.getAttribute(`data-${attributeName}`);
+    return value !== null ? value : defaultValue;
+  }
+  return defaultValue;
+}
+
+export function setDataAttribute(
+  element: Element,
+  attributeName: string | Record<string, string>,
+  attributeValue: string = '',
+): void {
+  if (isString(attributeName)) {
+    element.setAttribute(`data-${attributeName}`, attributeValue);
+    return;
+  }
+
+  const obj = attributeName as Record<string, string>;
+  for (const key in obj) {
+    if (Object.hasOwn(obj, key)) {
+      setDataAttribute(element, key, obj[key]);
+    }
+  }
+}
+
 /**
  * Injects a CSS file into the document by creating a link element.
  */
@@ -34,4 +89,51 @@ export function injectJSFile(
   scriptElement.src = url;
   scriptElement.onload = callback;
   (document.head || document.documentElement).appendChild(scriptElement);
+}
+
+/**
+ * Creates a datalist element with options from the given array of strings
+ * @param options Array of strings to use as datalist options
+ * @param dataListId ID to assign to the datalist element
+ * @returns The created datalist element
+ */
+export function createDataList(
+  options: string[],
+  dataListId: string,
+): HTMLDataListElement {
+  const datalist = document.createElement('datalist');
+  datalist.id = dataListId;
+
+  options.forEach((optionText) => {
+    const option = document.createElement('option');
+    option.value = optionText;
+    datalist.appendChild(option);
+  });
+
+  return datalist;
+}
+
+/**
+ * Creates a datalist and attaches it to the DOM, then returns the ID
+ * @param options Array of strings to use as datalist options
+ * @param inputElement Optional input element to associate with the datalist
+ * @returns The created datalist element
+ */
+export function createDataListForInput(
+  options: string[],
+  inputElement?: HTMLInputElement,
+): HTMLDataListElement {
+  const listId = inputElement?.id
+    ? `${inputElement.id}-list`
+    : `datalist-${Math.random().toString(36).substring(2, 9)}`;
+
+  const datalist = createDataList(options, listId);
+
+  document.body.appendChild(datalist);
+
+  if (inputElement) {
+    inputElement.setAttribute('list', listId);
+  }
+
+  return datalist;
 }

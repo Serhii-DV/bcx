@@ -1,0 +1,70 @@
+/* BCX Filter interface styling */
+.bcx-filter-container {
+  margin: 20px 0;
+  padding: 15px;
+}
+
+.bcx-filter-input-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.bcx-filter-input {
+  flex: 1;
+  field-sizing: content;
+  padding: 8px 12px;
+  font-size: 16px;
+  background-color: transparent;
+  border-width: 0 0 1px 0;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+  color: inherit;
+  margin-bottom: 10px;
+}
+
+.bcx-filter-input:focus {
+  border-bottom-color: #0070f3;
+  outline: none;
+}
+
+.bcx-filter-clear-button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  height: fit-content;
+  margin-top: 4px;
+}
+
+.bcx-filter-clear-button:hover {
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-color: #999;
+}
+
+.bcx-filter-clear-button:focus {
+  outline: 2px solid #0070f3;
+  outline-offset: 1px;
+}
+
+.filter-results-count {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Hide filtered out items */
+.filtered-hidden {
+  display: none !important;
+}
