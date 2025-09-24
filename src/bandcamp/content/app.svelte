@@ -117,7 +117,7 @@ Use Ctrl+/ to toggle"
   bind:open={albumSearchOpen}
   portalProps={{ to: shadowContainer }}
   data={musicData}
-  placeholder="Search for artists, albums, or tracks..."
+  placeholder="Search for artists or albums..."
   emptyMessage="No artists or albums found"
   onArtistSelect={handleArtistSelect}
   onAlbumSelect={handleAlbumSelect}

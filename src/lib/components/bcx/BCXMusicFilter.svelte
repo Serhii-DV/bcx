@@ -218,7 +218,7 @@ function destroy(): void {
       onchange={handleChange}
       type="text"
       class="bcx-filter-input"
-      placeholder="Type to search albums..."
+      placeholder="Search for artists or albums..."
     />
 
     {#if searchQuery.trim()}

@@ -80,8 +80,8 @@ function handleKeydown(event: KeyboardEvent) {
     <Command.Group heading="Suggestions">
       <Command.Item onSelect={handleSearchArtistAlbum}>
         <ListMusicIcon class="mr-2 size-4" />
-        <span>Search Artist/Album</span>
-        <Command.Shortcut>⌘A</Command.Shortcut>
+        <span>Search by artist or album on the page</span>
+        <Command.Shortcut>Ctrl+M | ⌘M</Command.Shortcut>
       </Command.Item>
     </Command.Group>
     <Command.Separator />
