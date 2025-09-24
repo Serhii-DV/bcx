@@ -1,6 +1,5 @@
 <script lang="ts">
-import { DropdownMenu } from 'bits-ui';
-import { ListMusicIcon, TerminalIcon } from 'lucide-svelte';
+import { TerminalIcon } from 'lucide-svelte';
 import { getMusicItems } from 'src/bandcamp/page/music/html';
 import { Url } from 'src/bandcamp/url';
 import { onCtrlKey } from 'src/utils/keyboard';
@@ -94,45 +93,14 @@ function handleSettingsSelect() {
 <svelte:document onkeydown={handleKeydown} />
 
 {#if shadowContainer}
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger
-      class="bcx-dropdown-trigger"
-      title="BCX - Bandcamp Extension Menu"
-    >
-      <ListMusicIcon />
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Portal to={shadowContainer}>
-      <DropdownMenu.Content
-        class="bcx-dropdown-content"
-        sideOffset={8}
-      >
-        <DropdownMenu.Item
-          class="bcx-dropdown-item"
-          onSelect={() => commandOpen = true}
-        >
-          <span class="bcx-dropdown-icon">
-            <TerminalIcon />
-          </span>
-          Commands
-          <div class="bcx-dropdown-shortcut">
-            <kbd>Ctrl</kbd> + <kbd>/</kbd>
-          </div>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item
-          class="bcx-dropdown-item"
-          onSelect={() => albumSearchOpen = true}
-        >
-          <span class="bcx-dropdown-icon">
-            <ListMusicIcon />
-          </span>
-          Search music
-          <div class="bcx-dropdown-shortcut">
-            <kbd>Ctrl</kbd> + <kbd>M</kbd>
-          </div>
-        </DropdownMenu.Item>
-      </DropdownMenu.Content>
-    </DropdownMenu.Portal>
-  </DropdownMenu.Root>
+  <button
+    class="bcx-trigger-button"
+    title="BCX - Bandcamp Extension Menu.
+Use Ctrl+/ to toggle"
+    onclick={() => commandOpen = true}
+  >
+    <TerminalIcon /> BCX
+  </button>
 {/if}
 
 {#if shadowContainer}
@@ -158,8 +126,8 @@ function handleSettingsSelect() {
 
 
 <style>
-  /* Dropdown Menu Styles - Dark Theme */
-  :global(.bcx-dropdown-trigger) {
+  /* BCX Trigger Button Styles - Dark Theme */
+  :global(.bcx-trigger-button) {
     background: #1f2937;
     border: 1px solid #374151;
     color: #f9fafb;
@@ -175,76 +143,20 @@ function handleSettingsSelect() {
     z-index: 999999;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  :global(.bcx-dropdown-trigger:hover) {
+  :global(.bcx-trigger-button:hover) {
     background: #374151;
     border-color: #4b5563;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
-  :global(.bcx-dropdown-content) {
-    background: #1f2937;
-    border: 1px solid #374151;
-    border-radius: 8px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    z-index: 999999;
-    pointer-events: auto;
-    overflow: hidden;
-    padding: 0.5rem;
-    min-width: 280px;
-  }
-
-  :global(.bcx-dropdown-item) {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    color: #f9fafb;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    width: 100%;
-    text-align: left;
-    position: relative;
-  }
-
-  :global(.bcx-dropdown-item:hover) {
-    background: #374151;
-    color: #ffffff;
-  }
-
-  :global(.bcx-dropdown-item:focus) {
+  :global(.bcx-trigger-button:focus) {
     background: #374151;
     outline: none;
-  }
-
-  :global(.bcx-dropdown-icon) {
-    font-size: 1.125rem;
-    width: 1.5rem;
-    text-align: center;
-    flex-shrink: 0;
-  }
-
-  :global(.bcx-dropdown-shortcut) {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    opacity: 0.7;
-  }
-
-  :global(.bcx-dropdown-shortcut kbd) {
-    background: #374151;
-    border: 1px solid #4b5563;
-    border-radius: 4px;
-    padding: 0.125rem 0.375rem;
-    font-size: 0.6875rem;
-    font-family: ui-monospace, 'SFMono-Regular', monospace;
-    color: #d1d5db;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   }
 </style>
