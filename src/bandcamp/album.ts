@@ -1,7 +1,7 @@
-import { Artist } from '../../artist';
-import { Url } from '../../url';
+import { Artist } from './artist';
+import { Url } from './url';
 
-export class MusicItem {
+export class Album {
   constructor(
     public url: Url,
     public artist: Artist,
@@ -16,8 +16,8 @@ export class MusicItem {
     title: string,
     image: string,
     id: string,
-  ): MusicItem {
-    return new MusicItem(
+  ): Album {
+    return new Album(
       new Url(url),
       Artist.fromString(artist),
       title,

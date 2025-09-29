@@ -1,16 +1,22 @@
-import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
+import type { Album } from 'src/bandcamp/album';
 import { countOccurrences } from 'src/utils/array';
-import type { Album, Artist, Data } from '$lib/components/bcx/types';
+import type {
+  AlbumSearchData,
+  ArtistSearchData,
+  MusicSearchData,
+} from '$lib/components/bcx/types';
 
-export function getMusicDataFromMusicItems(musicItems: MusicItem[]): Data {
+export function createMusicSearchDataFromAlbums(
+  albums: Album[],
+): MusicSearchData {
   const values: string[] = [];
 
-  musicItems.forEach((item) => {
+  albums.forEach((item) => {
     values.push(...item.artist.names);
   });
   const counts = countOccurrences(values.sort());
-  const artists: Artist[] = mapToArtists(counts);
-  const albums: Album[] = musicItems
+  const searchArtists: ArtistSearchData[] = mapToSearchArtists(counts);
+  const searchAlbums: AlbumSearchData[] = albums
     .map((item) => ({
       url: item.url.toString(),
       artist: item.artist.toString(),
@@ -23,8 +29,8 @@ export function getMusicDataFromMusicItems(musicItems: MusicItem[]): Data {
     });
 
   return {
-    artists,
-    albums,
+    artists: searchArtists,
+    albums: searchAlbums,
   };
 }
 
@@ -38,14 +44,14 @@ export function getMusicDataFromMusicItems(musicItems: MusicItem[]): Data {
  * ```typescript
  * const artists = ['Beatles', 'beatles', 'Queen', 'QUEEN', 'Beatles'];
  * const counts = countOccurrences(artists);
- * const artistObjects = mapToArtists(counts);
+ * const searchArtists = mapToSearchArtists(counts);
  * // Result: [
  * //   { name: 'beatles', albumCount: 3 },
  * //   { name: 'queen', albumCount: 2 }
  * // ]
  * ```
  */
-function mapToArtists(countMap: Map<string, number>): Artist[] {
+function mapToSearchArtists(countMap: Map<string, number>): ArtistSearchData[] {
   return Array.from(countMap.entries()).map(([name, count]) => ({
     name: name,
     albumCount: count,

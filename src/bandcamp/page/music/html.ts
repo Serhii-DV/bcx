@@ -1,8 +1,8 @@
 import { element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import { MusicItem } from './musicItem';
+import { Album } from '../../album';
 
-function createMusicItemFromMusicGridItem(gridElement: Element): MusicItem {
+function createAlbumFromMusicGridItem(gridElement: Element): Album {
   let artist =
     element('.artist-override', gridElement)?.innerText ||
     element('#band-name-location .title')?.innerText ||
@@ -19,7 +19,7 @@ function createMusicItemFromMusicGridItem(gridElement: Element): MusicItem {
   const image = element('a .art img', gridElement)?.getAttribute('src') || '';
   const id = gridElement?.getAttribute('data-item-id') || '0';
 
-  return MusicItem.create(
+  return Album.create(
     (url[0] === '/' ? window.location.origin : '') + url,
     artist,
     title,
@@ -28,11 +28,11 @@ function createMusicItemFromMusicGridItem(gridElement: Element): MusicItem {
   );
 }
 
-export function getMusicItems(): MusicItem[] {
-  const items: MusicItem[] = [];
+export function findAlbumsOnThePage(): Album[] {
+  const items: Album[] = [];
 
   elements('#music-grid .music-grid-item').forEach((el) => {
-    items.push(createMusicItemFromMusicGridItem(el));
+    items.push(createAlbumFromMusicGridItem(el));
   });
 
   return items;

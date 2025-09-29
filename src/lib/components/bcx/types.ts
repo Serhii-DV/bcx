@@ -1,25 +1,17 @@
 // Types for search results
-export interface Artist {
+export interface ArtistSearchData {
   name: string;
   albumCount?: number;
 }
 
-export interface Album {
+export interface AlbumSearchData {
   url: string;
   artist: string;
   title: string;
   year?: number;
 }
 
-export interface Data {
-  artists: Artist[];
-  albums: Album[];
+export interface MusicSearchData {
+  artists: ArtistSearchData[];
+  albums: AlbumSearchData[];
 }
-
-// Music filter types
-export interface MusicFilterProps {
-  musicItems: import('src/bandcamp/page/music/musicItem').MusicItem[];
-}
-
-// Re-export MusicItem for convenience
-export type { MusicItem } from 'src/bandcamp/page/music/musicItem';

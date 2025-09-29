@@ -5,11 +5,9 @@ import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCSSFile } from 'src/utils/dom';
 import 'src/utils/console';
 import BCXMusicFilter from '$lib/components/bcx/BCXMusicFilter.svelte';
-import { getMusicItems } from '../page/music/html';
+import { findAlbumsOnThePage } from '../page/music/html';
 
 console.log('Bandcamp content app module!');
-
-let musicFilterComponent: any = null;
 
 function init() {
   mountApp();
@@ -43,10 +41,10 @@ function mountMusicFilter() {
     return;
   }
 
-  const musicItems = getMusicItems();
+  const albums = findAlbumsOnThePage();
 
-  if (musicItems.length === 0) {
-    console.log('No music items found on this page');
+  if (albums.length === 0) {
+    console.log('No albums found on this page');
     return;
   }
 
@@ -67,16 +65,14 @@ function mountMusicFilter() {
   }
 
   // Mount the Svelte component using Svelte 5 syntax
-  musicFilterComponent = mount(BCXMusicFilter, {
+  mount(BCXMusicFilter, {
     target: filterContainer,
     props: {
-      musicItems: musicItems,
+      albums,
     },
   });
 
-  console.log(
-    `BCX Music Filter component mounted with ${musicItems.length} items`,
-  );
+  console.log(`BCX Music Filter component mounted with ${albums.length} items`);
 }
 
 if (document.readyState === 'loading') {

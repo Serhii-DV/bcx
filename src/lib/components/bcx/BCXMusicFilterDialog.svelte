@@ -6,7 +6,11 @@
 
 import type { Dialog as DialogPrimitive } from 'bits-ui';
 import * as Command from '$lib/components/ui/command/index.js';
-import type { Album, Artist, Data } from './types';
+import type {
+  AlbumSearchData,
+  ArtistSearchData,
+  MusicSearchData,
+} from './types';
 
 let {
   open = $bindable(false),
@@ -21,15 +25,15 @@ let {
   portalProps?: DialogPrimitive.PortalProps;
   placeholder?: string;
   emptyMessage?: string;
-  data?: Data;
-  onArtistSelect?: ((artist: Artist) => void) | null;
-  onAlbumSelect?: ((album: Album) => void) | null;
+  data?: MusicSearchData;
+  onArtistSelect?: ((artist: ArtistSearchData) => void) | null;
+  onAlbumSelect?: ((album: AlbumSearchData) => void) | null;
 } = $props();
 
 // biome-ignore lint: reactive variable declaration
 let searchQuery = $state('');
 
-function handleArtistSelect(artist: Artist) {
+function handleArtistSelect(artist: ArtistSearchData) {
   console.log(`🎵 BCX: Artist selected "${artist.name}"`);
   if (onArtistSelect) {
     onArtistSelect(artist);
@@ -37,7 +41,7 @@ function handleArtistSelect(artist: Artist) {
   searchQuery = artist.name;
 }
 
-function handleAlbumSelect(album: Album) {
+function handleAlbumSelect(album: AlbumSearchData) {
   console.log(`💿 BCX: Album selected "${album.title}" by ${album.artist}`);
   if (onAlbumSelect) {
     onAlbumSelect(album);
