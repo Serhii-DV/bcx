@@ -30,6 +30,10 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           import: './src/bandcamp/content/app.ts',
           html: false,
         },
+        'bandcamp.content.pageAlbum': {
+          import: './src/bandcamp/content/pageAlbumApp.ts',
+          html: false,
+        },
       },
     },
     resolve: {

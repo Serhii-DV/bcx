@@ -13,6 +13,11 @@
       "js": ["bandcamp.content.js"],
       "matches": ["https://*.bandcamp.com/*"],
       "run_at": "document_end"
+    },
+    {
+      "js": ["bandcamp.content.pageAlbum.js"],
+      "matches": ["https://*.bandcamp.com/album/*"],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
