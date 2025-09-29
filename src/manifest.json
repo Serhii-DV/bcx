@@ -10,12 +10,12 @@
   "host_permissions": ["https://*.bandcamp.com/*"],
   "content_scripts": [
     {
-      "js": ["bandcamp.content.js"],
+      "js": ["bandcamp.content.all.js"],
       "matches": ["https://*.bandcamp.com/*"],
       "run_at": "document_end"
     },
     {
-      "js": ["bandcamp.content.pageAlbum.js"],
+      "js": ["bandcamp.content.album.js"],
       "matches": ["https://*.bandcamp.com/album/*"],
       "run_at": "document_end"
     }

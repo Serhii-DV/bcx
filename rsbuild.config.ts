@@ -26,12 +26,12 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           import: './src/background.ts',
           html: false,
         },
-        'bandcamp.content': {
-          import: './src/bandcamp/content/app.ts',
+        'bandcamp.content.all': {
+          import: './src/bandcamp/content/app.all.ts',
           html: false,
         },
-        'bandcamp.content.pageAlbum': {
-          import: './src/bandcamp/content/pageAlbumApp.ts',
+        'bandcamp.content.album': {
+          import: './src/bandcamp/content/app.album.ts',
           html: false,
         },
       },
