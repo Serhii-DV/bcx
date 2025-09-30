@@ -7,23 +7,15 @@ function init() {
     return;
   }
 
-  // Extract schema from LD+JSON script tag
-  const schemaScript = document.querySelector(
-    'script[type="application/ld+json"]',
-  );
-  if (!schemaScript) {
-    console.warn('No LD+JSON schema found on page');
+  const schema = AlbumPage.findSchema();
+
+  if (!schema) {
     return;
   }
 
-  try {
-    const schema = JSON.parse(schemaScript.textContent || '');
-    const album = AlbumPage.createAlbumFromSchema(schema);
+  const album = AlbumPage.createAlbumFromSchema(schema);
 
-    console.log('Album extracted from schema:', album);
-  } catch (error) {
-    console.error('Failed to parse LD+JSON schema:', error);
-  }
+  console.log('Album extracted from schema:', album);
 }
 
 if (document.readyState === 'loading') {
