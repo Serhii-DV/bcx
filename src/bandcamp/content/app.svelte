@@ -1,6 +1,6 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
-import { findAlbumsOnThePage } from 'src/bandcamp/content/page/musicPage';
+import { findAlbumsOnThePage } from 'src/bandcamp/page/musicPage';
 import { Url } from 'src/bandcamp/url';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';

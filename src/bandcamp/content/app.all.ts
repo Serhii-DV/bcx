@@ -5,7 +5,7 @@ import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCSSFile } from 'src/utils/dom';
 import 'src/utils/console';
 import BCXMusicFilter from '$lib/components/bcx/BCXMusicFilter.svelte';
-import { findAlbumsOnThePage } from './page/musicPage';
+import { findAlbumsOnThePage } from '../page/musicPage';
 
 console.log('Bandcamp content app module!');
 

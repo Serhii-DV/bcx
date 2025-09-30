@@ -1,5 +1,5 @@
+import { AlbumPage } from '../page/albumPage';
 import { Url } from '../url';
-import { AlbumPage } from './page/albumPage';
 
 function init() {
   console.log('Page Album Content script initialized');

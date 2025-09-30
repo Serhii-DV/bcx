@@ -11,7 +11,7 @@ import { ListMusicIcon } from 'lucide-svelte';
 import {
   getMenuBarCollectionButton,
   getMenuBarFeedButton,
-} from 'src/bandcamp/content/page/menuBar';
+} from 'src/bandcamp/page/menuBar';
 import * as Command from '$lib/components/ui/command/index.js';
 
 let {

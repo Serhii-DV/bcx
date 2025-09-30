@@ -1,6 +1,6 @@
 import { element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import { Album } from '../../album';
+import { Album } from '../album';
 
 function createAlbumFromMusicGridItem(gridElement: Element): Album {
   let artist =
