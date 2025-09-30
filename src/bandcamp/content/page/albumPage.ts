@@ -33,7 +33,7 @@ export class AlbumPage {
       schema.byArtist.name,
       schema.name,
       schema.image,
-      `album-${albumId}`,
+      albumId,
       metadata,
     );
   }

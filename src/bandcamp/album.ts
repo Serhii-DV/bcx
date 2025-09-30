@@ -17,7 +17,7 @@ export class Album {
     artist: string,
     title: string,
     image: string,
-    id: string,
+    id: string | number,
     metadata?: AlbumMetadata,
   ): Album {
     return new Album(
@@ -25,7 +25,7 @@ export class Album {
       Artist.fromString(artist),
       title,
       image,
-      parseInt(id.replace('album-', '')),
+      typeof id === 'string' ? parseInt(id.replace('album-', '')) : id,
       metadata,
     );
   }
