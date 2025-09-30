@@ -2,6 +2,18 @@ export interface StorageData {
   [key: string]: any;
 }
 
+export interface StorageObject {
+  [key: string]: any;
+}
+
+export interface HasStorageObject {
+  toStorageObject(): StorageObject;
+}
+
+export interface HasStorageData extends HasStorageObject {
+  toStorageKey(): string;
+}
+
 export type StorageDataMap = StorageData;
 
 export class Storage {
@@ -37,7 +49,7 @@ export class Storage {
     });
   }
 
-  async set(key: string, data: StorageData): Promise<void> {
+  async set(key: string, data: StorageObject): Promise<void> {
     return new Promise((resolve, reject) => {
       this.storage.set({ [key]: data }, () => {
         if (chrome.runtime.lastError) {
@@ -48,6 +60,10 @@ export class Storage {
         resolve();
       });
     });
+  }
+
+  async save(data: HasStorageData): Promise<void> {
+    return this.set(data.toStorageKey(), data.toStorageObject());
   }
 
   async clear(): Promise<void> {
