@@ -1,6 +1,6 @@
 import { v5 as uuid5 } from 'uuid';
 
-const host = 'bandcamp.com';
+const bandcampHost = 'bandcamp.com';
 
 export class Url {
   public url: URL;
@@ -67,7 +67,7 @@ export class Url {
   }
 
   get isRegular(): boolean {
-    return this.toString().includes('https://' + host);
+    return this.toString().includes('https://' + bandcampHost);
   }
 
   get isMusic(): boolean {
@@ -76,7 +76,7 @@ export class Url {
   }
 
   get isAlbum(): boolean {
-    return this.toString().includes(host + '/album/');
+    return this.toString().includes(bandcampHost + '/album/');
   }
 
   /**
@@ -89,7 +89,7 @@ export class Url {
 }
 
 export function isValidBandcampUrl(url: string): boolean {
-  return url.includes(host);
+  return url.includes(bandcampHost);
 }
 
 function removeQueryParams(url: string): string {

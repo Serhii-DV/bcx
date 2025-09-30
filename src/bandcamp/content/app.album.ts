@@ -1,9 +1,12 @@
+import { Url } from '../url';
 import { AlbumPage } from './page/albumPage';
 
 function init() {
   console.log('Page Album Content script initialized');
 
-  if (!window.location.hostname.includes('bandcamp.com')) {
+  const pageUrl = new Url(window.location.href);
+
+  if (!pageUrl.isAlbum) {
     return;
   }
 
