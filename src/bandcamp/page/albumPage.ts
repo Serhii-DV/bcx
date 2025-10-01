@@ -43,10 +43,7 @@ export class AlbumPage {
     const metadata = new AlbumMetadata(
       schema.publisher.name,
       new Date(schema.datePublished),
-      new Date(schema.dateModified),
       schema.keywords,
-      schema.creditText || '',
-      'high-quality', // Default quality description
     );
 
     // Create Album object using the static create method
