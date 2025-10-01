@@ -12,13 +12,13 @@ function init() {
   }
 
   const schema = AlbumPage.findSchema();
+  console.log('Schema:', schema);
 
   if (!schema) {
     return;
   }
 
   const album = AlbumPage.createAlbumFromSchema(schema);
-
   console.log('Album extracted from schema:', album);
 
   const storage = new Storage();

@@ -39,6 +39,11 @@ export class AlbumPage {
         (prop: PropertyValue) => prop.name === 'item_id',
       )?.value as number) || 0;
 
+    const sellingBandId =
+      (digitalRelease?.additionalProperty.find(
+        (prop: PropertyValue) => prop.name === 'selling_band_id',
+      )?.value as number) || 0;
+
     // Create AlbumMetadata from schema
     const metadata = new AlbumMetadata(
       schema.publisher.name,
@@ -53,6 +58,7 @@ export class AlbumPage {
       schema.name,
       schema.image,
       albumId,
+      sellingBandId,
       metadata,
     );
   }

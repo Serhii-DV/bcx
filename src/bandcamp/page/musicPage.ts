@@ -18,6 +18,7 @@ function createAlbumFromMusicGridItem(gridElement: Element): Album {
   const url = element('a', gridElement)?.getAttribute('href') || '';
   const image = element('a .art img', gridElement)?.getAttribute('src') || '';
   const id = gridElement?.getAttribute('data-item-id') || '0';
+  const sellingBandId = gridElement?.getAttribute('data-band-id') || '0';
 
   return Album.create(
     (url[0] === '/' ? window.location.origin : '') + url,
@@ -25,6 +26,7 @@ function createAlbumFromMusicGridItem(gridElement: Element): Album {
     title,
     image,
     id,
+    sellingBandId,
   );
 }
 

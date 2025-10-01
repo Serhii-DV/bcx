@@ -10,6 +10,7 @@ export class Album implements HasStorageData {
     public title: string,
     public image: string,
     public id: number,
+    public sellingBandId: number,
     public metadata?: AlbumMetadata,
   ) {}
 
@@ -19,6 +20,7 @@ export class Album implements HasStorageData {
     title: string,
     image: string,
     id: string | number,
+    sellingBandId: string | number,
     metadata?: AlbumMetadata,
   ): Album {
     return new Album(
@@ -27,6 +29,9 @@ export class Album implements HasStorageData {
       title,
       image,
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id,
+      typeof sellingBandId === 'string'
+        ? parseInt(sellingBandId)
+        : sellingBandId,
       metadata,
     );
   }
@@ -38,6 +43,7 @@ export class Album implements HasStorageData {
       title: this.title,
       image: this.image,
       id: this.id,
+      sellingBandId: this.sellingBandId,
       metadata: this.metadata ? this.metadata.toStorageObject() : undefined,
     };
   }
@@ -52,6 +58,7 @@ export class Album implements HasStorageData {
     this.title = data.title;
     this.image = data.image;
     this.id = data.id;
+    this.sellingBandId = data.sellingBandId;
     this.metadata = data.metadata
       ? AlbumMetadata.fromStorageObject(data.metadata)
       : undefined;
