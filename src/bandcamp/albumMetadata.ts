@@ -1,7 +1,9 @@
 import type { HasStorageObject, StorageObject } from 'src/core/storage';
+import { Price } from './price';
 
 export class AlbumMetadata implements HasStorageObject {
   constructor(
+    public price: Price,
     public label: string,
     public published: Date,
     public modified: Date,
@@ -10,6 +12,7 @@ export class AlbumMetadata implements HasStorageObject {
 
   toStorageObject(): StorageObject {
     return {
+      price: this.price.toStorageObject(),
       label: this.label,
       published: this.published.toISOString(),
       modified: this.modified.toISOString(),
@@ -19,6 +22,7 @@ export class AlbumMetadata implements HasStorageObject {
 
   static fromStorageObject(data: StorageObject): AlbumMetadata {
     return new AlbumMetadata(
+      Price.fromStorageObject(data.price),
       data.label,
       new Date(data.published),
       new Date(data.modified),

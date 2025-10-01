@@ -1,5 +1,6 @@
 import { Album } from 'src/bandcamp/album';
 import { AlbumMetadata } from 'src/bandcamp/albumMetadata';
+import { Price } from '../price';
 import type { AlbumRelease, PropertyValue, Schema } from './schema';
 
 export class AlbumPage {
@@ -44,15 +45,19 @@ export class AlbumPage {
         (prop: PropertyValue) => prop.name === 'selling_band_id',
       )?.value as number) || 0;
 
-    // Create AlbumMetadata from schema
+    const price = new Price(
+      (digitalRelease?.offers.price as number) || 0,
+      digitalRelease?.offers.priceCurrency || 'USD',
+    );
+
     const metadata = new AlbumMetadata(
+      price,
       schema.publisher.name,
       new Date(schema.datePublished),
       new Date(schema.dateModified),
       schema.keywords,
     );
 
-    // Create Album object using the static create method
     return Album.create(
       schema.mainEntityOfPage,
       schema.byArtist.name,
