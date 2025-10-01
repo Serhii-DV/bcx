@@ -48,6 +48,7 @@ export class AlbumPage {
     const metadata = new AlbumMetadata(
       schema.publisher.name,
       new Date(schema.datePublished),
+      new Date(schema.dateModified),
       schema.keywords,
     );
 

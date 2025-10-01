@@ -3,14 +3,16 @@ import type { HasStorageObject, StorageObject } from 'src/core/storage';
 export class AlbumMetadata implements HasStorageObject {
   constructor(
     public label: string,
-    public datePublished: Date,
+    public published: Date,
+    public modified: Date,
     public keywords: string[],
   ) {}
 
   toStorageObject(): StorageObject {
     return {
       label: this.label,
-      datePublished: this.datePublished.toISOString(),
+      published: this.published.toISOString(),
+      modified: this.modified.toISOString(),
       keywords: this.keywords,
     };
   }
@@ -18,7 +20,8 @@ export class AlbumMetadata implements HasStorageObject {
   static fromStorageObject(data: StorageObject): AlbumMetadata {
     return new AlbumMetadata(
       data.label,
-      new Date(data.datePublished),
+      new Date(data.published),
+      new Date(data.modified),
       data.keywords,
     );
   }
