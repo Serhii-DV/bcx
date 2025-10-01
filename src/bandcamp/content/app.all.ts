@@ -26,7 +26,7 @@ function mountApp() {
   const shadowRoot = container.attachShadow({ mode: 'open' });
   // Inject content CSS file (see manifest.json for details)
   injectCSSFile(
-    getExtensionUrl('bandcamp.content.css'),
+    getExtensionUrl('bandcamp.content.all.css'),
     () => {
       mount(App, {
         target: shadowRoot,

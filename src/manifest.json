@@ -22,7 +22,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["bandcamp.content.css"],
+      "resources": ["bandcamp.content.all.css"],
       "matches": ["https://*.bandcamp.com/*"]
     }
   ],
