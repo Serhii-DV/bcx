@@ -1,7 +1,12 @@
+import { Url } from 'src/bandcamp/url';
 import { Storage } from './storage';
 
 /**
  * Shared storage instance for use across content scripts
- * This ensures we have a single storage instance throughout the application
  */
 export const storage = new Storage();
+
+/**
+ * Shared current URL instance for use across content scripts
+ */
+export const currentPageUrl = Url.current();

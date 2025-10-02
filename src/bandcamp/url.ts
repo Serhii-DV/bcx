@@ -86,6 +86,10 @@ export class Url {
   toString(): string {
     return this.url.toString();
   }
+
+  static current(): Url {
+    return new Url(window.location.href);
+  }
 }
 
 export function isValidBandcampUrl(url: string): boolean {

@@ -1,13 +1,10 @@
-import { storage } from 'src/core/shared';
+import { currentPageUrl, storage } from 'src/core/shared';
 import { AlbumPage } from '../page/albumPage';
-import { Url } from '../url';
 
 function init() {
   console.log('Page Album Content script initialized');
 
-  const pageUrl = new Url(window.location.href);
-
-  if (!pageUrl.isAlbum) {
+  if (!currentPageUrl.isAlbum) {
     return;
   }
 
