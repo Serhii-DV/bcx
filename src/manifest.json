@@ -15,6 +15,11 @@
       "run_at": "document_end"
     },
     {
+      "js": ["bandcamp.content.pageMusic.js"],
+      "matches": ["https://*.bandcamp.com/", "https://*.bandcamp.com/music"],
+      "run_at": "document_end"
+    },
+    {
       "js": ["bandcamp.content.album.js"],
       "matches": ["https://*.bandcamp.com/album/*"],
       "run_at": "document_end"

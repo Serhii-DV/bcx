@@ -5,8 +5,6 @@ import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCSSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
-import BCXMusicFilter from '$lib/components/bcx/BCXMusicFilter.svelte';
-import { findAlbumsOnThePage } from '../page/musicPage';
 
 console.log('Bandcamp content app module!');
 
@@ -15,11 +13,6 @@ onDOMReady(() => {
     return;
   }
 
-  mountApp();
-  mountMusicFilter();
-});
-
-function mountApp() {
   const container = document.createElement('div');
   container.id = 'bcx-app';
   document.body.appendChild(container);
@@ -35,43 +28,4 @@ function mountApp() {
     },
     shadowRoot,
   );
-}
-
-function mountMusicFilter() {
-  if (!currentPageUrl.isMusic) {
-    return;
-  }
-
-  const albums = findAlbumsOnThePage();
-
-  if (albums.length === 0) {
-    console.log('No albums found on this page');
-    return;
-  }
-
-  // Create a container for the music filter component
-  const musicGrid = document.getElementById('music-grid');
-  if (!musicGrid) {
-    console.log('Music grid not found on this page');
-    return;
-  }
-
-  // Create container element for the Svelte component
-  const filterContainer = document.createElement('div');
-  filterContainer.id = 'bcx-music-filter';
-
-  // Insert the container before the music grid
-  if (musicGrid.parentNode) {
-    musicGrid.parentNode.insertBefore(filterContainer, musicGrid);
-  }
-
-  // Mount the Svelte component using Svelte 5 syntax
-  mount(BCXMusicFilter, {
-    target: filterContainer,
-    props: {
-      albums,
-    },
-  });
-
-  console.log(`BCX Music Filter component mounted with ${albums.length} items`);
-}
+});
