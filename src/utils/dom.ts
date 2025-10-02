@@ -137,3 +137,22 @@ export function createDataListForInput(
 
   return datalist;
 }
+
+/**
+ * Executes a callback function when the DOM is ready.
+ * If the document is already loaded, the callback is executed immediately.
+ * Otherwise, it waits for the DOMContentLoaded event.
+ * @param callback The function to execute when DOM is ready
+ */
+export function onDOMReady(callback: () => void): void {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', callback);
+  } else {
+    callback();
+  }
+
+  // Additional safety check for dynamic page loads
+  if (document.readyState === 'complete') {
+    setTimeout(callback, 100);
+  }
+}

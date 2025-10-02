@@ -2,7 +2,7 @@ import { mount } from 'svelte';
 import App from './app.svelte';
 import './app.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
-import { injectCSSFile } from 'src/utils/dom';
+import { injectCSSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import BCXMusicFilter from '$lib/components/bcx/BCXMusicFilter.svelte';
@@ -10,14 +10,14 @@ import { findAlbumsOnThePage } from '../page/musicPage';
 
 console.log('Bandcamp content app module!');
 
-function init() {
+onDOMReady(() => {
   if (!currentPageUrl.isBandcamp) {
     return;
   }
 
   mountApp();
   mountMusicFilter();
-}
+});
 
 function mountApp() {
   const container = document.createElement('div');
@@ -74,15 +74,4 @@ function mountMusicFilter() {
   });
 
   console.log(`BCX Music Filter component mounted with ${albums.length} items`);
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
-
-// Additional safety check for dynamic page loads
-if (document.readyState === 'complete') {
-  setTimeout(init, 100);
 }

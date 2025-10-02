@@ -1,7 +1,8 @@
 import { currentPageUrl, storage } from 'src/core/shared';
+import { onDOMReady } from 'src/utils/dom';
 import { AlbumPage } from '../page/albumPage';
 
-function init() {
+onDOMReady(() => {
   console.log('Page Album Content script initialized');
 
   if (!currentPageUrl.isAlbum) {
@@ -20,10 +21,4 @@ function init() {
   storage.save(album).catch((error) => {
     console.error('Failed to store album in storage:', error);
   });
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+});
