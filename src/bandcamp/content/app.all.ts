@@ -4,21 +4,22 @@ import './app.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCSSFile } from 'src/utils/dom';
 import 'src/utils/console';
+import { currentPageUrl } from 'src/core/shared';
 import BCXMusicFilter from '$lib/components/bcx/BCXMusicFilter.svelte';
 import { findAlbumsOnThePage } from '../page/musicPage';
 
 console.log('Bandcamp content app module!');
 
 function init() {
+  if (!currentPageUrl.isBandcamp) {
+    return;
+  }
+
   mountApp();
   mountMusicFilter();
 }
 
 function mountApp() {
-  if (!window.location.hostname.includes('bandcamp.com')) {
-    return;
-  }
-
   const container = document.createElement('div');
   container.id = 'bcx-app';
   document.body.appendChild(container);
@@ -37,7 +38,7 @@ function mountApp() {
 }
 
 function mountMusicFilter() {
-  if (!window.location.hostname.includes('bandcamp.com')) {
+  if (!currentPageUrl.isMusic) {
     return;
   }
 

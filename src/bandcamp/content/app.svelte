@@ -1,7 +1,7 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
 import { findAlbumsOnThePage } from 'src/bandcamp/page/musicPage';
-import { Url } from 'src/bandcamp/url';
+import { currentPageUrl } from 'src/core/shared';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
@@ -22,9 +22,7 @@ let musicSearchData: MusicSearchData = $state({
   albums: [],
 });
 
-const pageUrl = new Url(window.location.href);
-
-if (pageUrl.isMusic) {
+if (currentPageUrl.isMusic) {
   musicSearchData = createMusicSearchDataFromAlbums(findAlbumsOnThePage());
 }
 

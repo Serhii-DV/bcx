@@ -7,18 +7,19 @@ export class Url {
   public uuid: string;
 
   constructor(url: string) {
-    if (!isValidBandcampUrl(url)) {
-      throw new Error(`Wrong Bandcamp URL: ${url}`);
-    }
-
     try {
       url = removeQueryParams(url);
       url = removeBandcampMusicPath(url);
       this.url = new URL(url);
-      this.uuid = uuid5(url, uuid5.URL);
     } catch (error) {
       throw new Error(`Invalid URL: ${url}`);
     }
+
+    if (!this.isBandcamp) {
+      throw new Error(`Wrong Bandcamp URL: ${url}`);
+    }
+
+    this.uuid = uuid5(url, uuid5.URL);
   }
 
   get hostname(): string {
@@ -64,6 +65,10 @@ export class Url {
    */
   get pathname(): string {
     return this.url.pathname;
+  }
+
+  get isBandcamp(): boolean {
+    return isValidBandcampUrl(this.toString());
   }
 
   get isRegular(): boolean {
