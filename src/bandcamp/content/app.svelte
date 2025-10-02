@@ -1,6 +1,6 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
-import { findAlbumsOnThePage } from 'src/bandcamp/page/musicPage';
+import { MusicPage } from 'src/bandcamp/page/musicPage';
 import { currentPageUrl } from 'src/core/shared';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
@@ -23,7 +23,7 @@ let musicSearchData: MusicSearchData = $state({
 });
 
 if (currentPageUrl.isMusic) {
-  musicSearchData = createMusicSearchDataFromAlbums(findAlbumsOnThePage());
+  musicSearchData = createMusicSearchDataFromAlbums(MusicPage.findAlbums());
 }
 
 function handleKeydown(e: KeyboardEvent) {

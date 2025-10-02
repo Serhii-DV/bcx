@@ -2,14 +2,14 @@ import { currentPageUrl } from 'src/core/shared';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
-import { findAlbumsOnThePage } from '../page/musicPage';
+import { MusicPage } from '../page/musicPage';
 
 onDOMReady(() => {
   if (!currentPageUrl.isMusic) {
     return;
   }
 
-  const albums = findAlbumsOnThePage();
+  const albums = MusicPage.findAlbums();
 
   if (albums.length === 0) {
     console.log('No albums found on this page');
