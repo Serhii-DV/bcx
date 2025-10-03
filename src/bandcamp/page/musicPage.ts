@@ -1,7 +1,17 @@
 import { currentPageUrl, storage } from 'src/core/shared';
-import { element, elements } from 'src/utils/dom';
+import { element } from 'src/utils/dom';
 import { Album } from '../album';
 import { MusicGroup } from '../musicGroup';
+
+interface MusicGridClientItem {
+  art_id: number;
+  artist: string;
+  band_id: number;
+  id: number;
+  page_url: string;
+  title: string;
+  type: string;
+}
 
 export class MusicPage {
   /**
@@ -39,9 +49,24 @@ export class MusicPage {
    */
   static findAlbums(): Album[] {
     const items: Album[] = [];
+    const clientItems = element('#music-grid')?.dataset?.clientItems;
 
-    elements('#music-grid .music-grid-item').forEach((el) => {
-      items.push(this.createAlbumFromMusicGridItem(el));
+    if (!clientItems) {
+      console.log('No client items found on this page');
+      return items;
+    }
+
+    JSON.parse(clientItems).forEach((item: MusicGridClientItem) => {
+      items.push(
+        Album.create(
+          currentPageUrl.withPath(item.page_url),
+          item.artist,
+          item.title,
+          item.id,
+          item.art_id,
+          item.band_id,
+        ),
+      );
     });
 
     return items;

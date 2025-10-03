@@ -30,6 +30,10 @@ export class Artist {
   }
 
   static fromString(input: string): Artist {
+    if (input === undefined) {
+      return new Artist(['']);
+    }
+
     input = trim(input, ' -\n');
     input = removeInvisibleChars(input);
 

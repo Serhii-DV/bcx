@@ -2,6 +2,7 @@ import type { HasStorageData, StorageObject } from 'src/core/storage';
 import { removeInvisibleChars } from 'src/utils/string';
 import { AlbumMetadata } from './albumMetadata';
 import { Artist } from './artist';
+import { Artwork } from './artwork';
 import { Url } from './url';
 
 export class Album implements HasStorageData {
@@ -9,27 +10,27 @@ export class Album implements HasStorageData {
     public url: Url,
     public artist: Artist,
     public title: string,
-    public image: string,
     public id: number,
+    public artwork: Artwork,
     public sellingBandId: number,
     public metadata?: AlbumMetadata,
   ) {}
 
   static create(
-    url: string,
+    url: string | Url,
     artist: string,
     title: string,
-    image: string,
     id: string | number,
+    art_id: string | number,
     sellingBandId: string | number,
     metadata?: AlbumMetadata,
   ): Album {
     return new Album(
-      new Url(url),
+      typeof url === 'string' ? new Url(url) : url,
       Artist.fromString(artist),
       removeInvisibleChars(title),
-      image,
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id,
+      new Artwork(typeof art_id === 'string' ? parseInt(art_id) : art_id),
       typeof sellingBandId === 'string'
         ? parseInt(sellingBandId)
         : sellingBandId,
@@ -42,8 +43,8 @@ export class Album implements HasStorageData {
       url: this.url.toString(),
       artist: this.artist.toString(),
       title: this.title,
-      image: this.image,
       id: this.id,
+      art_id: this.artwork.id,
       sellingBandId: this.sellingBandId,
       metadata: this.metadata ? this.metadata.toStorageObject() : undefined,
     };
@@ -58,8 +59,8 @@ export class Album implements HasStorageData {
       data.url,
       data.artist,
       data.title,
-      data.image,
       data.id,
+      data.art_id,
       data.sellingBandId,
       data.metadata
         ? AlbumMetadata.fromStorageObject(data.metadata)

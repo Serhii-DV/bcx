@@ -95,6 +95,20 @@ export class Url {
   static current(): Url {
     return new Url(window.location.href);
   }
+
+  /**
+   * Sets a new path for the URL while keeping the current protocol and hostname.
+   * @param newPath The new path to set (should start with '/')
+   * @returns A new Url instance with the updated path
+   */
+  withPath(newPath: string): Url {
+    if (!newPath.startsWith('/')) {
+      newPath = '/' + newPath;
+    }
+
+    const newUrl = `${this.hostnameWithProtocol}${newPath}`;
+    return new Url(newUrl);
+  }
 }
 
 export function isValidBandcampUrl(url: string): boolean {
