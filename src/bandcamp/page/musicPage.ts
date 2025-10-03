@@ -1,6 +1,7 @@
+import { currentPageUrl, storage } from 'src/core/shared';
 import { element, elements } from 'src/utils/dom';
-import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album';
+import { MusicGroup } from '../musicGroup';
 
 export class MusicPage {
   /**
@@ -9,18 +10,14 @@ export class MusicPage {
    * @returns Album object created from the grid element
    */
   static createAlbumFromMusicGridItem(gridElement: Element): Album {
-    let artist =
+    const artist =
       element('.artist-override', gridElement)?.innerText ||
       element('#band-name-location .title')?.innerText ||
       '';
-
-    artist = trim(artist, ' -\n');
-    artist = removeInvisibleChars(artist);
-
     const titleParts = element('.title', gridElement)?.innerText.split(
       '\n',
     ) || [''];
-    const title = removeInvisibleChars(titleParts[0]);
+    const title = titleParts[0];
     const url = element('a', gridElement)?.getAttribute('href') || '';
     const image = element('a .art img', gridElement)?.getAttribute('src') || '';
     const id = gridElement?.getAttribute('data-item-id') || '0';
@@ -48,5 +45,22 @@ export class MusicPage {
     });
 
     return items;
+  }
+
+  static createMusicGroup(): MusicGroup {
+    const bandName =
+      element('#band-name-location .title')?.innerText ||
+      document.title.split(' | ')[0] ||
+      'Unknown Artist';
+
+    const musicGroup = MusicGroup.create(
+      currentPageUrl,
+      bandName,
+      this.findAlbums(),
+    );
+
+    storage.save(musicGroup);
+
+    return musicGroup;
   }
 }

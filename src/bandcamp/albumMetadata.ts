@@ -10,6 +10,23 @@ export class AlbumMetadata implements HasStorageObject {
     public keywords: string[],
   ) {}
 
+  static create(
+    amount: string | number,
+    currency: string,
+    label: string,
+    published: string,
+    modified: string,
+    keywords: string[],
+  ): AlbumMetadata {
+    return new AlbumMetadata(
+      Price.create(amount, currency),
+      label,
+      new Date(published),
+      new Date(modified),
+      keywords,
+    );
+  }
+
   toStorageObject(): StorageObject {
     return {
       price: this.price.toStorageObject(),
@@ -21,11 +38,12 @@ export class AlbumMetadata implements HasStorageObject {
   }
 
   static fromStorageObject(data: StorageObject): AlbumMetadata {
-    return new AlbumMetadata(
-      Price.fromStorageObject(data.price),
+    return AlbumMetadata.create(
+      data.price.amount,
+      data.price.currency,
       data.label,
-      new Date(data.published),
-      new Date(data.modified),
+      data.published,
+      data.modified,
       data.keywords,
     );
   }

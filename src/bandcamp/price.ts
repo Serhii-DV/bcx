@@ -6,6 +6,13 @@ export class Price implements HasStorageObject {
     public currency: string,
   ) {}
 
+  static create(amount: string | number, currency: string): Price {
+    if (typeof amount === 'string') {
+      amount = parseFloat(amount);
+    }
+    return new Price(amount, currency);
+  }
+
   isZero(): boolean {
     return this.amount === 0;
   }
@@ -22,6 +29,6 @@ export class Price implements HasStorageObject {
   }
 
   static fromStorageObject(data: StorageObject): Price {
-    return new Price(data.amount, data.currency);
+    return Price.create(data.amount, data.currency);
   }
 }
