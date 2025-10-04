@@ -2,6 +2,7 @@ import { currentPageUrl, storage } from 'src/core/shared';
 import { element } from 'src/utils/dom';
 import { Album } from '../album';
 import { Band } from '../band';
+import { BandMetadata } from '../bandMetadata';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -73,12 +74,25 @@ export class MusicPage {
   }
 
   static createBand(): Band {
-    const bandName =
-      element('#band-name-location .title')?.innerText ||
-      document.title.split(' | ')[0] ||
-      'Unknown Artist';
+    const bandData = JSON.parse(
+      element('[data-band]')?.dataset?.band || 'null',
+    );
 
-    const band = Band.create(currentPageUrl, bandName, this.findAlbums());
+    if (!bandData) {
+      throw new Error('No band data found on this page');
+    }
+
+    const bandMetadata = BandMetadata.create(
+      bandData.create_date,
+      bandData.currency,
+    );
+    const band = Band.create(
+      bandData.id,
+      bandData.name,
+      bandData.url,
+      this.findAlbums(),
+      bandMetadata,
+    );
 
     storage.save(band);
 
