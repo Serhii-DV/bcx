@@ -50,14 +50,11 @@ export class MusicPage {
    */
   static findAlbums(): Album[] {
     const items: Album[] = [];
-    const clientItems = element('#music-grid')?.dataset?.clientItems;
+    const clientItems = JSON.parse(
+      element('#music-grid')?.dataset?.clientItems || '[]',
+    );
 
-    if (!clientItems) {
-      console.log('No client items found on this page');
-      return items;
-    }
-
-    JSON.parse(clientItems).forEach((item: MusicGridClientItem) => {
+    clientItems.forEach((item: MusicGridClientItem) => {
       items.push(
         Album.create(
           currentPageUrl.withPath(item.page_url),
