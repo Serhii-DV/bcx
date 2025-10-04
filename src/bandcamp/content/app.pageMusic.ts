@@ -9,7 +9,8 @@ onDOMReady(() => {
     return;
   }
 
-  const band = MusicPage.createBand();
+  const musicPage = new MusicPage();
+  const band = musicPage.band;
   const albums = band.albums;
 
   if (albums.length === 0) {
