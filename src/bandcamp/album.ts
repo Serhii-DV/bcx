@@ -12,7 +12,7 @@ export class Album implements HasStorageData {
     public title: string,
     public id: number,
     public artwork: Artwork,
-    public sellingBandId: number,
+    public bandId: number,
     public metadata?: AlbumMetadata,
   ) {}
 
@@ -21,8 +21,8 @@ export class Album implements HasStorageData {
     artist: string,
     title: string,
     id: string | number,
-    art_id: string | number,
-    sellingBandId: string | number,
+    artworkId: string | number,
+    bandId: string | number,
     metadata?: AlbumMetadata,
   ): Album {
     return new Album(
@@ -30,10 +30,10 @@ export class Album implements HasStorageData {
       Artist.fromString(artist),
       removeInvisibleChars(title),
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id,
-      new Artwork(typeof art_id === 'string' ? parseInt(art_id) : art_id),
-      typeof sellingBandId === 'string'
-        ? parseInt(sellingBandId)
-        : sellingBandId,
+      new Artwork(
+        typeof artworkId === 'string' ? parseInt(artworkId) : artworkId,
+      ),
+      typeof bandId === 'string' ? parseInt(bandId) : bandId,
       metadata,
     );
   }
@@ -44,8 +44,8 @@ export class Album implements HasStorageData {
       artist: this.artist.toString(),
       title: this.title,
       id: this.id,
-      art_id: this.artwork.id,
-      sellingBandId: this.sellingBandId,
+      artworkId: this.artwork.id,
+      bandId: this.bandId,
       metadata: this.metadata ? this.metadata.toStorageObject() : undefined,
     };
   }
@@ -60,8 +60,8 @@ export class Album implements HasStorageData {
       data.artist,
       data.title,
       data.id,
-      data.art_id,
-      data.sellingBandId,
+      data.artworkId,
+      data.bandId,
       data.metadata
         ? AlbumMetadata.fromStorageObject(data.metadata)
         : undefined,
