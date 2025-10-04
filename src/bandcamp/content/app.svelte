@@ -23,8 +23,8 @@ let musicSearchData: MusicSearchData = $state({
 });
 
 if (currentPageUrl.isMusic) {
-  const musicGroup = MusicPage.createMusicGroup();
-  musicSearchData = createMusicSearchDataFromAlbums(musicGroup.albums);
+  const band = MusicPage.createBand();
+  musicSearchData = createMusicSearchDataFromAlbums(band.albums);
 }
 
 function handleKeydown(e: KeyboardEvent) {

@@ -1,7 +1,7 @@
 import { currentPageUrl, storage } from 'src/core/shared';
 import { element } from 'src/utils/dom';
 import { Album } from '../album';
-import { MusicGroup } from '../musicGroup';
+import { Band } from '../band';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -72,20 +72,16 @@ export class MusicPage {
     return items;
   }
 
-  static createMusicGroup(): MusicGroup {
+  static createBand(): Band {
     const bandName =
       element('#band-name-location .title')?.innerText ||
       document.title.split(' | ')[0] ||
       'Unknown Artist';
 
-    const musicGroup = MusicGroup.create(
-      currentPageUrl,
-      bandName,
-      this.findAlbums(),
-    );
+    const band = Band.create(currentPageUrl, bandName, this.findAlbums());
 
-    storage.save(musicGroup);
+    storage.save(band);
 
-    return musicGroup;
+    return band;
   }
 }

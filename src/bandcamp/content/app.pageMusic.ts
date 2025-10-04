@@ -9,8 +9,8 @@ onDOMReady(() => {
     return;
   }
 
-  const musicGroup = MusicPage.createMusicGroup();
-  const albums = musicGroup.albums;
+  const band = MusicPage.createBand();
+  const albums = band.albums;
 
   if (albums.length === 0) {
     console.log('No albums found on this page');
