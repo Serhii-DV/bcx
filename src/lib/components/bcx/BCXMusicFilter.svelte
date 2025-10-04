@@ -5,7 +5,8 @@
 
 import Isotope from 'isotope-layout';
 import type { Album } from 'src/bandcamp/album';
-import { createMusicSearchDataFromAlbums } from 'src/bandcamp/content/helper';
+import type { Band } from 'src/bandcamp/band';
+import { createMusicSearchGroupFromBand } from 'src/bandcamp/content/helper';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
@@ -17,10 +18,10 @@ interface MusicGridItem extends HTMLLIElement {
 }
 
 interface Props {
-  albums: Album[];
+  band: Band;
 }
 
-let { albums }: Props = $props();
+let { band }: Props = $props();
 
 // Component state
 let musicGrid: HTMLElement | null = $state(null);
@@ -93,14 +94,14 @@ function setup(): void {
 function setupDataList(): void {
   if (!filterInput) return;
 
-  const musicSearchData = createMusicSearchDataFromAlbums(albums);
-  const options = musicSearchData.artists.map((artist) =>
+  const musicSearchGroup = createMusicSearchGroupFromBand(band);
+  const options = musicSearchGroup.artists.map((artist) =>
     artist.albumCount && artist.albumCount > 1
       ? artist.name + ` (${artist.albumCount})`
       : artist.name,
   );
 
-  musicSearchData.albums.forEach((album) => {
+  musicSearchGroup.albums.forEach((album) => {
     options.push(album.artist + ' - ' + album.title);
   });
 
@@ -111,7 +112,7 @@ function initIsotope(): void {
   if (!musicGrid) return;
 
   // Setup items values for filtering
-  albums.forEach((item: Album) => {
+  band.albums.forEach((item: Album) => {
     const gridElement = musicGrid?.querySelector(
       '[data-item-id="album-' + item.id + '"]',
     );

@@ -1,22 +1,26 @@
-import type { Album } from 'src/bandcamp/album';
 import { countOccurrences } from 'src/utils/array';
 import type {
   AlbumSearchData,
   ArtistSearchData,
   MusicSearchData,
+  MusicSearchGroup,
 } from '$lib/components/bcx/types';
+import type { Band } from '../band';
 
-export function createMusicSearchDataFromAlbums(
-  albums: Album[],
-): MusicSearchData {
+export function createMusicSearchGroupFromBand(band: Band): MusicSearchGroup {
+  const searchGroup: MusicSearchGroup = {
+    name: band.name,
+    artists: [],
+    albums: [],
+  };
   const values: string[] = [];
 
-  albums.forEach((item) => {
+  band.albums.forEach((item) => {
     values.push(...item.artist.names);
   });
   const counts = countOccurrences(values.sort());
   const searchArtists: ArtistSearchData[] = mapToSearchArtists(counts);
-  const searchAlbums: AlbumSearchData[] = albums
+  const searchAlbums: AlbumSearchData[] = band.albums
     .map((item) => ({
       url: item.url.toString(),
       artist: item.artist.toString(),
@@ -28,10 +32,18 @@ export function createMusicSearchDataFromAlbums(
       return aKey.localeCompare(bKey);
     });
 
-  return {
-    artists: searchArtists,
-    albums: searchAlbums,
-  };
+  searchGroup.artists = searchArtists;
+  searchGroup.albums = searchAlbums;
+
+  return searchGroup;
+}
+
+export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
+  const searchData: MusicSearchData = [];
+  const searchGroup: MusicSearchGroup = createMusicSearchGroupFromBand(band);
+  searchData.push(searchGroup);
+
+  return searchData;
 }
 
 /**

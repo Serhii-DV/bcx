@@ -12,19 +12,16 @@ import type {
   MusicSearchData,
 } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
-import { createMusicSearchDataFromAlbums } from './helper';
+import { createMusicSearchDataFromBand } from './helper';
 
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
-let musicSearchData: MusicSearchData = $state({
-  artists: [],
-  albums: [],
-});
+let musicSearchData: MusicSearchData = $state([]);
 
 if (currentPageUrl.isMusic) {
   const musicPage = new MusicPage();
-  musicSearchData = createMusicSearchDataFromAlbums(musicPage.band.albums);
+  musicSearchData = createMusicSearchDataFromBand(musicPage.band);
 }
 
 function handleKeydown(e: KeyboardEvent) {

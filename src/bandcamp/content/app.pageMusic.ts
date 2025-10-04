@@ -11,9 +11,8 @@ onDOMReady(() => {
 
   const musicPage = new MusicPage();
   const band = musicPage.band;
-  const albums = band.albums;
 
-  if (albums.length === 0) {
+  if (band.albums.length === 0) {
     console.log('No albums found on this page');
     return;
   }
@@ -38,9 +37,11 @@ onDOMReady(() => {
   mount(BCXMusicFilter, {
     target: filterContainer,
     props: {
-      albums,
+      band,
     },
   });
 
-  console.log(`BCX Music Filter component mounted with ${albums.length} items`);
+  console.log(
+    `BCX Music Filter component mounted with ${band.albums.length} items`,
+  );
 });

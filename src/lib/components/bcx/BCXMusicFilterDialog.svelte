@@ -17,7 +17,7 @@ let {
   portalProps,
   placeholder = 'Type an artist name or album title...',
   emptyMessage = 'No results found.',
-  data = { artists: [], albums: [] },
+  data = [],
   onArtistSelect = null,
   onAlbumSelect = null,
 }: {
@@ -63,35 +63,34 @@ function handleKeydown(event: KeyboardEvent) {
 
   <Command.List>
       <Command.Empty>{emptyMessage}</Command.Empty>
-      <!-- Artists Section -->
-      {#if data.artists.length > 0}
-        <Command.Group heading="Artists">
-          {#each data.artists as artist}
-            <Command.Item onSelect={() => handleArtistSelect(artist)}>
-              <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span>
-            </Command.Item>
-          {/each}
-        </Command.Group>
-      {/if}
 
-      <!-- Separator if both artists and albums exist -->
-      {#if data.artists.length > 0 && data.albums.length > 0}
-        <Command.Separator />
-      {/if}
+      {#each data as { name, artists, albums } (name)}
+        {#if artists.length > 0 || albums.length > 0}
+          <Command.Group heading={name}>
+            <!-- Artists in Group -->
+            {#each artists as artist}
+              <Command.Item onSelect={() => handleArtistSelect(artist)}>
+                <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span>
+              </Command.Item>
+            {/each}
 
-      <!-- Albums Section -->
-      {#if data.albums.length > 0}
-        <Command.Group heading="Albums">
-          {#each data.albums as album}
-            <Command.Item onSelect={() => handleAlbumSelect(album)}>
-              <span>{album.artist} - {album.title}{#if album.year} - {album.year}{/if}</span>
-            </Command.Item>
-          {/each}
-        </Command.Group>
-      {/if}
+            <!-- Separator if both artists and albums exist in group -->
+            {#if artists.length > 0 && albums.length > 0}
+              <Command.Separator />
+            {/if}
+
+            <!-- Albums in Group -->
+            {#each albums as album}
+              <Command.Item onSelect={() => handleAlbumSelect(album)}>
+                <span>{album.artist} - {album.title}{#if album.year} - {album.year}{/if}</span>
+              </Command.Item>
+            {/each}
+          </Command.Group>
+        {/if}
+      {/each}
 
       <!-- Default content when no search query -->
-      {#if !searchQuery.trim() && data.artists.length === 0 && data.albums.length === 0}
+      {#if !searchQuery.trim() && data.length === 0}
         <div>
           <h3>Search Bandcamp</h3>
           <p>
