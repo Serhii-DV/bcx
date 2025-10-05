@@ -21,7 +21,7 @@ export class MusicPage {
   constructor() {
     this.band = this.createBand();
     this.band.albums = this.findAlbums();
-    storage.save(this.band);
+    storage.set(this.band);
   }
 
   /**

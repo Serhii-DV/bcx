@@ -1,6 +1,6 @@
-import type { HasStorageObject, StorageObject } from 'src/core/storage';
+import type { StorableObject, StorageObject } from 'src/core/storage';
 
-export class Price implements HasStorageObject {
+export class Price implements StorableObject {
   constructor(
     public amount: number,
     public currency: string,

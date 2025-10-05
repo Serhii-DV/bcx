@@ -1,10 +1,10 @@
-import type { HasStorageData, StorageObject } from 'src/core/storage';
+import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from './album';
 import { BandMetadata } from './bandMetadata';
 import { Url } from './url';
 
-export class Band implements HasStorageData {
+export class Band implements Storable {
   constructor(
     public id: number,
     public name: string,
@@ -29,6 +29,14 @@ export class Band implements HasStorageData {
     );
   }
 
+  toStorableData(): StorableData {
+    const key = 'band.' + this.id;
+    return {
+      [key]: this.toStorageObject(),
+      [this.url.uuid]: key,
+    };
+  }
+
   toStorageObject(): StorageObject {
     return {
       id: this.id,
@@ -37,10 +45,6 @@ export class Band implements HasStorageData {
       albums: this.albums.map((album) => album.toStorageObject()),
       metadata: this.metadata.toStorageObject(),
     };
-  }
-
-  toStorageKey(): string {
-    return this.url.uuid;
   }
 
   static fromStorageObject(data: StorageObject): Band {

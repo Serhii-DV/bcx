@@ -1,20 +1,26 @@
-export interface StorageData {
-  [key: string]: any;
-}
-
 export interface StorageObject {
   [key: string]: any;
 }
 
-export interface HasStorageObject {
+export interface StorableData {
+  // must be `any` because values can be either StorageObject or string (key reference)
+  [key: string]: any;
+}
+
+export interface StorableObject {
   toStorageObject(): StorageObject;
 }
 
-export interface HasStorageData extends HasStorageObject {
-  toStorageKey(): string;
+export interface StorableObjectConstructor<T> {
+  new (...args: any[]): T;
+  fromStorageObject(data: StorageObject): T;
 }
 
-export type StorageDataMap = StorageData;
+export interface Storable extends StorableObject {
+  toStorableData(): StorableData;
+}
+
+export type StorageDataMap = StorableData;
 
 export class Storage {
   private storage: chrome.storage.StorageArea;
@@ -49,21 +55,33 @@ export class Storage {
     });
   }
 
-  async set(key: string, data: StorageObject): Promise<void> {
+  async set(
+    key: string | StorableData | Storable,
+    data?: StorageObject,
+  ): Promise<void> {
+    let storableData: StorableData;
+
+    if (typeof key === 'string') {
+      if (data === undefined) {
+        throw new Error('Data parameter is required when key is a string');
+      }
+      storableData = { [key]: data };
+    } else if ('toStorableData' in key) {
+      storableData = (key as Storable).toStorableData();
+    } else {
+      storableData = key as StorableData;
+    }
+
     return new Promise((resolve, reject) => {
-      this.storage.set({ [key]: data }, () => {
+      this.storage.set(storableData, () => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage] Set by key', key, data);
+        console.log('[Storage] Set', storableData);
         resolve();
       });
     });
-  }
-
-  async save(data: HasStorageData): Promise<void> {
-    return this.set(data.toStorageKey(), data.toStorageObject());
   }
 
   async clear(): Promise<void> {

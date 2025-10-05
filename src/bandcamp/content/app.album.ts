@@ -18,7 +18,7 @@ onDOMReady(() => {
 
   const album = AlbumPage.createAlbumFromSchema(schema);
   console.log('Album extracted from schema:', album);
-  storage.save(album).catch((error) => {
+  storage.set(album).catch((error) => {
     console.error('Failed to store album in storage:', error);
   });
 });

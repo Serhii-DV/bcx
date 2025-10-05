@@ -1,11 +1,11 @@
-import type { HasStorageData, StorageObject } from 'src/core/storage';
+import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { removeInvisibleChars } from 'src/utils/string';
 import { AlbumMetadata } from './albumMetadata';
 import { Artist } from './artist';
 import { Artwork } from './artwork';
 import { Url } from './url';
 
-export class Album implements HasStorageData {
+export class Album implements Storable {
   constructor(
     public url: Url,
     public artist: Artist,
@@ -38,6 +38,14 @@ export class Album implements HasStorageData {
     );
   }
 
+  toStorableData(): StorableData {
+    const key = 'album.' + this.id;
+    return {
+      [key]: this.toStorageObject(),
+      [this.url.uuid]: key,
+    };
+  }
+
   toStorageObject(): StorageObject {
     return {
       url: this.url.toString(),
@@ -48,10 +56,6 @@ export class Album implements HasStorageData {
       bandId: this.bandId,
       metadata: this.metadata ? this.metadata.toStorageObject() : undefined,
     };
-  }
-
-  toStorageKey(): string {
-    return this.url.uuid;
   }
 
   static fromStorageObject(data: StorageObject): Album {

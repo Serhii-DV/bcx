@@ -1,7 +1,7 @@
-import type { HasStorageObject, StorageObject } from 'src/core/storage';
+import type { StorableObject, StorageObject } from 'src/core/storage';
 import { Price } from './price';
 
-export class AlbumMetadata implements HasStorageObject {
+export class AlbumMetadata implements StorableObject {
   constructor(
     public price: Price,
     public label: string,
