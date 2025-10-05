@@ -35,12 +35,24 @@ export class AlbumPage {
       (release: AlbumRelease) => release.musicReleaseFormat === 'DigitalFormat',
     );
 
+    const url = schema.mainEntityOfPage;
+    const artist = schema.byArtist.name;
+    const title = schema.name;
+
     const albumId =
       (digitalRelease?.additionalProperty.find(
         (prop: PropertyValue) => prop.name === 'item_id',
       )?.value as number) || 0;
 
-    const sellingBandId =
+    const artworkId =
+      (digitalRelease?.additionalProperty.find(
+        (prop: PropertyValue) => prop.name === 'art_id',
+      )?.value as number) || 0;
+
+    // Some albums may not have a selling_band_id (e.g. compilations)
+    // Default to 0 in such cases
+
+    const bandId =
       (digitalRelease?.additionalProperty.find(
         (prop: PropertyValue) => prop.name === 'selling_band_id',
       )?.value as number) || 0;
@@ -59,12 +71,12 @@ export class AlbumPage {
     );
 
     return Album.create(
-      schema.mainEntityOfPage,
-      schema.byArtist.name,
-      schema.name,
-      schema.image,
+      url,
+      artist,
+      title,
       albumId,
-      sellingBandId,
+      artworkId,
+      bandId,
       metadata,
     );
   }
