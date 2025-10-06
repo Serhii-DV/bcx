@@ -1,6 +1,5 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
-import { MusicPage } from 'src/bandcamp/page/musicPage';
 import { currentPageUrl } from 'src/core/shared';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
@@ -12,17 +11,24 @@ import type {
   MusicSearchData,
 } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
-import { createMusicSearchDataFromBand } from './helper';
+import type { Band } from '../band';
+import { createMusicSearchDataFromBands } from './helper';
+
+// Props interface
+interface Props {
+  bands?: Band[];
+}
+
+let { bands = [] }: Props = $props();
 
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
-let musicSearchData: MusicSearchData = $state([]);
 
-if (currentPageUrl.isMusic) {
-  const musicPage = new MusicPage();
-  musicSearchData = createMusicSearchDataFromBand(musicPage.band);
-}
+// Derive music search data from bands prop
+let musicSearchData: MusicSearchData = $derived(
+  currentPageUrl.isMusic ? createMusicSearchDataFromBands(bands) : [],
+);
 
 function handleKeydown(e: KeyboardEvent) {
   onCtrlKey('/', e, () => {

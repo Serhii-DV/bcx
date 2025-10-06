@@ -5,10 +5,11 @@ import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCSSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
+import { getBandsFromStorage } from './helper';
 
 console.log('Bandcamp content app module!');
 
-onDOMReady(() => {
+onDOMReady(async () => {
   if (!currentPageUrl.isBandcamp) {
     return;
   }
@@ -18,12 +19,19 @@ onDOMReady(() => {
   document.body.appendChild(container);
 
   const shadowRoot = container.attachShadow({ mode: 'open' });
+
+  // Load bands data before mounting the app
+  const bands = await getBandsFromStorage();
+
   // Inject content CSS file (see manifest.json for details)
   injectCSSFile(
     getExtensionUrl('bandcamp.content.all.css'),
     () => {
       mount(App, {
         target: shadowRoot,
+        props: {
+          bands,
+        },
       });
     },
     shadowRoot,

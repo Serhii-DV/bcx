@@ -1,3 +1,4 @@
+import { storage } from 'src/core/shared';
 import { countOccurrences } from 'src/utils/array';
 import type {
   AlbumSearchData,
@@ -5,7 +6,7 @@ import type {
   MusicSearchData,
   MusicSearchGroup,
 } from '$lib/components/bcx/types';
-import type { Band } from '../band';
+import { Band } from '../band';
 
 export function createMusicSearchGroupFromBand(band: Band): MusicSearchGroup {
   const searchGroup: MusicSearchGroup = {
@@ -36,6 +37,29 @@ export function createMusicSearchGroupFromBand(band: Band): MusicSearchGroup {
   searchGroup.albums = searchAlbums;
 
   return searchGroup;
+}
+
+export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
+  const searchData: MusicSearchData = bands.map((band) =>
+    createMusicSearchGroupFromBand(band),
+  );
+  return searchData;
+}
+
+export async function getBandsFromStorage(): Promise<Band[]> {
+  // TODO: For better performance, consider maintaining a 'band.ids' index
+  // to avoid loading all storage data. Currently using getAll() for simplicity.
+  const allData = await storage.getAll();
+  const bands: Band[] = [];
+
+  for (const [key, value] of Object.entries(allData)) {
+    if (key.startsWith('band.') && key !== 'band.ids') {
+      const band = Band.fromStorageObject(value);
+      bands.push(band);
+    }
+  }
+
+  return bands;
 }
 
 export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
