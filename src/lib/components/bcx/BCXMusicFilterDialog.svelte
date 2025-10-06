@@ -10,6 +10,7 @@ import type {
   AlbumSearchData,
   ArtistSearchData,
   MusicSearchData,
+  MusicSearchGroup,
 } from './types';
 
 let {
@@ -32,6 +33,51 @@ let {
 
 // biome-ignore lint: reactive variable declaration
 let searchQuery = $state('');
+
+// Dynamic filtering based on search query
+let filteredData = $derived.by(() => {
+  const query = searchQuery.trim().toLowerCase();
+
+  // Return empty array if no search query
+  if (!query) {
+    return [] as MusicSearchData;
+  }
+
+  // Filter data based on search query
+  return data
+    .map((group) => {
+      // Separate artists into startsWith and includes groups
+      const startsWithArtists = group.artists.filter((artist) =>
+        artist.name.toLowerCase().startsWith(query),
+      );
+      const includesArtists = group.artists.filter(
+        (artist) =>
+          !artist.name.toLowerCase().startsWith(query) &&
+          artist.name.toLowerCase().includes(query),
+      );
+
+      // Separate albums into startsWith and includes groups
+      const startsWithAlbums = group.albums.filter(
+        (album) =>
+          album.artist.toLowerCase().startsWith(query) ||
+          album.title.toLowerCase().startsWith(query),
+      );
+      const includesAlbums = group.albums.filter(
+        (album) =>
+          !album.artist.toLowerCase().startsWith(query) &&
+          !album.title.toLowerCase().startsWith(query) &&
+          (album.artist.toLowerCase().includes(query) ||
+            album.title.toLowerCase().includes(query)),
+      );
+
+      return {
+        name: group.name,
+        artists: [...startsWithArtists, ...includesArtists],
+        albums: [...startsWithAlbums, ...includesAlbums],
+      } as MusicSearchGroup;
+    })
+    .filter((group) => group.artists.length > 0 || group.albums.length > 0);
+});
 
 function handleArtistSelect(artist: ArtistSearchData) {
   console.log(`🎵 BCX: Artist selected "${artist.name}"`);
@@ -64,23 +110,23 @@ function handleKeydown(event: KeyboardEvent) {
   <Command.List>
       <Command.Empty>{emptyMessage}</Command.Empty>
 
-      {#each data as { name, artists, albums } (name)}
-        {#if artists.length > 0 || albums.length > 0}
-          <Command.Group heading={name}>
+      {#each filteredData as group (group.name)}
+        {#if group.artists.length > 0 || group.albums.length > 0}
+          <Command.Group heading={group.name}>
             <!-- Artists in Group -->
-            {#each artists as artist}
+            {#each group.artists as artist}
               <Command.Item onSelect={() => handleArtistSelect(artist)}>
                 <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span>
               </Command.Item>
             {/each}
 
             <!-- Separator if both artists and albums exist in group -->
-            {#if artists.length > 0 && albums.length > 0}
+            {#if group.artists.length > 0 && group.albums.length > 0}
               <Command.Separator />
             {/if}
 
             <!-- Albums in Group -->
-            {#each albums as album}
+            {#each group.albums as album}
               <Command.Item onSelect={() => handleAlbumSelect(album)}>
                 <span>{album.artist} - {album.title}{#if album.year} - {album.year}{/if}</span>
               </Command.Item>
@@ -90,14 +136,20 @@ function handleKeydown(event: KeyboardEvent) {
       {/each}
 
       <!-- Default content when no search query -->
-      {#if !searchQuery.trim() && data.length === 0}
-        <div>
-          <h3>Search Bandcamp</h3>
-          <p>
+      {#if !searchQuery.trim()}
+        <div class="px-4 py-6 text-center">
+          <h3 class="text-lg font-medium mb-2">Search Bandcamp</h3>
+          <p class="text-sm text-muted-foreground mb-4">
             Start typing to search for artists, albums, and tracks
           </p>
-          <div>
-            <kbd>↑</kbd><kbd>↓</kbd> navigate • <kbd>↵</kbd> select • <kbd>Esc</kbd> close
+          <div class="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+            <kbd class="px-1.5 py-0.5 text-xs bg-muted border rounded">↑</kbd>
+            <kbd class="px-1.5 py-0.5 text-xs bg-muted border rounded">↓</kbd>
+            <span>navigate •</span>
+            <kbd class="px-1.5 py-0.5 text-xs bg-muted border rounded">↵</kbd>
+            <span>select •</span>
+            <kbd class="px-1.5 py-0.5 text-xs bg-muted border rounded">Esc</kbd>
+            <span>close</span>
           </div>
         </div>
       {/if}
