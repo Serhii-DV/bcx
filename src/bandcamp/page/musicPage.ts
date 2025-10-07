@@ -3,7 +3,7 @@ import { element } from 'src/utils/dom';
 import { Album } from '../album';
 import { Band } from '../band';
 import { BandMetadata } from '../bandMetadata';
-import type { Url } from '../url';
+import { Url } from '../url';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -29,41 +29,32 @@ export class MusicPage {
    * @returns Array of Album objects found on the page
    */
   private findAlbums(): Album[] {
-    const items: Album[] = [];
-    const clientItems = JSON.parse(
-      element('#music-grid')?.dataset?.clientItems || '[]',
-    );
-
+    const albums: Album[] = [];
     const musicGridElement = element('#music-grid');
 
     if (!musicGridElement) {
       console.log('No music grid found on this page');
-      return items;
+      return albums;
     }
 
+    const clientItems = JSON.parse(
+      musicGridElement.dataset?.clientItems || '[]',
+    );
+
     clientItems.forEach((item: MusicGridClientItem) => {
-      let albumUrl: string | Url = '';
+      const albumUrl = this.getAlbumUrl(item, musicGridElement);
 
-      if (this.band.id === item.band_id) {
-        albumUrl = this.band.url.withPath(item.page_url);
-      } else {
-        const albumUrlElement = element(
-          `[data-item-id="album-${item.id}"] a`,
-          musicGridElement,
-        );
-
-        if (!albumUrlElement) {
-          console.warn('No album link found for item:', item);
-          return;
-        }
-
-        albumUrl = albumUrlElement.getAttribute('href') || '';
+      if (!albumUrl) {
+        console.warn('No album URL found for item:', item);
+        return;
       }
 
-      items.push(
+      const artist = item.artist || this.band.name;
+
+      albums.push(
         Album.create(
           albumUrl,
-          item.artist,
+          artist,
           item.title,
           item.id,
           item.art_id,
@@ -72,7 +63,33 @@ export class MusicPage {
       );
     });
 
-    return items;
+    return albums;
+  }
+
+  /**
+   * Determines the album URL for a given music grid item
+   * @param item - The music grid client item
+   * @param musicGridElement - The music grid DOM element
+   * @returns The album URL as string or Url object, or empty string if not found
+   */
+  private getAlbumUrl(
+    item: MusicGridClientItem,
+    musicGridElement: HTMLElement,
+  ): string | Url {
+    if (this.band.id === item.band_id) {
+      return this.band.url.withPath(item.page_url);
+    } else {
+      const albumUrlElement = element(
+        `[data-item-id="album-${item.id}"] a`,
+        musicGridElement,
+      );
+
+      if (!albumUrlElement) {
+        return '';
+      }
+
+      return albumUrlElement.getAttribute('href') || '';
+    }
   }
 
   private createBand(): Band {
