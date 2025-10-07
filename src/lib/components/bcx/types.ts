@@ -11,10 +11,7 @@ export interface AlbumSearchData {
   year?: number;
 }
 
-export interface MusicSearchGroup {
-  name: string;
+export interface MusicSearchData {
   artists: ArtistSearchData[];
   albums: AlbumSearchData[];
 }
-
-export type MusicSearchData = MusicSearchGroup[];

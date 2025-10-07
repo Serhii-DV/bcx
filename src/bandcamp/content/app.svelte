@@ -27,7 +27,9 @@ let albumSearchOpen = $state(false);
 
 // Derive music search data from bands prop
 let musicSearchData: MusicSearchData = $derived(
-  currentPageUrl.isMusic ? createMusicSearchDataFromBands(bands) : [],
+  currentPageUrl.isMusic
+    ? createMusicSearchDataFromBands(bands)
+    : { artists: [], albums: [] },
 );
 
 function handleKeydown(e: KeyboardEvent) {

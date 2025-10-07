@@ -4,21 +4,16 @@ import type {
   AlbumSearchData,
   ArtistSearchData,
   MusicSearchData,
-  MusicSearchGroup,
 } from '$lib/components/bcx/types';
 import { Band } from '../band';
 
-export function createMusicSearchGroupFromBand(band: Band): MusicSearchGroup {
-  const searchGroup: MusicSearchGroup = {
-    name: band.name,
-    artists: [],
-    albums: [],
-  };
+export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
   const values: string[] = [];
 
   band.albums.forEach((item) => {
     values.push(...item.artist.names);
   });
+
   const counts = countOccurrences(values.sort());
   const searchArtists: ArtistSearchData[] = mapToSearchArtists(counts);
   const searchAlbums: AlbumSearchData[] = band.albums
@@ -33,17 +28,27 @@ export function createMusicSearchGroupFromBand(band: Band): MusicSearchGroup {
       return aKey.localeCompare(bKey);
     });
 
-  searchGroup.artists = searchArtists;
-  searchGroup.albums = searchAlbums;
-
-  return searchGroup;
+  return {
+    artists: searchArtists,
+    albums: searchAlbums,
+  };
 }
 
 export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
-  const searchData: MusicSearchData = bands.map((band) =>
-    createMusicSearchGroupFromBand(band),
-  );
-  return searchData;
+  const allArtists: ArtistSearchData[] = [];
+  const allAlbums: AlbumSearchData[] = [];
+
+  // Aggregate all artists and albums from all bands
+  bands.forEach((band) => {
+    const searchData = createMusicSearchDataFromBand(band);
+    allArtists.push(...searchData.artists);
+    allAlbums.push(...searchData.albums);
+  });
+
+  return {
+    artists: allArtists,
+    albums: allAlbums,
+  };
 }
 
 export async function getBandsFromStorage(): Promise<Band[]> {
@@ -60,14 +65,6 @@ export async function getBandsFromStorage(): Promise<Band[]> {
   }
 
   return bands;
-}
-
-export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
-  const searchData: MusicSearchData = [];
-  const searchGroup: MusicSearchGroup = createMusicSearchGroupFromBand(band);
-  searchData.push(searchGroup);
-
-  return searchData;
 }
 
 /**

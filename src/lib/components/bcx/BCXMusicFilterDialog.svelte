@@ -10,7 +10,6 @@ import type {
   AlbumSearchData,
   ArtistSearchData,
   MusicSearchData,
-  MusicSearchGroup,
 } from './types';
 
 let {
@@ -18,7 +17,7 @@ let {
   portalProps,
   placeholder = 'Type an artist name or album title...',
   emptyMessage = 'No results found.',
-  data = [],
+  data = { artists: [], albums: [] },
   onArtistSelect = null,
   onAlbumSelect = null,
 }: {
@@ -26,7 +25,7 @@ let {
   portalProps?: DialogPrimitive.PortalProps;
   placeholder?: string;
   emptyMessage?: string;
-  data?: MusicSearchData;
+  data: MusicSearchData;
   onArtistSelect?: ((artist: ArtistSearchData) => void) | null;
   onAlbumSelect?: ((album: AlbumSearchData) => void) | null;
 } = $props();
@@ -34,50 +33,45 @@ let {
 // biome-ignore lint: reactive variable declaration
 let searchQuery = $state('');
 
-// Dynamic filtering based on search query
-let filteredData = $derived.by(() => {
-  const query = searchQuery.trim().toLowerCase();
-
-  // Return empty array if no search query
-  if (!query) {
-    return [] as MusicSearchData;
+const filteredData = $derived.by(() => {
+  if (searchQuery.trim().length < 3) {
+    return { artists: [], albums: [] };
   }
 
-  // Filter data based on search query
-  return data
-    .map((group) => {
-      // Separate artists into startsWith and includes groups
-      const startsWithArtists = group.artists.filter((artist) =>
-        artist.name.toLowerCase().startsWith(query),
-      );
-      const includesArtists = group.artists.filter(
-        (artist) =>
-          !artist.name.toLowerCase().startsWith(query) &&
-          artist.name.toLowerCase().includes(query),
-      );
+  const query = searchQuery.trim().toLowerCase();
 
-      // Separate albums into startsWith and includes groups
-      const startsWithAlbums = group.albums.filter(
-        (album) =>
-          album.artist.toLowerCase().startsWith(query) ||
-          album.title.toLowerCase().startsWith(query),
-      );
-      const includesAlbums = group.albums.filter(
-        (album) =>
-          !album.artist.toLowerCase().startsWith(query) &&
-          !album.title.toLowerCase().startsWith(query) &&
-          (album.artist.toLowerCase().includes(query) ||
-            album.title.toLowerCase().includes(query)),
-      );
+  // Filter artists
+  const artistsStartsWith = data.artists.filter((artist) =>
+    artist.name.toLowerCase().startsWith(query),
+  );
+  const artistsIncludes = data.artists.filter(
+    (artist) =>
+      !artist.name.toLowerCase().startsWith(query) &&
+      artist.name.toLowerCase().includes(query),
+  );
 
-      return {
-        name: group.name,
-        artists: [...startsWithArtists, ...includesArtists],
-        albums: [...startsWithAlbums, ...includesAlbums],
-      } as MusicSearchGroup;
-    })
-    .filter((group) => group.artists.length > 0 || group.albums.length > 0);
+  // Filter albums
+  const albumsStartsWith = data.albums.filter(
+    (album) =>
+      album.title.toLowerCase().startsWith(query) ||
+      album.artist.toLowerCase().startsWith(query),
+  );
+  const albumsIncludes = data.albums.filter(
+    (album) =>
+      !album.title.toLowerCase().startsWith(query) &&
+      !album.artist.toLowerCase().startsWith(query) &&
+      (album.title.toLowerCase().includes(query) ||
+        album.artist.toLowerCase().includes(query)),
+  );
+
+  return {
+    artists: [...artistsStartsWith, ...artistsIncludes],
+    albums: [...albumsStartsWith, ...albumsIncludes],
+  };
 });
+
+// Check if we should show search results (3+ characters)
+const shouldShowResults = $derived(searchQuery.trim().length >= 3);
 
 function handleArtistSelect(artist: ArtistSearchData) {
   console.log(`🎵 BCX: Artist selected "${artist.name}"`);
@@ -104,43 +98,49 @@ function handleKeydown(event: KeyboardEvent) {
 
 <svelte:window on:keydown={handleKeydown} />
 
-<Command.Dialog bind:open={open} {portalProps}>
+<Command.Dialog bind:open={open} {portalProps} shouldFilter={false}>
   <Command.Input bind:value={searchQuery} placeholder={placeholder} />
 
   <Command.List>
-      <Command.Empty>{emptyMessage}</Command.Empty>
-
-      {#each filteredData as group (group.name)}
-        {#if group.artists.length > 0 || group.albums.length > 0}
-          <Command.Group heading={group.name}>
-            <!-- Artists in Group -->
-            {#each group.artists as artist}
+      {#if shouldShowResults}
+        {#if filteredData.artists.length > 0}
+          <Command.Group heading="Artists">
+            {#each filteredData.artists as artist}
               <Command.Item onSelect={() => handleArtistSelect(artist)}>
                 <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span>
               </Command.Item>
             {/each}
+          </Command.Group>
+        {/if}
 
-            <!-- Separator if both artists and albums exist in group -->
-            {#if group.artists.length > 0 && group.albums.length > 0}
-              <Command.Separator />
-            {/if}
+        {#if filteredData.albums.length > 0}
+          <!-- Separator if both artists and albums exist -->
+          {#if filteredData.artists.length > 0}
+            <Command.Separator />
+          {/if}
 
-            <!-- Albums in Group -->
-            {#each group.albums as album}
+          <Command.Group heading="Albums">
+            {#each filteredData.albums as album}
               <Command.Item onSelect={() => handleAlbumSelect(album)}>
                 <span>{album.artist} - {album.title}{#if album.year} - {album.year}{/if}</span>
               </Command.Item>
             {/each}
           </Command.Group>
         {/if}
-      {/each}
 
-      <!-- Default content when no search query -->
-      {#if !searchQuery.trim()}
+        {#if filteredData.artists.length === 0 && filteredData.albums.length === 0}
+          <Command.Empty>{emptyMessage}</Command.Empty>
+        {/if}
+      {:else}
+        <!-- Default content when search query is less than 3 characters -->
         <div class="px-4 py-6 text-center">
           <h3 class="text-lg font-medium mb-2">Search Bandcamp</h3>
           <p class="text-sm text-muted-foreground mb-4">
-            Start typing to search for artists, albums, and tracks
+            {#if searchQuery.trim().length === 0}
+              Start typing to search for artists, albums, and tracks
+            {:else}
+              Type at least 3 characters to search
+            {/if}
           </p>
           <div class="flex items-center justify-center gap-1 text-xs text-muted-foreground">
             <kbd class="px-1.5 py-0.5 text-xs bg-muted border rounded">↑</kbd>

@@ -6,7 +6,7 @@
 import Isotope from 'isotope-layout';
 import type { Album } from 'src/bandcamp/album';
 import type { Band } from 'src/bandcamp/band';
-import { createMusicSearchGroupFromBand } from 'src/bandcamp/content/helper';
+import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
@@ -94,14 +94,14 @@ function setup(): void {
 function setupDataList(): void {
   if (!filterInput) return;
 
-  const musicSearchGroup = createMusicSearchGroupFromBand(band);
-  const options = musicSearchGroup.artists.map((artist) =>
+  const musicSearchData = createMusicSearchDataFromBand(band);
+  const options = musicSearchData.artists.map((artist) =>
     artist.albumCount && artist.albumCount > 1
       ? artist.name + ` (${artist.albumCount})`
       : artist.name,
   );
 
-  musicSearchGroup.albums.forEach((album) => {
+  musicSearchData.albums.forEach((album) => {
     options.push(album.artist + ' - ' + album.title);
   });
 
