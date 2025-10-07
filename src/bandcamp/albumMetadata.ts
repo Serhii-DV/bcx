@@ -10,6 +10,10 @@ export class AlbumMetadata implements StorableObject {
     public keywords: string[],
   ) {}
 
+  year(): number {
+    return this.published.getFullYear();
+  }
+
   static create(
     amount: string | number,
     currency: string,

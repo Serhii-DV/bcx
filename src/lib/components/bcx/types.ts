@@ -1,4 +1,7 @@
 // Types for search results
+import type { Album } from 'src/bandcamp/album';
+import type { Band } from 'src/bandcamp/band';
+
 export interface ArtistSearchData {
   name: string;
   albumCount?: number;
@@ -12,6 +15,11 @@ export interface AlbumSearchData {
 }
 
 export interface MusicSearchData {
-  artists: ArtistSearchData[];
-  albums: AlbumSearchData[];
+  bands: Band[];
+  albums: Album[];
 }
+
+export const emptyMusicSearchData: MusicSearchData = {
+  bands: [],
+  albums: [],
+};

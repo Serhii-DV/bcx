@@ -5,12 +5,12 @@ import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
-import type {
-  AlbumSearchData,
-  ArtistSearchData,
-  MusicSearchData,
+import {
+  emptyMusicSearchData,
+  type MusicSearchData,
 } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
+import type { Album } from '../album';
 import type { Band } from '../band';
 import { createMusicSearchDataFromBands } from './helper';
 
@@ -29,7 +29,7 @@ let albumSearchOpen = $state(false);
 let musicSearchData: MusicSearchData = $derived(
   currentPageUrl.isMusic
     ? createMusicSearchDataFromBands(bands)
-    : { artists: [], albums: [] },
+    : emptyMusicSearchData,
 );
 
 function handleKeydown(e: KeyboardEvent) {
@@ -67,16 +67,16 @@ onMount(() => {
   }
 });
 
-function handleArtistSelect(artist: ArtistSearchData) {
+function handleBandSelect(band: Band) {
   // Set the search query for the music filter using the store
-  const searchValue = artist.name;
+  const searchValue = band.name;
   musicFilterStore.setSearchQuery(searchValue);
 
   // Optional: Show confirmation
   console.log(`🔍 BCX: Filtering music grid for artist "${searchValue}"`);
 }
 
-function handleAlbumSelect(album: AlbumSearchData) {
+function handleAlbumSelect(album: Album) {
   // Set the search query for the music filter using the store
   const searchValue = `${album.artist} - ${album.title}`;
   musicFilterStore.setSearchQuery(searchValue);
@@ -127,7 +127,7 @@ Use Ctrl+/ to toggle"
   data={musicSearchData}
   placeholder="Search for artists or albums..."
   emptyMessage="No artists or albums found"
-  onArtistSelect={handleArtistSelect}
+  onBandSelect={handleBandSelect}
   onAlbumSelect={handleAlbumSelect}
 />
 {/if}

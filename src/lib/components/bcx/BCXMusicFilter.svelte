@@ -95,14 +95,10 @@ function setupDataList(): void {
   if (!filterInput) return;
 
   const musicSearchData = createMusicSearchDataFromBand(band);
-  const options = musicSearchData.artists.map((artist) =>
-    artist.albumCount && artist.albumCount > 1
-      ? artist.name + ` (${artist.albumCount})`
-      : artist.name,
-  );
+  const options = musicSearchData.bands.map((band) => band.name);
 
   musicSearchData.albums.forEach((album) => {
-    options.push(album.artist + ' - ' + album.title);
+    options.push(album.artist.toString() + ' - ' + album.title);
   });
 
   createDataListForInput(options, filterInput);
