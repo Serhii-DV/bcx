@@ -8,7 +8,11 @@ import type { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Album } from 'src/bandcamp/album';
 import type { Band } from 'src/bandcamp/band';
 import * as Command from '$lib/components/ui/command/index.js';
-import { emptyMusicSearchData, type MusicSearchData } from './types';
+import {
+  type ArtistSearchData,
+  emptyMusicSearchData,
+  type MusicSearchData,
+} from './types';
 
 let {
   open = $bindable(false),
@@ -17,6 +21,7 @@ let {
   emptyMessage = 'No results found.',
   minSearchLength = 2,
   data = emptyMusicSearchData,
+  onArtistSelect = null,
   onBandSelect = null,
   onAlbumSelect = null,
 }: {
@@ -26,6 +31,7 @@ let {
   emptyMessage?: string;
   minSearchLength?: number;
   data: MusicSearchData;
+  onArtistSelect?: ((artist: ArtistSearchData) => void) | null;
   onBandSelect?: ((band: Band) => void) | null;
   onAlbumSelect?: ((album: Album) => void) | null;
 } = $props();
@@ -39,6 +45,16 @@ const filteredData = $derived.by(() => {
   }
 
   const query = searchQuery.trim().toLowerCase();
+
+  // Filter artists
+  const artistsStartsWith = data.artists.filter((artist) =>
+    artist.name.toLowerCase().startsWith(query),
+  );
+  const artistsIncludes = data.artists.filter(
+    (artist) =>
+      !artist.name.toLowerCase().startsWith(query) &&
+      artist.name.toLowerCase().includes(query),
+  );
 
   // Filter bands
   const bandsStartsWith = data.bands.filter((band) =>
@@ -65,6 +81,7 @@ const filteredData = $derived.by(() => {
   );
 
   return {
+    artists: [...artistsStartsWith, ...artistsIncludes],
     bands: [...bandsStartsWith, ...bandsIncludes],
     albums: [...albumsStartsWith, ...albumsIncludes],
   };
@@ -74,6 +91,14 @@ const filteredData = $derived.by(() => {
 const shouldShowResults = $derived(
   searchQuery.trim().length >= minSearchLength,
 );
+
+function handleArtistSelect(artist: ArtistSearchData) {
+  console.log(`🎤 BCX: Artist selected "${artist.name}"`);
+  if (onArtistSelect) {
+    onArtistSelect(artist);
+  }
+  searchQuery = artist.name;
+}
 
 function handleBandSelect(band: Band) {
   console.log(`🎵 BCX: Band selected "${band.name}"`);
@@ -107,7 +132,22 @@ function handleKeydown(event: KeyboardEvent) {
 
   <Command.List>
       {#if shouldShowResults}
+        {#if filteredData.artists.length > 0}
+          <Command.Group heading="Artists ({filteredData.artists.length} of {data.artists.length})">
+            {#each filteredData.artists as artist}
+              <Command.Item onSelect={() => handleArtistSelect(artist)}>
+                <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span>
+              </Command.Item>
+            {/each}
+          </Command.Group>
+        {/if}
+
         {#if filteredData.bands.length > 0}
+          <!-- Separator if both artists and bands exist -->
+          {#if filteredData.artists.length > 0}
+            <Command.Separator />
+          {/if}
+
           <Command.Group heading="Bands ({filteredData.bands.length} of {data.bands.length})">
             {#each filteredData.bands as band}
               <Command.Item onSelect={() => handleBandSelect(band)}>
@@ -119,7 +159,7 @@ function handleKeydown(event: KeyboardEvent) {
 
         {#if filteredData.albums.length > 0}
           <!-- Separator if both bands and albums exist -->
-          {#if filteredData.bands.length > 0}
+          {#if filteredData.artists.length > 0 || filteredData.bands.length > 0}
             <Command.Separator />
           {/if}
 
@@ -132,12 +172,12 @@ function handleKeydown(event: KeyboardEvent) {
           </Command.Group>
         {/if}
 
-        {#if filteredData.bands.length === 0 && filteredData.albums.length === 0}
+        {#if filteredData.artists.length === 0 && filteredData.bands.length === 0 && filteredData.albums.length === 0}
           <Command.Empty>
             <div class="text-center py-4">
               <p class="text-sm text-muted-foreground mb-2">{emptyMessage}</p>
               <p class="text-xs text-muted-foreground">
-                Available: {data.bands.length} bands, {data.albums.length} albums
+                Available: {data.artists.length} artists, {data.bands.length} bands, {data.albums.length} albums
               </p>
             </div>
           </Command.Empty>
@@ -154,7 +194,7 @@ function handleKeydown(event: KeyboardEvent) {
             {/if}
           </p>
           <p class="text-xs text-muted-foreground mb-4">
-            Available: {data.bands.length} bands, {data.albums.length} albums
+            Available: {data.artists.length} artists, {data.bands.length} bands, {data.albums.length} albums
           </p>
           <div class="flex items-center justify-center gap-1 text-xs text-muted-foreground">
             <kbd class="px-1.5 py-0.5 text-xs bg-muted border rounded">↑</kbd>

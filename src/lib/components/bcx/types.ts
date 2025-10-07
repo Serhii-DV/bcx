@@ -7,19 +7,14 @@ export interface ArtistSearchData {
   albumCount?: number;
 }
 
-export interface AlbumSearchData {
-  url: string;
-  artist: string;
-  title: string;
-  year?: number;
-}
-
 export interface MusicSearchData {
+  artists: ArtistSearchData[];
   bands: Band[];
   albums: Album[];
 }
 
 export const emptyMusicSearchData: MusicSearchData = {
+  artists: [],
   bands: [],
   albums: [],
 };

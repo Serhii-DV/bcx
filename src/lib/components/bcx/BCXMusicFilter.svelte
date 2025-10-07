@@ -95,8 +95,16 @@ function setupDataList(): void {
   if (!filterInput) return;
 
   const musicSearchData = createMusicSearchDataFromBand(band);
-  const options = musicSearchData.bands.map((band) => band.name);
+  const options: string[] = [];
 
+  // Add artists
+  musicSearchData.artists.forEach((artist) => {
+    options.push(artist.name + ' (' + artist.albumCount + ')');
+  });
+
+  // We don't need to show other bands on the band page
+
+  // Add albums
   musicSearchData.albums.forEach((album) => {
     options.push(album.artist.toString() + ' - ' + album.title);
   });
