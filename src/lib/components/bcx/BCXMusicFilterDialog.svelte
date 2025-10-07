@@ -17,6 +17,7 @@ let {
   portalProps,
   placeholder = 'Type an artist name or album title...',
   emptyMessage = 'No results found.',
+  minSearchLength = 2,
   data = { artists: [], albums: [] },
   onArtistSelect = null,
   onAlbumSelect = null,
@@ -25,6 +26,7 @@ let {
   portalProps?: DialogPrimitive.PortalProps;
   placeholder?: string;
   emptyMessage?: string;
+  minSearchLength?: number;
   data: MusicSearchData;
   onArtistSelect?: ((artist: ArtistSearchData) => void) | null;
   onAlbumSelect?: ((album: AlbumSearchData) => void) | null;
@@ -34,7 +36,7 @@ let {
 let searchQuery = $state('');
 
 const filteredData = $derived.by(() => {
-  if (searchQuery.trim().length < 3) {
+  if (searchQuery.trim().length < minSearchLength) {
     return { artists: [], albums: [] };
   }
 
@@ -70,8 +72,10 @@ const filteredData = $derived.by(() => {
   };
 });
 
-// Check if we should show search results (3+ characters)
-const shouldShowResults = $derived(searchQuery.trim().length >= 3);
+// Check if we should show search results (based on minSearchLength)
+const shouldShowResults = $derived(
+  searchQuery.trim().length >= minSearchLength,
+);
 
 function handleArtistSelect(artist: ArtistSearchData) {
   console.log(`🎵 BCX: Artist selected "${artist.name}"`);
@@ -132,14 +136,14 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Empty>{emptyMessage}</Command.Empty>
         {/if}
       {:else}
-        <!-- Default content when search query is less than 3 characters -->
+        <!-- Default content when search query is less than minSearchLength -->
         <div class="px-4 py-6 text-center">
           <h3 class="text-lg font-medium mb-2">Search Bandcamp</h3>
           <p class="text-sm text-muted-foreground mb-4">
             {#if searchQuery.trim().length === 0}
               Start typing to search for artists, albums, and tracks
             {:else}
-              Type at least 3 characters to search
+              Type at least {minSearchLength} characters to search
             {/if}
           </p>
           <div class="flex items-center justify-center gap-1 text-xs text-muted-foreground">
