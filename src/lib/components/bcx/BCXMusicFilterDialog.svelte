@@ -108,7 +108,7 @@ function handleKeydown(event: KeyboardEvent) {
   <Command.List>
       {#if shouldShowResults}
         {#if filteredData.artists.length > 0}
-          <Command.Group heading="Artists">
+          <Command.Group heading="Artists ({filteredData.artists.length} of {data.artists.length})">
             {#each filteredData.artists as artist}
               <Command.Item onSelect={() => handleArtistSelect(artist)}>
                 <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span>
@@ -123,7 +123,7 @@ function handleKeydown(event: KeyboardEvent) {
             <Command.Separator />
           {/if}
 
-          <Command.Group heading="Albums">
+          <Command.Group heading="Albums ({filteredData.albums.length} of {data.albums.length})">
             {#each filteredData.albums as album}
               <Command.Item onSelect={() => handleAlbumSelect(album)}>
                 <span>{album.artist} - {album.title}{#if album.year} - {album.year}{/if}</span>
@@ -133,7 +133,14 @@ function handleKeydown(event: KeyboardEvent) {
         {/if}
 
         {#if filteredData.artists.length === 0 && filteredData.albums.length === 0}
-          <Command.Empty>{emptyMessage}</Command.Empty>
+          <Command.Empty>
+            <div class="text-center py-4">
+              <p class="text-sm text-muted-foreground mb-2">{emptyMessage}</p>
+              <p class="text-xs text-muted-foreground">
+                Available: {data.artists.length} artists, {data.albums.length} albums
+              </p>
+            </div>
+          </Command.Empty>
         {/if}
       {:else}
         <!-- Default content when search query is less than minSearchLength -->
@@ -145,6 +152,9 @@ function handleKeydown(event: KeyboardEvent) {
             {:else}
               Type at least {minSearchLength} characters to search
             {/if}
+          </p>
+          <p class="text-xs text-muted-foreground mb-4">
+            Available: {data.artists.length} artists, {data.albums.length} albums
           </p>
           <div class="flex items-center justify-center gap-1 text-xs text-muted-foreground">
             <kbd class="px-1.5 py-0.5 text-xs bg-muted border rounded">↑</kbd>
