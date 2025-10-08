@@ -4,10 +4,8 @@
  * Main command palette for the BCX extension
  */
 
-import SettingsIcon from '@lucide/svelte/icons/settings';
-import UserIcon from '@lucide/svelte/icons/user';
 import type { Dialog as DialogPrimitive } from 'bits-ui';
-import { ListMusicIcon } from 'lucide-svelte';
+import { ListMusic, Settings, User } from 'lucide-svelte';
 import {
   getMenuBarCollectionButton,
   getMenuBarFeedButton,
@@ -80,7 +78,7 @@ function handleKeydown(event: KeyboardEvent) {
 
     <Command.Group heading="Suggestions">
       <Command.Item onSelect={handleSearchArtistAlbum}>
-        <ListMusicIcon class="mr-2 size-4" />
+        <ListMusic class="mr-2 size-4" />
         <span>Search by artist or album on the page</span>
         <Command.Shortcut>Ctrl+M | ⌘M</Command.Shortcut>
       </Command.Item>
@@ -89,12 +87,12 @@ function handleKeydown(event: KeyboardEvent) {
 
     <Command.Group heading="Bandcamp">
       <Command.Item onSelect={handleFeedSelect}>
-        <UserIcon class="mr-2 size-4" />
+        <User class="mr-2 size-4" />
         <span>Feed</span>
         <Command.Shortcut>⌘E</Command.Shortcut>
       </Command.Item>
       <Command.Item onSelect={handleCollectionSelect}>
-        <SettingsIcon class="mr-2 size-4" />
+        <Settings class="mr-2 size-4" />
         <span>Collection</span>
         <Command.Shortcut>⌘C</Command.Shortcut>
       </Command.Item>
@@ -102,12 +100,12 @@ function handleKeydown(event: KeyboardEvent) {
 
     <Command.Group heading="BCX Extension">
       <Command.Item onSelect={handleProfileSelect}>
-        <UserIcon class="mr-2 size-4" />
+        <User class="mr-2 size-4" />
         <span>Profile</span>
         <Command.Shortcut>⌘P</Command.Shortcut>
       </Command.Item>
       <Command.Item onSelect={handleSettingsSelect}>
-        <SettingsIcon class="mr-2 size-4" />
+        <Settings class="mr-2 size-4" />
         <span>Settings</span>
         <Command.Shortcut>⌘S</Command.Shortcut>
       </Command.Item>
