@@ -44,7 +44,18 @@ export class MusicPage {
     // Try client items data first (faster and more reliable)
     const clientItemsData = musicGridElement.dataset?.clientItems;
     if (clientItemsData) {
-      return this.extractAlbumsFromClientItems(clientItemsData);
+      let musicGridClientItems: MusicGridClientItem[] = [];
+      try {
+        musicGridClientItems = JSON.parse(clientItemsData);
+      } catch (error) {
+        console.warn(
+          '[MusicPage]',
+          'Failed to parse client items data:',
+          error,
+        );
+      }
+
+      return this.extractAlbumsFromMusicGridClientItems(musicGridClientItems);
     }
 
     // Fallback to DOM extraction
@@ -56,28 +67,23 @@ export class MusicPage {
   }
 
   /**
-   * Extracts albums from client items JSON data
-   * @param clientItemsData - JSON string containing client items
+   * Extracts albums from music grid client items
+   * @param items - Array of MusicGridClientItem objects
    * @returns Array of Album objects
    */
-  private extractAlbumsFromClientItems(clientItemsData: string): Album[] {
-    try {
-      const clientItems: MusicGridClientItem[] = JSON.parse(clientItemsData);
+  private extractAlbumsFromMusicGridClientItems(
+    items: MusicGridClientItem[],
+  ): Album[] {
+    const albums = items
+      .map((item) => this.createAlbumFromClientItem(item))
+      .filter((album): album is Album => album !== null);
 
-      const albums = clientItems
-        .map((item) => this.createAlbumFromClientItem(item))
-        .filter((album): album is Album => album !== null);
+    console.log(
+      '[MusicPage]',
+      `Extracted ${albums.length} albums from music grid client items data`,
+    );
 
-      console.log(
-        '[MusicPage]',
-        `Extracted ${albums.length} albums from client items`,
-      );
-      return albums;
-    } catch (error) {
-      console.warn('[MusicPage]', 'Failed to parse client items data:', error);
-    }
-
-    return [];
+    return albums;
   }
 
   /**
@@ -86,12 +92,7 @@ export class MusicPage {
    * @returns Album object or null if creation fails
    */
   private createAlbumFromClientItem(item: MusicGridClientItem): Album | null {
-    const albumUrl = this.getAlbumUrl(item);
-    if (!albumUrl) {
-      console.warn('[MusicPage]', 'No album URL found for item:', item.title);
-      return null;
-    }
-
+    const albumUrl = this.normalizeAlbumUrl(item.page_url);
     const artist = item.artist || this.band.name;
     return Album.create(
       albumUrl,
@@ -117,7 +118,10 @@ export class MusicPage {
       .map((gridItem) => this.extractAlbumFromGridItem(gridItem))
       .filter((album): album is Album => album !== null);
 
-    console.log('[MusicPage]', `Extracted ${albums.length} albums from DOM`);
+    console.log(
+      '[MusicPage]',
+      `Extracted ${albums.length} albums from ".music-grid-item" DOM elements`,
+    );
     return albums;
   }
 
@@ -221,29 +225,6 @@ export class MusicPage {
   private extractBandIdFromElement(gridItem: HTMLElement): number | null {
     const bandId = gridItem.getAttribute('data-band-id');
     return bandId ? parseInt(bandId, 10) : null;
-  }
-
-  /**
-   * Determines the album URL for a given music grid item
-   * @param item - The music grid client item
-   * @param musicGridElement - The music grid DOM element
-   * @returns The album URL as string or Url object, or empty string if not found
-   */
-  private getAlbumUrl(item: MusicGridClientItem): string | Url {
-    if (this.band.id === item.band_id) {
-      return this.band.url.withPath(item.page_url);
-    } else {
-      const albumUrlElement = element(
-        `[data-item-id="album-${item.id}"] a`,
-        this.musicGridElement,
-      );
-
-      if (!albumUrlElement) {
-        return '';
-      }
-
-      return albumUrlElement.getAttribute('href') || '';
-    }
   }
 
   private createBand(): Band {
