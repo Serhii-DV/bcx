@@ -1,6 +1,7 @@
 import { storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element, elements } from 'src/utils/dom';
+import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album';
 import { Band } from '../band';
 import { BandMetadata } from '../bandMetadata';
@@ -47,6 +48,12 @@ export class MusicPage {
       let musicGridClientItems: MusicGridClientItem[] = [];
       try {
         musicGridClientItems = JSON.parse(clientItemsData);
+        console.log(
+          '[MusicPage]',
+          'Music grid client items has',
+          musicGridClientItems.length,
+          'items',
+        );
       } catch (error) {
         console.warn(
           '[MusicPage]',
@@ -80,7 +87,9 @@ export class MusicPage {
 
     console.log(
       '[MusicPage]',
-      `Extracted ${albums.length} albums from music grid client items data`,
+      'Extracted',
+      albums.length,
+      'albums from music grid client items data',
     );
 
     return albums;
@@ -120,8 +129,11 @@ export class MusicPage {
 
     console.log(
       '[MusicPage]',
-      `Extracted ${albums.length} albums from ".music-grid-item" DOM elements`,
+      'Extracted',
+      albums.length,
+      'albums from ".music-grid-item" DOM elements',
     );
+
     return albums;
   }
 
@@ -131,61 +143,98 @@ export class MusicPage {
    * @returns Album object or null if extraction fails
    */
   private extractAlbumFromGridItem(gridItem: HTMLElement): Album | null {
-    // Extract album link - early return if not found
-    const albumLink = element('a', gridItem);
-    if (!albumLink) {
-      console.warn('[MusicPage]', 'No album link found in grid item');
+    try {
+      // Extract album URL
+      const albumLink = element('a', gridItem) as HTMLAnchorElement;
+      if (!albumLink) {
+        throw new Error('No album link found in grid item');
+      }
+
+      const albumUrl = albumLink.getAttribute('href');
+      if (!albumUrl) {
+        throw new Error('No album URL found in grid item');
+      }
+
+      const normalizedAlbumUrl = this.normalizeAlbumUrl(albumUrl);
+
+      // Extract album ID
+      const albumId = this.extractAlbumIdFromElement(gridItem);
+      if (!albumId) {
+        throw new Error('No album ID found in grid item');
+      }
+
+      // Extract title with improved handling
+      const title = this.extractTitleFromGridItem(gridItem);
+
+      // Extract artist with improved logic
+      const artist = this.extractArtistFromGridItem(gridItem);
+
+      // Extract optional IDs with fallbacks
+      const artworkId = this.extractArtworkIdFromElement(gridItem) || 0;
+      const bandId = this.extractBandIdFromElement(gridItem) || this.band.id;
+
+      return Album.create(
+        normalizedAlbumUrl,
+        artist,
+        title,
+        albumId,
+        artworkId,
+        bandId,
+      );
+    } catch (error) {
+      console.warn(
+        '[MusicPage]',
+        'Error extracting album from grid item:',
+        error,
+      );
       return null;
     }
+  }
 
-    const albumUrl = albumLink.getAttribute('href');
-    if (!albumUrl) {
-      console.warn('[MusicPage]', 'No album URL found in grid item');
-      return null;
+  /**
+   * Extracts title from grid item with improved handling of newlines
+   */
+  private extractTitleFromGridItem(gridItem: HTMLElement): string {
+    const titleElement = element('.title', gridItem) as HTMLElement;
+    if (!titleElement) {
+      return 'Unknown Title';
     }
 
-    const normalizedAlbumUrl = this.normalizeAlbumUrl(albumUrl);
+    // Split by newlines and take the first part
+    const titleParts = titleElement.innerText.split('\n');
+    let title = titleParts[0].trim();
 
-    // Extract required IDs
-    const albumId = this.extractAlbumIdFromElement(gridItem);
-    if (!albumId) {
-      console.warn('[MusicPage]', 'No album ID found for grid item');
-      return null;
-    }
+    // Clean the title using existing utilities
+    title = trim(title, ' -\n');
+    title = removeInvisibleChars(title);
 
-    // Extract title - using optional chaining for cleaner code
-    const title =
-      element('p.title', gridItem)?.textContent?.trim() || 'Unknown Title';
+    return title || 'Unknown Title';
+  }
 
-    // Extract artist - prefer data-filter-artist over band name
-    const filterArtist = gridItem.getAttribute('data-filter-artist');
-    const artist =
-      filterArtist?.match(/^([^-]+)\s*-/)?.[1]?.trim() || this.band.name;
+  /**
+   * Extracts artist from grid item with improved fallback logic
+   */
+  private extractArtistFromGridItem(gridItem: HTMLElement): string {
+    // First, try to get artist from artist-override element
+    const artistElement = element('.artist-override', gridItem) as HTMLElement;
+    let artist = artistElement?.innerText || '';
 
-    // Extract optional IDs with fallbacks
-    const artworkId = this.extractArtworkIdFromElement(gridItem) || 0;
-    const bandId = this.extractBandIdFromElement(gridItem) || this.band.id;
+    // Clean the artist name using existing utilities
+    artist = trim(artist, ' -\n');
+    artist = removeInvisibleChars(artist);
 
-    return Album.create(
-      normalizedAlbumUrl,
-      artist,
-      title,
-      albumId,
-      artworkId,
-      bandId,
-    );
+    return artist || this.band.name;
   }
 
   /**
    * Normalizes album URL to absolute path
    * @param albumUrl - The album URL (relative or absolute)
-   * @returns Normalized absolute URL as string or Url object
+   * @returns Normalized absolute URL as Url object
    */
   private normalizeAlbumUrl(albumUrl: string): Url {
-    if (albumUrl.startsWith('https://')) {
-      return new Url(albumUrl);
-    }
-    return this.band.url.withPath(albumUrl);
+    return albumUrl.startsWith('https://')
+      ? new Url(albumUrl)
+      : this.band.url.withPath(albumUrl);
   }
 
   /**
