@@ -73,6 +73,8 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
     },
     dev: {
       writeToDisk: true, // Write files to disk for browser extension development
+      hmr: false, // Disable HMR for browser extension content scripts
+      liveReload: false, // Disable live reload to prevent WebSocket connections
     },
 
     tools: {
