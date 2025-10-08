@@ -18,10 +18,17 @@ interface MusicGridClientItem {
 
 export class MusicPage {
   public band: Band;
+  public musicGridElement: HTMLElement | null = null;
 
   constructor() {
     this.band = this.createBand();
-    this.band.albums = this.findAlbums();
+
+    this.musicGridElement = element('#music-grid');
+    if (!this.musicGridElement) {
+      console.log('[MusicPage]', 'No #music-grid found on this page');
+    }
+
+    this.band.albums = this.findAlbums(this.musicGridElement);
     storage.set(this.band);
   }
 
@@ -29,12 +36,10 @@ export class MusicPage {
    * Finds and extracts all albums from the music grid on the current page
    * @returns Array of Album objects found on the page
    */
-  private findAlbums(): Album[] {
+  private findAlbums(musicGridElement: HTMLElement | null): Album[] {
     const albums: Album[] = [];
-    const musicGridElement = element('#music-grid');
 
     if (!musicGridElement) {
-      console.log('No music grid found on this page');
       return albums;
     }
 
@@ -43,10 +48,10 @@ export class MusicPage {
     );
 
     clientItems.forEach((item: MusicGridClientItem) => {
-      const albumUrl = this.getAlbumUrl(item, musicGridElement);
+      const albumUrl = this.getAlbumUrl(item);
 
       if (!albumUrl) {
-        console.warn('No album URL found for item:', item);
+        console.warn('[MusicPage]', 'No album URL found for item:', item);
         return;
       }
 
@@ -64,6 +69,10 @@ export class MusicPage {
       );
     });
 
+    if (albums.length === 0) {
+      console.log('[MusicPage]', 'No albums found in the music grid');
+    }
+
     return albums;
   }
 
@@ -73,16 +82,13 @@ export class MusicPage {
    * @param musicGridElement - The music grid DOM element
    * @returns The album URL as string or Url object, or empty string if not found
    */
-  private getAlbumUrl(
-    item: MusicGridClientItem,
-    musicGridElement: HTMLElement,
-  ): string | Url {
+  private getAlbumUrl(item: MusicGridClientItem): string | Url {
     if (this.band.id === item.band_id) {
       return this.band.url.withPath(item.page_url);
     } else {
       const albumUrlElement = element(
         `[data-item-id="album-${item.id}"] a`,
-        musicGridElement,
+        this.musicGridElement,
       );
 
       if (!albumUrlElement) {
