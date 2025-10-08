@@ -4,8 +4,9 @@
  */
 
 import Isotope from 'isotope-layout';
-import { getMusicDataFromMusicItems } from 'src/bandcamp/content/helper';
-import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
+import type { Album } from 'src/bandcamp/album';
+import type { Band } from 'src/bandcamp/band';
+import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
@@ -17,10 +18,10 @@ interface MusicGridItem extends HTMLLIElement {
 }
 
 interface Props {
-  musicItems: MusicItem[];
+  band: Band;
 }
 
-let { musicItems }: Props = $props();
+let { band }: Props = $props();
 
 // Component state
 let musicGrid: HTMLElement | null = $state(null);
@@ -93,15 +94,19 @@ function setup(): void {
 function setupDataList(): void {
   if (!filterInput) return;
 
-  const musicData = getMusicDataFromMusicItems(musicItems);
-  const options = musicData.artists.map((artist) =>
-    artist.albumCount && artist.albumCount > 1
-      ? artist.name + ` (${artist.albumCount})`
-      : artist.name,
-  );
+  const musicSearchData = createMusicSearchDataFromBand(band);
+  const options: string[] = [];
 
-  musicData.albums.forEach((album) => {
-    options.push(album.artist + ' - ' + album.title);
+  // Add artists
+  musicSearchData.artists.forEach((artist) => {
+    options.push(artist.name + ' (' + artist.albumCount + ')');
+  });
+
+  // We don't need to show other bands on the band page
+
+  // Add albums
+  musicSearchData.albums.forEach((album) => {
+    options.push(album.artist.toString() + ' - ' + album.title);
   });
 
   createDataListForInput(options, filterInput);
@@ -111,7 +116,7 @@ function initIsotope(): void {
   if (!musicGrid) return;
 
   // Setup items values for filtering
-  musicItems.forEach((item: MusicItem) => {
+  band.albums.forEach((item: Album) => {
     const gridElement = musicGrid?.querySelector(
       '[data-item-id="album-' + item.id + '"]',
     );

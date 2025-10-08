@@ -1,28 +1,36 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
-import { getMusicItems } from 'src/bandcamp/page/music/html';
-import { Url } from 'src/bandcamp/url';
+import { currentPageUrl } from 'src/core/shared';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
-import type { Album, Artist, Data } from '$lib/components/bcx/types';
+import {
+  emptyMusicSearchData,
+  type MusicSearchData,
+} from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
-import { getMusicDataFromMusicItems } from './helper';
+import type { Album } from '../album';
+import type { Band } from '../band';
+import { createMusicSearchDataFromBands } from './helper';
+
+// Props interface
+interface Props {
+  bands?: Band[];
+}
+
+let { bands = [] }: Props = $props();
 
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
-let musicData: Data = $state({
-  artists: [],
-  albums: [],
-});
 
-const pageUrl = new Url(window.location.href);
-
-if (pageUrl.isMusic) {
-  musicData = getMusicDataFromMusicItems(getMusicItems());
-}
+// Derive music search data from bands prop
+let musicSearchData: MusicSearchData = $derived(
+  currentPageUrl.isMusic
+    ? createMusicSearchDataFromBands(bands)
+    : emptyMusicSearchData,
+);
 
 function handleKeydown(e: KeyboardEvent) {
   onCtrlKey('/', e, () => {
@@ -59,9 +67,9 @@ onMount(() => {
   }
 });
 
-function handleArtistSelect(artist: Artist) {
+function handleBandSelect(band: Band) {
   // Set the search query for the music filter using the store
-  const searchValue = artist.name;
+  const searchValue = band.name;
   musicFilterStore.setSearchQuery(searchValue);
 
   // Optional: Show confirmation
@@ -116,10 +124,10 @@ Use Ctrl+/ to toggle"
 <BcxMusicFilterDialog
   bind:open={albumSearchOpen}
   portalProps={{ to: shadowContainer }}
-  data={musicData}
+  data={musicSearchData}
   placeholder="Search for artists or albums..."
   emptyMessage="No artists or albums found"
-  onArtistSelect={handleArtistSelect}
+  onBandSelect={handleBandSelect}
   onAlbumSelect={handleAlbumSelect}
 />
 {/if}

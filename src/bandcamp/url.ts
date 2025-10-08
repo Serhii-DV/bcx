@@ -1,24 +1,25 @@
 import { v5 as uuid5 } from 'uuid';
 
-const host = 'bandcamp.com';
+const bandcampHost = 'bandcamp.com';
 
 export class Url {
   public url: URL;
   public uuid: string;
 
   constructor(url: string) {
-    if (!isValidBandcampUrl(url)) {
-      throw new Error(`Wrong Bandcamp URL: ${url}`);
-    }
-
     try {
       url = removeQueryParams(url);
       url = removeBandcampMusicPath(url);
       this.url = new URL(url);
-      this.uuid = uuid5(url, uuid5.URL);
     } catch (error) {
       throw new Error(`Invalid URL: ${url}`);
     }
+
+    if (!this.isBandcamp) {
+      throw new Error(`Wrong Bandcamp URL: ${url}`);
+    }
+
+    this.uuid = uuid5(url, uuid5.URL);
   }
 
   get hostname(): string {
@@ -66,8 +67,12 @@ export class Url {
     return this.url.pathname;
   }
 
+  get isBandcamp(): boolean {
+    return isValidBandcampUrl(this.toString());
+  }
+
   get isRegular(): boolean {
-    return this.toString().includes('https://' + host);
+    return this.toString().includes('https://' + bandcampHost);
   }
 
   get isMusic(): boolean {
@@ -76,7 +81,7 @@ export class Url {
   }
 
   get isAlbum(): boolean {
-    return this.toString().includes(host + '/album/');
+    return this.toString().includes(bandcampHost + '/album/');
   }
 
   /**
@@ -86,10 +91,28 @@ export class Url {
   toString(): string {
     return this.url.toString();
   }
+
+  static current(): Url {
+    return new Url(window.location.href);
+  }
+
+  /**
+   * Sets a new path for the URL while keeping the current protocol and hostname.
+   * @param newPath The new path to set (should start with '/')
+   * @returns A new Url instance with the updated path
+   */
+  withPath(newPath: string): Url {
+    if (!newPath.startsWith('/')) {
+      newPath = '/' + newPath;
+    }
+
+    const newUrl = `${this.hostnameWithProtocol}${newPath}`;
+    return new Url(newUrl);
+  }
 }
 
 export function isValidBandcampUrl(url: string): boolean {
-  return url.includes(host);
+  return url.includes(bandcampHost);
 }
 
 function removeQueryParams(url: string): string {

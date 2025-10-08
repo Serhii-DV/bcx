@@ -1,52 +1,69 @@
-import type { MusicItem } from 'src/bandcamp/page/music/musicItem';
+import { storage } from 'src/core/shared';
 import { countOccurrences } from 'src/utils/array';
-import type { Album, Artist, Data } from '$lib/components/bcx/types';
+import type {
+  ArtistSearchData,
+  MusicSearchData,
+} from '$lib/components/bcx/types';
+import { Band } from '../band';
 
-export function getMusicDataFromMusicItems(musicItems: MusicItem[]): Data {
-  const values: string[] = [];
-
-  musicItems.forEach((item) => {
-    values.push(...item.artist.names);
-  });
-  const counts = countOccurrences(values.sort());
-  const artists: Artist[] = mapToArtists(counts);
-  const albums: Album[] = musicItems
-    .map((item) => ({
-      url: item.url.toString(),
-      artist: item.artist.toString(),
-      title: item.title,
-    }))
-    .sort((a, b) => {
-      const aKey = `${a.artist} - ${a.title}`;
-      const bKey = `${b.artist} - ${b.title}`;
-      return aKey.localeCompare(bKey);
-    });
-
+export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
   return {
-    artists,
-    albums,
+    artists: createArtistSearchData(band),
+    bands: [band],
+    albums: band.albums,
   };
 }
 
+export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
+  const allArtists: ArtistSearchData[] = [];
+  const allAlbums = bands.flatMap((band) => band.albums);
+
+  // Aggregate all artists from all bands
+  bands.forEach((band) => {
+    const searchData = createMusicSearchDataFromBand(band);
+    allArtists.push(...searchData.artists);
+  });
+
+  return {
+    artists: allArtists,
+    bands: bands,
+    albums: allAlbums,
+  };
+}
+
+export async function getBandsFromStorage(): Promise<Band[]> {
+  // TODO: For better performance, consider maintaining a 'band.ids' index
+  // to avoid loading all storage data. Currently using getAll() for simplicity.
+  const allData = await storage.getAll();
+  const bands: Band[] = [];
+
+  for (const [key, value] of Object.entries(allData)) {
+    if (key.startsWith('band.') && key !== 'band.ids') {
+      const band = Band.fromStorageObject(value);
+      bands.push(band);
+    }
+  }
+
+  return bands;
+}
+
 /**
- * Converts the result from countOccurrences to an array of Artist objects.
+ * Creates artist search data from a band by extracting and counting all artist names
+ * from the band's albums.
  *
- * @param countMap - The Map returned by countOccurrences method
- * @returns An array of Artist objects with name and albumCount
- *
- * @example
- * ```typescript
- * const artists = ['Beatles', 'beatles', 'Queen', 'QUEEN', 'Beatles'];
- * const counts = countOccurrences(artists);
- * const artistObjects = mapToArtists(counts);
- * // Result: [
- * //   { name: 'beatles', albumCount: 3 },
- * //   { name: 'queen', albumCount: 2 }
- * // ]
- * ```
+ * @param band - The band to extract artist data from
+ * @returns An array of ArtistSearchData with names and album counts
  */
-function mapToArtists(countMap: Map<string, number>): Artist[] {
-  return Array.from(countMap.entries()).map(([name, count]) => ({
+function createArtistSearchData(band: Band): ArtistSearchData[] {
+  const albumArtists: string[] = [];
+
+  band.albums.forEach((item) => {
+    albumArtists.push(...item.artist.names);
+  });
+
+  const counts = countOccurrences(albumArtists.sort());
+
+  return Array.from(counts.entries()).map(([name, count]) => ({
     name: name,
     albumCount: count,
   }));

@@ -1,0 +1,131 @@
+import { Album } from 'src/bandcamp/album';
+import { AlbumMetadata } from 'src/bandcamp/albumMetadata';
+import { Price } from '../price';
+import type { AlbumRelease, PropertyValue, Schema } from './schema';
+
+export class AlbumPage {
+  /**
+   * Finds and parses the LD+JSON schema from the page
+   * @return Parsed Schema object or null if not found/failed
+   */
+  static findSchema(): Schema | null {
+    const schemaScript = document.querySelector(
+      'script[type="application/ld+json"]',
+    );
+    if (!schemaScript) {
+      console.warn('No LD+JSON schema found on page');
+      return null;
+    }
+
+    try {
+      const schema = JSON.parse(schemaScript.textContent || '');
+      return schema;
+    } catch (error) {
+      console.error('Failed to parse LD+JSON schema:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Creates an Album object from a Bandcamp Schema JSON-LD data
+   */
+  static createAlbumFromSchema(schema: Schema): Album {
+    // Extract the album ID from the main digital release
+    const digitalRelease = schema.albumRelease.find(
+      (release: AlbumRelease) => release.musicReleaseFormat === 'DigitalFormat',
+    );
+
+    const url = schema.mainEntityOfPage;
+    const artist = schema.byArtist.name;
+    const title = schema.name;
+
+    const albumId =
+      (digitalRelease?.additionalProperty.find(
+        (prop: PropertyValue) => prop.name === 'item_id',
+      )?.value as number) || 0;
+
+    const artworkId =
+      (digitalRelease?.additionalProperty.find(
+        (prop: PropertyValue) => prop.name === 'art_id',
+      )?.value as number) || 0;
+
+    // Some albums may not have a selling_band_id (e.g. compilations)
+    // Default to 0 in such cases
+
+    const bandId =
+      (digitalRelease?.additionalProperty.find(
+        (prop: PropertyValue) => prop.name === 'selling_band_id',
+      )?.value as number) || 0;
+
+    const price = new Price(
+      (digitalRelease?.offers.price as number) || 0,
+      digitalRelease?.offers.priceCurrency || 'USD',
+    );
+
+    const metadata = new AlbumMetadata(
+      price,
+      schema.publisher.name,
+      new Date(schema.datePublished),
+      new Date(schema.dateModified),
+      schema.keywords,
+    );
+
+    return Album.create(
+      url,
+      artist,
+      title,
+      albumId,
+      artworkId,
+      bandId,
+      metadata,
+    );
+  }
+
+  /**
+   * Extract track information from schema
+   */
+  static getTracksFromSchema(schema: Schema) {
+    return schema.track.itemListElement.map((trackItem) => ({
+      position: trackItem.position,
+      name: trackItem.item.name,
+      duration: trackItem.item.duration,
+      url: trackItem.item.mainEntityOfPage,
+      trackId: trackItem.item.additionalProperty.find(
+        (prop: PropertyValue) => prop.name === 'track_id',
+      )?.value as number,
+    }));
+  }
+
+  /**
+   * Extract pricing information from schema
+   */
+  static getPricingFromSchema(schema: Schema) {
+    return schema.albumRelease.map((release: AlbumRelease) => ({
+      format: release.musicReleaseFormat,
+      name: release.name,
+      price: release.offers.price,
+      currency: release.offers.priceCurrency,
+      availability: release.offers.availability,
+      description: release.description,
+      images: release.image,
+    }));
+  }
+
+  /**
+   * Extract publisher/label information from schema
+   */
+  static getPublisherFromSchema(schema: Schema) {
+    return {
+      name: schema.publisher.name,
+      url: schema.publisher['@id'],
+      description: schema.publisher.description,
+      genre: schema.publisher.genre,
+      location: schema.publisher.foundingLocation.name,
+      image: schema.publisher.image,
+      socialLinks: schema.publisher.mainEntityOfPage.map((page) => ({
+        name: page.name,
+        url: page.url,
+      })),
+    };
+  }
+}

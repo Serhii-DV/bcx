@@ -1,4 +1,9 @@
-import { containsOneOf, splitString } from 'src/utils/string';
+import {
+  containsOneOf,
+  removeInvisibleChars,
+  splitString,
+  trim,
+} from 'src/utils/string';
 
 export class Artist {
   public names: string[];
@@ -25,6 +30,13 @@ export class Artist {
   }
 
   static fromString(input: string): Artist {
+    if (input === undefined) {
+      return new Artist(['']);
+    }
+
+    input = trim(input, ' -\n');
+    input = removeInvisibleChars(input);
+
     const useOriginal = containsOneOf(input, ['V/A']);
     const names: string[] = useOriginal
       ? [input]
