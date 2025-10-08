@@ -1,4 +1,5 @@
 import { currentPageUrl } from 'src/core/shared';
+import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';

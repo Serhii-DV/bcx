@@ -1,6 +1,7 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
 import { currentPageUrl } from 'src/core/shared';
+import { console } from 'src/utils/console';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';

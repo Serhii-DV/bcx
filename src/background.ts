@@ -1,4 +1,4 @@
-import 'src/utils/console';
+import { console } from 'src/utils/console';
 
 console.log('Running background script');
 

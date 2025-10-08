@@ -7,6 +7,7 @@
 import type { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Album } from 'src/bandcamp/album';
 import type { Band } from 'src/bandcamp/band';
+import { console } from 'src/utils/console';
 import * as Command from '$lib/components/ui/command/index.js';
 import {
   type ArtistSearchData,

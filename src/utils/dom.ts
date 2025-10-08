@@ -1,3 +1,4 @@
+import { console } from './console';
 import { isString } from './utils';
 
 export function element(

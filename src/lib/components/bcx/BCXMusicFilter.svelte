@@ -7,6 +7,7 @@ import Isotope from 'isotope-layout';
 import type { Album } from 'src/bandcamp/album';
 import type { Band } from 'src/bandcamp/band';
 import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
+import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';

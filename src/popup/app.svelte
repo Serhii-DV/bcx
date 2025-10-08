@@ -2,6 +2,7 @@
 import MoonIcon from '@lucide/svelte/icons/moon';
 import SunIcon from '@lucide/svelte/icons/sun';
 import { ModeWatcher, toggleMode } from 'mode-watcher';
+import { console } from 'src/utils/console';
 import { Button } from '$lib/components/ui/button/index.js';
 import * as Dialog from '$lib/components/ui/dialog/index.js';
 

@@ -1,4 +1,5 @@
 import { currentPageUrl, storage } from 'src/core/shared';
+import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { AlbumPage } from '../page/albumPage';
 

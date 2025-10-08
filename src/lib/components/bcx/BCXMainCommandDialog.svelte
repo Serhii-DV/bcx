@@ -12,6 +12,7 @@ import {
   getMenuBarCollectionButton,
   getMenuBarFeedButton,
 } from 'src/bandcamp/page/menuBar';
+import { console } from 'src/utils/console';
 import * as Command from '$lib/components/ui/command/index.js';
 
 let {

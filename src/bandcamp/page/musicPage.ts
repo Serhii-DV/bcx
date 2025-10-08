@@ -1,4 +1,5 @@
 import { storage } from 'src/core/shared';
+import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
 import { Album } from '../album';
 import { Band } from '../band';

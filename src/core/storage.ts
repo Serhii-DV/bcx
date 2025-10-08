@@ -1,3 +1,5 @@
+import { console } from 'src/utils/console';
+
 export interface StorageObject {
   [key: string]: any;
 }
