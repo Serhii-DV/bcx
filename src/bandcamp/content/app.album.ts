@@ -4,11 +4,11 @@ import { onDOMReady } from 'src/utils/dom';
 import { AlbumPage } from '../page/albumPage';
 
 onDOMReady(() => {
-  console.log('Page Album Content script initialized');
-
   if (!currentPageUrl.isAlbum) {
     return;
   }
+
+  console.log('Start album page content script setup');
 
   const schema = AlbumPage.findSchema();
   console.log('Schema:', schema);
