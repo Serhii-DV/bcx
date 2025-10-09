@@ -42,35 +42,16 @@ export class MusicPage {
       return [];
     }
 
-    // Try client items data first (faster and more reliable)
-    const clientItemsData = musicGridElement.dataset?.clientItems;
-    if (clientItemsData) {
-      let musicGridClientItems: MusicGridClientItem[] = [];
-      try {
-        musicGridClientItems = JSON.parse(clientItemsData);
-        console.log(
-          '[MusicPage]',
-          'Music grid client items has',
-          musicGridClientItems.length,
-          'items',
-        );
-      } catch (error) {
-        console.warn(
-          '[MusicPage]',
-          'Failed to parse client items data:',
-          error,
-        );
-      }
+    // It looks like clientItems data attribute doesn't contain "featured" releases
+    // We can't use this method. Let's use this method as a fallback.
 
-      return this.extractAlbumsFromMusicGridClientItems(musicGridClientItems);
+    const albums = this.extractAlbumsFromDOM(musicGridElement);
+
+    if (!albums.length) {
+      return this.extractAlbumsFromDataAttr(musicGridElement);
     }
 
-    // Fallback to DOM extraction
-    console.log(
-      '[MusicPage]',
-      'No dataset.clientItems found, extracting from DOM elements',
-    );
-    return this.extractAlbumsFromMusicGridElement(musicGridElement);
+    return albums;
   }
 
   /**
@@ -78,21 +59,45 @@ export class MusicPage {
    * @param items - Array of MusicGridClientItem objects
    * @returns Array of Album objects
    */
-  private extractAlbumsFromMusicGridClientItems(
-    items: MusicGridClientItem[],
-  ): Album[] {
-    const albums = items
-      .map((item) => this.createAlbumFromClientItem(item))
-      .filter((album): album is Album => album !== null);
+  private extractAlbumsFromDataAttr(musicGridElement: HTMLElement): Album[] {
+    const clientItemsData = musicGridElement.dataset?.clientItems;
 
-    console.log(
-      '[MusicPage]',
-      'Extracted',
-      albums.length,
-      'albums from music grid client items data',
-    );
+    if (!clientItemsData) {
+      console.log(
+        '[MusicPage]',
+        'No dataset.clientItems found, extracting from DOM elements',
+      );
 
-    return albums;
+      return [];
+    }
+
+    try {
+      const items: MusicGridClientItem[] = JSON.parse(clientItemsData);
+
+      console.log(
+        '[MusicPage]',
+        'Music grid client items has',
+        items.length,
+        'items',
+      );
+
+      const albums = items
+        .map((item) => this.createAlbumFromClientItem(item))
+        .filter((album): album is Album => album !== null);
+
+      console.log(
+        '[MusicPage]',
+        'Extracted',
+        albums.length,
+        'albums from music grid client items data',
+      );
+
+      return albums;
+    } catch (error) {
+      console.warn('[MusicPage]', 'Failed to parse client items data:', error);
+    }
+
+    return [];
   }
 
   /**
@@ -118,9 +123,7 @@ export class MusicPage {
    * @param musicGridElement - The music grid container element
    * @returns Array of Album objects extracted from DOM
    */
-  private extractAlbumsFromMusicGridElement(
-    musicGridElement: HTMLElement,
-  ): Album[] {
+  private extractAlbumsFromDOM(musicGridElement: HTMLElement): Album[] {
     const musicGridItems = elements('.music-grid-item', musicGridElement);
 
     const albums = musicGridItems
