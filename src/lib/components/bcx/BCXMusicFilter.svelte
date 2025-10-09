@@ -14,20 +14,16 @@ import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import filterStyles from './BCXMusicFilter.css?inline';
 
-interface MusicGridItem extends HTMLLIElement {
-  querySelector(selector: string): HTMLElement | null;
-}
-
 interface Props {
   band: Band;
+  musicGrid: HTMLElement;
+  musicGridItems: HTMLElement[];
 }
 
-let { band }: Props = $props();
+let { band, musicGrid, musicGridItems }: Props = $props();
 
 // Component state
-let musicGrid: HTMLElement | null = $state(null);
 let filterInput: HTMLInputElement | null = $state(null);
-let items: MusicGridItem[] = $state([]);
 let debounceTimer: NodeJS.Timeout | null = null;
 let isotope: Isotope | null = null;
 let searchQuery = $state('');
@@ -43,8 +39,20 @@ $effect(() => {
 });
 
 onMount(() => {
-  setup();
+  console.log(
+    '[BCXMusicFilter]',
+    'Initialized with',
+    musicGridItems.length,
+    'DOM elements',
+  );
+
   injectStyles();
+
+  totalCount = musicGridItems.length;
+  visibleCount = musicGridItems.length;
+
+  initIsotope();
+  setupDataList();
 
   // Subscribe to store updates
   storeUnsubscribe = musicFilterStore.subscribe((state) => {
@@ -65,32 +73,6 @@ onDestroy(() => {
     storeUnsubscribe();
   }
 });
-
-function setup(): void {
-  musicGrid = document.getElementById('music-grid');
-
-  if (!musicGrid) {
-    console.log('Bandcamp music grid not found on this page');
-    return;
-  }
-
-  items = Array.from(
-    musicGrid.querySelectorAll('.music-grid-item'),
-  ) as MusicGridItem[];
-
-  if (items.length === 0) {
-    console.log('No music grid items found');
-    return;
-  }
-
-  totalCount = items.length;
-  visibleCount = items.length;
-
-  initIsotope();
-  setupDataList();
-
-  console.log(`Bandcamp Filter initialized with ${items.length} items`);
-}
 
 function setupDataList(): void {
   if (!filterInput) return;
@@ -114,22 +96,19 @@ function setupDataList(): void {
 }
 
 function initIsotope(): void {
-  if (!musicGrid) return;
-
-  // Setup items values for filtering
-  band.albums.forEach((item: Album) => {
-    const gridElement = musicGrid?.querySelector(
-      '[data-item-id="album-' + item.id + '"]',
+  band.albums.forEach((album: Album) => {
+    const gridElement = musicGrid.querySelector(
+      '[data-item-id="album-' + album.id + '"]',
     );
 
     gridElement?.setAttribute(
       'data-filter-value',
-      (item.artist.toString() + ' - ' + item.title).toLowerCase(),
+      (album.artist.toString() + ' - ' + album.title).toLowerCase(),
     );
   });
 
   // Initialize Isotope with options
-  isotope = new Isotope(musicGrid as HTMLElement, {
+  isotope = new Isotope(musicGrid, {
     itemSelector: '.music-grid-item',
     layoutMode: 'fitRows',
   });
@@ -165,8 +144,8 @@ function filterItems(query: string): void {
 
   // Update visible count
   if (query) {
-    const visibleItems = items.filter((item) => {
-      const filterValue = item.getAttribute('data-filter-value') || '';
+    const visibleItems = musicGridItems.filter((musicGridItem) => {
+      const filterValue = musicGridItem.getAttribute('data-filter-value') || '';
       return filterValue.includes(query);
     });
     visibleCount = visibleItems.length;

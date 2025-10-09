@@ -20,6 +20,7 @@ interface MusicGridClientItem {
 export class MusicPage {
   public band: Band;
   public musicGridElement: HTMLElement | null = null;
+  public musicGridItemElements: HTMLElement[];
 
   constructor() {
     this.band = this.createBand();
@@ -29,26 +30,26 @@ export class MusicPage {
       console.log('[MusicPage]', 'No #music-grid found on this page');
     }
 
-    this.band.albums = this.findAlbums(this.musicGridElement);
+    this.musicGridItemElements = elements(
+      '.music-grid-item',
+      this.musicGridElement,
+    );
+    this.band.albums = this.findAlbums();
     storage.set(this.band);
   }
 
   /**
-   * Finds and extracts all albums from the music grid on the current page
+   * Finds and extracts all albums on the current page
    * @returns Array of Album objects found on the page
    */
-  private findAlbums(musicGridElement: HTMLElement | null): Album[] {
-    if (!musicGridElement) {
-      return [];
-    }
-
+  private findAlbums(): Album[] {
     // It looks like clientItems data attribute doesn't contain "featured" releases
     // We can't use this method. Let's use this method as a fallback.
 
-    const albums = this.extractAlbumsFromDOM(musicGridElement);
+    const albums = this.extractAlbumsFromDOM();
 
     if (!albums.length) {
-      return this.extractAlbumsFromDataAttr(musicGridElement);
+      return this.extractAlbumsFromDataAttr();
     }
 
     return albums;
@@ -59,8 +60,8 @@ export class MusicPage {
    * @param items - Array of MusicGridClientItem objects
    * @returns Array of Album objects
    */
-  private extractAlbumsFromDataAttr(musicGridElement: HTMLElement): Album[] {
-    const clientItemsData = musicGridElement.dataset?.clientItems;
+  private extractAlbumsFromDataAttr(): Album[] {
+    const clientItemsData = this.musicGridElement?.dataset?.clientItems;
 
     if (!clientItemsData) {
       console.log(
@@ -120,13 +121,10 @@ export class MusicPage {
 
   /**
    * Extracts album data from DOM elements when dataset.clientItems is not available
-   * @param musicGridElement - The music grid container element
    * @returns Array of Album objects extracted from DOM
    */
-  private extractAlbumsFromDOM(musicGridElement: HTMLElement): Album[] {
-    const musicGridItems = elements('.music-grid-item', musicGridElement);
-
-    const albums = musicGridItems
+  private extractAlbumsFromDOM(): Album[] {
+    const albums = this.musicGridItemElements
       .map((gridItem) => this.extractAlbumFromGridItem(gridItem))
       .filter((album): album is Album => album !== null);
 
