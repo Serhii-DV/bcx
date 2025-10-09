@@ -2,6 +2,7 @@ import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from './album';
 import { BandMetadata } from './bandMetadata';
+import { StorageKey } from './storageKey';
 import { Url } from './url';
 
 export class Band implements Storable {
@@ -30,11 +31,20 @@ export class Band implements Storable {
   }
 
   toStorableData(): StorableData {
-    const key = 'band.' + this.id;
-    return {
+    const key = StorageKey.bandKey(this.id);
+    const urlKey = StorageKey.urlKey(this.url);
+    const bandData: StorableData = {
       [key]: this.toStorageObject(),
-      [this.url.uuid]: key,
+      [urlKey]: key,
     };
+
+    // Add storable data for each album
+    for (const album of this.albums) {
+      const albumStorableData = album.toStorableData();
+      Object.assign(bandData, albumStorableData);
+    }
+
+    return bandData;
   }
 
   toStorageObject(): StorageObject {
@@ -42,20 +52,24 @@ export class Band implements Storable {
       id: this.id,
       name: this.name,
       url: this.url.toString(),
-      albums: this.albums.map((album) => album.toStorageObject()),
+      // Save Album IDs instead of full Album objects to avoid redundancy
+      albums: this.albums.map((album) => album.id),
       metadata: this.metadata.toStorageObject(),
     };
   }
 
-  static fromStorageObject(data: StorageObject): Band {
+  static fromStorageObject(
+    bandStorageObject: StorageObject,
+    albumStorageObjects: StorageObject[],
+  ): Band {
     return Band.create(
-      data.id,
-      data.name,
-      data.url,
-      data.albums.map((albumData: StorageObject) =>
+      bandStorageObject.id,
+      bandStorageObject.name,
+      bandStorageObject.url,
+      albumStorageObjects.map((albumData: StorageObject) =>
         Album.fromStorageObject(albumData),
       ),
-      BandMetadata.fromStorageObject(data.metadata),
+      BandMetadata.fromStorageObject(bandStorageObject.metadata),
     );
   }
 }

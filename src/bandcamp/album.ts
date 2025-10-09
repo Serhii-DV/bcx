@@ -3,6 +3,7 @@ import { removeInvisibleChars } from 'src/utils/string';
 import { AlbumMetadata } from './albumMetadata';
 import { Artist } from './artist';
 import { Artwork } from './artwork';
+import { StorageKey } from './storageKey';
 import { Url } from './url';
 
 export class Album implements Storable {
@@ -39,10 +40,11 @@ export class Album implements Storable {
   }
 
   toStorableData(): StorableData {
-    const key = 'album.' + this.id;
+    const key = StorageKey.albumKey(this.id);
+    const urlKey = StorageKey.urlKey(this.url);
     return {
       [key]: this.toStorageObject(),
-      [this.url.uuid]: key,
+      [urlKey]: key,
     };
   }
 

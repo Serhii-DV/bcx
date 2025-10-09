@@ -1,4 +1,3 @@
-import { storage } from 'src/core/shared';
 import { countOccurrences } from 'src/utils/array';
 import type {
   ArtistSearchData,
@@ -29,22 +28,6 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
     bands: bands,
     albums: allAlbums,
   };
-}
-
-export async function getBandsFromStorage(): Promise<Band[]> {
-  // TODO: For better performance, consider maintaining a 'band.ids' index
-  // to avoid loading all storage data. Currently using getAll() for simplicity.
-  const allData = await storage.getAll();
-  const bands: Band[] = [];
-
-  for (const [key, value] of Object.entries(allData)) {
-    if (key.startsWith('band.') && key !== 'band.ids') {
-      const band = Band.fromStorageObject(value);
-      bands.push(band);
-    }
-  }
-
-  return bands;
 }
 
 /**
