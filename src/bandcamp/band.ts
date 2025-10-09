@@ -58,18 +58,13 @@ export class Band implements Storable {
     };
   }
 
-  static fromStorageObject(
-    bandStorageObject: StorageObject,
-    albumStorageObjects: StorageObject[],
-  ): Band {
+  static fromStorageObject(band: StorageObject, albums: StorageObject[]): Band {
     return Band.create(
-      bandStorageObject.id,
-      bandStorageObject.name,
-      bandStorageObject.url,
-      albumStorageObjects.map((albumData: StorageObject) =>
-        Album.fromStorageObject(albumData),
-      ),
-      BandMetadata.fromStorageObject(bandStorageObject.metadata),
+      band.id,
+      band.name,
+      band.url,
+      albums.map((album: StorageObject) => Album.fromStorageObject(album)),
+      BandMetadata.fromStorageObject(band.metadata),
     );
   }
 }

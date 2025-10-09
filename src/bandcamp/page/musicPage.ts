@@ -1,10 +1,10 @@
-import { storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album';
 import { Band } from '../band';
 import { BandMetadata } from '../bandMetadata';
+import { BandcampStorage } from '../storage';
 import { Url } from '../url';
 
 interface MusicGridClientItem {
@@ -35,7 +35,7 @@ export class MusicPage {
       this.musicGridElement,
     );
     this.band.albums = this.findAlbums();
-    storage.set(this.band);
+    BandcampStorage.saveBand(this.band);
   }
 
   /**

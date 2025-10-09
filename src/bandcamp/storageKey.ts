@@ -1,7 +1,8 @@
 import type { Url } from './url';
 
-export const BAND_KEY_PREFIX = 'b';
-export const ALBUM_KEY_PREFIX = 'a';
+const BAND_KEY_PREFIX = '/b';
+const ALBUM_KEY_PREFIX = '/a';
+const BANDS_KEY = '/bands';
 
 export class StorageKey {
   static bandKey(bandId: number): string {
@@ -22,5 +23,13 @@ export class StorageKey {
 
   static isAlbumKey(key: string): boolean {
     return key.startsWith(ALBUM_KEY_PREFIX);
+  }
+
+  static bandsKey(): string {
+    return BANDS_KEY;
+  }
+
+  static isBandsKey(key: string): boolean {
+    return key === BANDS_KEY;
   }
 }
