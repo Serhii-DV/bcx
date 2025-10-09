@@ -8,12 +8,12 @@ import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { getBandsFromStorage } from './helper';
 
-console.log('Bandcamp content app module!');
-
 onDOMReady(async () => {
   if (!currentPageUrl.isBandcamp) {
     return;
   }
+
+  console.log('Start all pages content script setup');
 
   const container = document.createElement('div');
   container.id = 'bcx-app';

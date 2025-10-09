@@ -1,5 +1,4 @@
 import { currentPageUrl } from 'src/core/shared';
-import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
@@ -12,20 +11,12 @@ onDOMReady(() => {
 
   const musicPage = new MusicPage();
   const band = musicPage.band;
+  const musicGrid = musicPage.musicGridElement;
 
-  if (band.albums.length === 0) {
-    console.log('No albums found on this page');
+  if (!musicGrid || band.albums.length === 0) {
     return;
   }
 
-  // Create a container for the music filter component
-  const musicGrid = document.getElementById('music-grid');
-  if (!musicGrid) {
-    console.log('Music grid not found on this page');
-    return;
-  }
-
-  // Create container element for the Svelte component
   const filterContainer = document.createElement('div');
   filterContainer.id = 'bcx-music-filter';
 
@@ -34,15 +25,12 @@ onDOMReady(() => {
     musicGrid.parentNode.insertBefore(filterContainer, musicGrid);
   }
 
-  // Mount the Svelte component using Svelte 5 syntax
   mount(BCXMusicFilter, {
     target: filterContainer,
     props: {
       band,
+      musicGrid,
+      musicGridItems: musicPage.musicGridItemElements,
     },
   });
-
-  console.log(
-    `BCX Music Filter component mounted with ${band.albums.length} items`,
-  );
 });
