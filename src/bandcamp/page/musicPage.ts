@@ -157,12 +157,7 @@ export class MusicPage {
       }
 
       const normalizedAlbumUrl = this.normalizeAlbumUrl(albumUrl);
-
-      // Extract album ID
       const albumId = this.extractAlbumIdFromElement(gridItem);
-      if (!albumId) {
-        throw new Error('No album ID found in grid item');
-      }
 
       // Extract title with improved handling
       const title = this.extractTitleFromGridItem(gridItem);
@@ -185,7 +180,7 @@ export class MusicPage {
     } catch (error) {
       console.warn(
         '[MusicPage]',
-        'Error extracting album from grid item:',
+        'Error extracting album from grid item\n',
         error,
       );
       return null;
@@ -240,14 +235,26 @@ export class MusicPage {
 
   /**
    * Extracts album ID from DOM element
+   * @throws Error if album ID is not found or invalid
    */
-  private extractAlbumIdFromElement(gridItem: HTMLElement): number | null {
+  private extractAlbumIdFromElement(gridItem: HTMLElement): number {
     // Try to get from data-item-id attribute first
     const itemId = gridItem.getAttribute('data-item-id');
-    if (!itemId) return null;
+
+    if (!itemId) {
+      throw new Error('No data-item-id attribute found in grid item');
+    }
 
     const match = itemId.match(/album-(\d+)/);
-    return match ? parseInt(match[1], 10) : null;
+    const albumId = match ? parseInt(match[1], 10) : null;
+
+    if (!albumId) {
+      throw new Error(
+        `Invalid album ID format. Expected "album-<id>". Got "${itemId}"`,
+      );
+    }
+
+    return albumId;
   }
 
   /**
