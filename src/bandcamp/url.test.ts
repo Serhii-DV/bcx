@@ -165,3 +165,21 @@ describe('isValidBandcampURL', () => {
     expect(isValidBandcampUrl(invalidUrl)).toBe(false);
   });
 });
+
+describe('withPath', () => {
+  it('should return a new Url instance with the updated path', () => {
+    const validUrl = 'https://artist.bandcamp.com/album/album-name';
+    const bandcampUrl = new Url(validUrl);
+    const newPath = '/music';
+    const newUrl = bandcampUrl.withPath(newPath);
+    expect(newUrl.toString()).toBe('https://artist.bandcamp.com/music');
+  });
+
+  it('should add a leading slash if not present in the new path', () => {
+    const validUrl = 'https://artist.bandcamp.com/album/album-name';
+    const bandcampUrl = new Url(validUrl);
+    const newPath = 'music';
+    const newUrl = bandcampUrl.withPath(newPath);
+    expect(newUrl.toString()).toBe('https://artist.bandcamp.com/music');
+  });
+});
