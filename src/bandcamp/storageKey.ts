@@ -1,7 +1,9 @@
 import type { Url } from './url';
 
-const BAND_KEY_PREFIX = '/b';
-const ALBUM_KEY_PREFIX = '/a';
+// We use `/` at the start to avoid potential collisions with other keys and namespaces
+// Also, it shows up nicely in the storage viewer before UUID values
+const BAND_KEY_PREFIX = '/b/';
+const ALBUM_KEY_PREFIX = '/a/';
 const BANDS_KEY = '/bands';
 
 export class StorageKey {
