@@ -10,16 +10,12 @@ onDOMReady(() => {
 
   console.log('Start album page content script setup');
 
-  const schema = AlbumPage.findSchema();
-  console.log('Schema:', schema);
-
-  if (!schema) {
-    return;
+  try {
+    const albumPage = new AlbumPage();
+    storage.set(albumPage.album).catch((error) => {
+      console.error('Failed to store album in storage:', error);
+    });
+  } catch (error) {
+    console.error('Failed to initialize AlbumPage:', error);
   }
-
-  const album = AlbumPage.createAlbumFromSchema(schema);
-  console.log('Album extracted from schema:', album);
-  storage.set(album).catch((error) => {
-    console.error('Failed to store album in storage:', error);
-  });
 });

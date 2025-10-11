@@ -1,3 +1,5 @@
+import { element } from 'src/utils/dom';
+
 export interface Schema {
   '@type': string;
   '@id': string;
@@ -103,4 +105,22 @@ export interface Person {
   image?: string;
   additionalProperty?: PropertyValue[];
   name?: string;
+}
+
+/**
+ * Finds and parses the LD+JSON schema from the page
+ * @return Parsed Schema object or null if not found/failed
+ */
+export function getSchema(): Schema {
+  const schemaScript = element('script[type="application/ld+json"]');
+
+  if (!schemaScript) {
+    throw new Error('No LD+JSON schema script tag found on page');
+  }
+
+  try {
+    return JSON.parse(schemaScript.textContent || '') as Schema;
+  } catch (error) {
+    throw new Error('Failed to parse LD+JSON schema', { cause: error });
+  }
 }
