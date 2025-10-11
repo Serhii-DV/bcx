@@ -121,6 +121,20 @@ describe('BandcampURL', () => {
     });
   });
 
+  describe('isTrack', () => {
+    it('should return true for Bandcamp track pages', () => {
+      const validUrl = 'https://artist.bandcamp.com/track/track-name';
+      const bandcampUrl = new Url(validUrl);
+      expect(bandcampUrl.isTrack).toBe(true);
+    });
+
+    it('should return false for non-track Bandcamp pages', () => {
+      const validUrl = 'https://artist.bandcamp.com/album/album-name';
+      const bandcampUrl = new Url(validUrl);
+      expect(bandcampUrl.isTrack).toBe(false);
+    });
+  });
+
   describe('toString', () => {
     it('should return the full URL as a string', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';

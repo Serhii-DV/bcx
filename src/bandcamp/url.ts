@@ -9,7 +9,6 @@ export class Url {
   constructor(url: string) {
     try {
       url = removeQueryParams(url);
-      url = removeBandcampMusicPath(url);
       this.url = new URL(url);
     } catch (error) {
       throw new Error(`Invalid URL: ${url}`);
@@ -84,6 +83,10 @@ export class Url {
     return this.toString().includes(bandcampHost + '/album/');
   }
 
+  get isTrack(): boolean {
+    return this.toString().includes(bandcampHost + '/track/');
+  }
+
   /**
    * Returns the full URL as a string.
    * @returns The string representation of the URL.
@@ -118,17 +121,5 @@ export function isValidBandcampUrl(url: string): boolean {
 function removeQueryParams(url: string): string {
   const urlObj = new URL(url);
   urlObj.search = '';
-  return urlObj.toString();
-}
-
-function removeBandcampMusicPath(url: string): string {
-  const urlObj = new URL(url);
-  const segments = urlObj.pathname.split('/').filter(Boolean);
-
-  if (segments[segments.length - 1] === 'music') {
-    segments.pop();
-    urlObj.pathname = '/' + segments.join('/');
-  }
-
   return urlObj.toString();
 }
