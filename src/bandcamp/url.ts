@@ -33,6 +33,13 @@ export class Url {
   }
 
   /**
+   * Returns the base band URL.
+   */
+  get bandUrl(): Url {
+    return new Url(this.hostnameWithProtocol);
+  }
+
+  /**
    * Returns the subdomain of the URL's hostname or an empty string if none exists.
    */
   get subdomain(): string {
@@ -109,8 +116,7 @@ export class Url {
       newPath = '/' + newPath;
     }
 
-    const newUrl = `${this.hostnameWithProtocol}${newPath}`;
-    return new Url(newUrl);
+    return new Url(`${this.hostnameWithProtocol}${newPath}`);
   }
 }
 

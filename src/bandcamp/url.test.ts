@@ -42,6 +42,16 @@ describe('BandcampURL', () => {
     });
   });
 
+  describe('bandUrl', () => {
+    it('should return the base band URL', () => {
+      const validUrl = 'https://artist.bandcamp.com/album/album-name';
+      const bandcampUrl = new Url(validUrl);
+      expect(bandcampUrl.bandUrl.toString()).toBe(
+        'https://artist.bandcamp.com/',
+      );
+    });
+  });
+
   describe('subdomain', () => {
     it('should return the subdomain of the URL', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';
