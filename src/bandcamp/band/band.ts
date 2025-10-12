@@ -3,7 +3,7 @@ import type { Album } from '../album';
 import { StorageKey } from '../storageKey';
 import type { Track } from '../track/track';
 import type { Url } from '../url';
-import type { BandMetadata } from './bandMetadata';
+import type { BandMetadata } from './metadata';
 
 export class Band implements Storable {
   constructor(

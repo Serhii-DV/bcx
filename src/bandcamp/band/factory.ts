@@ -5,7 +5,7 @@ import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import { Url } from '../url';
 import { Band } from './band';
-import { BandMetadata } from './bandMetadata';
+import { BandMetadata } from './metadata';
 
 export class BandFactory {
   static create(
