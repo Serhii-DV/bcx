@@ -39,10 +39,10 @@ export class MusicPage {
       this.musicGridElement,
     );
     const releases = this.findReleases();
-    this.band.albums = releases.filter(
+    this.band.metadata.albums = releases.filter(
       (release): release is Album => release instanceof Album,
     );
-    this.band.tracks = releases.filter(
+    this.band.metadata.tracks = releases.filter(
       (release): release is Track => release instanceof Track,
     );
   }
@@ -325,8 +325,6 @@ export class MusicPage {
       bandData.id,
       bandData.name,
       bandData.url,
-      [],
-      [],
       bandMetadata,
     );
 

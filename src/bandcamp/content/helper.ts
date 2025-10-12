@@ -9,13 +9,13 @@ export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
   return {
     artists: createArtistSearchData(band),
     bands: [band],
-    albums: band.albums,
+    albums: band.metadata.albums,
   };
 }
 
 export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
   const allArtists: ArtistSearchData[] = [];
-  const allAlbums = bands.flatMap((band) => band.albums);
+  const allAlbums = bands.flatMap((band) => band.metadata.albums);
 
   // Aggregate all artists from all bands
   bands.forEach((band) => {
@@ -40,7 +40,7 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
 function createArtistSearchData(band: Band): ArtistSearchData[] {
   const albumArtists: string[] = [];
 
-  band.albums.forEach((item) => {
+  band.metadata.albums.forEach((item) => {
     albumArtists.push(...item.artist.names);
   });
 

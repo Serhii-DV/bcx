@@ -6,7 +6,7 @@
 
 import type { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Album } from 'src/bandcamp/album';
-import type { Band } from 'src/bandcamp/band';
+import type { Band } from 'src/bandcamp/band/band';
 import { console } from 'src/utils/console';
 import * as Command from '$lib/components/ui/command/index.js';
 import {
@@ -152,7 +152,7 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Bands ({filteredData.bands.length} of {data.bands.length})">
             {#each filteredData.bands as band}
               <Command.Item onSelect={() => handleBandSelect(band)}>
-                <span>{band.name}{#if band.albums?.length}&nbsp;({band.albums.length}){/if}</span>
+                <span>{band.name}{#if band.metadata.albums?.length}&nbsp;({band.metadata.albums.length}){/if}</span>
               </Command.Item>
             {/each}
           </Command.Group>

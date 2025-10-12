@@ -1,8 +1,10 @@
 import { storage } from 'src/core/shared';
-import type { StorageObject } from 'src/core/storage';
+import type { StorableData } from 'src/core/storage';
+import { Album } from './album';
 import { Band } from './band/band';
 import { BandFactory } from './band/factory';
 import { StorageKey } from './storageKey';
+import { TrackFactory } from './track/factory';
 import type { Track } from './track/track';
 
 export class BandcampStorage {
@@ -25,74 +27,88 @@ export class BandcampStorage {
       return [];
     }
 
-    // Prepare all keys to load in one storage call
-    const bandKeys: string[] = bandIds.map((id) => StorageKey.bandKey(id));
+    const bandsData = await this.loadBandsStorableData(bandIds);
 
-    // Load all band data in single call
-    const bandsData = await storage.get(bandKeys);
+    // Collect release keys from loaded band data
+    const releaseKeys: string[] = [];
+    for (const key in bandsData) {
+      if (typeof bandsData[key] !== 'object') {
+        delete bandsData[key];
+      }
 
-    // Collect album keys from loaded band data
-    const albumKeys: string[] = [];
-    for (const bandKey of bandKeys) {
-      const objBand = bandsData[bandKey];
-      objBand?.albums.forEach((albumId: number) => {
+      const objBand = bandsData[key];
+      objBand?.metadata?.albums.forEach((albumId: number) => {
         const albumKey = StorageKey.albumKey(albumId);
-        if (albumKeys.includes(albumKey)) return;
-        albumKeys.push(albumKey);
+        if (releaseKeys.includes(albumKey)) return;
+        releaseKeys.push(albumKey);
+      });
+      objBand?.metadata?.tracks.forEach((trackId: number) => {
+        const trackKey = StorageKey.trackKey(trackId);
+        if (releaseKeys.includes(trackKey)) return;
+        releaseKeys.push(trackKey);
       });
     }
 
-    // Load album data if needed
-    const albumData = albumKeys.length
-      ? await storage.get(Array.from(albumKeys))
+    // Load releases data if needed
+    const releaseObjs = releaseKeys.length
+      ? await storage.get(Array.from(releaseKeys))
       : {};
 
     // Create bands from loaded data
     const bands: Band[] = [];
-    bandKeys.forEach((bandKey) => {
-      const objBand = bandsData[bandKey];
-      if (!objBand) return;
-      const band = this.createBandFromStorageObject(objBand, albumData);
-      if (!band) return;
+
+    for (const key in bandsData) {
+      if (typeof bandsData[key] !== 'object') {
+        continue;
+      }
+
+      const objBand = bandsData[key];
+      if (!objBand) continue;
+      const band = this.createBandFromStorageObject(objBand, releaseObjs);
+      if (!band) continue;
 
       bands.push(band);
-    });
+    }
 
     return bands;
   }
 
   private static createBandFromStorageObject(
     bandObj: any,
-    albumsObj: { [key: string]: any },
+    releaseObjs: StorableData,
   ): Band | null {
     if (!bandObj || typeof bandObj !== 'object') {
       return null;
     }
 
-    const albumIds: number[] = bandObj.albums || [];
-    if (albumIds.length === 0) {
-      return BandFactory.fromStorage(bandObj, [], []);
+    const albumIds: number[] = bandObj.metadata.albums || [];
+    const trackIds: number[] = bandObj.metadata.tracks || [];
+
+    if (albumIds.length === 0 && trackIds.length === 0) {
+      return BandFactory.fromStorage(bandObj);
     }
 
-    const albumObjs: StorageObject[] = [];
+    const albums: Album[] = [];
     albumIds.forEach((albumId) => {
       const albumKey = StorageKey.albumKey(albumId);
-      const albumObj = albumsObj[albumKey];
+      const albumObj = releaseObjs[albumKey];
       if (!albumObj) return;
-      albumObjs.push(albumObj);
+      albums.push(Album.fromStorageObject(albumObj));
     });
 
-    const trackObjs: StorageObject[] = [];
-    if (bandObj.tracks && Array.isArray(bandObj.tracks)) {
-      bandObj.tracks.forEach((trackId: number) => {
-        const trackKey = StorageKey.trackKey(trackId);
-        const trackObj = albumsObj[trackKey];
-        if (!trackObj) return;
-        trackObjs.push(trackObj);
-      });
-    }
+    const tracks: Track[] = [];
+    trackIds.forEach((trackId) => {
+      const trackKey = StorageKey.trackKey(trackId);
+      const trackObj = releaseObjs[trackKey];
+      if (!trackObj) return;
+      tracks.push(TrackFactory.fromStorage(trackObj));
+    });
 
-    return BandFactory.fromStorage(bandObj, albumObjs, trackObjs);
+    const band = BandFactory.fromStorage(bandObj);
+    band.metadata.albums = albums;
+    band.metadata.tracks = tracks;
+
+    return band;
   }
 
   private static async getBandsIds(): Promise<number[]> {
@@ -100,6 +116,16 @@ export class BandcampStorage {
     const bandIds: number[] =
       (await storage.getByKey<number[]>(bandsKey)) || [];
     return bandIds;
+  }
+
+  private static async loadBandsStorableData(
+    bandIds: number[],
+  ): Promise<StorableData> {
+    // Prepare all keys to load in one storage call
+    const bandKeys: string[] = bandIds.map((id) => StorageKey.bandKey(id));
+
+    // Load all band data in single call
+    return await storage.get(bandKeys);
   }
 
   static async saveTrack(track: Track): Promise<void> {

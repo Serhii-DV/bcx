@@ -1,5 +1,4 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
-import type { Album } from '../album';
 import { StorageKey } from '../storageKey';
 import type { Track } from '../track/track';
 import type { Url } from '../url';
@@ -10,10 +9,16 @@ export class Band implements Storable {
     public id: number,
     public name: string,
     public url: Url,
-    public albums: Album[],
-    public tracks: Track[],
     public metadata: BandMetadata,
   ) {}
+
+  get hasReleases(): boolean {
+    return this.metadata.albums.length > 0 || this.metadata.tracks.length > 0;
+  }
+
+  get tracks(): Track[] {
+    return this.metadata.tracks;
+  }
 
   toStorableData(): StorableData {
     const key = StorageKey.bandKey(this.id);
@@ -24,13 +29,13 @@ export class Band implements Storable {
     };
 
     // Add storable data for each album
-    for (const album of this.albums) {
+    for (const album of this.metadata.albums) {
       const albumStorableData = album.toStorableData();
       Object.assign(bandData, albumStorableData);
     }
 
     // Add storable data for each track
-    for (const track of this.tracks) {
+    for (const track of this.metadata.tracks) {
       const trackStorableData = track.toStorableData();
       Object.assign(bandData, trackStorableData);
     }
@@ -43,10 +48,6 @@ export class Band implements Storable {
       id: this.id,
       name: this.name,
       url: this.url.toString(),
-      // Save Album IDs instead of full Album objects to avoid redundancy
-      albums: this.albums.map((album) => album.id),
-      // Save Track IDs instead of full Track objects to avoid redundancy
-      tracks: this.tracks.map((track) => track.id),
       metadata: this.metadata.toStorageObject(),
     };
   }

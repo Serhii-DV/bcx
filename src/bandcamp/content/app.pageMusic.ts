@@ -14,7 +14,7 @@ onDOMReady(() => {
   const band = musicPage.band;
   const musicGrid = musicPage.musicGridElement;
 
-  if (!musicGrid || band.albums.length === 0) {
+  if (!musicGrid || !band.hasReleases) {
     return;
   }
 
