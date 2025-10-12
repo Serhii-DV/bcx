@@ -4,9 +4,9 @@ import { console } from 'src/utils/console';
 import { Price } from '../price';
 import {
   type AlbumRelease,
-  getSchema,
+  getMusicAlbumSchema,
+  type MusicAlbumSchema,
   type PropertyValue,
-  type Schema,
 } from './schema';
 
 export class AlbumPage {
@@ -16,7 +16,7 @@ export class AlbumPage {
    * @throws Error if schema is not found or invalid
    */
   constructor() {
-    const schema = getSchema();
+    const schema = getMusicAlbumSchema();
     console.log('[AlbumPage]', 'Schema extracted from page:', schema);
     this.album = this.createAlbumFromSchema(schema!);
     console.log('[AlbumPage]', 'Album extracted from schema:', this.album);
@@ -25,7 +25,7 @@ export class AlbumPage {
   /**
    * Creates an Album object from a Bandcamp Schema JSON-LD data
    */
-  private createAlbumFromSchema(schema: Schema): Album {
+  private createAlbumFromSchema(schema: MusicAlbumSchema): Album {
     // Extract the album ID from the main digital release
     const digitalRelease = schema.albumRelease.find(
       (release: AlbumRelease) => release.musicReleaseFormat === 'DigitalFormat',
@@ -80,7 +80,7 @@ export class AlbumPage {
   /**
    * Extract track information from schema
    */
-  static getTracksFromSchema(schema: Schema) {
+  static getTracksFromSchema(schema: MusicAlbumSchema) {
     return schema.track.itemListElement.map((trackItem) => ({
       position: trackItem.position,
       name: trackItem.item.name,
@@ -95,7 +95,7 @@ export class AlbumPage {
   /**
    * Extract pricing information from schema
    */
-  static getPricingFromSchema(schema: Schema) {
+  static getPricingFromSchema(schema: MusicAlbumSchema) {
     return schema.albumRelease.map((release: AlbumRelease) => ({
       format: release.musicReleaseFormat,
       name: release.name,
@@ -110,7 +110,7 @@ export class AlbumPage {
   /**
    * Extract publisher/label information from schema
    */
-  static getPublisherFromSchema(schema: Schema) {
+  static getPublisherFromSchema(schema: MusicAlbumSchema) {
     return {
       name: schema.publisher.name,
       url: schema.publisher['@id'],
