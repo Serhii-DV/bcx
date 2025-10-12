@@ -3,6 +3,7 @@ import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
 import { MusicPage } from '../page/musicPage';
+import { BandcampStorage } from '../storage';
 
 onDOMReady(() => {
   if (!currentPageUrl.isMusic) {
@@ -16,6 +17,8 @@ onDOMReady(() => {
   if (!musicGrid || band.albums.length === 0) {
     return;
   }
+
+  BandcampStorage.saveBand(band);
 
   const filterContainer = document.createElement('div');
   filterContainer.id = 'bcx-music-filter';

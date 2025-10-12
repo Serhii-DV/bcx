@@ -4,7 +4,6 @@ import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album';
 import { Band } from '../band';
 import { BandMetadata } from '../bandMetadata';
-import { BandcampStorage } from '../storage';
 import { Url } from '../url';
 
 interface MusicGridClientItem {
@@ -35,7 +34,6 @@ export class MusicPage {
       this.musicGridElement,
     );
     this.band.albums = this.findAlbums();
-    BandcampStorage.saveBand(this.band);
   }
 
   /**
