@@ -5,6 +5,8 @@ import { Album } from '../album';
 import { Band } from '../band/band';
 import { BandMetadata } from '../band/bandMetadata';
 import { BandFactory } from '../band/factory';
+import { TrackFactory } from '../track/factory';
+import { Track } from '../track/track';
 import { Url } from '../url';
 
 interface MusicGridClientItem {
@@ -16,6 +18,8 @@ interface MusicGridClientItem {
   title: string;
   type: string;
 }
+
+type Release = Album | Track;
 
 export class MusicPage {
   public band: Band;
@@ -34,18 +38,24 @@ export class MusicPage {
       '.music-grid-item',
       this.musicGridElement,
     );
-    this.band.albums = this.findAlbums();
+    const releases = this.findReleases();
+    this.band.albums = releases.filter(
+      (release): release is Album => release instanceof Album,
+    );
+    this.band.tracks = releases.filter(
+      (release): release is Track => release instanceof Track,
+    );
   }
 
   /**
-   * Finds and extracts all albums on the current page
-   * @returns Array of Album objects found on the page
+   * Finds and extracts all releases on the current page
+   * @returns Array of Release objects found on the page
    */
-  private findAlbums(): Album[] {
+  private findReleases(): Release[] {
     // It looks like clientItems data attribute doesn't contain "featured" releases
     // We can't use this method. Let's use this method as a fallback.
 
-    const albums = this.extractAlbumsFromDOM();
+    const albums = this.extractReleasesFromDOM();
 
     if (!albums.length) {
       return this.extractAlbumsFromDataAttr();
@@ -122,69 +132,63 @@ export class MusicPage {
    * Extracts album data from DOM elements when dataset.clientItems is not available
    * @returns Array of Album objects extracted from DOM
    */
-  private extractAlbumsFromDOM(): Album[] {
-    const albums = this.musicGridItemElements
-      .map((gridItem) => this.extractAlbumFromGridItem(gridItem))
-      .filter((album): album is Album => album !== null);
+  private extractReleasesFromDOM(): Release[] {
+    const releases = this.musicGridItemElements
+      .map((gridItem) => this.extractReleaseFromGridItem(gridItem))
+      .filter((release): release is Release => release !== null);
 
     console.log(
       '[MusicPage]',
       'Extracted',
-      albums.length,
-      'albums from ".music-grid-item" DOM elements',
+      releases.length,
+      'releases from ".music-grid-item" DOM elements',
     );
 
-    return albums;
+    return releases;
   }
 
   /**
-   * Extracts album data from a single music grid item
+   * Extracts release data from a single music grid item
    * @param gridItem - The individual music grid item element
-   * @returns Album object or null if extraction fails
+   * @returns Release object or null if extraction fails
    */
-  private extractAlbumFromGridItem(gridItem: HTMLElement): Album | null {
+  private extractReleaseFromGridItem(gridItem: HTMLElement): Release | null {
     try {
-      // Extract album URL
+      // Extract release URL
       const linkElement = element('a', gridItem) as HTMLAnchorElement;
       if (!linkElement) {
-        throw new Error('No album link found in grid item');
+        throw new Error('No release link found in grid item');
       }
 
       const urlValue = linkElement.getAttribute('href');
       if (!urlValue) {
-        throw new Error('No album URL found in grid item');
+        throw new Error('No release URL found in grid item');
       }
 
-      const normalizedAlbumUrl = this.normalizeUrl(urlValue);
+      const url = this.normalizeUrl(urlValue);
       const itemId = this.extractDataFromDataItemId(gridItem);
 
-      // Only process albums, skip tracks
-      if (itemId.type !== 'album') {
+      if (itemId.type !== 'album' && itemId.type !== 'track') {
         throw new Error(
-          `Expected "album" type item id, but got "${itemId.value}"`,
+          `Unsupported item type "${itemId.type}" in data-item-id attribute`,
         );
       }
 
-      const albumId = itemId.id;
-
       // Extract title with improved handling
       const title = this.extractTitleFromGridItem(gridItem);
-
       // Extract artist with improved logic
       const artist = this.extractArtistFromGridItem(gridItem);
-
       // Extract optional IDs with fallbacks
       const artworkId = this.extractArtworkIdFromElement(gridItem) || 0;
       const bandId = this.extractBandIdFromElement(gridItem) || this.band.id;
 
-      return Album.create(
-        normalizedAlbumUrl,
-        artist,
-        title,
-        albumId,
-        artworkId,
-        bandId,
-      );
+      switch (itemId.type) {
+        case 'album':
+          return Album.create(url, artist, title, itemId.id, artworkId, bandId);
+
+        case 'track':
+          return TrackFactory.fromRawData(itemId.id, url, title, '00:00:00');
+      }
     } catch (error) {
       console.warn(
         '[MusicPage]',
