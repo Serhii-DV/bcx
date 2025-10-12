@@ -1,6 +1,7 @@
 import { storage } from 'src/core/shared';
 import type { StorageObject } from 'src/core/storage';
-import { Band } from './band';
+import { Band } from './band/band';
+import { BandFactory } from './band/factory';
 import { StorageKey } from './storageKey';
 import type { Track } from './track/track';
 
@@ -70,7 +71,7 @@ export class BandcampStorage {
 
     const albumIds: number[] = bandObj.albums || [];
     if (albumIds.length === 0) {
-      return Band.fromStorageObject(bandObj, []);
+      return BandFactory.fromStorage(bandObj, [], []);
     }
 
     const albumObjs: StorageObject[] = [];
@@ -81,7 +82,17 @@ export class BandcampStorage {
       albumObjs.push(albumObj);
     });
 
-    return Band.fromStorageObject(bandObj, albumObjs);
+    const trackObjs: StorageObject[] = [];
+    if (bandObj.tracks && Array.isArray(bandObj.tracks)) {
+      bandObj.tracks.forEach((trackId: number) => {
+        const trackKey = StorageKey.trackKey(trackId);
+        const trackObj = albumsObj[trackKey];
+        if (!trackObj) return;
+        trackObjs.push(trackObj);
+      });
+    }
+
+    return BandFactory.fromStorage(bandObj, albumObjs, trackObjs);
   }
 
   private static async getBandsIds(): Promise<number[]> {

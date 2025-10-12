@@ -2,8 +2,9 @@ import { console } from 'src/utils/console';
 import { element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album';
-import { Band } from '../band';
-import { BandMetadata } from '../bandMetadata';
+import { Band } from '../band/band';
+import { BandMetadata } from '../band/bandMetadata';
+import { BandFactory } from '../band/factory';
 import { Url } from '../url';
 
 interface MusicGridClientItem {
@@ -105,7 +106,7 @@ export class MusicPage {
    * @returns Album object or null if creation fails
    */
   private createAlbumFromClientItem(item: MusicGridClientItem): Album | null {
-    const albumUrl = this.normalizeAlbumUrl(item.page_url);
+    const albumUrl = this.normalizeUrl(item.page_url);
     const artist = item.artist || this.band.name;
     return Album.create(
       albumUrl,
@@ -144,17 +145,17 @@ export class MusicPage {
   private extractAlbumFromGridItem(gridItem: HTMLElement): Album | null {
     try {
       // Extract album URL
-      const albumLink = element('a', gridItem) as HTMLAnchorElement;
-      if (!albumLink) {
+      const linkElement = element('a', gridItem) as HTMLAnchorElement;
+      if (!linkElement) {
         throw new Error('No album link found in grid item');
       }
 
-      const albumUrl = albumLink.getAttribute('href');
-      if (!albumUrl) {
+      const urlValue = linkElement.getAttribute('href');
+      if (!urlValue) {
         throw new Error('No album URL found in grid item');
       }
 
-      const normalizedAlbumUrl = this.normalizeAlbumUrl(albumUrl);
+      const normalizedAlbumUrl = this.normalizeUrl(urlValue);
       const itemId = this.extractDataFromDataItemId(gridItem);
 
       // Only process albums, skip tracks
@@ -231,13 +232,13 @@ export class MusicPage {
 
   /**
    * Normalizes album URL to absolute path
-   * @param albumUrl - The album URL (relative or absolute)
+   * @param url - The URL (relative or absolute)
    * @returns Normalized absolute URL as Url object
    */
-  private normalizeAlbumUrl(albumUrl: string): Url {
-    return albumUrl.startsWith('https://')
-      ? new Url(albumUrl)
-      : this.band.url.withPath(albumUrl);
+  private normalizeUrl(url: string): Url {
+    return url.startsWith('https://')
+      ? new Url(url)
+      : this.band.url.withPath(url);
   }
 
   /**
@@ -316,10 +317,11 @@ export class MusicPage {
       bandData.create_date,
       bandData.currency,
     );
-    const band = Band.create(
+    const band = BandFactory.fromRawData(
       bandData.id,
       bandData.name,
       bandData.url,
+      [],
       [],
       bandMetadata,
     );

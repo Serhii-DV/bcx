@@ -1,6 +1,6 @@
 // Types for search results
 import type { Album } from 'src/bandcamp/album';
-import type { Band } from 'src/bandcamp/band';
+import type { Band } from 'src/bandcamp/band/band';
 
 export interface ArtistSearchData {
   name: string;

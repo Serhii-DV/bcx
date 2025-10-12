@@ -1,9 +1,9 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
-import { removeInvisibleChars, trim } from 'src/utils/string';
-import { Album } from './album';
-import { BandMetadata } from './bandMetadata';
-import { StorageKey } from './storageKey';
-import { Url } from './url';
+import type { Album } from '../album';
+import { StorageKey } from '../storageKey';
+import type { Track } from '../track/track';
+import type { Url } from '../url';
+import type { BandMetadata } from './bandMetadata';
 
 export class Band implements Storable {
   constructor(
@@ -11,24 +11,9 @@ export class Band implements Storable {
     public name: string,
     public url: Url,
     public albums: Album[],
+    public tracks: Track[],
     public metadata: BandMetadata,
   ) {}
-
-  static create(
-    id: string | number,
-    name: string,
-    url: string | Url,
-    albums: Album[],
-    metadata: BandMetadata,
-  ): Band {
-    return new Band(
-      typeof id === 'string' ? parseInt(id, 10) : id,
-      trim(removeInvisibleChars(name), ' -\n'),
-      url instanceof Url ? url : new Url(url),
-      albums,
-      metadata,
-    );
-  }
 
   toStorableData(): StorableData {
     const key = StorageKey.bandKey(this.id);
@@ -44,6 +29,12 @@ export class Band implements Storable {
       Object.assign(bandData, albumStorableData);
     }
 
+    // Add storable data for each track
+    for (const track of this.tracks) {
+      const trackStorableData = track.toStorableData();
+      Object.assign(bandData, trackStorableData);
+    }
+
     return bandData;
   }
 
@@ -54,17 +45,9 @@ export class Band implements Storable {
       url: this.url.toString(),
       // Save Album IDs instead of full Album objects to avoid redundancy
       albums: this.albums.map((album) => album.id),
+      // Save Track IDs instead of full Track objects to avoid redundancy
+      tracks: this.tracks.map((track) => track.id),
       metadata: this.metadata.toStorageObject(),
     };
-  }
-
-  static fromStorageObject(band: StorageObject, albums: StorageObject[]): Band {
-    return Band.create(
-      band.id,
-      band.name,
-      band.url,
-      albums.map((album: StorageObject) => Album.fromStorageObject(album)),
-      BandMetadata.fromStorageObject(band.metadata),
-    );
   }
 }
