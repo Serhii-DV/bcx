@@ -21,6 +21,10 @@ export class Url {
     this.uuid = uuid5(url, uuid5.URL);
   }
 
+  static create(url: string | Url | URL): Url {
+    return new Url(url.toString());
+  }
+
   get hostname(): string {
     return this.url.hostname;
   }

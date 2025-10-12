@@ -38,6 +38,10 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           import: './src/bandcamp/content/app.album.ts',
           html: false,
         },
+        'bandcamp.content.track': {
+          import: './src/bandcamp/content/app.track.ts',
+          html: false,
+        },
       },
     },
     resolve: {

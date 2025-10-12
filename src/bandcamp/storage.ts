@@ -2,6 +2,7 @@ import { storage } from 'src/core/shared';
 import type { StorageObject } from 'src/core/storage';
 import { Band } from './band';
 import { StorageKey } from './storageKey';
+import type { Track } from './track/track';
 
 export class BandcampStorage {
   static async saveBand(band: Band): Promise<void> {
@@ -88,5 +89,11 @@ export class BandcampStorage {
     const bandIds: number[] =
       (await storage.getByKey<number[]>(bandsKey)) || [];
     return bandIds;
+  }
+
+  static async saveTrack(track: Track): Promise<void> {
+    await storage.set(track).catch((reason) => {
+      throw new Error(reason);
+    });
   }
 }
