@@ -18,8 +18,6 @@ onDOMReady(() => {
     return;
   }
 
-  BandcampStorage.saveBand(band);
-
   const filterContainer = document.createElement('div');
   filterContainer.id = 'bcx-music-filter';
 
@@ -36,4 +34,6 @@ onDOMReady(() => {
       musicGridItems: musicPage.musicGridItemElements,
     },
   });
+
+  BandcampStorage.saveBand(band);
 });

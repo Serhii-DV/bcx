@@ -10,12 +10,14 @@ export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
     artists: createArtistSearchData(band),
     bands: [band],
     albums: band.metadata.albums,
+    tracks: band.metadata.tracks,
   };
 }
 
 export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
   const allArtists: ArtistSearchData[] = [];
   const allAlbums = bands.flatMap((band) => band.metadata.albums);
+  const allTracks = bands.flatMap((band) => band.metadata.tracks);
 
   // Aggregate all artists from all bands
   bands.forEach((band) => {
@@ -27,6 +29,7 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
     artists: allArtists,
     bands: bands,
     albums: allAlbums,
+    tracks: allTracks,
   };
 }
 
@@ -40,8 +43,12 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
 function createArtistSearchData(band: Band): ArtistSearchData[] {
   const albumArtists: string[] = [];
 
-  band.metadata.albums.forEach((item) => {
-    albumArtists.push(...item.artist.names);
+  band.metadata.albums.forEach((album) => {
+    albumArtists.push(...album.artist.names);
+  });
+
+  band.metadata.tracks.forEach((track) => {
+    albumArtists.push(...track.artist.names);
   });
 
   const counts = countOccurrences(albumArtists.sort());
