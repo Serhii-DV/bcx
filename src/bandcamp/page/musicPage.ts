@@ -193,6 +193,7 @@ export class MusicPage {
             artist,
             title,
             '00:00:00',
+            artworkId,
           );
       }
     } catch (error) {
