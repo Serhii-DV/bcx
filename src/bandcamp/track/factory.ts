@@ -1,17 +1,15 @@
 import type { StorageObject } from 'src/core/storage';
+import { Artist } from '../artist';
 import type { MusicRecordingSchema } from '../page/schema';
 import { Url } from '../url';
 import { TrackTime } from './time';
 import { Track } from './track';
 
 export class TrackFactory {
-  static create(id: number, url: Url, title: string, time: TrackTime): Track {
-    return new Track(id, url, title, time);
-  }
-
   static fromRawData(
     id: string | number,
     url: string | Url | URL,
+    artist: string | Artist,
     title: string,
     time: string | TrackTime,
   ): Track {
@@ -21,7 +19,10 @@ export class TrackFactory {
     const trackTime =
       typeof time === 'string' ? TrackTime.fromString(time) : time;
 
-    return new Track(trackId, trackUrl, title, trackTime);
+    const trackArtist =
+      typeof artist === 'string' ? Artist.fromString(artist) : artist;
+
+    return new Track(trackId, trackUrl, trackArtist, title, trackTime);
   }
 
   static fromSchema(schema: MusicRecordingSchema): Track {
@@ -29,17 +30,19 @@ export class TrackFactory {
       (schema.additionalProperty?.find((prop) => prop.name === 'track_id')
         ?.value as number) || 0;
 
-    const url = new Url(schema.mainEntityOfPage);
+    const url = schema.mainEntityOfPage;
+    const artist = schema.byArtist.name;
     const title = schema.name;
     const time = TrackTime.fromDuration(schema.duration);
 
-    return new Track(trackId, url, title, time);
+    return TrackFactory.fromRawData(trackId, url, artist, title, time);
   }
 
   static fromStorage(track: StorageObject): Track {
     return TrackFactory.fromRawData(
       track.id,
       track.url,
+      track.artist,
       track.title,
       track.time,
     );

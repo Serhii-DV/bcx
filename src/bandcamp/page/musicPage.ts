@@ -187,7 +187,13 @@ export class MusicPage {
           return Album.create(url, artist, title, itemId.id, artworkId, bandId);
 
         case 'track':
-          return TrackFactory.fromRawData(itemId.id, url, title, '00:00:00');
+          return TrackFactory.fromRawData(
+            itemId.id,
+            url,
+            artist,
+            title,
+            '00:00:00',
+          );
       }
     } catch (error) {
       console.warn(
