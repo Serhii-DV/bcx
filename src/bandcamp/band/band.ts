@@ -1,6 +1,5 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { StorageKey } from '../storageKey';
-import type { Track } from '../track/track';
 import type { Url } from '../url';
 import type { BandMetadata } from './metadata';
 
@@ -14,10 +13,6 @@ export class Band implements Storable {
 
   get hasReleases(): boolean {
     return this.metadata.albums.length > 0 || this.metadata.tracks.length > 0;
-  }
-
-  get tracks(): Track[] {
-    return this.metadata.tracks;
   }
 
   toStorableData(): StorableData {
