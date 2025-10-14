@@ -116,6 +116,20 @@ export class Storage {
     });
   }
 
+  async count(): Promise<number> {
+    return new Promise((resolve, reject) => {
+      this.getAll().then((items) => {
+        if (chrome.runtime.lastError) {
+          return reject(chrome.runtime.lastError);
+        }
+
+        const count = Object.keys(items).length;
+        console.log('[Storage] Count', count);
+        resolve(count);
+      });
+    });
+  }
+
   async getSize(): Promise<number> {
     const storage = this.storage;
 
@@ -147,9 +161,5 @@ export class Storage {
         });
       }
     });
-  }
-
-  toConsoleLog() {
-    this.getAll().then((data) => console.log('[Storage] Data', data));
   }
 }

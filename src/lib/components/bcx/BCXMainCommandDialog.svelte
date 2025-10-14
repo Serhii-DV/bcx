@@ -12,6 +12,7 @@ import {
 } from 'src/bandcamp/page/menuBar';
 import { console } from 'src/utils/console';
 import * as Command from '$lib/components/ui/command/index.js';
+import BCXDevCommandDialog from './BCXDevCommandDialog.svelte';
 
 let {
   open = $bindable(false),
@@ -26,6 +27,9 @@ let {
   onProfileSelect?: (() => void) | null;
   onSettingsSelect?: (() => void) | null;
 } = $props();
+
+let devDialogOpen = $state(false);
+let commandInput = $state('');
 
 function handleSearchArtistAlbum() {
   console.log('🎵 BCX: Search Artist/Album selected');
@@ -65,6 +69,16 @@ function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     open = false;
   }
+  if (event.key === 'Enter' && commandInput.trim() === '/dev') {
+    open = false;
+    devDialogOpen = true;
+    commandInput = '';
+  }
+}
+
+function handleDevDialogBack() {
+  devDialogOpen = false;
+  open = true;
 }
 </script>
 
@@ -72,7 +86,10 @@ function handleKeydown(event: KeyboardEvent) {
 
 <!-- Main Command Dialog -->
 <Command.Dialog bind:open={open} {portalProps}>
-  <Command.Input placeholder="Type a command or search..." />
+  <Command.Input
+    placeholder="Type a command or search..."
+    bind:value={commandInput}
+  />
   <Command.List>
     <Command.Empty>No results found.</Command.Empty>
 
@@ -113,6 +130,13 @@ function handleKeydown(event: KeyboardEvent) {
 
   </Command.List>
 </Command.Dialog>
+
+<!-- Developer Command Dialog -->
+<BCXDevCommandDialog
+  bind:open={devDialogOpen}
+  {portalProps}
+  onBack={handleDevDialogBack}
+/>
 
 <style>
   /* BCX Main Command Dialog Styles */
