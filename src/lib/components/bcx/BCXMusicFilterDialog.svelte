@@ -5,7 +5,7 @@
  */
 
 import type { Dialog as DialogPrimitive } from 'bits-ui';
-import type { Album } from 'src/bandcamp/album';
+import type { Album } from 'src/bandcamp/album/album';
 import type { Band } from 'src/bandcamp/band/band';
 import type { Track } from 'src/bandcamp/track/track';
 import { console } from 'src/utils/console';

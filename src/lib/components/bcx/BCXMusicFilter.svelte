@@ -4,7 +4,7 @@
  */
 
 import Isotope from 'isotope-layout';
-import type { Album } from 'src/bandcamp/album';
+import type { Album } from 'src/bandcamp/album/album';
 import type { Band } from 'src/bandcamp/band/band';
 import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import { console } from 'src/utils/console';
