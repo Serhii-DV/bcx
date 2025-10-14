@@ -44,6 +44,19 @@ export class Storage {
     });
   }
 
+  async getByKey<T = any>(key: string): Promise<T | undefined> {
+    return new Promise((resolve, reject) => {
+      this.storage.get([key], (items) => {
+        if (chrome.runtime.lastError) {
+          return reject(chrome.runtime.lastError);
+        }
+
+        console.log('[Storage] Get by key', key);
+        resolve(items[key] as T | undefined);
+      });
+    });
+  }
+
   async getAll(): Promise<StorageDataMap> {
     return new Promise<StorageDataMap>((resolve, reject) => {
       this.storage.get(null, (items) => {

@@ -6,7 +6,7 @@ import { injectCSSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { getBandsFromStorage } from './helper';
+import { BandcampStorage } from '../core/storage';
 
 onDOMReady(async () => {
   if (!currentPageUrl.isBandcamp) {
@@ -22,7 +22,7 @@ onDOMReady(async () => {
   const shadowRoot = container.attachShadow({ mode: 'open' });
 
   // Load bands data before mounting the app
-  const bands = await getBandsFromStorage();
+  const bands = await BandcampStorage.getBands();
 
   // Inject content CSS file (see manifest.json for details)
   injectCSSFile(

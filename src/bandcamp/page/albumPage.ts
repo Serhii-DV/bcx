@@ -1,35 +1,31 @@
-import { Album } from 'src/bandcamp/album';
-import { AlbumMetadata } from 'src/bandcamp/albumMetadata';
-import { Price } from '../price';
-import type { AlbumRelease, PropertyValue, Schema } from './schema';
+import { Album } from 'src/bandcamp/album/album';
+import { AlbumMetadata } from 'src/bandcamp/album/metadata';
+import { console } from 'src/utils/console';
+import { Price } from '../core/price';
+import {
+  type AlbumRelease,
+  getMusicAlbumSchema,
+  type MusicAlbumSchema,
+  type PropertyValue,
+} from './schema';
 
 export class AlbumPage {
-  /**
-   * Finds and parses the LD+JSON schema from the page
-   * @return Parsed Schema object or null if not found/failed
-   */
-  static findSchema(): Schema | null {
-    const schemaScript = document.querySelector(
-      'script[type="application/ld+json"]',
-    );
-    if (!schemaScript) {
-      console.warn('No LD+JSON schema found on page');
-      return null;
-    }
+  public album: Album;
 
-    try {
-      const schema = JSON.parse(schemaScript.textContent || '');
-      return schema;
-    } catch (error) {
-      console.error('Failed to parse LD+JSON schema:', error);
-      return null;
-    }
+  /**
+   * @throws Error if schema is not found or invalid
+   */
+  constructor() {
+    const schema = getMusicAlbumSchema();
+    console.log('[AlbumPage]', 'Schema extracted from page:', schema);
+    this.album = this.createAlbumFromSchema(schema!);
+    console.log('[AlbumPage]', 'Album extracted from schema:', this.album);
   }
 
   /**
    * Creates an Album object from a Bandcamp Schema JSON-LD data
    */
-  static createAlbumFromSchema(schema: Schema): Album {
+  private createAlbumFromSchema(schema: MusicAlbumSchema): Album {
     // Extract the album ID from the main digital release
     const digitalRelease = schema.albumRelease.find(
       (release: AlbumRelease) => release.musicReleaseFormat === 'DigitalFormat',
@@ -84,7 +80,7 @@ export class AlbumPage {
   /**
    * Extract track information from schema
    */
-  static getTracksFromSchema(schema: Schema) {
+  static getTracksFromSchema(schema: MusicAlbumSchema) {
     return schema.track.itemListElement.map((trackItem) => ({
       position: trackItem.position,
       name: trackItem.item.name,
@@ -99,7 +95,7 @@ export class AlbumPage {
   /**
    * Extract pricing information from schema
    */
-  static getPricingFromSchema(schema: Schema) {
+  static getPricingFromSchema(schema: MusicAlbumSchema) {
     return schema.albumRelease.map((release: AlbumRelease) => ({
       format: release.musicReleaseFormat,
       name: release.name,
@@ -114,7 +110,7 @@ export class AlbumPage {
   /**
    * Extract publisher/label information from schema
    */
-  static getPublisherFromSchema(schema: Schema) {
+  static getPublisherFromSchema(schema: MusicAlbumSchema) {
     return {
       name: schema.publisher.name,
       url: schema.publisher['@id'],

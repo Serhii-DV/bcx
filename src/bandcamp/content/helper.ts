@@ -1,22 +1,23 @@
-import { storage } from 'src/core/shared';
 import { countOccurrences } from 'src/utils/array';
 import type {
   ArtistSearchData,
   MusicSearchData,
 } from '$lib/components/bcx/types';
-import { Band } from '../band';
+import { Band } from '../band/band';
 
 export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
   return {
     artists: createArtistSearchData(band),
     bands: [band],
-    albums: band.albums,
+    albums: band.metadata.albums,
+    tracks: band.metadata.tracks,
   };
 }
 
 export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
   const allArtists: ArtistSearchData[] = [];
-  const allAlbums = bands.flatMap((band) => band.albums);
+  const allAlbums = bands.flatMap((band) => band.metadata.albums);
+  const allTracks = bands.flatMap((band) => band.metadata.tracks);
 
   // Aggregate all artists from all bands
   bands.forEach((band) => {
@@ -28,23 +29,8 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
     artists: allArtists,
     bands: bands,
     albums: allAlbums,
+    tracks: allTracks,
   };
-}
-
-export async function getBandsFromStorage(): Promise<Band[]> {
-  // TODO: For better performance, consider maintaining a 'band.ids' index
-  // to avoid loading all storage data. Currently using getAll() for simplicity.
-  const allData = await storage.getAll();
-  const bands: Band[] = [];
-
-  for (const [key, value] of Object.entries(allData)) {
-    if (key.startsWith('band.') && key !== 'band.ids') {
-      const band = Band.fromStorageObject(value);
-      bands.push(band);
-    }
-  }
-
-  return bands;
 }
 
 /**
@@ -57,8 +43,12 @@ export async function getBandsFromStorage(): Promise<Band[]> {
 function createArtistSearchData(band: Band): ArtistSearchData[] {
   const albumArtists: string[] = [];
 
-  band.albums.forEach((item) => {
-    albumArtists.push(...item.artist.names);
+  band.metadata.albums.forEach((album) => {
+    albumArtists.push(...album.artist.names);
+  });
+
+  band.metadata.tracks.forEach((track) => {
+    albumArtists.push(...track.artist.names);
   });
 
   const counts = countOccurrences(albumArtists.sort());

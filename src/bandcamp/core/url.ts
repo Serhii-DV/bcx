@@ -9,7 +9,6 @@ export class Url {
   constructor(url: string) {
     try {
       url = removeQueryParams(url);
-      url = removeBandcampMusicPath(url);
       this.url = new URL(url);
     } catch (error) {
       throw new Error(`Invalid URL: ${url}`);
@@ -22,6 +21,10 @@ export class Url {
     this.uuid = uuid5(url, uuid5.URL);
   }
 
+  static create(url: string | Url | URL): Url {
+    return new Url(url.toString());
+  }
+
   get hostname(): string {
     return this.url.hostname;
   }
@@ -31,6 +34,13 @@ export class Url {
    */
   get hostnameWithProtocol(): string {
     return `${this.url.protocol}//${this.url.hostname}`;
+  }
+
+  /**
+   * Returns the base band URL.
+   */
+  get bandUrl(): Url {
+    return new Url(this.hostnameWithProtocol);
   }
 
   /**
@@ -84,6 +94,10 @@ export class Url {
     return this.toString().includes(bandcampHost + '/album/');
   }
 
+  get isTrack(): boolean {
+    return this.toString().includes(bandcampHost + '/track/');
+  }
+
   /**
    * Returns the full URL as a string.
    * @returns The string representation of the URL.
@@ -106,8 +120,7 @@ export class Url {
       newPath = '/' + newPath;
     }
 
-    const newUrl = `${this.hostnameWithProtocol}${newPath}`;
-    return new Url(newUrl);
+    return new Url(`${this.hostnameWithProtocol}${newPath}`);
   }
 }
 
@@ -118,17 +131,5 @@ export function isValidBandcampUrl(url: string): boolean {
 function removeQueryParams(url: string): string {
   const urlObj = new URL(url);
   urlObj.search = '';
-  return urlObj.toString();
-}
-
-function removeBandcampMusicPath(url: string): string {
-  const urlObj = new URL(url);
-  const segments = urlObj.pathname.split('/').filter(Boolean);
-
-  if (segments[segments.length - 1] === 'music') {
-    segments.pop();
-    urlObj.pathname = '/' + segments.join('/');
-  }
-
   return urlObj.toString();
 }

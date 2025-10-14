@@ -2,6 +2,7 @@ import { currentPageUrl } from 'src/core/shared';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
+import { BandcampStorage } from '../core/storage';
 import { MusicPage } from '../page/musicPage';
 
 onDOMReady(() => {
@@ -13,7 +14,7 @@ onDOMReady(() => {
   const band = musicPage.band;
   const musicGrid = musicPage.musicGridElement;
 
-  if (!musicGrid || band.albums.length === 0) {
+  if (!musicGrid || !band.hasReleases) {
     return;
   }
 
@@ -33,4 +34,6 @@ onDOMReady(() => {
       musicGridItems: musicPage.musicGridItemElements,
     },
   });
+
+  BandcampStorage.saveBand(band);
 });

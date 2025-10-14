@@ -42,6 +42,16 @@ describe('BandcampURL', () => {
     });
   });
 
+  describe('bandUrl', () => {
+    it('should return the base band URL', () => {
+      const validUrl = 'https://artist.bandcamp.com/album/album-name';
+      const bandcampUrl = new Url(validUrl);
+      expect(bandcampUrl.bandUrl.toString()).toBe(
+        'https://artist.bandcamp.com/',
+      );
+    });
+  });
+
   describe('subdomain', () => {
     it('should return the subdomain of the URL', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';
@@ -121,6 +131,20 @@ describe('BandcampURL', () => {
     });
   });
 
+  describe('isTrack', () => {
+    it('should return true for Bandcamp track pages', () => {
+      const validUrl = 'https://artist.bandcamp.com/track/track-name';
+      const bandcampUrl = new Url(validUrl);
+      expect(bandcampUrl.isTrack).toBe(true);
+    });
+
+    it('should return false for non-track Bandcamp pages', () => {
+      const validUrl = 'https://artist.bandcamp.com/album/album-name';
+      const bandcampUrl = new Url(validUrl);
+      expect(bandcampUrl.isTrack).toBe(false);
+    });
+  });
+
   describe('toString', () => {
     it('should return the full URL as a string', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';
@@ -139,5 +163,23 @@ describe('isValidBandcampURL', () => {
   it('should return false for an invalid Bandcamp URL', () => {
     const invalidUrl = 'https://example.com';
     expect(isValidBandcampUrl(invalidUrl)).toBe(false);
+  });
+});
+
+describe('withPath', () => {
+  it('should return a new Url instance with the updated path', () => {
+    const validUrl = 'https://artist.bandcamp.com/album/album-name';
+    const bandcampUrl = new Url(validUrl);
+    const newPath = '/music';
+    const newUrl = bandcampUrl.withPath(newPath);
+    expect(newUrl.toString()).toBe('https://artist.bandcamp.com/music');
+  });
+
+  it('should add a leading slash if not present in the new path', () => {
+    const validUrl = 'https://artist.bandcamp.com/album/album-name';
+    const bandcampUrl = new Url(validUrl);
+    const newPath = 'music';
+    const newUrl = bandcampUrl.withPath(newPath);
+    expect(newUrl.toString()).toBe('https://artist.bandcamp.com/music');
   });
 });

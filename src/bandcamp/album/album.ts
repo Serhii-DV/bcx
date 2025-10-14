@@ -1,9 +1,10 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { removeInvisibleChars } from 'src/utils/string';
-import { AlbumMetadata } from './albumMetadata';
-import { Artist } from './artist';
-import { Artwork } from './artwork';
-import { Url } from './url';
+import { Artist } from '../core/artist';
+import { Artwork } from '../core/artwork';
+import { StorageKey } from '../core/storageKey';
+import { Url } from '../core/url';
+import { AlbumMetadata } from './metadata';
 
 export class Album implements Storable {
   constructor(
@@ -39,10 +40,11 @@ export class Album implements Storable {
   }
 
   toStorableData(): StorableData {
-    const key = 'album.' + this.id;
+    const key = StorageKey.albumKey(this.id);
+    const urlKey = StorageKey.urlKey(this.url);
     return {
       [key]: this.toStorageObject(),
-      [this.url.uuid]: key,
+      [urlKey]: key,
     };
   }
 

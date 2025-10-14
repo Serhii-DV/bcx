@@ -1,11 +1,13 @@
-import { storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import { Album } from '../album';
-import { Band } from '../band';
-import { BandMetadata } from '../bandMetadata';
-import { Url } from '../url';
+import { Album } from '../album/album';
+import { Band } from '../band/band';
+import { BandFactory } from '../band/factory';
+import { BandMetadata } from '../band/metadata';
+import { Url } from '../core/url';
+import { TrackFactory } from '../track/factory';
+import { Track } from '../track/track';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -16,6 +18,8 @@ interface MusicGridClientItem {
   title: string;
   type: string;
 }
+
+type Release = Album | Track;
 
 export class MusicPage {
   public band: Band;
@@ -34,19 +38,24 @@ export class MusicPage {
       '.music-grid-item',
       this.musicGridElement,
     );
-    this.band.albums = this.findAlbums();
-    storage.set(this.band);
+    const releases = this.findReleases();
+    this.band.metadata.albums = releases.filter(
+      (release): release is Album => release instanceof Album,
+    );
+    this.band.metadata.tracks = releases.filter(
+      (release): release is Track => release instanceof Track,
+    );
   }
 
   /**
-   * Finds and extracts all albums on the current page
-   * @returns Array of Album objects found on the page
+   * Finds and extracts all releases on the current page
+   * @returns Array of Release objects found on the page
    */
-  private findAlbums(): Album[] {
+  private findReleases(): Release[] {
     // It looks like clientItems data attribute doesn't contain "featured" releases
     // We can't use this method. Let's use this method as a fallback.
 
-    const albums = this.extractAlbumsFromDOM();
+    const albums = this.extractReleasesFromDOM();
 
     if (!albums.length) {
       return this.extractAlbumsFromDataAttr();
@@ -107,7 +116,7 @@ export class MusicPage {
    * @returns Album object or null if creation fails
    */
   private createAlbumFromClientItem(item: MusicGridClientItem): Album | null {
-    const albumUrl = this.normalizeAlbumUrl(item.page_url);
+    const albumUrl = this.normalizeUrl(item.page_url);
     const artist = item.artist || this.band.name;
     return Album.create(
       albumUrl,
@@ -123,69 +132,74 @@ export class MusicPage {
    * Extracts album data from DOM elements when dataset.clientItems is not available
    * @returns Array of Album objects extracted from DOM
    */
-  private extractAlbumsFromDOM(): Album[] {
-    const albums = this.musicGridItemElements
-      .map((gridItem) => this.extractAlbumFromGridItem(gridItem))
-      .filter((album): album is Album => album !== null);
+  private extractReleasesFromDOM(): Release[] {
+    const releases = this.musicGridItemElements
+      .map((gridItem) => this.extractReleaseFromGridItem(gridItem))
+      .filter((release): release is Release => release !== null);
 
     console.log(
       '[MusicPage]',
       'Extracted',
-      albums.length,
-      'albums from ".music-grid-item" DOM elements',
+      releases.length,
+      'releases from ".music-grid-item" DOM elements',
     );
 
-    return albums;
+    return releases;
   }
 
   /**
-   * Extracts album data from a single music grid item
+   * Extracts release data from a single music grid item
    * @param gridItem - The individual music grid item element
-   * @returns Album object or null if extraction fails
+   * @returns Release object or null if extraction fails
    */
-  private extractAlbumFromGridItem(gridItem: HTMLElement): Album | null {
+  private extractReleaseFromGridItem(gridItem: HTMLElement): Release | null {
     try {
-      // Extract album URL
-      const albumLink = element('a', gridItem) as HTMLAnchorElement;
-      if (!albumLink) {
-        throw new Error('No album link found in grid item');
+      // Extract release URL
+      const linkElement = element('a', gridItem) as HTMLAnchorElement;
+      if (!linkElement) {
+        throw new Error('No release link found in grid item');
       }
 
-      const albumUrl = albumLink.getAttribute('href');
-      if (!albumUrl) {
-        throw new Error('No album URL found in grid item');
+      const urlValue = linkElement.getAttribute('href');
+      if (!urlValue) {
+        throw new Error('No release URL found in grid item');
       }
 
-      const normalizedAlbumUrl = this.normalizeAlbumUrl(albumUrl);
+      const url = this.normalizeUrl(urlValue);
+      const itemId = this.extractDataFromDataItemId(gridItem);
 
-      // Extract album ID
-      const albumId = this.extractAlbumIdFromElement(gridItem);
-      if (!albumId) {
-        throw new Error('No album ID found in grid item');
+      if (itemId.type !== 'album' && itemId.type !== 'track') {
+        throw new Error(
+          `Unsupported item type "${itemId.type}" in data-item-id attribute`,
+        );
       }
 
       // Extract title with improved handling
       const title = this.extractTitleFromGridItem(gridItem);
-
       // Extract artist with improved logic
       const artist = this.extractArtistFromGridItem(gridItem);
-
       // Extract optional IDs with fallbacks
       const artworkId = this.extractArtworkIdFromElement(gridItem) || 0;
       const bandId = this.extractBandIdFromElement(gridItem) || this.band.id;
 
-      return Album.create(
-        normalizedAlbumUrl,
-        artist,
-        title,
-        albumId,
-        artworkId,
-        bandId,
-      );
+      switch (itemId.type) {
+        case 'album':
+          return Album.create(url, artist, title, itemId.id, artworkId, bandId);
+
+        case 'track':
+          return TrackFactory.fromRawData(
+            itemId.id,
+            url,
+            artist,
+            title,
+            '00:00:00',
+            artworkId,
+          );
+      }
     } catch (error) {
       console.warn(
         '[MusicPage]',
-        'Error extracting album from grid item:',
+        'Error extracting album from grid item\n',
         error,
       );
       return null;
@@ -229,25 +243,49 @@ export class MusicPage {
 
   /**
    * Normalizes album URL to absolute path
-   * @param albumUrl - The album URL (relative or absolute)
+   * @param url - The URL (relative or absolute)
    * @returns Normalized absolute URL as Url object
    */
-  private normalizeAlbumUrl(albumUrl: string): Url {
-    return albumUrl.startsWith('https://')
-      ? new Url(albumUrl)
-      : this.band.url.withPath(albumUrl);
+  private normalizeUrl(url: string): Url {
+    return url.startsWith('https://')
+      ? new Url(url)
+      : this.band.url.withPath(url);
   }
 
   /**
-   * Extracts album ID from DOM element
+   * Extracts data from data-item-id attribute
+   * @throws Error if data-item-id is not found or invalid
    */
-  private extractAlbumIdFromElement(gridItem: HTMLElement): number | null {
+  private extractDataFromDataItemId(gridItem: HTMLElement): {
+    type: string;
+    id: number;
+    value: string;
+  } {
     // Try to get from data-item-id attribute first
-    const itemId = gridItem.getAttribute('data-item-id');
-    if (!itemId) return null;
+    const value = gridItem.getAttribute('data-item-id');
 
-    const match = itemId.match(/album-(\d+)/);
-    return match ? parseInt(match[1], 10) : null;
+    if (!value) {
+      throw new Error('No data-item-id attribute found in grid item');
+    }
+
+    const match = value.match(/(\w+)-(\d+)/);
+
+    if (!match) {
+      throw new Error(
+        `Invalid data-item-id format. Expected "<type>-<id>". Got "${value}"`,
+      );
+    }
+
+    const type = match[1];
+    const id = parseInt(match[2], 10);
+
+    if (isNaN(id)) {
+      throw new Error(
+        `Invalid ID in data-item-id. Expected numeric ID. Got "${match[2]}"`,
+      );
+    }
+
+    return { type, id, value };
   }
 
   /**
@@ -290,11 +328,10 @@ export class MusicPage {
       bandData.create_date,
       bandData.currency,
     );
-    const band = Band.create(
+    const band = BandFactory.fromRawData(
       bandData.id,
       bandData.name,
       bandData.url,
-      [],
       bandMetadata,
     );
 
