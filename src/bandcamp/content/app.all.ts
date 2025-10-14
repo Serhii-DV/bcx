@@ -6,7 +6,7 @@ import { injectCSSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { BandcampStorage } from '../storage';
+import { BandcampStorage } from '../core/storage';
 
 onDOMReady(async () => {
   if (!currentPageUrl.isBandcamp) {

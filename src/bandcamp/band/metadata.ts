@@ -1,5 +1,5 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
-import type { Album } from '../album';
+import type { Album } from '../album/album';
 import type { Track } from '../track/track';
 
 export class BandMetadata implements StorableObject {

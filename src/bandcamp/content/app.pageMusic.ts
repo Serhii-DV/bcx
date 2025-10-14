@@ -2,8 +2,8 @@ import { currentPageUrl } from 'src/core/shared';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
+import { BandcampStorage } from '../core/storage';
 import { MusicPage } from '../page/musicPage';
-import { BandcampStorage } from '../storage';
 
 onDOMReady(() => {
   if (!currentPageUrl.isMusic) {

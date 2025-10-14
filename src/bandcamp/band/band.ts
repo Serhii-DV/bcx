@@ -1,6 +1,6 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
-import { StorageKey } from '../storageKey';
-import type { Url } from '../url';
+import { StorageKey } from '../core/storageKey';
+import type { Url } from '../core/url';
 import type { BandMetadata } from './metadata';
 
 export class Band implements Storable {

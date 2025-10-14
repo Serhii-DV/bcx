@@ -1,13 +1,13 @@
 import { console } from 'src/utils/console';
 import { element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import { Album } from '../album';
+import { Album } from '../album/album';
 import { Band } from '../band/band';
 import { BandFactory } from '../band/factory';
 import { BandMetadata } from '../band/metadata';
+import { Url } from '../core/url';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
-import { Url } from '../url';
 
 interface MusicGridClientItem {
   art_id: number;

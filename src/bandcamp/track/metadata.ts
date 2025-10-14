@@ -1,5 +1,5 @@
 import type { StorableData, StorableObject } from 'src/core/storage';
-import type { Price } from '../price';
+import type { Price } from '../core/price';
 
 export class TrackMetadata implements StorableObject {
   constructor(

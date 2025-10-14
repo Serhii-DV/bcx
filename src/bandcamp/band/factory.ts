@@ -1,8 +1,8 @@
 import type { StorageObject } from 'src/core/storage';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import { Album } from '../album';
+import { Album } from '../album/album';
+import { Url } from '../core/url';
 import { TrackFactory } from '../track/factory';
-import { Url } from '../url';
 import { Band } from './band';
 import { BandMetadata } from './metadata';
 
