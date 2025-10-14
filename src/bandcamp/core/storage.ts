@@ -133,4 +133,23 @@ export class BandcampStorage {
       throw new Error(reason);
     });
   }
+
+  static async loadAlbumsData(albums: Album[]): Promise<Album[]> {
+    const albumKeys = albums.map((album) => StorageKey.albumKey(album.id));
+    const albumsData = await storage.get(albumKeys);
+    const loadedAlbums = Object.values(albumsData)
+      .filter(
+        (data): data is object => typeof data === 'object' && data !== null,
+      )
+      .map((albumObj) => Album.fromStorageObject(albumObj))
+      .filter((album): album is Album => album !== null);
+
+    // Create a map of loaded albums by ID for efficient lookup
+    const loadedAlbumsMap = new Map(
+      loadedAlbums.map((album) => [album.id, album]),
+    );
+
+    // Merge albums with loaded data, preferring loaded data when available
+    return albums.map((album) => loadedAlbumsMap.get(album.id) || album);
+  }
 }

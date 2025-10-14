@@ -89,7 +89,7 @@ function setupDataList(): void {
 
   // Add albums
   musicSearchData.albums.forEach((album) => {
-    options.push(album.artist.toString() + ' - ' + album.title);
+    options.push(album.toString());
   });
 
   createDataListForInput(options, filterInput);
@@ -103,7 +103,7 @@ function initIsotope(): void {
 
     gridElement?.setAttribute(
       'data-filter-value',
-      (album.artist.toString() + ' - ' + album.title).toLowerCase(),
+      album.toString().toLowerCase(),
     );
   });
 
