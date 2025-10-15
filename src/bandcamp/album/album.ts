@@ -18,7 +18,8 @@ export class Album implements Storable {
   ) {}
 
   toString(): string {
-    const year = this.metadata?.year ? ` (${this.metadata.year})` : '';
+    const year =
+      this.metadata instanceof AlbumMetadata ? ` (${this.metadata.year})` : '';
     return `${this.artist.toString()} - ${this.title}${year}`;
   }
 
