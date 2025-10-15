@@ -8,14 +8,14 @@ onDOMReady(() => {
     return;
   }
 
-  console.log('Start album page content script setup');
+  console.log('[app.album]', 'Start content script setup');
 
   try {
     const albumPage = new PageAlbum();
     storage.set(albumPage.album).catch((error) => {
-      console.error('Failed to store album in storage:', error);
+      console.error('[app.album]', 'Failed to store album in storage:', error);
     });
   } catch (error) {
-    console.error('Failed to initialize AlbumPage:', error);
+    console.error('[app.album]', 'Failed to initialize PageAlbum:', error);
   }
 });

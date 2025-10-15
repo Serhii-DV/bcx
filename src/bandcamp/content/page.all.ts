@@ -13,7 +13,7 @@ onDOMReady(async () => {
     return;
   }
 
-  console.log('Start all pages content script setup');
+  console.log('[app.all]', 'Start content script setup');
 
   const container = document.createElement('div');
   container.id = 'bcx-app';

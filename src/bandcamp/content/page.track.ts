@@ -5,17 +5,16 @@ import { BandcampStorage } from '../domain/storage';
 import { TrackPage } from '../domain/track/page';
 
 onDOMReady(() => {
-  console.log(currentPageUrl);
   if (!currentPageUrl.isTrack) {
     return;
   }
 
-  console.log('Start track page content script setup');
+  console.log('[app.track]', 'Start content script setup');
 
   try {
     const trackPage = new TrackPage();
     BandcampStorage.saveTrack(trackPage.track);
   } catch (error) {
-    console.error('Failed to initialize TrackPage:', error);
+    console.error('[app.track]', 'Failed to initialize TrackPage:', error);
   }
 });

@@ -17,9 +17,9 @@ export class PageAlbum {
    */
   constructor() {
     const schema = getMusicAlbumSchema();
-    console.log('[AlbumPage]', 'Schema extracted from page:', schema);
+    console.log('[PageAlbum]', 'Schema extracted from page:', schema);
     this.album = this.createAlbumFromSchema(schema!);
-    console.log('[AlbumPage]', 'Album extracted from schema:', this.album);
+    console.log('[PageAlbum]', 'Album extracted from schema:', this.album);
   }
 
   /**

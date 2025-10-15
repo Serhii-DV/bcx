@@ -32,7 +32,7 @@ export class PageMusic {
 
     this.musicGridElement = element('#music-grid');
     if (!this.musicGridElement) {
-      console.log('[MusicPage]', 'No #music-grid found on this page');
+      console.log('[PageMusic]', 'No #music-grid found on this page');
     }
 
     this.musicGridItemElements = elements(
@@ -85,7 +85,7 @@ export class PageMusic {
 
     if (!clientItemsData) {
       console.log(
-        '[MusicPage]',
+        '[PageMusic]',
         'No dataset.clientItems found, extracting from DOM elements',
       );
 
@@ -96,7 +96,7 @@ export class PageMusic {
       const items: MusicGridClientItem[] = JSON.parse(clientItemsData);
 
       console.log(
-        '[MusicPage]',
+        '[PageMusic]',
         'Music grid client items has',
         items.length,
         'items',
@@ -107,7 +107,7 @@ export class PageMusic {
         .filter((album): album is Album => album !== null);
 
       console.log(
-        '[MusicPage]',
+        '[PageMusic]',
         'Extracted',
         albums.length,
         'albums from music grid client items data',
@@ -115,7 +115,7 @@ export class PageMusic {
 
       return albums;
     } catch (error) {
-      console.warn('[MusicPage]', 'Failed to parse client items data:', error);
+      console.warn('[PageMusic]', 'Failed to parse client items data:', error);
     }
 
     return [];
@@ -149,7 +149,7 @@ export class PageMusic {
       .filter((release): release is Release => release !== null);
 
     console.log(
-      '[MusicPage]',
+      '[PageMusic]',
       'Extracted',
       releases.length,
       'releases from ".music-grid-item" DOM elements',
@@ -209,7 +209,7 @@ export class PageMusic {
       }
     } catch (error) {
       console.warn(
-        '[MusicPage]',
+        '[PageMusic]',
         'Error extracting album from grid item\n',
         error,
       );

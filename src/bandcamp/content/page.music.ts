@@ -11,7 +11,7 @@ onDOMReady(async () => {
     return;
   }
 
-  console.log('[app.music]', 'Start album page content script setup');
+  console.log('[app.music]', 'Start content script setup');
 
   const musicPage = await PageMusic.init();
   const band = musicPage.band;
