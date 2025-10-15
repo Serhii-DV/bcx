@@ -26,7 +26,7 @@ onDOMReady(async () => {
 
   // Inject content CSS file (see manifest.json for details)
   injectCSSFile(
-    getExtensionUrl('bandcamp.content.all.css'),
+    getExtensionUrl('bandcamp.page.all.css'),
     () => {
       mount(App, {
         target: shadowRoot,
