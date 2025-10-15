@@ -74,14 +74,17 @@ const filteredData = $derived.by(() => {
   const albumsStartsWith = data.albums.filter(
     (album) =>
       album.title.toLowerCase().startsWith(query) ||
-      album.artist.toString().toLowerCase().startsWith(query),
+      album.artist.toString().toLowerCase().startsWith(query) ||
+      album.metadata?.year.toString().startsWith(query),
   );
   const albumsIncludes = data.albums.filter(
     (album) =>
       !album.title.toLowerCase().startsWith(query) &&
       !album.artist.toString().toLowerCase().startsWith(query) &&
+      !album.metadata?.year.toString().startsWith(query) &&
       (album.title.toLowerCase().includes(query) ||
-        album.artist.toString().toLowerCase().includes(query)),
+        album.artist.toString().toLowerCase().includes(query) ||
+        album.metadata?.year.toString().includes(query)),
   );
 
   // Filter tracks
@@ -195,7 +198,7 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Albums ({filteredData.albums.length} of {data.albums.length})">
             {#each filteredData.albums as album}
               <Command.Item onSelect={() => handleAlbumSelect(album)}>
-                <span>{album.artist.toString()} - {album.title}{#if album.metadata?.year} - {album.metadata.year}{/if}</span>
+                <span>{album.toString()}</span>
               </Command.Item>
             {/each}
           </Command.Group>
