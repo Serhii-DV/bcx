@@ -1,4 +1,4 @@
-import { console } from 'src/utils/console';
+import { arrayPreview, console } from 'src/utils/console';
 
 export interface StorageObject {
   [key: string]: any;
@@ -38,7 +38,7 @@ export class Storage {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage] Get by keys', keys);
+        console.log('[Storage.get]', ...arrayPreview(keys));
         resolve(items);
       });
     });
@@ -51,7 +51,7 @@ export class Storage {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage] Get by key', key);
+        console.log('[Storage.getByKey]', key);
         resolve(items[key] as T | undefined);
       });
     });
@@ -64,7 +64,7 @@ export class Storage {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage] Get all');
+        console.log('[Storage.getAll]', ...arrayPreview(Object.keys(items)));
         resolve(items);
       });
     });
@@ -93,7 +93,7 @@ export class Storage {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage] Set', storableData);
+        console.log('[Storage.set]', storableData);
         resolve();
       });
     });
@@ -110,7 +110,7 @@ export class Storage {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage] Remove key(s)', key);
+        console.log('[Storage.remove]', ...arrayPreview(key as string[]));
         resolve();
       });
     });
@@ -124,7 +124,7 @@ export class Storage {
         }
 
         const count = Object.keys(items).length;
-        console.log('[Storage] Count', count);
+        console.log('[Storage.count]', count);
         resolve(count);
       });
     });
@@ -141,7 +141,7 @@ export class Storage {
             return reject(chrome.runtime.lastError);
           }
 
-          console.log('[Storage] Size', bytesInUse);
+          console.log('[Storage.getSize]', bytesInUse);
           resolve(bytesInUse);
         });
       } else {
@@ -156,7 +156,7 @@ export class Storage {
             );
           }, 0);
 
-          console.log('[Storage] Size', bytesInUse);
+          console.log('[Storage.getSize]', bytesInUse);
           resolve(bytesInUse);
         });
       }

@@ -1,6 +1,5 @@
 import { storage } from 'src/core/shared';
 import type { StorableData } from 'src/core/storage';
-import { console } from 'src/utils/console';
 import { Album } from './album/album';
 import { Band } from './band/band';
 import { BandFactory } from './band/factory';
@@ -43,7 +42,7 @@ export class BandcampStorage {
       const trackStorableData = track.toStorableData();
       Object.assign(storageData, trackStorableData);
     }
-    console.log('[BandcampStorage]', storageData);
+
     await storage.set(storageData);
   }
 

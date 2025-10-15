@@ -13,3 +13,9 @@ export const console = {
   warn: globalThis.console.warn.bind(globalThis.console, PREFIX),
   info: globalThis.console.info.bind(globalThis.console, PREFIX),
 };
+
+export function arrayPreview<T>(arr: T[], limit = 10): [string, T[]] {
+  const preview = arr.slice(0, limit);
+  const summary = `(showing ${Math.min(limit, arr.length)} of ${arr.length})`;
+  return [summary, preview];
+}
