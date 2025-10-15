@@ -1,23 +1,25 @@
 import { currentPageUrl } from 'src/core/shared';
+import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
 import { BandcampStorage } from '../core/storage';
 import { MusicPage } from '../page/musicPage';
 
-onDOMReady(() => {
+onDOMReady(async () => {
   if (!currentPageUrl.isMusic) {
     return;
   }
 
-  const musicPage = new MusicPage();
+  console.log('[app.music]', 'Start album page content script setup');
+
+  const musicPage = await MusicPage.init();
   const band = musicPage.band;
   const musicGrid = musicPage.musicGridElement;
 
   if (!musicGrid || !band.hasReleases) {
     return;
   }
-
   const filterContainer = document.createElement('div');
   filterContainer.id = 'bcx-music-filter';
 

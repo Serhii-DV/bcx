@@ -145,15 +145,27 @@ export function createDataListForInput(
  * Otherwise, it waits for the DOMContentLoaded event.
  * @param callback The function to execute when DOM is ready
  */
-export function onDOMReady(callback: () => void): void {
+export function onDOMReady(callback: () => void | Promise<void>): void {
+  const safeCall = () => {
+    try {
+      const result = callback();
+      if (result instanceof Promise) {
+        result.catch((err) => {
+          console.error('onDOMReady callback error:', err);
+        });
+      }
+    } catch (err) {
+      console.error('onDOMReady callback error:', err);
+    }
+  };
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', callback);
+    document.addEventListener('DOMContentLoaded', safeCall);
   } else {
-    callback();
+    safeCall();
   }
 
-  // Additional safety check for dynamic page loads
   if (document.readyState === 'complete') {
-    setTimeout(callback, 100);
+    setTimeout(safeCall, 100);
   }
 }

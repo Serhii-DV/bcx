@@ -1,5 +1,6 @@
 import { storage } from 'src/core/shared';
 import type { StorableData } from 'src/core/storage';
+import { console } from 'src/utils/console';
 import { Album } from '../album/album';
 import { Band } from '../band/band';
 import { BandFactory } from '../band/factory';
@@ -17,7 +18,33 @@ export class BandcampStorage {
       await storage.set(StorageKey.bandsKey(), bandIds);
     }
 
-    await storage.set(band);
+    const storageData: StorableData = band.toStorableData();
+    const albumData = await BandcampStorage.getAlbumsData(band.metadata.albums);
+
+    // Add storable data for each album but only in case if it doesn't exist yet
+    for (const album of band.metadata.albums) {
+      const albumKey = StorageKey.albumKey(album.id);
+      if (albumData[albumKey]) {
+        continue; // Skip if album data already exists
+      }
+
+      const albumStorableData = album.toStorableData();
+      Object.assign(storageData, albumStorableData);
+    }
+
+    // Add storable data for each track but only in case if it doesn't exist yet
+    const trackData = await BandcampStorage.getTracksData(band.metadata.tracks);
+    for (const track of band.metadata.tracks) {
+      const trackKey = StorageKey.trackKey(track.id);
+      if (trackData[trackKey]) {
+        continue; // Skip if track data already exists
+      }
+
+      const trackStorableData = track.toStorableData();
+      Object.assign(storageData, trackStorableData);
+    }
+    console.log('[BandcampStorage]', storageData);
+    await storage.set(storageData);
   }
 
   static async getBands(): Promise<Band[]> {
@@ -134,9 +161,18 @@ export class BandcampStorage {
     });
   }
 
-  static async loadAlbumsData(albums: Album[]): Promise<Album[]> {
+  static async getAlbumsData(albums: Album[]): Promise<StorableData> {
     const albumKeys = albums.map((album) => StorageKey.albumKey(album.id));
-    const albumsData = await storage.get(albumKeys);
+    return await storage.get(albumKeys);
+  }
+
+  static async getTracksData(tracks: Track[]): Promise<StorableData> {
+    const trackKeys = tracks.map((track) => StorageKey.trackKey(track.id));
+    return await storage.get(trackKeys);
+  }
+
+  static async loadAlbumsData(albums: Album[]): Promise<Album[]> {
+    const albumsData = await BandcampStorage.getAlbumsData(albums);
     const loadedAlbums = Object.values(albumsData)
       .filter(
         (data): data is object => typeof data === 'object' && data !== null,

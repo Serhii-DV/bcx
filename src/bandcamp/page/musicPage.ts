@@ -5,6 +5,7 @@ import { Album } from '../album/album';
 import { Band } from '../band/band';
 import { BandFactory } from '../band/factory';
 import { BandMetadata } from '../band/metadata';
+import { BandcampStorage } from '../core/storage';
 import { Url } from '../core/url';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
@@ -38,10 +39,20 @@ export class MusicPage {
       '.music-grid-item',
       this.musicGridElement,
     );
+  }
+
+  static async init(): Promise<MusicPage> {
+    const musicPage = new MusicPage();
+    await musicPage.initReleases();
+    return musicPage;
+  }
+
+  private async initReleases(): Promise<void> {
     const releases = this.findReleases();
-    this.band.metadata.albums = releases.filter(
+    const albums = releases.filter(
       (release): release is Album => release instanceof Album,
     );
+    this.band.metadata.albums = await BandcampStorage.loadAlbumsData(albums);
     this.band.metadata.tracks = releases.filter(
       (release): release is Track => release instanceof Track,
     );

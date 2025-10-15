@@ -23,18 +23,6 @@ export class Band implements Storable {
       [urlKey]: key,
     };
 
-    // Add storable data for each album
-    for (const album of this.metadata.albums) {
-      const albumStorableData = album.toStorableData();
-      Object.assign(bandData, albumStorableData);
-    }
-
-    // Add storable data for each track
-    for (const track of this.metadata.tracks) {
-      const trackStorableData = track.toStorableData();
-      Object.assign(bandData, trackStorableData);
-    }
-
     return bandData;
   }
 
