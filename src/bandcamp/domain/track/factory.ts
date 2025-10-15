@@ -1,7 +1,7 @@
 import type { StorageObject } from 'src/core/storage';
-import type { MusicRecordingSchema } from '../../page/schema';
 import { Artist } from '../artist';
 import { Artwork } from '../artwork';
+import type { MusicRecordingSchema } from '../page/schema';
 import { Price } from '../price';
 import { Url } from '../url';
 import { TrackMetadata } from './metadata';

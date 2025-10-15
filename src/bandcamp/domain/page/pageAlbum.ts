@@ -1,7 +1,7 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumMetadata } from 'src/bandcamp/domain/album/metadata';
 import { console } from 'src/utils/console';
-import { Price } from '../domain/price';
+import { Price } from '../price';
 import {
   type AlbumRelease,
   getMusicAlbumSchema,
@@ -9,7 +9,7 @@ import {
   type PropertyValue,
 } from './schema';
 
-export class AlbumPage {
+export class PageAlbum {
   public album: Album;
 
   /**

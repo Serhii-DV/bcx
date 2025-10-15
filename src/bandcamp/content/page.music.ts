@@ -3,8 +3,8 @@ import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
+import { PageMusic } from '../domain/page/pageMusic';
 import { BandcampStorage } from '../domain/storage';
-import { MusicPage } from '../page/musicPage';
 
 onDOMReady(async () => {
   if (!currentPageUrl.isMusic) {
@@ -13,7 +13,7 @@ onDOMReady(async () => {
 
   console.log('[app.music]', 'Start album page content script setup');
 
-  const musicPage = await MusicPage.init();
+  const musicPage = await PageMusic.init();
   const band = musicPage.band;
   const musicGrid = musicPage.musicGridElement;
 

@@ -9,7 +9,7 @@ import { ListMusic, Settings, User } from 'lucide-svelte';
 import {
   getMenuBarCollectionButton,
   getMenuBarFeedButton,
-} from 'src/bandcamp/page/menuBar';
+} from 'src/bandcamp/domain/page/menuBar';
 import { console } from 'src/utils/console';
 import * as Command from '$lib/components/ui/command/index.js';
 import BCXDevCommandDialog from './BCXDevCommandDialog.svelte';
