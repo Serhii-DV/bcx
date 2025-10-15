@@ -8,7 +8,7 @@ export class TrackMetadata implements StorableObject {
     public modified: Date,
   ) {}
 
-  year(): number {
+  get year(): number {
     return this.published.getFullYear();
   }
 

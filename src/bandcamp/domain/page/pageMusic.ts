@@ -1,5 +1,5 @@
 import { console } from 'src/utils/console';
-import { element, elements } from 'src/utils/dom';
+import { createElement, element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album/album';
 import { Band } from '../band/band';
@@ -42,9 +42,10 @@ export class PageMusic {
   }
 
   static async init(): Promise<PageMusic> {
-    const musicPage = new PageMusic();
-    await musicPage.initReleases();
-    return musicPage;
+    const pageMusic = new PageMusic();
+    await pageMusic.initReleases();
+    pageMusic.appendYearsToReleases();
+    return pageMusic;
   }
 
   private async initReleases(): Promise<void> {
@@ -56,6 +57,42 @@ export class PageMusic {
     this.band.metadata.tracks = releases.filter(
       (release): release is Track => release instanceof Track,
     );
+  }
+
+  private appendYearsToReleases(): void {
+    this.band.metadata.albums.forEach((album) => {
+      if (!album.metadata) return;
+
+      const gridItem = element(
+        `.music-grid-item[data-item-id="album-${album.id}"]`,
+        this.musicGridElement,
+      );
+      if (!gridItem) return;
+
+      this.appendYearToGridItem(gridItem, album.metadata.year);
+    });
+
+    this.band.metadata.tracks.forEach((track) => {
+      if (!track.metadata) return;
+
+      const gridItem = element(
+        `.music-grid-item[data-item-id="track-${track.id}"]`,
+        this.musicGridElement,
+      );
+      if (!gridItem) return;
+
+      this.appendYearToGridItem(gridItem, track.metadata.year);
+    });
+  }
+
+  private appendYearToGridItem(gridItem: HTMLElement, year: number): void {
+    const titleElement = element('.title', gridItem);
+    if (!titleElement) return;
+
+    const yearElement = createElement(`<small><br>${year}</small>`);
+    if (!yearElement) return;
+
+    titleElement.appendChild(yearElement);
   }
 
   /**

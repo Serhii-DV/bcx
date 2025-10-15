@@ -17,6 +17,12 @@ export function elements(
   ) as HTMLElement[];
 }
 
+export function createElement(htmlString: string): HTMLElement | null {
+  const div = document.createElement('div');
+  div.innerHTML = htmlString.trim();
+  return div.firstChild as HTMLElement | null;
+}
+
 export function hasDataAttribute(
   element: Element,
   attributeName: string,
