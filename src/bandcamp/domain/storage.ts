@@ -160,6 +160,12 @@ export class BandcampStorage {
     });
   }
 
+  static async saveAlbum(album: Album): Promise<void> {
+    await storage.set(album).catch((reason) => {
+      throw new Error(reason);
+    });
+  }
+
   static async getAlbumsData(albums: Album[]): Promise<StorableData> {
     const albumKeys = albums.map((album) => StorageKey.albumKey(album.id));
     return await storage.get(albumKeys);
