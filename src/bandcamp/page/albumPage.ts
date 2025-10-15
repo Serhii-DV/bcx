@@ -1,7 +1,7 @@
-import { Album } from 'src/bandcamp/album/album';
-import { AlbumMetadata } from 'src/bandcamp/album/metadata';
+import { Album } from 'src/bandcamp/domain/album/album';
+import { AlbumMetadata } from 'src/bandcamp/domain/album/metadata';
 import { console } from 'src/utils/console';
-import { Price } from '../core/price';
+import { Price } from '../domain/price';
 import {
   type AlbumRelease,
   getMusicAlbumSchema,

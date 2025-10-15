@@ -1,12 +1,12 @@
 import { storage } from 'src/core/shared';
 import type { StorableData } from 'src/core/storage';
 import { console } from 'src/utils/console';
-import { Album } from '../album/album';
-import { Band } from '../band/band';
-import { BandFactory } from '../band/factory';
-import { TrackFactory } from '../track/factory';
-import type { Track } from '../track/track';
+import { Album } from './album/album';
+import { Band } from './band/band';
+import { BandFactory } from './band/factory';
 import { StorageKey } from './storageKey';
+import { TrackFactory } from './track/factory';
+import type { Track } from './track/track';
 
 export class BandcampStorage {
   static async saveBand(band: Band): Promise<void> {

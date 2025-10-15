@@ -1,14 +1,14 @@
 import { console } from 'src/utils/console';
 import { element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import { Album } from '../album/album';
-import { Band } from '../band/band';
-import { BandFactory } from '../band/factory';
-import { BandMetadata } from '../band/metadata';
-import { BandcampStorage } from '../core/storage';
-import { Url } from '../core/url';
-import { TrackFactory } from '../track/factory';
-import { Track } from '../track/track';
+import { Album } from '../domain/album/album';
+import { Band } from '../domain/band/band';
+import { BandFactory } from '../domain/band/factory';
+import { BandMetadata } from '../domain/band/metadata';
+import { BandcampStorage } from '../domain/storage';
+import { TrackFactory } from '../domain/track/factory';
+import { Track } from '../domain/track/track';
+import { Url } from '../domain/url';
 
 interface MusicGridClientItem {
   art_id: number;

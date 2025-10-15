@@ -4,9 +4,9 @@
  */
 
 import Isotope from 'isotope-layout';
-import type { Album } from 'src/bandcamp/album/album';
-import type { Band } from 'src/bandcamp/band/band';
 import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
+import type { Album } from 'src/bandcamp/domain/album/album';
+import type { Band } from 'src/bandcamp/domain/band/band';
 import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';

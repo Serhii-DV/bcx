@@ -1,9 +1,9 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { removeInvisibleChars } from 'src/utils/string';
-import { Artist } from '../core/artist';
-import { Artwork } from '../core/artwork';
-import { StorageKey } from '../core/storageKey';
-import { Url } from '../core/url';
+import { Artist } from '../artist';
+import { Artwork } from '../artwork';
+import { StorageKey } from '../storageKey';
+import { Url } from '../url';
 import { AlbumMetadata } from './metadata';
 
 export class Album implements Storable {

@@ -1,5 +1,5 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
-import { Price } from '../core/price';
+import { Price } from '../price';
 
 export class AlbumMetadata implements StorableObject {
   constructor(

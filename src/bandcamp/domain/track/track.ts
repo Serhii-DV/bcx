@@ -1,8 +1,8 @@
 import type { Storable, StorableData } from 'src/core/storage';
-import type { Artist } from '../core/artist';
-import type { Artwork } from '../core/artwork';
-import { StorageKey } from '../core/storageKey';
-import { Url } from '../core/url';
+import type { Artist } from '../artist';
+import type { Artwork } from '../artwork';
+import { StorageKey } from '../storageKey';
+import { Url } from '../url';
 import type { TrackMetadata } from './metadata';
 import { TrackTime } from './time';
 

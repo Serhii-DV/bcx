@@ -3,7 +3,7 @@ import type {
   ArtistSearchData,
   MusicSearchData,
 } from '$lib/components/bcx/types';
-import { Band } from '../band/band';
+import { Band } from '../domain/band/band';
 
 export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
   return {

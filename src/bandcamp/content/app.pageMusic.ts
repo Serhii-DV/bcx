@@ -3,7 +3,7 @@ import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
-import { BandcampStorage } from '../core/storage';
+import { BandcampStorage } from '../domain/storage';
 import { MusicPage } from '../page/musicPage';
 
 onDOMReady(async () => {

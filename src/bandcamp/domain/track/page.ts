@@ -2,7 +2,7 @@ import { console } from 'src/utils/console';
 import {
   getMusicRecordingSchema,
   type MusicRecordingSchema,
-} from '../page/schema';
+} from '../../page/schema';
 import { TrackFactory } from './factory';
 import { Track } from './track';
 

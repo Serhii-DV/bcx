@@ -1,8 +1,8 @@
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
-import { BandcampStorage } from '../core/storage';
-import { TrackPage } from '../track/page';
+import { BandcampStorage } from '../domain/storage';
+import { TrackPage } from '../domain/track/page';
 
 onDOMReady(() => {
   console.log(currentPageUrl);

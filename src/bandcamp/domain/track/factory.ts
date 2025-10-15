@@ -1,9 +1,9 @@
 import type { StorageObject } from 'src/core/storage';
-import { Artist } from '../core/artist';
-import { Artwork } from '../core/artwork';
-import { Price } from '../core/price';
-import { Url } from '../core/url';
-import type { MusicRecordingSchema } from '../page/schema';
+import type { MusicRecordingSchema } from '../../page/schema';
+import { Artist } from '../artist';
+import { Artwork } from '../artwork';
+import { Price } from '../price';
+import { Url } from '../url';
 import { TrackMetadata } from './metadata';
 import { TrackTime } from './time';
 import { Track } from './track';
