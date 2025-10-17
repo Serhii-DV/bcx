@@ -1,15 +1,11 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
-import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
-import {
-  emptyMusicSearchData,
-  type MusicSearchData,
-} from '$lib/components/bcx/types';
+import type { MusicSearchData } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
@@ -28,9 +24,7 @@ let albumSearchOpen = $state(false);
 
 // Derive music search data from bands prop
 let musicSearchData: MusicSearchData = $derived(
-  currentPageUrl.isMusic
-    ? createMusicSearchDataFromBands(bands)
-    : emptyMusicSearchData,
+  createMusicSearchDataFromBands(bands),
 );
 
 function handleKeydown(e: KeyboardEvent) {

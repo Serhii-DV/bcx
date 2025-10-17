@@ -23,6 +23,7 @@ onDOMReady(async () => {
 
   // Load bands data before mounting the app
   const bands = await BandcampStorage.getBands();
+  console.log('[app.all]', `Loaded ${bands.length} bands from storage`);
 
   // Inject content CSS file (see manifest.json for details)
   injectCSSFile(
