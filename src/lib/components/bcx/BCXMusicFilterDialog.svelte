@@ -168,7 +168,7 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Artists ({filteredData.artists.length} of {data.artists.length})">
             {#each filteredData.artists as artist}
               <Command.Item onSelect={() => handleArtistSelect(artist)}>
-                <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span>
+                <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span><br>
               </Command.Item>
             {/each}
           </Command.Group>
@@ -184,6 +184,7 @@ function handleKeydown(event: KeyboardEvent) {
             {#each filteredData.bands as band}
               <Command.Item onSelect={() => handleBandSelect(band)}>
                 <span>{band.name}{#if band.metadata.albums?.length}&nbsp;({band.metadata.albums.length}){/if}</span>
+                <br><span class="text-muted-foreground">{band.url.hostname}</span>
               </Command.Item>
             {/each}
           </Command.Group>
@@ -199,6 +200,7 @@ function handleKeydown(event: KeyboardEvent) {
             {#each filteredData.albums as album}
               <Command.Item onSelect={() => handleAlbumSelect(album)}>
                 <span>{album.toString()}</span>
+                <br><span class="text-muted-foreground">{album.url.hostname}</span>
               </Command.Item>
             {/each}
           </Command.Group>
@@ -214,6 +216,7 @@ function handleKeydown(event: KeyboardEvent) {
             {#each filteredData.tracks as track}
               <Command.Item onSelect={() => handleTrackSelect(track)}>
                 <span>{track.artist.toString()} - {track.title}{#if track.metadata?.year} - {track.metadata.year}{/if}</span>
+                <br><span class="text-muted-foreground">{track.url.hostname}</span>
               </Command.Item>
             {/each}
           </Command.Group>
