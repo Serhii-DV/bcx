@@ -25,12 +25,21 @@ export class Url {
     return new Url(url.toString());
   }
 
+  /**
+   * Returns the hostname of the URL.
+   *
+   * Examples:
+   * https://subdomain.bandcamp.com/path -> subdomain.bandcamp.com
+   */
   get hostname(): string {
     return this.url.hostname;
   }
 
   /**
    * Returns the protocol and hostname of the URL.
+   *
+   * Examples:
+   * https://subdomain.bandcamp.com/path -> https://subdomain.bandcamp.com
    */
   get hostnameWithProtocol(): string {
     return `${this.url.protocol}//${this.url.hostname}`;
@@ -45,6 +54,10 @@ export class Url {
 
   /**
    * Returns the subdomain of the URL's hostname or an empty string if none exists.
+   *
+   * Examples:
+   * https://subdomain.bandcamp.com -> subdomain
+   * https://bandcamp.com -> (empty string)
    */
   get subdomain(): string {
     const parts = this.url.hostname.split('.');
@@ -56,6 +69,9 @@ export class Url {
 
   /**
    * Returns the URL without the protocol.
+   *
+   * Examples:
+   * https://subdomain.bandcamp.com/path?query=1#hash -> subdomain.bandcamp.com/path?query=1#hash
    */
   get withoutProtocol(): string {
     return `${this.url.hostname}${this.url.pathname}${this.url.search}${this.url.hash}`;
@@ -63,6 +79,9 @@ export class Url {
 
   /**
    * Returns the URL without query parameters.
+   *
+   * Examples:
+   * https://subdomain.bandcamp.com/path?query=1#hash -> https://subdomain.bandcamp.com/path#hash
    */
   get withoutQueryParams(): string {
     const urlCopy = new URL(this.url.toString());
@@ -72,6 +91,9 @@ export class Url {
 
   /**
    * Returns the pathname of the URL.
+   *
+   * Examples:
+   * https://subdomain.bandcamp.com/path/to/resource?query=1#hash -> /path/to/resource
    */
   get pathname(): string {
     return this.url.pathname;
