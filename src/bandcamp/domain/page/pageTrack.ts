@@ -1,10 +1,7 @@
 import { console } from 'src/utils/console';
-import {
-  getMusicRecordingSchema,
-  type MusicRecordingSchema,
-} from '../page/schema';
-import { TrackFactory } from './factory';
-import { Track } from './track';
+import { TrackFactory } from '../track/factory';
+import { Track } from '../track/track';
+import { getMusicRecordingSchema, type MusicRecordingSchema } from './schema';
 
 export class TrackPage {
   public track: Track;
