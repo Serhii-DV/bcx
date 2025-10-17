@@ -1,7 +1,9 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumMetadata } from 'src/bandcamp/domain/album/metadata';
 import { console } from 'src/utils/console';
+import { element } from 'src/utils/dom';
 import { Price } from '../price';
+import { createReleaseYearElement } from './helper';
 import {
   type AlbumRelease,
   getMusicAlbumSchema,
@@ -20,6 +22,8 @@ export class PageAlbum {
     console.log('[PageAlbum]', 'Schema extracted from page:', schema);
     this.album = this.createAlbumFromSchema(schema!);
     console.log('[PageAlbum]', 'Album extracted from schema:', this.album);
+
+    this.appendAlbumYear();
   }
 
   /**
@@ -75,6 +79,21 @@ export class PageAlbum {
       bandId,
       metadata,
     );
+  }
+
+  private appendAlbumYear(): void {
+    const trackTitleElement = element('#name-section .trackTitle');
+
+    if (!trackTitleElement || !this.album.metadata?.year) {
+      return;
+    }
+
+    const releaseYearElement = createReleaseYearElement(
+      this.album.metadata.year,
+      this.album.metadata.publishedDate,
+    );
+
+    trackTitleElement.insertAdjacentElement('beforeend', releaseYearElement);
   }
 
   /**

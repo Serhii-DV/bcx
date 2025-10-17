@@ -12,6 +12,10 @@ export class TrackMetadata implements StorableObject {
     return this.published.getFullYear();
   }
 
+  get publishedDate(): string {
+    return this.published.toISOString().split('T')[0];
+  }
+
   toStorageObject(): StorableData {
     return {
       price: this.price.toString(),

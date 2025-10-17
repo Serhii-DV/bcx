@@ -1,5 +1,5 @@
 import { console } from 'src/utils/console';
-import { createElement, element, elements } from 'src/utils/dom';
+import { element, elements } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album/album';
 import { Band } from '../band/band';
@@ -9,6 +9,7 @@ import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import { Url } from '../url';
+import { createReleaseYearElement } from './helper';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -44,7 +45,7 @@ export class PageMusic {
   static async init(): Promise<PageMusic> {
     const pageMusic = new PageMusic();
     await pageMusic.initReleases();
-    pageMusic.appendYearsToReleases();
+    pageMusic.appendYearToReleases();
     return pageMusic;
   }
 
@@ -59,7 +60,7 @@ export class PageMusic {
     );
   }
 
-  private appendYearsToReleases(): void {
+  private appendYearToReleases(): void {
     this.band.metadata.albums.forEach((album) => {
       if (!album.metadata) return;
 
@@ -69,7 +70,11 @@ export class PageMusic {
       );
       if (!gridItem) return;
 
-      this.appendYearToGridItem(gridItem, album.metadata.year);
+      this.appendYearToGridItem(
+        gridItem,
+        album.metadata.year,
+        album.metadata.publishedDate,
+      );
     });
 
     this.band.metadata.tracks.forEach((track) => {
@@ -81,18 +86,33 @@ export class PageMusic {
       );
       if (!gridItem) return;
 
-      this.appendYearToGridItem(gridItem, track.metadata.year);
+      this.appendYearToGridItem(
+        gridItem,
+        track.metadata.year,
+        track.metadata.publishedDate,
+      );
     });
   }
 
-  private appendYearToGridItem(gridItem: HTMLElement, year: number): void {
+  private appendYearToGridItem(
+    gridItem: HTMLElement,
+    year: number,
+    publishedDate: string,
+  ): void {
     const titleElement = element('.title', gridItem);
     if (!titleElement) return;
 
-    const yearElement = createElement(`<small><br>${year}</small>`);
-    if (!yearElement) return;
+    const releaseYearElement = createReleaseYearElement(year, publishedDate);
+    if (!releaseYearElement) return;
 
-    titleElement.appendChild(yearElement);
+    const brElement = element('br', gridItem);
+
+    if (brElement) {
+      brElement.insertAdjacentElement('beforebegin', releaseYearElement);
+      return;
+    }
+
+    titleElement.insertAdjacentElement('beforeend', releaseYearElement);
   }
 
   /**

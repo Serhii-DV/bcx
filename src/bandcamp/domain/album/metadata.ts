@@ -14,6 +14,10 @@ export class AlbumMetadata implements StorableObject {
     return this.published.getFullYear();
   }
 
+  get publishedDate(): string {
+    return this.published.toISOString().split('T')[0];
+  }
+
   static create(
     amount: string | number,
     currency: string,
