@@ -2,9 +2,9 @@ import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { removeInvisibleChars } from 'src/utils/string';
 import { Artist } from '../artist';
 import { Artwork } from '../artwork';
+import { Metadata } from '../metadata';
 import { StorageKey } from '../storageKey';
 import { Url } from '../url';
-import { AlbumMetadata } from './metadata';
 
 export class Album implements Storable {
   constructor(
@@ -14,12 +14,12 @@ export class Album implements Storable {
     public id: number,
     public artwork: Artwork,
     public bandId: number,
-    public metadata?: AlbumMetadata,
+    public metadata?: Metadata,
   ) {}
 
   toString(): string {
     const year =
-      this.metadata instanceof AlbumMetadata ? ` (${this.metadata.year})` : '';
+      this.metadata instanceof Metadata ? ` (${this.metadata.year})` : '';
     return `${this.artist.toString()} - ${this.title}${year}`;
   }
 
@@ -30,7 +30,7 @@ export class Album implements Storable {
     id: string | number,
     artworkId: string | number,
     bandId: string | number,
-    metadata?: AlbumMetadata,
+    metadata?: Metadata,
   ): Album {
     return new Album(
       typeof url === 'string' ? new Url(url) : url,
@@ -74,9 +74,7 @@ export class Album implements Storable {
       data.id,
       data.artworkId,
       data.bandId,
-      data.metadata
-        ? AlbumMetadata.fromStorageObject(data.metadata)
-        : undefined,
+      data.metadata ? Metadata.fromStorageObject(data.metadata) : undefined,
     );
   }
 }

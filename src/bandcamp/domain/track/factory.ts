@@ -1,10 +1,10 @@
 import type { StorageObject } from 'src/core/storage';
 import { Artist } from '../artist';
 import { Artwork } from '../artwork';
+import { Metadata } from '../metadata';
 import type { MusicRecordingSchema } from '../page/schema';
 import { Price } from '../price';
 import { Url } from '../url';
-import { TrackMetadata } from './metadata';
 import { TrackTime } from './time';
 import { Track } from './track';
 
@@ -16,7 +16,7 @@ export class TrackFactory {
     title: string,
     time: string | TrackTime,
     artwork: string | number | Artwork,
-    metadata?: TrackMetadata,
+    metadata?: Metadata,
   ): Track {
     const trackId =
       typeof id === 'string' ? parseInt(id.replace('track-', ''), 10) : id;
@@ -69,10 +69,12 @@ export class TrackFactory {
       digitalRelease?.offers.priceCurrency || 'USD',
     );
 
-    const metadata = new TrackMetadata(
+    const metadata = Metadata.create(
       price,
-      new Date(schema.datePublished),
-      new Date(schema.dateModified),
+      schema.publisher.name,
+      schema.datePublished,
+      schema.dateModified,
+      schema.keywords,
     );
 
     return TrackFactory.fromRawData(
@@ -94,6 +96,7 @@ export class TrackFactory {
       track.title,
       track.time,
       track.artId,
+      track.metadata ? Metadata.fromStorageObject(track.metadata) : undefined,
     );
   }
 }

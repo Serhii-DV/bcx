@@ -1,10 +1,10 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
-import { Price } from '../price';
+import { Price } from './price';
 
-export class AlbumMetadata implements StorableObject {
+export class Metadata implements StorableObject {
   constructor(
     public price: Price,
-    public label: string,
+    public publisher: string,
     public published: Date,
     public modified: Date,
     public keywords: string[],
@@ -19,16 +19,15 @@ export class AlbumMetadata implements StorableObject {
   }
 
   static create(
-    amount: string | number,
-    currency: string,
-    label: string,
+    price: Price,
+    publisher: string,
     published: string,
     modified: string,
-    keywords: string[],
-  ): AlbumMetadata {
-    return new AlbumMetadata(
-      Price.create(amount, currency),
-      label,
+    keywords: string[] = [],
+  ): Metadata {
+    return new Metadata(
+      price,
+      publisher,
       new Date(published),
       new Date(modified),
       keywords,
@@ -38,18 +37,17 @@ export class AlbumMetadata implements StorableObject {
   toStorageObject(): StorageObject {
     return {
       price: this.price.toStorageObject(),
-      label: this.label,
+      publisher: this.publisher,
       published: this.published.toISOString(),
       modified: this.modified.toISOString(),
       keywords: this.keywords,
     };
   }
 
-  static fromStorageObject(data: StorageObject): AlbumMetadata {
-    return AlbumMetadata.create(
-      data.price.amount,
-      data.price.currency,
-      data.label,
+  static fromStorageObject(data: StorageObject): Metadata {
+    return Metadata.create(
+      Price.create(data.price.amount, data.price.currency),
+      data.publisher,
       data.published,
       data.modified,
       data.keywords,

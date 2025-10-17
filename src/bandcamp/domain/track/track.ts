@@ -1,9 +1,9 @@
 import type { Storable, StorableData } from 'src/core/storage';
 import type { Artist } from '../artist';
 import type { Artwork } from '../artwork';
+import type { Metadata } from '../metadata';
 import { StorageKey } from '../storageKey';
 import { Url } from '../url';
-import type { TrackMetadata } from './metadata';
 import { TrackTime } from './time';
 
 export class Track implements Storable {
@@ -15,7 +15,7 @@ export class Track implements Storable {
     public time: TrackTime,
     public artwork: Artwork,
     public albumId?: number,
-    public metadata?: TrackMetadata,
+    public metadata?: Metadata,
   ) {}
 
   toStorableData(): StorableData {

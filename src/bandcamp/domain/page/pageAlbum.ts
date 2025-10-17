@@ -1,5 +1,5 @@
 import { Album } from 'src/bandcamp/domain/album/album';
-import { AlbumMetadata } from 'src/bandcamp/domain/album/metadata';
+import { Metadata } from 'src/bandcamp/domain/metadata';
 import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
 import { Price } from '../price';
@@ -62,11 +62,11 @@ export class PageAlbum {
       digitalRelease?.offers.priceCurrency || 'USD',
     );
 
-    const metadata = new AlbumMetadata(
+    const metadata = Metadata.create(
       price,
       schema.publisher.name,
-      new Date(schema.datePublished),
-      new Date(schema.dateModified),
+      schema.datePublished,
+      schema.dateModified,
       schema.keywords,
     );
 
