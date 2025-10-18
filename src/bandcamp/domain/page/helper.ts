@@ -5,6 +5,6 @@ export function createReleaseYearElement(
   publishedDate: string,
 ): HTMLElement {
   return createElement(
-    `<small class="bcx bcx-release-year" title="${publishedDate}">(${year})</small>`,
+    `<span class="bcx bcx-release-year" title="${publishedDate}">(${year})</span>`,
   ) as HTMLElement;
 }
