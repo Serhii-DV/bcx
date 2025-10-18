@@ -10,7 +10,11 @@ import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import { Url } from '../url';
-import { createReleaseYearElement } from './helper';
+import {
+  createMetadataElement,
+  createReleaseArtistBadgeElement,
+  createReleaseYearBadgeElement,
+} from './helper';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -49,7 +53,7 @@ export class PageMusic {
     await injectCssFile(getExtensionUrl('bandcamp.page.music.css'));
     const pageMusic = new PageMusic();
     await pageMusic.initReleases();
-    pageMusic.appendYearToReleases();
+    pageMusic.appendMetadataToReleases();
     return pageMusic;
   }
 
@@ -64,52 +68,49 @@ export class PageMusic {
     );
   }
 
-  private appendYearToReleases(): void {
+  private appendMetadataToReleases(): void {
     this.band.metadata.albums.forEach((album) => {
-      if (!album.metadata) return;
-
       const gridItem = element(
         `.music-grid-item[data-item-id="album-${album.id}"]`,
         this.musicGridElement,
       );
       if (!gridItem) return;
 
-      this.appendYearToGridItem(
-        gridItem,
-        album.metadata.year,
-        album.metadata.publishedDate,
-      );
+      this.appendBadgesToGridItem(gridItem, album);
     });
 
     this.band.metadata.tracks.forEach((track) => {
-      if (!track.metadata) return;
-
       const gridItem = element(
         `.music-grid-item[data-item-id="track-${track.id}"]`,
         this.musicGridElement,
       );
       if (!gridItem) return;
 
-      this.appendYearToGridItem(
-        gridItem,
-        track.metadata.year,
-        track.metadata.publishedDate,
-      );
+      this.appendBadgesToGridItem(gridItem, track);
     });
   }
 
-  private appendYearToGridItem(
+  private appendBadgesToGridItem(
     gridItem: HTMLElement,
-    year: number,
-    publishedDate: string,
+    release: Release,
   ): void {
-    const titleElement = element('.title', gridItem);
-    if (!titleElement) return;
+    const releaseMetadataElement = createMetadataElement();
 
-    const releaseYearElement = createReleaseYearElement(year, publishedDate);
-    if (!releaseYearElement) return;
+    if (release.metadata?.year) {
+      const releaseYearBadge = createReleaseYearBadgeElement(
+        release.metadata.year,
+      );
+      releaseMetadataElement.appendChild(releaseYearBadge);
+    }
 
-    titleElement.insertAdjacentElement('beforeend', releaseYearElement);
+    if (release.artist) {
+      release.artist.names.forEach((artistName) => {
+        const releaseArtistBadge = createReleaseArtistBadgeElement(artistName);
+        releaseMetadataElement.appendChild(releaseArtistBadge);
+      });
+    }
+
+    gridItem.insertAdjacentElement('beforeend', releaseMetadataElement);
   }
 
   /**

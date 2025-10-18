@@ -185,3 +185,19 @@ export function onDOMReady(callback: () => void | Promise<void>): void {
     setTimeout(safeCall, 100);
   }
 }
+
+export function onClick<T extends HTMLElement>(
+  element: T | T[] | NodeListOf<T> | null,
+  callback: (event: MouseEvent) => void,
+): void {
+  if (!element) return;
+
+  const elements =
+    element instanceof HTMLElement
+      ? [element]
+      : Array.isArray(element)
+        ? element
+        : Array.from(element);
+
+  elements.forEach((el) => el.addEventListener('click', callback));
+}

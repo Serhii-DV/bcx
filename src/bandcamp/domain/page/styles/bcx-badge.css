@@ -1,0 +1,46 @@
+.bcx-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2em 0.2em;
+  line-height: 1;
+  border-radius: 5px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.bcx-badge:hover {
+  border-color: #a5b4fc;
+}
+
+.bcx-badge--success {
+  background-color: #dcfce7;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.bcx-badge--warning {
+  background-color: #fef9c3;
+  color: #854d0e;
+  border-color: #fde68a;
+}
+
+.bcx-badge--danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.bcx-badge--info {
+  background-color: #e0f2fe;
+  color: #075985;
+  border-color: #bae6fd;
+}
