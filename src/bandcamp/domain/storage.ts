@@ -43,7 +43,7 @@ export class BandcampStorage {
       Object.assign(storageData, trackStorableData);
     }
 
-    await storage.set(storageData);
+    return await storage.set(storageData);
   }
 
   static async getBands(): Promise<Band[]> {
@@ -155,13 +155,13 @@ export class BandcampStorage {
   }
 
   static async saveTrack(track: Track): Promise<void> {
-    await storage.set(track).catch((reason) => {
+    return await storage.set(track).catch((reason) => {
       throw new Error(reason);
     });
   }
 
   static async saveAlbum(album: Album): Promise<void> {
-    await storage.set(album).catch((reason) => {
+    return await storage.set(album).catch((reason) => {
       throw new Error(reason);
     });
   }

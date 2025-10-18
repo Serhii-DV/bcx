@@ -13,29 +13,33 @@ onDOMReady(async () => {
 
   console.log('[app.music]', 'Start content script setup');
 
-  const musicPage = await PageMusic.init();
-  const band = musicPage.band;
-  const musicGrid = musicPage.musicGridElement;
+  try {
+    const musicPage = await PageMusic.init();
+    const band = musicPage.band;
+    const musicGrid = musicPage.musicGridElement;
 
-  if (!musicGrid || !band.hasReleases) {
-    return;
+    if (!musicGrid || !band.hasReleases) {
+      return;
+    }
+    const filterContainer = document.createElement('div');
+    filterContainer.id = 'bcx-music-filter';
+
+    // Insert the container before the music grid
+    if (musicGrid.parentNode) {
+      musicGrid.parentNode.insertBefore(filterContainer, musicGrid);
+    }
+
+    mount(BCXMusicFilter, {
+      target: filterContainer,
+      props: {
+        band,
+        musicGrid,
+        musicGridItems: musicPage.musicGridItemElements,
+      },
+    });
+
+    await BandcampStorage.saveBand(band);
+  } catch (error) {
+    console.error('[app.music]', 'Failed to setup content script:', error);
   }
-  const filterContainer = document.createElement('div');
-  filterContainer.id = 'bcx-music-filter';
-
-  // Insert the container before the music grid
-  if (musicGrid.parentNode) {
-    musicGrid.parentNode.insertBefore(filterContainer, musicGrid);
-  }
-
-  mount(BCXMusicFilter, {
-    target: filterContainer,
-    props: {
-      band,
-      musicGrid,
-      musicGridItems: musicPage.musicGridItemElements,
-    },
-  });
-
-  BandcampStorage.saveBand(band);
 });

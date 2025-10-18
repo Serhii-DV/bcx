@@ -1,5 +1,6 @@
+import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { console } from 'src/utils/console';
-import { element, elements } from 'src/utils/dom';
+import { element, elementHtml, elements, injectCssFile } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album/album';
 import { Band } from '../band/band';
@@ -28,7 +29,9 @@ export class PageMusic {
   public musicGridElement: HTMLElement | null = null;
   public musicGridItemElements: HTMLElement[];
 
-  constructor() {
+  private constructor() {
+    elementHtml()?.classList.add('bcx-page-music');
+
     this.band = this.createBand();
 
     this.musicGridElement = element('#music-grid');
@@ -43,6 +46,7 @@ export class PageMusic {
   }
 
   static async init(): Promise<PageMusic> {
+    await injectCssFile(getExtensionUrl('bandcamp.page.music.css'));
     const pageMusic = new PageMusic();
     await pageMusic.initReleases();
     pageMusic.appendYearToReleases();
