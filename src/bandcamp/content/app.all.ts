@@ -1,6 +1,6 @@
 import { mount } from 'svelte';
-import App from './app.svelte';
-import './app.css';
+import App from './app.all.svelte';
+import './app.all.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCssFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
