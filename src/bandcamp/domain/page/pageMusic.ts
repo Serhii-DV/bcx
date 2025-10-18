@@ -105,13 +105,6 @@ export class PageMusic {
     const releaseYearElement = createReleaseYearElement(year, publishedDate);
     if (!releaseYearElement) return;
 
-    const brElement = element('br', gridItem);
-
-    if (brElement) {
-      brElement.insertAdjacentElement('beforebegin', releaseYearElement);
-      return;
-    }
-
     titleElement.insertAdjacentElement('beforeend', releaseYearElement);
   }
 

@@ -34,6 +34,14 @@
     {
       "resources": ["bandcamp.page.all.css"],
       "matches": ["https://*.bandcamp.com/*"]
+    },
+    {
+      "resources": ["bandcamp.page.music.css"],
+      "matches": ["https://*.bandcamp.com/*"]
+    },
+    {
+      "resources": ["bandcamp.page.album.css"],
+      "matches": ["https://*.bandcamp.com/*"]
     }
   ],
   "action": {

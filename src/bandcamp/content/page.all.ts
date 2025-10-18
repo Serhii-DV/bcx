@@ -2,7 +2,7 @@ import { mount } from 'svelte';
 import App from './app.svelte';
 import './app.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
-import { injectCSSFile, onDOMReady } from 'src/utils/dom';
+import { injectCssFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
@@ -21,21 +21,20 @@ onDOMReady(async () => {
 
   const shadowRoot = container.attachShadow({ mode: 'open' });
 
-  // Load bands data before mounting the app
-  const bands = await BandcampStorage.getBands();
-  console.log('[app.all]', `Loaded ${bands.length} bands from storage`);
+  try {
+    await injectCssFile(getExtensionUrl('bandcamp.page.all.css'), shadowRoot);
 
-  // Inject content CSS file (see manifest.json for details)
-  injectCSSFile(
-    getExtensionUrl('bandcamp.page.all.css'),
-    () => {
-      mount(App, {
-        target: shadowRoot,
-        props: {
-          bands,
-        },
-      });
-    },
-    shadowRoot,
-  );
+    // Load bands data before mounting the app
+    const bands = await BandcampStorage.getBands();
+    console.log('[app.all]', `Loaded ${bands.length} bands from storage`);
+
+    mount(App, {
+      target: shadowRoot,
+      props: {
+        bands,
+      },
+    });
+  } catch (error) {
+    console.error('[app.all]', 'Failed to setup content script:', error);
+  }
 });
