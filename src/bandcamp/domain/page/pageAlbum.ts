@@ -1,7 +1,7 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { console } from 'src/utils/console';
-import { element } from 'src/utils/dom';
+import { element, elementHtml } from 'src/utils/dom';
 import { Price } from '../price';
 import { createReleaseYearElement } from './helper';
 import {
@@ -18,6 +18,8 @@ export class PageAlbum {
    * @throws Error if schema is not found or invalid
    */
   constructor() {
+    elementHtml()?.classList.add('bcx-page-album');
+
     const schema = getMusicAlbumSchema();
     console.log('[PageAlbum]', 'Schema extracted from page:', schema);
     this.album = this.createAlbumFromSchema(schema!);

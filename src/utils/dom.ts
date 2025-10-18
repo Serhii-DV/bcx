@@ -17,6 +17,10 @@ export function elements(
   ) as HTMLElement[];
 }
 
+export function elementHtml(): HTMLElement | null {
+  return document.documentElement;
+}
+
 export function createElement(htmlString: string): HTMLElement | null {
   const div = document.createElement('div');
   div.innerHTML = htmlString.trim();
