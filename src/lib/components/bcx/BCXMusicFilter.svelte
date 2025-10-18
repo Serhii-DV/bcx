@@ -27,6 +27,7 @@ let filterInput: HTMLInputElement | null = $state(null);
 let debounceTimer: NodeJS.Timeout | null = null;
 let isotope: Isotope | null = null;
 let searchQuery = $state('');
+let previousQuery = '';
 let visibleCount = $state(0);
 let totalCount = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
@@ -34,6 +35,13 @@ let storeUnsubscribe: (() => void) | null = null;
 // Reactive values
 $effect(() => {
   if (searchQuery !== undefined) {
+    // Scroll to input when query changes from empty to non-empty
+    if (previousQuery.trim() === '' && searchQuery.trim() !== '') {
+      // Only scroll when it changes from empty → non-empty
+      filterInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    previousQuery = searchQuery;
+
     handleFilterChange(searchQuery);
   }
 });
