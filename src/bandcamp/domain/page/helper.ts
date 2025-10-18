@@ -40,6 +40,6 @@ export function createReleaseYearElement(
   publishedDate: string,
 ): HTMLElement {
   return createElement(
-    `<span class="bcx-release-year" title="${publishedDate}">${year}</span>`,
+    `<div class="bcx-release-year" title="${publishedDate}">${year}</div>`,
   ) as HTMLElement;
 }

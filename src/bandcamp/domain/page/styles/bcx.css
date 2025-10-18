@@ -10,8 +10,8 @@
   cursor: pointer;
 }
 
-.bcx-page-album .bcx-release-metadata {
-  display: block;
+.bcx-page-album .bcx-release-year {
+  margin: 10px 0;
   font-weight: normal;
-  font-size: 60%;
+  font-size: 16px;
 }

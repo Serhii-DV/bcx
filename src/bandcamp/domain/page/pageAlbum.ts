@@ -101,7 +101,7 @@ export class PageAlbum {
       this.album.metadata.publishedDate,
     );
 
-    trackTitleElement.insertAdjacentElement('beforeend', releaseYearElement);
+    trackTitleElement.insertAdjacentElement('afterend', releaseYearElement);
   }
 
   /**
