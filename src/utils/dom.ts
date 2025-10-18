@@ -62,27 +62,33 @@ export function setDataAttribute(
 
 /**
  * Injects a CSS file into the document by creating a link element.
+ * Returns a Promise that resolves when the CSS file is loaded.
  */
-export function injectCSSFile(
+export function injectCssFile(
   cssUrl: string,
-  callback: ((this: GlobalEventHandlers, ev: Event) => any) | null = null,
   target: Document | ShadowRoot = document,
-): void {
-  const linkElement = document.createElement('link');
-  linkElement.rel = 'stylesheet';
-  linkElement.href = cssUrl;
-  linkElement.onload = (event) => {
-    console.log('Injected css file:', cssUrl);
-    if (callback) {
-      callback.call(linkElement, event);
-    }
-  };
+): Promise<HTMLLinkElement> {
+  return new Promise((resolve, reject) => {
+    const linkElement = document.createElement('link');
+    linkElement.rel = 'stylesheet';
+    linkElement.href = cssUrl;
 
-  if (target instanceof Document) {
-    target.head.appendChild(linkElement);
-  } else {
-    target.appendChild(linkElement);
-  }
+    linkElement.onload = () => {
+      console.log('Injected CSS file:', cssUrl);
+      resolve(linkElement);
+    };
+
+    linkElement.onerror = (error) => {
+      console.error('Failed to inject CSS file:', cssUrl, error);
+      reject(new Error(`Failed to load CSS file: ${cssUrl}`));
+    };
+
+    if (target instanceof Document) {
+      target.head.appendChild(linkElement);
+    } else {
+      target.appendChild(linkElement);
+    }
+  });
 }
 
 /**
