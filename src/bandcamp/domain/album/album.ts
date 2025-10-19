@@ -42,7 +42,7 @@ export class Album implements Storable {
       artworkId: this.artwork.id,
       bandId: this.bandId,
       // Save Track IDs instead of full Track objects to avoid redundancy
-      tracks: this.tracks.map((track) => track.id),
+      trackIds: this.tracks.map((track) => track.id),
       metadata: this.metadata ? this.metadata.toStorageObject() : undefined,
     };
   }

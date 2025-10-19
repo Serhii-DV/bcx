@@ -1,5 +1,5 @@
 import { storage } from 'src/core/shared';
-import type { StorableData } from 'src/core/storage';
+import type { StorableData, StorageObject } from 'src/core/storage';
 import { Album } from './album/album';
 import { AlbumFactory } from './album/factory';
 import { Band } from './band/band';
@@ -143,6 +143,20 @@ export class BandcampStorage {
     return albums;
   }
 
+  static async getTracksByTrackIds(trackIds: number[]): Promise<Track[]> {
+    const trackKeys = trackIds.map((trackId) => StorageKey.trackKey(trackId));
+    const storableData = await storage.get(trackKeys);
+
+    return trackKeys
+      .map((trackKey) => storableData[trackKey])
+      .filter(
+        (trackObj): trackObj is object =>
+          typeof trackObj === 'object' && trackObj !== null,
+      )
+      .map((trackObj) => TrackFactory.fromStorage(trackObj))
+      .filter((track): track is Track => track !== null);
+  }
+
   private static getTracksByTrackIdsFromStorableData(
     storableData: StorableData,
     trackIds: number[],
@@ -218,11 +232,41 @@ export class BandcampStorage {
   static async getAlbums(albums: Album[]): Promise<Album[]> {
     const albumsStorableData =
       await BandcampStorage.getAlbumsStorableData(albums);
-    const loadedAlbums = Object.values(albumsStorableData)
-      .filter(
-        (data): data is object => typeof data === 'object' && data !== null,
-      )
-      .map((albumObj) => AlbumFactory.fromStorageObject(albumObj))
+    const albumsData: StorageObject[] = Object.values(
+      albumsStorableData,
+    ).filter(
+      (data): data is object => typeof data === 'object' && data !== null,
+    );
+    const trackIds: number[] = [];
+    albumsData.forEach((albumStorageObject) => {
+      const ids: number[] = albumStorageObject.trackIds || [];
+      ids.forEach((id) => {
+        if (!trackIds.includes(id)) {
+          trackIds.push(id);
+        }
+      });
+    });
+
+    // Load all tracks data
+    const tracks = await BandcampStorage.getTracksByTrackIds(trackIds);
+    const loadedTracksMap = new Map(tracks.map((track) => [track.id, track]));
+
+    const loadedAlbums = albumsData
+      .map((albumStorageObject) => {
+        const album = AlbumFactory.fromStorageObject(albumStorageObject);
+        const trackIds: number[] = albumStorageObject.trackIds || [];
+
+        if (trackIds.length === 0) {
+          return album;
+        }
+
+        // Map track IDs to loaded Track objects
+        album.tracks = trackIds
+          .map((trackId) => loadedTracksMap.get(trackId))
+          .filter((track): track is Track => track !== undefined);
+
+        return album;
+      })
       .filter((album): album is Album => album !== null);
 
     // Create a map of loaded albums by ID for efficient lookup
