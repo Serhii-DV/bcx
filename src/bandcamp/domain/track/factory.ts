@@ -54,8 +54,10 @@ export class TrackFactory {
         ?.value as number) || 0;
 
     const url = schema.mainEntityOfPage;
-    const artist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
-    const title = schema.name;
+    const mainArtist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
+    const { artist, title } = TrackFactory.extractArtistAndTitleFromTitle(
+      schema.name,
+    );
     const time = TrackTime.fromDuration(schema.duration);
     // albumId is not available in schema, try to get it from pagedata
     const albumId = bandcampPageData.albumId || undefined;
@@ -82,13 +84,25 @@ export class TrackFactory {
     return TrackFactory.fromRawData(
       trackId,
       url,
-      artist,
+      artist ?? mainArtist,
       title,
       time,
       artId,
       albumId,
       metadata,
     );
+  }
+
+  private static extractArtistAndTitleFromTitle(title: string): {
+    artist: Artist | null;
+    title: string;
+  } {
+    // Sometimes the artist name is included in the title, e.g., "Artist - Track Title"
+    const parts = title.split(' - ');
+    return {
+      artist: parts.length > 1 ? Artist.fromString(parts[0]) : null,
+      title: parts.length > 1 ? parts[1] : title,
+    };
   }
 
   static fromStorage(track: StorageObject): Track {
