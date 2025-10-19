@@ -19,7 +19,7 @@ export class BandcampStorage {
     }
 
     const storageData: StorableData = band.toStorableData();
-    const albumData = await BandcampStorage.getAlbumsStorageData(
+    const albumData = await BandcampStorage.getAlbumsStorableData(
       band.metadata.albums,
     );
 
@@ -49,16 +49,16 @@ export class BandcampStorage {
       return [];
     }
 
-    const bandsData = await this.loadBandsStorableData(bandIds);
+    const bandsStorableData = await this.getBandsStorableData(bandIds);
 
     // Collect release keys from loaded band data
     const releaseKeys: string[] = [];
-    for (const key in bandsData) {
-      if (typeof bandsData[key] !== 'object') {
-        delete bandsData[key];
+    for (const key in bandsStorableData) {
+      if (typeof bandsStorableData[key] !== 'object') {
+        delete bandsStorableData[key];
       }
 
-      const objBand = bandsData[key];
+      const objBand = bandsStorableData[key];
       objBand?.metadata?.albums.forEach((albumId: number) => {
         const albumKey = StorageKey.albumKey(albumId);
         if (releaseKeys.includes(albumKey)) return;
@@ -79,12 +79,12 @@ export class BandcampStorage {
     // Create bands from loaded data
     const bands: Band[] = [];
 
-    for (const key in bandsData) {
-      if (typeof bandsData[key] !== 'object') {
+    for (const key in bandsStorableData) {
+      if (typeof bandsStorableData[key] !== 'object') {
         continue;
       }
 
-      const objBand = bandsData[key];
+      const objBand = bandsStorableData[key];
       if (!objBand) continue;
       const band = this.createBandFromStorageObject(objBand, releaseObjs);
       if (!band) continue;
@@ -140,16 +140,6 @@ export class BandcampStorage {
     return bandIds;
   }
 
-  private static async loadBandsStorableData(
-    bandIds: number[],
-  ): Promise<StorableData> {
-    // Prepare all keys to load in one storage call
-    const bandKeys: string[] = bandIds.map((id) => StorageKey.bandKey(id));
-
-    // Load all band data in single call
-    return await storage.get(bandKeys);
-  }
-
   static async saveTrack(track: Track): Promise<void> {
     return await storage.set(track).catch((reason) => {
       throw new Error(reason);
@@ -169,10 +159,11 @@ export class BandcampStorage {
     tracks: Track[],
     storageData: StorableData,
   ): Promise<void> {
-    const tracksData = await BandcampStorage.getTracksStorageData(tracks);
+    const tracksStorableData =
+      await BandcampStorage.getTracksStorableData(tracks);
     for (const track of tracks) {
       const trackKey = StorageKey.trackKey(track.id);
-      if (tracksData[trackKey]) {
+      if (tracksStorableData[trackKey]) {
         continue; // Skip if track data already exists
       }
 
@@ -180,20 +171,28 @@ export class BandcampStorage {
       Object.assign(storageData, trackStorableData);
     }
   }
+  static async getBandsStorableData(bandIds: number[]): Promise<StorableData> {
+    // Prepare all keys to load in one storage call
+    const bandKeys: string[] = bandIds.map((id) => StorageKey.bandKey(id));
 
-  static async getAlbumsStorageData(albums: Album[]): Promise<StorableData> {
+    // Load all band data in single call
+    return await storage.get(bandKeys);
+  }
+
+  static async getAlbumsStorableData(albums: Album[]): Promise<StorableData> {
     const albumKeys = albums.map((album) => StorageKey.albumKey(album.id));
     return await storage.get(albumKeys);
   }
 
-  static async getTracksStorageData(tracks: Track[]): Promise<StorableData> {
+  static async getTracksStorableData(tracks: Track[]): Promise<StorableData> {
     const trackKeys = tracks.map((track) => StorageKey.trackKey(track.id));
     return await storage.get(trackKeys);
   }
 
   static async loadAlbumsData(albums: Album[]): Promise<Album[]> {
-    const albumsData = await BandcampStorage.getAlbumsStorageData(albums);
-    const loadedAlbums = Object.values(albumsData)
+    const albumsStorableData =
+      await BandcampStorage.getAlbumsStorableData(albums);
+    const loadedAlbums = Object.values(albumsStorableData)
       .filter(
         (data): data is object => typeof data === 'object' && data !== null,
       )
