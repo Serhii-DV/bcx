@@ -108,11 +108,14 @@ function initIsotope(): void {
     const gridElement = musicGrid.querySelector(
       '[data-item-id="album-' + album.id + '"]',
     );
+    let filterValue = album.toString();
 
-    gridElement?.setAttribute(
-      'data-filter-value',
-      album.toString().toLowerCase(),
-    );
+    // Include artists from tracks in filter value
+    album.tracks.forEach((track) => {
+      filterValue += ' ' + track.artist.toString();
+    });
+
+    gridElement?.setAttribute('data-filter-value', filterValue.toLowerCase());
   });
 
   band.metadata.tracks.forEach((track) => {

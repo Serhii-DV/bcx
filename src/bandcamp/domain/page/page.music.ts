@@ -114,6 +114,17 @@ export class PageMusic {
       });
     }
 
+    // For albums, also include artists from tracks
+    if (release instanceof Album) {
+      release.tracks.forEach((track) => {
+        track.artist.names.forEach((artistName) => {
+          const releaseArtistBadge =
+            createReleaseArtistBadgeElement(artistName);
+          releaseMetadataElement.appendChild(releaseArtistBadge);
+        });
+      });
+    }
+
     gridItem.insertAdjacentElement('beforeend', releaseMetadataElement);
   }
 
