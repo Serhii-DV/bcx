@@ -4,6 +4,7 @@ import { Artwork } from '../artwork';
 import { Metadata } from '../metadata';
 import type { MusicRecordingSchema } from '../page/schema';
 import { Price } from '../price';
+import { bandcampPageData } from '../shared';
 import { Url } from '../url';
 import { TrackTime } from './time';
 import { Track } from './track';
@@ -16,6 +17,7 @@ export class TrackFactory {
     title: string,
     time: string | TrackTime,
     artwork: string | number | Artwork,
+    albumId?: number,
     metadata?: Metadata,
   ): Track {
     const trackId =
@@ -26,8 +28,6 @@ export class TrackFactory {
 
     const trackArtist =
       typeof artist === 'string' ? Artist.fromString(artist) : artist;
-
-    const trackAlbumId = 0;
 
     const trackArtwork =
       artwork instanceof Artwork
@@ -43,7 +43,7 @@ export class TrackFactory {
       title,
       trackTime,
       trackArtwork,
-      trackAlbumId,
+      albumId,
       metadata,
     );
   }
@@ -57,6 +57,8 @@ export class TrackFactory {
     const artist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
     const title = schema.name;
     const time = TrackTime.fromDuration(schema.duration);
+    // albumId is not available in schema, try to get it from pagedata
+    const albumId = bandcampPageData.albumId || undefined;
     const artId =
       (schema.additionalProperty?.find((prop) => prop.name === 'art_id')
         ?.value as number) || 0;
@@ -84,6 +86,7 @@ export class TrackFactory {
       title,
       time,
       artId,
+      albumId,
       metadata,
     );
   }
@@ -96,6 +99,7 @@ export class TrackFactory {
       track.title,
       track.time,
       track.artId,
+      track.albumId,
       track.metadata ? Metadata.fromStorageObject(track.metadata) : undefined,
     );
   }
