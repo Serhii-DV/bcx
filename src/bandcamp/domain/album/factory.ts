@@ -9,6 +9,8 @@ import type {
   PropertyValue,
 } from '../page/schema';
 import { Price } from '../price';
+import { TrackFactory } from '../track/factory';
+import { TrackTime } from '../track/time';
 import type { Track } from '../track/track';
 import { Url } from '../url';
 import { Album } from './album';
@@ -54,7 +56,7 @@ export class AlbumFactory {
   /**
    * Creates an Album object from a Bandcamp Schema JSON-LD data
    */
-  static createAlbumFromSchema(schema: MusicAlbumSchema): Album {
+  static createFromSchema(schema: MusicAlbumSchema): Album {
     // Extract the album ID from the main digital release
     const digitalRelease = schema.albumRelease.find(
       (release: AlbumRelease) => release.musicReleaseFormat === 'DigitalFormat',
@@ -87,6 +89,8 @@ export class AlbumFactory {
       digitalRelease?.offers.priceCurrency || 'USD',
     );
 
+    const tracks = TrackFactory.createTracksFromSchema(schema);
+
     const metadata = Metadata.create(
       price,
       schema.publisher.name,
@@ -102,7 +106,7 @@ export class AlbumFactory {
       albumId,
       artworkId,
       bandId,
-      [],
+      tracks,
       metadata,
     );
   }

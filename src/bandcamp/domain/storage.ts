@@ -19,7 +19,9 @@ export class BandcampStorage {
     }
 
     const storageData: StorableData = band.toStorableData();
-    const albumData = await BandcampStorage.getAlbumsData(band.metadata.albums);
+    const albumData = await BandcampStorage.getAlbumsStorageData(
+      band.metadata.albums,
+    );
 
     // Add storable data for each album but only in case if it doesn't exist yet
     for (const album of band.metadata.albums) {
@@ -32,17 +34,10 @@ export class BandcampStorage {
       Object.assign(storageData, albumStorableData);
     }
 
-    // Add storable data for each track but only in case if it doesn't exist yet
-    const trackData = await BandcampStorage.getTracksData(band.metadata.tracks);
-    for (const track of band.metadata.tracks) {
-      const trackKey = StorageKey.trackKey(track.id);
-      if (trackData[trackKey]) {
-        continue; // Skip if track data already exists
-      }
-
-      const trackStorableData = track.toStorableData();
-      Object.assign(storageData, trackStorableData);
-    }
+    await BandcampStorage.addTracksToStorageData(
+      band.metadata.tracks,
+      storageData,
+    );
 
     return await storage.set(storageData);
   }
@@ -162,23 +157,42 @@ export class BandcampStorage {
   }
 
   static async saveAlbum(album: Album): Promise<void> {
-    return await storage.set(album).catch((reason) => {
+    const storageData: StorableData = album.toStorableData();
+    await BandcampStorage.addTracksToStorageData(album.tracks, storageData);
+
+    return await storage.set(storageData).catch((reason) => {
       throw new Error(reason);
     });
   }
 
-  static async getAlbumsData(albums: Album[]): Promise<StorableData> {
+  private static async addTracksToStorageData(
+    tracks: Track[],
+    storageData: StorableData,
+  ): Promise<void> {
+    const tracksData = await BandcampStorage.getTracksStorageData(tracks);
+    for (const track of tracks) {
+      const trackKey = StorageKey.trackKey(track.id);
+      if (tracksData[trackKey]) {
+        continue; // Skip if track data already exists
+      }
+
+      const trackStorableData = track.toStorableData();
+      Object.assign(storageData, trackStorableData);
+    }
+  }
+
+  static async getAlbumsStorageData(albums: Album[]): Promise<StorableData> {
     const albumKeys = albums.map((album) => StorageKey.albumKey(album.id));
     return await storage.get(albumKeys);
   }
 
-  static async getTracksData(tracks: Track[]): Promise<StorableData> {
+  static async getTracksStorageData(tracks: Track[]): Promise<StorableData> {
     const trackKeys = tracks.map((track) => StorageKey.trackKey(track.id));
     return await storage.get(trackKeys);
   }
 
   static async loadAlbumsData(albums: Album[]): Promise<Album[]> {
-    const albumsData = await BandcampStorage.getAlbumsData(albums);
+    const albumsData = await BandcampStorage.getAlbumsStorageData(albums);
     const loadedAlbums = Object.values(albumsData)
       .filter(
         (data): data is object => typeof data === 'object' && data !== null,

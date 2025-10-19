@@ -50,4 +50,22 @@ export class Artist {
   toString(): string {
     return this.value;
   }
+
+  static fromTrackTitle(
+    title: string,
+    defaultArtist: string,
+  ): {
+    artist: Artist;
+    title: string;
+  } {
+    // Sometimes the artist name is included in the title, e.g., "Artist - Track Title"
+    const parts = title.split(' - ');
+    return {
+      artist:
+        parts.length > 1
+          ? Artist.fromString(parts[0])
+          : Artist.fromString(defaultArtist),
+      title: parts.length > 1 ? parts[1] : title,
+    };
+  }
 }

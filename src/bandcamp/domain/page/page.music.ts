@@ -253,7 +253,7 @@ export class PageMusic {
           return Album.create(url, artist, title, itemId.id, artworkId, bandId);
 
         case 'track':
-          return TrackFactory.fromRawData(
+          return TrackFactory.create(
             itemId.id,
             url,
             artist,

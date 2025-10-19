@@ -22,7 +22,7 @@ export class PageAlbum {
 
     const schema = getMusicAlbumSchema();
     console.log('[PageAlbum]', 'Schema extracted from page:', schema);
-    this.album = AlbumFactory.createAlbumFromSchema(schema!);
+    this.album = AlbumFactory.createFromSchema(schema!);
     console.log('[PageAlbum]', 'Album extracted from schema:', this.album);
 
     this.appendAlbumYear();
@@ -46,21 +46,6 @@ export class PageAlbum {
     );
 
     trackTitleElement.insertAdjacentElement('afterend', releaseYearElement);
-  }
-
-  /**
-   * Extract track information from schema
-   */
-  static getTracksFromSchema(schema: MusicAlbumSchema) {
-    return schema.track.itemListElement.map((trackItem) => ({
-      position: trackItem.position,
-      name: trackItem.item.name,
-      duration: trackItem.item.duration,
-      url: trackItem.item.mainEntityOfPage,
-      trackId: trackItem.item.additionalProperty.find(
-        (prop: PropertyValue) => prop.name === 'track_id',
-      )?.value as number,
-    }));
   }
 
   /**

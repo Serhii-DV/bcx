@@ -2,7 +2,11 @@ import type { StorageObject } from 'src/core/storage';
 import { Artist } from '../artist';
 import { Artwork } from '../artwork';
 import { Metadata } from '../metadata';
-import type { MusicRecordingSchema } from '../page/schema';
+import type {
+  MusicAlbumSchema,
+  MusicRecordingSchema,
+  PropertyValue,
+} from '../page/schema';
 import { Price } from '../price';
 import { bandcampPageData } from '../shared';
 import { Url } from '../url';
@@ -10,7 +14,7 @@ import { TrackTime } from './time';
 import { Track } from './track';
 
 export class TrackFactory {
-  static fromRawData(
+  static create(
     id: string | number,
     url: string | Url | URL,
     artist: string | Artist,
@@ -55,9 +59,7 @@ export class TrackFactory {
 
     const url = schema.mainEntityOfPage;
     const mainArtist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
-    const { artist, title } = TrackFactory.extractArtistAndTitleFromTitle(
-      schema.name,
-    );
+    const { artist, title } = Artist.fromTrackTitle(schema.name, mainArtist);
     const time = TrackTime.fromDuration(schema.duration);
     // albumId is not available in schema, try to get it from pagedata
     const albumId = bandcampPageData.albumId || undefined;
@@ -81,10 +83,10 @@ export class TrackFactory {
       schema.keywords,
     );
 
-    return TrackFactory.fromRawData(
+    return TrackFactory.create(
       trackId,
       url,
-      artist ?? mainArtist,
+      artist,
       title,
       time,
       artId,
@@ -93,20 +95,49 @@ export class TrackFactory {
     );
   }
 
-  private static extractArtistAndTitleFromTitle(title: string): {
-    artist: Artist | null;
-    title: string;
-  } {
-    // Sometimes the artist name is included in the title, e.g., "Artist - Track Title"
-    const parts = title.split(' - ');
-    return {
-      artist: parts.length > 1 ? Artist.fromString(parts[0]) : null,
-      title: parts.length > 1 ? parts[1] : title,
-    };
+  /**
+   * Extract track information from schema
+   */
+  static createTracksFromSchema(schema: MusicAlbumSchema): Track[] {
+    const tracks: Track[] = [];
+    const albumArtId = schema.albumRelease[0]?.additionalProperty.find(
+      (prop: PropertyValue) => prop.name === 'art_id',
+    )?.value as number;
+    const albumId = schema.albumRelease[0]?.additionalProperty.find(
+      (prop: PropertyValue) => prop.name === 'item_id',
+    )?.value as number;
+
+    schema.track.itemListElement.forEach((trackItem) => {
+      const trackId = trackItem.item.additionalProperty.find(
+        (prop: PropertyValue) => prop.name === 'track_id',
+      )?.value as number;
+      const url = trackItem.item.mainEntityOfPage;
+      const { artist, title } = Artist.fromTrackTitle(
+        trackItem.item.name,
+        schema.byArtist.name,
+      );
+      const time = TrackTime.fromDuration(trackItem.item.duration);
+      const artId = albumArtId;
+
+      const track = TrackFactory.create(
+        trackId,
+        url,
+        artist,
+        title,
+        time,
+        artId,
+        albumId,
+        undefined,
+      );
+
+      tracks.push(track);
+    });
+
+    return tracks;
   }
 
   static fromStorage(track: StorageObject): Track {
-    return TrackFactory.fromRawData(
+    return TrackFactory.create(
       track.id,
       track.url,
       track.artist,
