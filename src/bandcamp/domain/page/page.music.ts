@@ -3,6 +3,7 @@ import { console } from 'src/utils/console';
 import { element, elementHtml, elements, injectCssFile } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album/album';
+import { AlbumFactory } from '../album/factory';
 import { Band } from '../band/band';
 import { BandFactory } from '../band/factory';
 import { BandMetadata } from '../band/metadata';
@@ -62,7 +63,7 @@ export class PageMusic {
     const albums = releases.filter(
       (release): release is Album => release instanceof Album,
     );
-    this.band.metadata.albums = await BandcampStorage.loadAlbumsData(albums);
+    this.band.metadata.albums = await BandcampStorage.getAlbums(albums);
     this.band.metadata.tracks = releases.filter(
       (release): release is Track => release instanceof Track,
     );
@@ -184,7 +185,7 @@ export class PageMusic {
   private createAlbumFromClientItem(item: MusicGridClientItem): Album | null {
     const albumUrl = this.normalizeUrl(item.page_url);
     const artist = item.artist || this.band.name;
-    return Album.create(
+    return AlbumFactory.create(
       albumUrl,
       artist,
       item.title,
@@ -250,7 +251,14 @@ export class PageMusic {
 
       switch (itemId.type) {
         case 'album':
-          return Album.create(url, artist, title, itemId.id, artworkId, bandId);
+          return AlbumFactory.create(
+            url,
+            artist,
+            title,
+            itemId.id,
+            artworkId,
+            bandId,
+          );
 
         case 'track':
           return TrackFactory.create(

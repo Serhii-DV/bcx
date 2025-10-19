@@ -96,41 +96,67 @@ export class BandcampStorage {
   }
 
   private static createBandFromStorageObject(
-    bandObj: any,
-    releaseObjs: StorableData,
+    bandStorageObject: any,
+    storableData: StorableData,
   ): Band | null {
-    if (!bandObj || typeof bandObj !== 'object') {
+    if (!bandStorageObject || typeof bandStorageObject !== 'object') {
       return null;
     }
 
-    const albumIds: number[] = bandObj.metadata.albums || [];
-    const trackIds: number[] = bandObj.metadata.tracks || [];
+    const albumIds: number[] = bandStorageObject.metadata.albums || [];
+    const trackIds: number[] = bandStorageObject.metadata.tracks || [];
 
     if (albumIds.length === 0 && trackIds.length === 0) {
-      return BandFactory.fromStorage(bandObj);
+      return BandFactory.fromStorage(bandStorageObject);
     }
 
-    const albums: Album[] = [];
-    albumIds.forEach((albumId) => {
-      const albumKey = StorageKey.albumKey(albumId);
-      const albumObj = releaseObjs[albumKey];
-      if (!albumObj) return;
-      albums.push(AlbumFactory.fromStorageObject(albumObj));
-    });
+    const albums = BandcampStorage.getAlbumsByAlbumIdsFromStorableData(
+      storableData,
+      albumIds,
+    );
 
-    const tracks: Track[] = [];
-    trackIds.forEach((trackId) => {
-      const trackKey = StorageKey.trackKey(trackId);
-      const trackObj = releaseObjs[trackKey];
-      if (!trackObj) return;
-      tracks.push(TrackFactory.fromStorage(trackObj));
-    });
+    const tracks = BandcampStorage.getTracksByTrackIdsFromStorableData(
+      storableData,
+      trackIds,
+    );
 
-    const band = BandFactory.fromStorage(bandObj);
+    const band = BandFactory.fromStorage(bandStorageObject);
     band.metadata.albums = albums;
     band.metadata.tracks = tracks;
 
     return band;
+  }
+
+  private static getAlbumsByAlbumIdsFromStorableData(
+    storableData: StorableData,
+    albumIds: number[],
+  ): Album[] {
+    const albums: Album[] = [];
+
+    albumIds.forEach((albumId) => {
+      const albumKey = StorageKey.albumKey(albumId);
+      const albumObj = storableData[albumKey];
+      if (!albumObj) return;
+      albums.push(AlbumFactory.fromStorageObject(albumObj));
+    });
+
+    return albums;
+  }
+
+  private static getTracksByTrackIdsFromStorableData(
+    storableData: StorableData,
+    trackIds: number[],
+  ): Track[] {
+    const tracks: Track[] = [];
+
+    trackIds.forEach((trackId) => {
+      const trackKey = StorageKey.trackKey(trackId);
+      const trackObj = storableData[trackKey];
+      if (!trackObj) return;
+      tracks.push(TrackFactory.fromStorage(trackObj));
+    });
+
+    return tracks;
   }
 
   private static async getBandsIds(): Promise<number[]> {
@@ -189,7 +215,7 @@ export class BandcampStorage {
     return await storage.get(trackKeys);
   }
 
-  static async loadAlbumsData(albums: Album[]): Promise<Album[]> {
+  static async getAlbums(albums: Album[]): Promise<Album[]> {
     const albumsStorableData =
       await BandcampStorage.getAlbumsStorableData(albums);
     const loadedAlbums = Object.values(albumsStorableData)
@@ -206,5 +232,24 @@ export class BandcampStorage {
 
     // Merge albums with loaded data, preferring loaded data when available
     return albums.map((album) => loadedAlbumsMap.get(album.id) || album);
+  }
+
+  static async getTracks(tracks: Track[]): Promise<Track[]> {
+    const tracksStorableData =
+      await BandcampStorage.getTracksStorableData(tracks);
+    const loadedTracks = Object.values(tracksStorableData)
+      .filter(
+        (data): data is object => typeof data === 'object' && data !== null,
+      )
+      .map((trackObj) => TrackFactory.fromStorage(trackObj))
+      .filter((track): track is Track => track !== null);
+
+    // Create a map of loaded tracks by ID for efficient lookup
+    const loadedTracksMap = new Map(
+      loadedTracks.map((track) => [track.id, track]),
+    );
+
+    // Merge tracks with loaded data, preferring loaded data when available
+    return tracks.map((track) => loadedTracksMap.get(track.id) || track);
   }
 }
