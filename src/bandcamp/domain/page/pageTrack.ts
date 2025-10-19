@@ -3,7 +3,7 @@ import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import { getMusicRecordingSchema, type MusicRecordingSchema } from './schema';
 
-export class TrackPage {
+export class PageTrack {
   public track: Track;
   public isStandaloneTrack: boolean;
 
