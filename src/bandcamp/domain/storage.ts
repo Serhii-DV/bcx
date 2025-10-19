@@ -1,6 +1,7 @@
 import { storage } from 'src/core/shared';
 import type { StorableData } from 'src/core/storage';
 import { Album } from './album/album';
+import { AlbumFactory } from './album/factory';
 import { Band } from './band/band';
 import { BandFactory } from './band/factory';
 import { StorageKey } from './storageKey';
@@ -119,7 +120,7 @@ export class BandcampStorage {
       const albumKey = StorageKey.albumKey(albumId);
       const albumObj = releaseObjs[albumKey];
       if (!albumObj) return;
-      albums.push(Album.fromStorageObject(albumObj));
+      albums.push(AlbumFactory.fromStorageObject(albumObj));
     });
 
     const tracks: Track[] = [];
@@ -182,7 +183,7 @@ export class BandcampStorage {
       .filter(
         (data): data is object => typeof data === 'object' && data !== null,
       )
-      .map((albumObj) => Album.fromStorageObject(albumObj))
+      .map((albumObj) => AlbumFactory.fromStorageObject(albumObj))
       .filter((album): album is Album => album !== null);
 
     // Create a map of loaded albums by ID for efficient lookup

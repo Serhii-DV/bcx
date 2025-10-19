@@ -1,9 +1,8 @@
 import { Album } from 'src/bandcamp/domain/album/album';
-import { Metadata } from 'src/bandcamp/domain/metadata';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { console } from 'src/utils/console';
 import { element, elementHtml, injectCssFile } from 'src/utils/dom';
-import { Price } from '../price';
+import { AlbumFactory } from '../album/factory';
 import { createReleaseYearElement } from './helper';
 import {
   type AlbumRelease,
@@ -23,7 +22,7 @@ export class PageAlbum {
 
     const schema = getMusicAlbumSchema();
     console.log('[PageAlbum]', 'Schema extracted from page:', schema);
-    this.album = this.createAlbumFromSchema(schema!);
+    this.album = AlbumFactory.createAlbumFromSchema(schema!);
     console.log('[PageAlbum]', 'Album extracted from schema:', this.album);
 
     this.appendAlbumYear();
@@ -32,61 +31,6 @@ export class PageAlbum {
   static async init(): Promise<PageAlbum> {
     await injectCssFile(getExtensionUrl('bandcamp.page.album.css'));
     return new PageAlbum();
-  }
-
-  /**
-   * Creates an Album object from a Bandcamp Schema JSON-LD data
-   */
-  private createAlbumFromSchema(schema: MusicAlbumSchema): Album {
-    // Extract the album ID from the main digital release
-    const digitalRelease = schema.albumRelease.find(
-      (release: AlbumRelease) => release.musicReleaseFormat === 'DigitalFormat',
-    );
-
-    const url = schema.mainEntityOfPage;
-    const artist = schema.byArtist.name;
-    const title = schema.name;
-
-    const albumId =
-      (digitalRelease?.additionalProperty.find(
-        (prop: PropertyValue) => prop.name === 'item_id',
-      )?.value as number) || 0;
-
-    const artworkId =
-      (digitalRelease?.additionalProperty.find(
-        (prop: PropertyValue) => prop.name === 'art_id',
-      )?.value as number) || 0;
-
-    // Some albums may not have a selling_band_id (e.g. compilations)
-    // Default to 0 in such cases
-
-    const bandId =
-      (digitalRelease?.additionalProperty.find(
-        (prop: PropertyValue) => prop.name === 'selling_band_id',
-      )?.value as number) || 0;
-
-    const price = new Price(
-      (digitalRelease?.offers.price as number) || 0,
-      digitalRelease?.offers.priceCurrency || 'USD',
-    );
-
-    const metadata = Metadata.create(
-      price,
-      schema.publisher.name,
-      schema.datePublished,
-      schema.dateModified,
-      schema.keywords,
-    );
-
-    return Album.create(
-      url,
-      artist,
-      title,
-      albumId,
-      artworkId,
-      bandId,
-      metadata,
-    );
   }
 
   private appendAlbumYear(): void {
