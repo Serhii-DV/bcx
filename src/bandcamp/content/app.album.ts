@@ -1,7 +1,7 @@
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
-import { PageAlbum } from '../domain/page/pageAlbum';
+import { PageAlbum } from '../domain/page/page.album';
 import { BandcampStorage } from '../domain/storage';
 
 onDOMReady(async () => {

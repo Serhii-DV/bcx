@@ -1,7 +1,7 @@
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
-import { PageTrack } from '../domain/page/pageTrack';
+import { PageTrack } from '../domain/page/page.track';
 import { BandcampStorage } from '../domain/storage';
 
 onDOMReady(() => {
