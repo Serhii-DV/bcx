@@ -8,29 +8,22 @@ export function createMetadataElement(): HTMLElement {
   ) as HTMLElement;
 }
 
-function searchBadgeOnClick(badge: HTMLElement): void {
+function handleSearchBadgeOnClick(badge: HTMLElement): void {
   onClick(badge, () => {
     const searchQuery = badge.getAttribute('data-search-query') || '';
     musicFilterStore.setSearchQuery(searchQuery);
   });
 }
 
-export function createReleaseYearBadgeElement(year: number): HTMLElement {
+export function createReleaseBadgeElement(
+  query: string,
+  className?: string,
+): HTMLElement {
   const badge = createElement(
-    `<span class="bcx-badge bcx-release-year" title="Search by year: ${year}" data-search-query="${year}">${year}</span>`,
+    `<span class="bcx-badge ${className}" title="Filter by: ${query}" data-search-query="${query}">${query}</span>`,
   ) as HTMLElement;
 
-  searchBadgeOnClick(badge);
-
-  return badge;
-}
-
-export function createReleaseArtistBadgeElement(artist: string): HTMLElement {
-  const badge = createElement(
-    `<span class="bcx-badge bcx-release-artist" title="Search by artist: ${artist}" data-search-query="${artist}">${artist}</span>`,
-  ) as HTMLElement;
-
-  searchBadgeOnClick(badge);
+  handleSearchBadgeOnClick(badge);
 
   return badge;
 }

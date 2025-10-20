@@ -1,3 +1,4 @@
+import { arrayUnique } from 'src/utils/array';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { console } from 'src/utils/console';
 import { element, elementHtml, elements, injectCssFile } from 'src/utils/dom';
@@ -11,11 +12,7 @@ import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import { Url } from '../url';
-import {
-  createMetadataElement,
-  createReleaseArtistBadgeElement,
-  createReleaseYearBadgeElement,
-} from './helper';
+import { createMetadataElement, createReleaseBadgeElement } from './helper';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -98,19 +95,11 @@ export class PageMusic {
     gridItem: HTMLElement,
     release: Release,
   ): void {
-    const releaseMetadataElement = createMetadataElement();
-
-    if (release.metadata?.year) {
-      const releaseYearBadge = createReleaseYearBadgeElement(
-        release.metadata.year,
-      );
-      releaseMetadataElement.appendChild(releaseYearBadge);
-    }
+    const badgeValues: string[] = [];
 
     if (release.artist) {
       release.artist.names.forEach((artistName) => {
-        const releaseArtistBadge = createReleaseArtistBadgeElement(artistName);
-        releaseMetadataElement.appendChild(releaseArtistBadge);
+        badgeValues.push(artistName);
       });
     }
 
@@ -118,12 +107,24 @@ export class PageMusic {
     if (release instanceof Album) {
       release.tracks.forEach((track) => {
         track.artist.names.forEach((artistName) => {
-          const releaseArtistBadge =
-            createReleaseArtistBadgeElement(artistName);
-          releaseMetadataElement.appendChild(releaseArtistBadge);
+          badgeValues.push(artistName);
         });
       });
     }
+
+    // Append release year
+    if (release.metadata?.year) {
+      badgeValues.push(release.metadata.year.toString());
+    }
+
+    const releaseMetadataElement = createMetadataElement();
+
+    arrayUnique(badgeValues)
+      .sort()
+      .forEach((value) => {
+        const badge = createReleaseBadgeElement(value);
+        releaseMetadataElement.appendChild(badge);
+      });
 
     gridItem.insertAdjacentElement('beforeend', releaseMetadataElement);
   }
