@@ -114,7 +114,9 @@ export class TrackFactory {
       const url = trackItem.item.mainEntityOfPage;
       const { artist, title } = Artist.fromTrackTitle(
         trackItem.item.name,
-        schema.byArtist.name,
+        trackItem.item.byArtist
+          ? trackItem.item.byArtist.name
+          : schema.byArtist.name,
       );
       const time = TrackTime.fromDuration(trackItem.item.duration);
       const artId = albumArtId;

@@ -23,12 +23,12 @@ export class PageAlbum {
     await injectCssFile(getExtensionUrl('bandcamp.page.album.css'));
 
     const schema = getMusicAlbumSchema();
-    console.log('[PageAlbum]', 'Schema:', schema);
+    console.log('[PageAlbum]', '[Schema]', schema);
 
     const pageAlbum = new PageAlbum(AlbumFactory.createFromSchema(schema!));
     await pageAlbum.loadTracksFromStorage();
 
-    console.log('[PageAlbum]', 'Album:', pageAlbum.album);
+    console.log('[PageAlbum]', '[Album]', pageAlbum.album);
 
     pageAlbum.appendAlbumYear();
 

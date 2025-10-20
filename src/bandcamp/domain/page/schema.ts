@@ -11,10 +11,7 @@ export interface MusicAlbumSchema {
   datePublished: string;
   numTracks: number;
   albumRelease: AlbumRelease[];
-  byArtist: {
-    '@type': string;
-    name: string;
-  };
+  byArtist: ByArtist;
   publisher: {
     '@type': string;
     '@id': string;
@@ -40,6 +37,7 @@ export interface MusicAlbumSchema {
         '@type': string;
         '@id': string;
         additionalProperty: PropertyValue[];
+        byArtist?: ByArtist;
         name: string;
         duration: string;
         copyrightNotice: string;
@@ -74,19 +72,11 @@ export interface MusicRecordingSchema {
     albumRelease: AlbumRelease[];
     albumReleaseType: string;
     '@id'?: string;
-    byArtist?: {
-      '@type': string;
-      name: string;
-    };
+    byArtist?: ByArtist;
     additionalProperty?: PropertyValue[];
     numTracks?: number;
   };
-  byArtist: {
-    '@type': string;
-    name: string;
-    '@id'?: string;
-    additionalProperty?: PropertyValue[];
-  };
+  byArtist: ByArtist;
   publisher: {
     '@type': string;
     '@id': string;
@@ -120,6 +110,13 @@ export interface AlbumRelease {
   offers: Offer;
   musicReleaseFormat: string;
   image: string[];
+}
+
+export interface ByArtist {
+  '@type': string;
+  name: string;
+  '@id'?: string;
+  additionalProperty?: PropertyValue[];
 }
 
 export interface PropertyValue {
