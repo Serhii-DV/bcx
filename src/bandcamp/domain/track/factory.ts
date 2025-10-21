@@ -26,7 +26,7 @@ export class TrackFactory {
   ): Track {
     const trackId =
       typeof id === 'string' ? parseInt(id.replace('track-', ''), 10) : id;
-    const trackUrl = Url.create(url);
+    const trackUrl = Url.parse(url);
     const trackTime =
       typeof time === 'string' ? TrackTime.fromString(time) : time;
 

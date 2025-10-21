@@ -2,37 +2,15 @@ import { v5 as uuid5 } from 'uuid';
 
 const bandcampHost = 'bandcamp.com';
 
-export class Url {
-  public url: URL;
-  public uuid: string;
-
-  constructor(url: string) {
-    try {
-      url = removeQueryParams(url);
-      this.url = new URL(url);
-    } catch (error) {
-      throw new Error(`Invalid URL: ${url}`);
-    }
-
-    if (!this.isBandcamp) {
-      throw new Error(`Wrong Bandcamp URL: ${url}`);
-    }
-
-    this.uuid = uuid5(url, uuid5.URL);
+export class Url extends URL {
+  static parse(url: string | Url | URL): Url {
+    if (url instanceof Url) return url;
+    if (url instanceof URL) return new Url(url.toString());
+    return new Url(url);
   }
 
-  static create(url: string | Url | URL): Url {
-    return new Url(url.toString());
-  }
-
-  /**
-   * Returns the hostname of the URL.
-   *
-   * Examples:
-   * https://subdomain.bandcamp.com/path -> subdomain.bandcamp.com
-   */
-  get hostname(): string {
-    return this.url.hostname;
+  get uuid(): string | undefined {
+    return uuid5(this.toString(), uuid5.URL);
   }
 
   /**
@@ -42,7 +20,7 @@ export class Url {
    * https://subdomain.bandcamp.com/path -> https://subdomain.bandcamp.com
    */
   get hostnameWithProtocol(): string {
-    return `${this.url.protocol}//${this.url.hostname}`;
+    return `${this.protocol}//${this.hostname}`;
   }
 
   /**
@@ -60,7 +38,7 @@ export class Url {
    * https://bandcamp.com -> (empty string)
    */
   get subdomain(): string {
-    const parts = this.url.hostname.split('.');
+    const parts = this.hostname.split('.');
     if (parts.length > 2) {
       return parts.slice(0, -2).join('.');
     }
@@ -74,7 +52,7 @@ export class Url {
    * https://subdomain.bandcamp.com/path?query=1#hash -> subdomain.bandcamp.com/path?query=1#hash
    */
   get withoutProtocol(): string {
-    return `${this.url.hostname}${this.url.pathname}${this.url.search}${this.url.hash}`;
+    return `${this.hostname}${this.pathname}${this.search}${this.hash}`;
   }
 
   /**
@@ -84,23 +62,21 @@ export class Url {
    * https://subdomain.bandcamp.com/path?query=1#hash -> https://subdomain.bandcamp.com/path#hash
    */
   get withoutQueryParams(): string {
-    const urlCopy = new URL(this.url.toString());
+    const urlCopy = new URL(this.toString());
     urlCopy.search = '';
     return urlCopy.toString();
   }
 
   /**
-   * Returns the pathname of the URL.
-   *
-   * Examples:
-   * https://subdomain.bandcamp.com/path/to/resource?query=1#hash -> /path/to/resource
+   * Gets and decodes the value of a query parameter by name.
    */
-  get pathname(): string {
-    return this.url.pathname;
+  getQueryParam(param: string): string | null {
+    const value = this.searchParams.get(param);
+    return value ? decodeURIComponent(value.replace(/\+/g, ' ')) : null;
   }
 
   get isBandcamp(): boolean {
-    return isValidBandcampUrl(this.toString());
+    return this.toString().includes(bandcampHost);
   }
 
   get isRegular(): boolean {
@@ -121,18 +97,6 @@ export class Url {
   }
 
   /**
-   * Returns the full URL as a string.
-   * @returns The string representation of the URL.
-   */
-  toString(): string {
-    return this.url.toString();
-  }
-
-  static current(): Url {
-    return new Url(window.location.href);
-  }
-
-  /**
    * Sets a new path for the URL while keeping the current protocol and hostname.
    * @param newPath The new path to set (should start with '/')
    * @returns A new Url instance with the updated path
@@ -144,14 +108,4 @@ export class Url {
 
     return new Url(`${this.hostnameWithProtocol}${newPath}`);
   }
-}
-
-export function isValidBandcampUrl(url: string): boolean {
-  return url.includes(bandcampHost);
-}
-
-function removeQueryParams(url: string): string {
-  const urlObj = new URL(url);
-  urlObj.search = '';
-  return urlObj.toString();
 }

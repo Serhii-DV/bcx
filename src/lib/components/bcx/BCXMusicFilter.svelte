@@ -7,6 +7,7 @@ import Isotope from 'isotope-layout';
 import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
+import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
@@ -26,7 +27,9 @@ let { band, musicGrid, musicGridItems }: Props = $props();
 let filterInput: HTMLInputElement | null = $state(null);
 let debounceTimer: NodeJS.Timeout | null = null;
 let isotope: Isotope | null = null;
-let searchQuery = $state('');
+let searchQuery = $state(
+  currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '',
+);
 let previousQuery = '';
 let visibleCount = $state(0);
 let totalCount = $state(0);
@@ -43,6 +46,7 @@ $effect(() => {
     previousQuery = searchQuery;
 
     handleFilterChange(searchQuery);
+    updateUrlQueryParamValue(MUSIC_FILTER_QUERY_PARAM, searchQuery);
   }
 });
 
@@ -54,13 +58,15 @@ onMount(() => {
     'DOM elements',
   );
 
-  injectStyles();
-
   totalCount = musicGridItems.length;
   visibleCount = musicGridItems.length;
 
+  injectStyles();
   initIsotope();
   setupDataList();
+
+  // Watch for browser navigation (Back/Forward buttons)
+  window.addEventListener('popstate', handlePopState);
 
   // Subscribe to store updates
   storeUnsubscribe = musicFilterStore.subscribe((state) => {
@@ -80,6 +86,8 @@ onDestroy(() => {
   if (storeUnsubscribe) {
     storeUnsubscribe();
   }
+
+  window.removeEventListener('popstate', handlePopState);
 });
 
 function setupDataList(): void {
@@ -134,6 +142,27 @@ function initIsotope(): void {
     itemSelector: '.music-grid-item',
     layoutMode: 'fitRows',
   });
+}
+
+function updateUrlQueryParamValue(key: string, value: string): void {
+  const url = currentPageUrl;
+
+  if (value.trim()) {
+    url.searchParams.set(key, value.trim());
+  } else {
+    url.searchParams.delete(key);
+  }
+
+  window.history.replaceState({}, '', url);
+}
+
+function handlePopState(): void {
+  const q = currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '';
+  if (q !== searchQuery) {
+    searchQuery = q;
+    if (filterInput) filterInput.value = q;
+    handleFilterChange(q);
+  }
 }
 
 function handleFilterChange(query: string): void {

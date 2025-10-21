@@ -12,22 +12,22 @@
     {
       "js": ["bandcamp.page.all.js"],
       "matches": ["https://*.bandcamp.com/*"],
-      "run_at": "document_end"
+      "run_at": "document_start"
     },
     {
       "js": ["bandcamp.page.music.js"],
-      "matches": ["https://*.bandcamp.com/", "https://*.bandcamp.com/music"],
-      "run_at": "document_end"
+      "matches": ["https://*.bandcamp.com/", "https://*.bandcamp.com/music*"],
+      "run_at": "document_start"
     },
     {
       "js": ["bandcamp.page.album.js"],
       "matches": ["https://*.bandcamp.com/album/*"],
-      "run_at": "document_end"
+      "run_at": "document_start"
     },
     {
       "js": ["bandcamp.page.track.js"],
       "matches": ["https://*.bandcamp.com/track/*"],
-      "run_at": "document_end"
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [

@@ -1,18 +1,15 @@
 import { describe, expect, it } from '@rstest/core';
-import { isValidBandcampUrl, Url } from './url';
+import { Url } from './url';
 
-describe('BandcampURL', () => {
-  describe('constructor', () => {
-    it('should throw an error for an invalid Bandcamp URL', () => {
-      const invalidUrl = 'https://example.com';
-      expect(() => new Url(invalidUrl)).toThrow('Wrong Bandcamp URL');
-    });
-
-    it('should create a BandcampURL object for a valid Bandcamp URL', () => {
-      const validUrl = 'https://artist.bandcamp.com/album/album-name';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl).toBeInstanceOf(Url);
-      expect(bandcampUrl.url.toString()).toBe(validUrl);
+describe('Bandcamp Url', () => {
+  describe('parse', () => {
+    it('should parse an url object for a valid bandcamp url', () => {
+      const validUrl =
+        'https://artist.bandcamp.com/album/album-name?param=value';
+      const url = Url.parse(validUrl);
+      expect(url).toBeInstanceOf(Url);
+      expect(url.toString()).toBe(validUrl);
+      expect(url.isBandcamp).toBe(true);
     });
   });
 
@@ -24,55 +21,41 @@ describe('BandcampURL', () => {
     });
   });
 
-  describe('hostname', () => {
-    it('should return the hostname of the URL', () => {
-      const validUrl = 'https://artist.bandcamp.com/album/album-name';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.hostname).toBe('artist.bandcamp.com');
-    });
-  });
-
   describe('hostnameWithProtocol', () => {
     it('should return the protocol and hostname of the URL', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.hostnameWithProtocol).toBe(
-        'https://artist.bandcamp.com',
-      );
+      const url = new Url(validUrl);
+      expect(url.hostnameWithProtocol).toBe('https://artist.bandcamp.com');
     });
   });
 
   describe('bandUrl', () => {
     it('should return the base band URL', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.bandUrl.toString()).toBe(
-        'https://artist.bandcamp.com/',
-      );
+      const url = new Url(validUrl);
+      expect(url.bandUrl.toString()).toBe('https://artist.bandcamp.com/');
     });
   });
 
   describe('subdomain', () => {
     it('should return the subdomain of the URL', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.subdomain).toBe('artist');
+      const url = new Url(validUrl);
+      expect(url.subdomain).toBe('artist');
     });
 
     it('should return an empty string if there is no subdomain', () => {
       const validUrl = 'https://bandcamp.com';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.subdomain).toBe('');
+      const url = new Url(validUrl);
+      expect(url.subdomain).toBe('');
     });
   });
 
   describe('withoutProtocol', () => {
     it('should return the URL without the protocol', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.withoutProtocol).toBe(
-        'artist.bandcamp.com/album/album-name',
-      );
+      const url = new Url(validUrl);
+      expect(url.withoutProtocol).toBe('artist.bandcamp.com/album/album-name');
     });
   });
 
@@ -80,18 +63,34 @@ describe('BandcampURL', () => {
     it('should return the URL without query parameters', () => {
       const validUrl =
         'https://artist.bandcamp.com/album/album-name?ref=source';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.withoutQueryParams).toBe(
+      const url = new Url(validUrl);
+      expect(url.withoutQueryParams).toBe(
         'https://artist.bandcamp.com/album/album-name',
       );
     });
   });
 
-  describe('pathname', () => {
-    it('should return the pathname of the URL', () => {
-      const validUrl = 'https://artist.bandcamp.com/album/album-name';
-      const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.pathname).toBe('/album/album-name');
+  describe('getQueryParam', () => {
+    it('should return the value of the specified query parameter', () => {
+      const validUrl =
+        'https://artist.bandcamp.com/album/album-name?ref=source&q=search';
+      const url = new Url(validUrl);
+      expect(url.getQueryParam('q')).toBe('search');
+      expect(url.getQueryParam('ref')).toBe('source');
+    });
+
+    it('should return null if the query parameter does not exist', () => {
+      const validUrl =
+        'https://artist.bandcamp.com/album/album-name?ref=source';
+      const url = new Url(validUrl);
+      expect(url.getQueryParam('q')).toBeNull();
+    });
+
+    it('should return decoded parameter value', () => {
+      const validUrl =
+        'https://artist.bandcamp.com/album/album-name?q=God+Body+Disconnect';
+      const url = new Url(validUrl);
+      expect(url.getQueryParam('q')).toBe('God Body Disconnect');
     });
   });
 
@@ -145,41 +144,21 @@ describe('BandcampURL', () => {
     });
   });
 
-  describe('toString', () => {
-    it('should return the full URL as a string', () => {
+  describe('withPath', () => {
+    it('should return a new Url instance with the updated path', () => {
       const validUrl = 'https://artist.bandcamp.com/album/album-name';
       const bandcampUrl = new Url(validUrl);
-      expect(bandcampUrl.toString()).toBe(validUrl);
+      const newPath = '/music';
+      const newUrl = bandcampUrl.withPath(newPath);
+      expect(newUrl.toString()).toBe('https://artist.bandcamp.com/music');
     });
-  });
-});
 
-describe('isValidBandcampURL', () => {
-  it('should return true for a valid Bandcamp URL', () => {
-    const validUrl = 'https://artist.bandcamp.com/album/album-name';
-    expect(isValidBandcampUrl(validUrl)).toBe(true);
-  });
-
-  it('should return false for an invalid Bandcamp URL', () => {
-    const invalidUrl = 'https://example.com';
-    expect(isValidBandcampUrl(invalidUrl)).toBe(false);
-  });
-});
-
-describe('withPath', () => {
-  it('should return a new Url instance with the updated path', () => {
-    const validUrl = 'https://artist.bandcamp.com/album/album-name';
-    const bandcampUrl = new Url(validUrl);
-    const newPath = '/music';
-    const newUrl = bandcampUrl.withPath(newPath);
-    expect(newUrl.toString()).toBe('https://artist.bandcamp.com/music');
-  });
-
-  it('should add a leading slash if not present in the new path', () => {
-    const validUrl = 'https://artist.bandcamp.com/album/album-name';
-    const bandcampUrl = new Url(validUrl);
-    const newPath = 'music';
-    const newUrl = bandcampUrl.withPath(newPath);
-    expect(newUrl.toString()).toBe('https://artist.bandcamp.com/music');
+    it('should add a leading slash if not present in the new path', () => {
+      const validUrl = 'https://artist.bandcamp.com/album/album-name';
+      const bandcampUrl = new Url(validUrl);
+      const newPath = 'music';
+      const newUrl = bandcampUrl.withPath(newPath);
+      expect(newUrl.toString()).toBe('https://artist.bandcamp.com/music');
+    });
   });
 });
