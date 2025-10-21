@@ -1,4 +1,5 @@
 import type { Logger, RsbuildPlugin, RsbuildPluginAPI } from '@rsbuild/core';
+import { execSync } from 'child_process';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import baseManifest from '../manifest.json';
@@ -26,12 +27,26 @@ function createDynamicManifest(options: ManifestOptions) {
   }
 
   if (options.appendDevData) {
+    const { branch, commit, dirty } = getGitInfo();
     const date = new Date();
-    dynamicManifest.name += ` [DEV]`;
-    dynamicManifest.description += ` (Generated on ${date.toLocaleString()})`;
+    dynamicManifest.name += ` [DEV:${branch}]`;
+    dynamicManifest.description += ` [${branch}][${commit}][${dirty}][${date.toLocaleString()}]`;
   }
 
   return dynamicManifest;
+}
+
+function getGitInfo() {
+  try {
+    const branch = execSync('git rev-parse --abbrev-ref HEAD')
+      .toString()
+      .trim();
+    const commit = execSync('git rev-parse --short HEAD').toString().trim();
+    const dirty = execSync('git diff --quiet || echo "*"').toString().trim();
+    return { branch, commit, dirty };
+  } catch {
+    return { branch: 'unknown', commit: 'unknown', dirty: '' };
+  }
 }
 
 function writeManifestFile(
