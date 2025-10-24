@@ -1,5 +1,7 @@
-export class UrlCompressor {
-  static compress(url: string): string {
+import type { StringCompressor } from '../compressor';
+
+export class UrlCompressor implements StringCompressor {
+  compress(url: string): string {
     return url
       .replace('https://', '')
       .replace('.bandcamp.com/', '')
@@ -7,7 +9,7 @@ export class UrlCompressor {
       .replace('track/', '/t/');
   }
 
-  static expand(compressed: string): string {
+  decompress(compressed: string): string {
     const [subdomain, type, slug] = compressed.split('/');
     const fullType = type === 'a' ? 'album' : 'track';
     return `https://${subdomain}.bandcamp.com/${fullType}/${slug}`;

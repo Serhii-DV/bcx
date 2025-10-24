@@ -22,13 +22,17 @@ export interface CompressedData {
     | undefined;
 }
 
-export interface Compressor {
-  compress(data: RawData): CompressedData;
-  decompress(data: CompressedData): RawData;
+export interface Compressor<T, U> {
+  compress(value: T): U;
+  decompress(value: U): T;
 }
 
+export interface RawDataCompressor
+  extends Compressor<RawData, CompressedData> {}
+export interface StringCompressor extends Compressor<string, string> {}
+
 export interface Compressable {
-  readonly compressor: Compressor;
+  readonly compressor: RawDataCompressor;
   toRawData(): RawData;
 }
 
@@ -41,7 +45,7 @@ export function compress(compressable: Compressable): CompressedData {
 
 export function decompress(
   compressedData: CompressedData,
-  compressor: Compressor,
+  compressor: RawDataCompressor,
 ): RawData {
   return compressor.decompress(compressedData);
 }
