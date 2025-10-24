@@ -9,13 +9,9 @@ import type {
   PropertyValue,
 } from '../page/schema';
 import { Price } from '../price';
-import { bandcampPageData } from '../shared';
+import { bandcampPageData, trackDataCompressor } from '../shared';
 import { Url } from '../url/url';
-import {
-  type CompressedTrackData,
-  type RawTrackData,
-  TrackDataCompressor,
-} from './compressor';
+import { type CompressedTrackData, type RawTrackData } from './compressor';
 import { TrackTime } from './time';
 import { Track } from './track';
 
@@ -160,7 +156,7 @@ export class TrackFactory {
   static fromCompressedData(data: CompressedTrackData): Track {
     const rawData = decompress(
       data as CompressedTrackData,
-      new TrackDataCompressor(),
+      trackDataCompressor,
     ) as RawTrackData;
 
     return this.fromRawData(rawData);

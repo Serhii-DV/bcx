@@ -5,6 +5,7 @@ import {
   PriceDataCompressor,
   type RawPriceData,
 } from './priceCompressor';
+import { priceDataCompressor } from './shared';
 
 export class Price implements StorableObject, Compressable {
   public readonly compressor = new PriceDataCompressor();
@@ -47,7 +48,7 @@ export class Price implements StorableObject, Compressable {
   static fromStorageObject(data: StorageObject): Price {
     const decompressed = decompress(
       data as CompressedPriceData,
-      new PriceDataCompressor(),
+      priceDataCompressor,
     ) as RawPriceData;
     return Price.create(decompressed.amount, decompressed.currency);
   }

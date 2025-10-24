@@ -64,7 +64,7 @@ export class BandMetadata implements StorableObject, Compressable {
     // The actual Album and Track objects should be reconstructed elsewhere
     const metadata = decompress(
       data as CompressedBandMetadata,
-      new BandMetadataCompressor(),
+      bandMetadataCompressor,
     ) as RawBandMetadata;
     return BandMetadata.create(metadata.created, metadata.currency, [], []);
   }

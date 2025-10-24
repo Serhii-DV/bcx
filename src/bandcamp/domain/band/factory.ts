@@ -1,12 +1,9 @@
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { decompress } from '../compressor';
+import { bandDataCompressor } from '../shared';
 import { Url } from '../url/url';
 import { Band } from './band';
-import {
-  BandDataCompressor,
-  type CompressedBandData,
-  type RawBandData,
-} from './compressor';
+import { type CompressedBandData, type RawBandData } from './compressor';
 import { BandMetadata } from './metadata';
 
 export class BandFactory {
@@ -30,6 +27,6 @@ export class BandFactory {
   }
 
   static createRawData(compressedData: CompressedBandData): RawBandData {
-    return decompress(compressedData, new BandDataCompressor()) as RawBandData;
+    return decompress(compressedData, bandDataCompressor) as RawBandData;
   }
 }

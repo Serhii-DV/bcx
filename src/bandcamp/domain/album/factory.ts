@@ -10,15 +10,12 @@ import type {
   PropertyValue,
 } from '../page/schema';
 import { Price } from '../price';
+import { albumDataCompressor } from '../shared';
 import { TrackFactory } from '../track/factory';
 import type { Track } from '../track/track';
 import { Url } from '../url/url';
 import { Album } from './album';
-import {
-  AlbumDataCompressor,
-  type CompressedAlbumData,
-  type RawAlbumData,
-} from './compressor';
+import { type CompressedAlbumData, type RawAlbumData } from './compressor';
 
 export class AlbumFactory {
   static create(
@@ -59,7 +56,7 @@ export class AlbumFactory {
   }
 
   static fromCompressedData(data: CompressedAlbumData): Album {
-    const rawData = decompress(data, new AlbumDataCompressor()) as RawAlbumData;
+    const rawData = decompress(data, albumDataCompressor) as RawAlbumData;
 
     return this.fromRawData(rawData);
   }
