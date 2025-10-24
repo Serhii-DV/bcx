@@ -56,6 +56,16 @@ export class Metadata implements StorableObject, Compressable {
     };
   }
 
+  static fromRawData(rawData: RawMetadataData): Metadata {
+    return Metadata.create(
+      Price.fromRawData(rawData.price),
+      rawData.publisher,
+      rawData.published,
+      rawData.modified,
+      rawData.keywords || [],
+    );
+  }
+
   static fromStorageObject(data: StorageObject): Metadata {
     const decompressed = decompress(
       data as CompressedMetadataData,

@@ -109,15 +109,16 @@ export class BandcampStorage {
       return null;
     }
 
-    const bandData = decompress(
+    const bandRawData = BandFactory.createRawData(
       bandStorageObject as CompressedBandData,
-      new BandDataCompressor(),
-    ) as RawBandData;
-    const albumIds: number[] = bandData.metadata.albumIds;
-    const trackIds: number[] = bandData.metadata.trackIds;
+    );
+    const band = BandFactory.fromRawData(bandRawData);
+
+    const albumIds: number[] = bandRawData.metadata.albumIds;
+    const trackIds: number[] = bandRawData.metadata.trackIds;
 
     if (albumIds.length === 0 && trackIds.length === 0) {
-      return BandFactory.fromStorage(bandStorageObject);
+      return band;
     }
 
     const albums = BandcampStorage.getAlbumsByAlbumIdsFromStorableData(
@@ -130,7 +131,6 @@ export class BandcampStorage {
       trackIds,
     );
 
-    const band = BandFactory.fromStorage(bandStorageObject);
     band.metadata.albums = albums;
     band.metadata.tracks = tracks;
 
@@ -147,7 +147,7 @@ export class BandcampStorage {
       const albumKey = StorageKey.albumKey(albumId);
       const albumObj = storableData[albumKey];
       if (!albumObj) return;
-      albums.push(AlbumFactory.fromStorageObject(albumObj));
+      albums.push(AlbumFactory.fromStorage(albumObj));
     });
 
     return albums;
@@ -263,7 +263,7 @@ export class BandcampStorage {
 
     const loadedAlbums = albumsData
       .map((albumStorageObject) => {
-        const album = AlbumFactory.fromStorageObject(albumStorageObject);
+        const album = AlbumFactory.fromStorage(albumStorageObject);
         const trackIds: number[] = albumStorageObject.trackIds || [];
 
         if (trackIds.length === 0) {

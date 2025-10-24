@@ -44,7 +44,7 @@ export class Track implements Storable, Compressable {
       time: this.time.toString(),
       artworkId: this.artwork.id,
       albumId: this.albumId,
-      metadata: this.metadata?.toStorageObject(),
+      metadata: this.metadata?.toRawData(),
     };
   }
 }

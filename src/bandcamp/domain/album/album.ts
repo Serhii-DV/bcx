@@ -51,7 +51,7 @@ export class Album implements Storable, Compressable {
       bandId: this.bandId,
       // Save Track IDs instead of full Track objects to avoid redundancy
       trackIds: this.tracks.map((track) => track.id),
-      metadata: this.metadata ? this.metadata.toStorageObject() : undefined,
+      metadata: this.metadata?.toRawData(),
     };
   }
 }

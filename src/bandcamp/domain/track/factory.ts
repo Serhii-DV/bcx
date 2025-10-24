@@ -1,6 +1,7 @@
 import type { StorageObject } from 'src/core/storage';
 import { Artist } from '../artist';
 import { Artwork } from '../artwork';
+import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import type {
   MusicAlbumSchema,
@@ -10,7 +11,11 @@ import type {
 import { Price } from '../price';
 import { bandcampPageData } from '../shared';
 import { Url } from '../url';
-import { type CompressedTrackData, TrackDataCompressor } from './compressor';
+import {
+  type CompressedTrackData,
+  type RawTrackData,
+  TrackDataCompressor,
+} from './compressor';
 import { TrackTime } from './time';
 import { Track } from './track';
 
@@ -139,21 +144,29 @@ export class TrackFactory {
     return tracks;
   }
 
-  static fromStorage(track: StorageObject): Track {
-    const decompressed = TrackDataCompressor.decompress(
-      track as CompressedTrackData,
-    );
+  static fromRawData(rawData: RawTrackData): Track {
     return TrackFactory.create(
-      decompressed.id,
-      decompressed.url,
-      decompressed.artist,
-      decompressed.title,
-      decompressed.time,
-      decompressed.artworkId,
-      decompressed.albumId,
-      decompressed.metadata
-        ? Metadata.fromStorageObject(decompressed.metadata)
-        : undefined,
+      rawData.id,
+      rawData.url,
+      rawData.artist,
+      rawData.title,
+      rawData.time,
+      rawData.artworkId,
+      rawData.albumId,
+      rawData.metadata ? Metadata.fromRawData(rawData.metadata) : undefined,
     );
+  }
+
+  static fromCompressedData(data: CompressedTrackData): Track {
+    const rawData = decompress(
+      data as CompressedTrackData,
+      new TrackDataCompressor(),
+    ) as RawTrackData;
+
+    return this.fromRawData(rawData);
+  }
+
+  static fromStorage(track: StorageObject): Track {
+    return this.fromCompressedData(track as CompressedTrackData);
   }
 }

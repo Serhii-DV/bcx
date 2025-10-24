@@ -45,24 +45,27 @@ export class AlbumFactory {
     );
   }
 
-  static fromStorageObject(data: StorageObject): Album {
-    const albumData = decompress(
-      data as CompressedAlbumData,
-      new AlbumDataCompressor(),
-    ) as RawAlbumData;
-
+  static fromRawData(rawData: RawAlbumData): Album {
     return this.create(
-      albumData.url,
-      albumData.artist,
-      albumData.title,
-      albumData.id,
-      albumData.artworkId,
-      albumData.bandId,
+      rawData.url,
+      rawData.artist,
+      rawData.title,
+      rawData.id,
+      rawData.artworkId,
+      rawData.bandId,
       [],
-      albumData.metadata
-        ? Metadata.fromStorageObject(albumData.metadata)
-        : undefined,
+      rawData.metadata ? Metadata.fromRawData(rawData.metadata) : undefined,
     );
+  }
+
+  static fromCompressedData(data: CompressedAlbumData): Album {
+    const rawData = decompress(data, new AlbumDataCompressor()) as RawAlbumData;
+
+    return this.fromRawData(rawData);
+  }
+
+  static fromStorage(data: StorageObject): Album {
+    return this.fromCompressedData(data as CompressedAlbumData);
   }
 
   /**

@@ -1,5 +1,9 @@
-import type { StorageObject } from 'src/core/storage';
 import type { CompressedData, Compressor, RawData } from '../compressor';
+import {
+  type CompressedMetadataData,
+  MetadataCompressor,
+  type RawMetadataData,
+} from '../metadataCompressor';
 import { UrlCompressor } from '../urlCompressor';
 
 export interface RawTrackData extends RawData {
@@ -10,7 +14,7 @@ export interface RawTrackData extends RawData {
   time: string;
   artworkId: number;
   albumId?: number;
-  metadata?: StorageObject;
+  metadata?: RawMetadataData;
 }
 
 export interface CompressedTrackData extends CompressedData {
@@ -21,10 +25,12 @@ export interface CompressedTrackData extends CompressedData {
   d: string; // time
   w: number; // artworkId
   l?: number; // albumId
-  m?: StorageObject; // metadata
+  m?: CompressedMetadataData; // metadata
 }
 
 export class TrackDataCompressor implements Compressor {
+  private readonly metadataCompressor = new MetadataCompressor();
+
   compress(data: RawTrackData): CompressedTrackData {
     return {
       i: data.id,
@@ -34,7 +40,9 @@ export class TrackDataCompressor implements Compressor {
       d: data.time,
       w: data.artworkId,
       l: data.albumId,
-      m: data.metadata,
+      m: data.metadata
+        ? this.metadataCompressor.compress(data.metadata)
+        : undefined,
     };
   }
 
@@ -47,7 +55,7 @@ export class TrackDataCompressor implements Compressor {
       time: data.d,
       artworkId: data.w,
       albumId: data.l,
-      metadata: data.m,
+      metadata: data.m ? this.metadataCompressor.decompress(data.m) : undefined,
     };
   }
 }

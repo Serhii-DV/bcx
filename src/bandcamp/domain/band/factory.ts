@@ -1,4 +1,3 @@
-import type { StorageObject } from 'src/core/storage';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { decompress } from '../compressor';
 import { Url } from '../url';
@@ -30,11 +29,7 @@ export class BandFactory {
     return new Band(bandId, bandName, bandUrl, metadata);
   }
 
-  static fromStorage(data: StorageObject): Band {
-    const rawData = decompress(
-      data as CompressedBandData,
-      new BandDataCompressor(),
-    ) as RawBandData;
-    return BandFactory.fromRawData(rawData);
+  static createRawData(compressedData: CompressedBandData): RawBandData {
+    return decompress(compressedData, new BandDataCompressor()) as RawBandData;
   }
 }

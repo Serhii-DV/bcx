@@ -40,6 +40,10 @@ export class Price implements StorableObject, Compressable {
     };
   }
 
+  static fromRawData(rawData: RawPriceData): Price {
+    return Price.create(rawData.amount, rawData.currency);
+  }
+
   static fromStorageObject(data: StorageObject): Price {
     const decompressed = decompress(
       data as CompressedPriceData,
