@@ -25,7 +25,7 @@ export class BandFactory {
       typeof rawData.id === 'string' ? parseInt(rawData.id, 10) : rawData.id;
     const bandName = trim(removeInvisibleChars(rawData.name), ' -\n');
     const bandUrl = new Url(rawData.url);
-    const metadata = BandMetadata.fromStorageObject(rawData.metadata);
+    const metadata = BandMetadata.fromRawData(rawData.metadata);
 
     return new Band(bandId, bandName, bandUrl, metadata);
   }

@@ -47,6 +47,15 @@ export class BandMetadata implements StorableObject, Compressable {
     };
   }
 
+  static fromRawData(rawData: RawBandMetadata): BandMetadata {
+    return BandMetadata.create(
+      rawData.created,
+      rawData.currency,
+      [], // Albums should be populated elsewhere
+      [], // Tracks should be populated elsewhere
+    );
+  }
+
   static fromStorageObject(data: StorageObject): BandMetadata {
     // Note: albums and tracks arrays will contain IDs, not full objects
     // The actual Album and Track objects should be reconstructed elsewhere
