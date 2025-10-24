@@ -5,7 +5,7 @@ import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
 import { StorageKey } from '../storageKey';
 import type { Track } from '../track/track';
-import { Url } from '../url';
+import { Url } from '../url/url';
 import { AlbumDataCompressor, type RawAlbumData } from './compressor';
 
 export class Album implements Storable, Compressable {

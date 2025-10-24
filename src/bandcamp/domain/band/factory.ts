@@ -1,6 +1,6 @@
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { decompress } from '../compressor';
-import { Url } from '../url';
+import { Url } from '../url/url';
 import { Band } from './band';
 import {
   BandDataCompressor,

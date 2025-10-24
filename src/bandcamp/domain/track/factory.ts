@@ -10,7 +10,7 @@ import type {
 } from '../page/schema';
 import { Price } from '../price';
 import { bandcampPageData } from '../shared';
-import { Url } from '../url';
+import { Url } from '../url/url';
 import {
   type CompressedTrackData,
   type RawTrackData,

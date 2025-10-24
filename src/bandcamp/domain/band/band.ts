@@ -1,7 +1,7 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { type Compressable, compress } from '../compressor';
 import { StorageKey } from '../storageKey';
-import type { Url } from '../url';
+import type { Url } from '../url/url';
 import { BandDataCompressor, type RawBandData } from './compressor';
 import type { BandMetadata } from './metadata';
 
@@ -39,7 +39,7 @@ export class Band implements Storable, Compressable {
       id: this.id,
       name: this.name,
       url: this.url.toString(),
-      metadata: this.metadata.toStorageObject(),
+      metadata: this.metadata.toRawData(),
     };
   }
 }

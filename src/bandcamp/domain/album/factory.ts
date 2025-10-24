@@ -12,7 +12,7 @@ import type {
 import { Price } from '../price';
 import { TrackFactory } from '../track/factory';
 import type { Track } from '../track/track';
-import { Url } from '../url';
+import { Url } from '../url/url';
 import { Album } from './album';
 import {
   AlbumDataCompressor,

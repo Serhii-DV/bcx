@@ -1,4 +1,4 @@
-import type { Url } from './url';
+import type { Url } from './url/url';
 
 // We use `/` at the start to avoid potential collisions with other keys and namespaces
 // Also, it shows up nicely in the storage viewer before UUID values

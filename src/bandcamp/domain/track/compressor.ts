@@ -4,7 +4,7 @@ import {
   MetadataCompressor,
   type RawMetadataData,
 } from '../metadataCompressor';
-import { UrlCompressor } from '../urlCompressor';
+import { UrlCompressor } from '../url/urlCompressor';
 
 export interface RawTrackData extends RawData {
   id: number;

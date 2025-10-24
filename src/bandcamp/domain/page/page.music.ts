@@ -11,7 +11,7 @@ import { BandFactory } from '../band/factory';
 import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
-import { Url } from '../url';
+import { Url } from '../url/url';
 import { createMetadataElement, createReleaseBadgeElement } from './helper';
 
 interface MusicGridClientItem {

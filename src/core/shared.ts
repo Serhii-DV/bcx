@@ -1,4 +1,4 @@
-import { Url } from 'src/bandcamp/domain/url';
+import { Url } from 'src/bandcamp/domain/url/url';
 import { Storage } from './storage';
 
 /**

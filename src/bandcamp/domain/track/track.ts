@@ -4,7 +4,7 @@ import type { Artwork } from '../artwork';
 import { type Compressable, compress } from '../compressor';
 import type { Metadata } from '../metadata';
 import { StorageKey } from '../storageKey';
-import { Url } from '../url';
+import { Url } from '../url/url';
 import { type RawTrackData, TrackDataCompressor } from './compressor';
 import { TrackTime } from './time';
 
