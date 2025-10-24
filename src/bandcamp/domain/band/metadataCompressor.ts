@@ -3,15 +3,15 @@ import type { CompressedData, Compressor, RawData } from '../compressor';
 export interface RawBandMetadata extends RawData {
   created: string;
   currency: string;
-  albums: number[];
-  tracks: number[];
+  albumIds: number[];
+  trackIds: number[];
 }
 
 export interface CompressedBandMetadata extends CompressedData {
   c: string; // created
   r: string; // currency
-  a?: number[]; // albums
-  t?: number[]; // tracks
+  a?: number[]; // albumIds
+  t?: number[]; // trackIds
 }
 
 export class BandMetadataCompressor implements Compressor {
@@ -19,8 +19,8 @@ export class BandMetadataCompressor implements Compressor {
     return {
       c: data.created,
       r: data.currency,
-      a: data.albums.length ? data.albums : undefined,
-      t: data.tracks.length ? data.tracks : undefined,
+      a: data.albumIds.length ? data.albumIds : undefined,
+      t: data.trackIds.length ? data.trackIds : undefined,
     };
   }
 
@@ -28,8 +28,8 @@ export class BandMetadataCompressor implements Compressor {
     return {
       created: data.c,
       currency: data.r,
-      albums: data.a || [],
-      tracks: data.t || [],
+      albumIds: data.a || [],
+      trackIds: data.t || [],
     };
   }
 }

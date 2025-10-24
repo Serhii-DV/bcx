@@ -6,8 +6,8 @@ import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Album } from '../album/album';
 import { AlbumFactory } from '../album/factory';
 import { Band } from '../band/band';
+import type { RawBandData } from '../band/compressor';
 import { BandFactory } from '../band/factory';
-import { BandMetadata } from '../band/metadata';
 import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
@@ -413,17 +413,18 @@ export class PageMusic {
       throw new Error('No band data found on this page');
     }
 
-    const bandMetadata = BandMetadata.create(
-      bandData.create_date,
-      bandData.currency,
-    );
-    const band = BandFactory.fromRawData(
-      bandData.id,
-      bandData.name,
-      bandData.url,
-      bandMetadata,
-    );
+    const rawData: RawBandData = {
+      id: bandData.id,
+      name: bandData.name,
+      url: bandData.url,
+      metadata: {
+        created: bandData.create_date,
+        currency: bandData.currency,
+        albumIds: [],
+        trackIds: [],
+      },
+    };
 
-    return band;
+    return BandFactory.fromRawData(rawData);
   }
 }

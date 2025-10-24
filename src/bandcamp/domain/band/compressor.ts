@@ -1,19 +1,19 @@
-import type { StorageObject } from 'src/core/storage';
 import type { CompressedData, Compressor, RawData } from '../compressor';
 import { UrlCompressor } from '../urlCompressor';
+import type { RawBandMetadata } from './metadataCompressor';
 
 export interface RawBandData extends RawData {
   id: number;
   name: string;
   url: string;
-  metadata: StorageObject;
+  metadata: RawBandMetadata;
 }
 
 export interface CompressedBandData extends CompressedData {
   i: number; // id
   n: string; // name
   u: string; // compressed url
-  m: StorageObject; // metadata
+  m: RawBandMetadata; // metadata
 }
 
 export class BandDataCompressor implements Compressor {

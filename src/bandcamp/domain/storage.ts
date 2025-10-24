@@ -3,8 +3,13 @@ import type { StorableData, StorageObject } from 'src/core/storage';
 import { Album } from './album/album';
 import { AlbumFactory } from './album/factory';
 import { Band } from './band/band';
-import { BandDataCompressor } from './band/compressor';
+import {
+  BandDataCompressor,
+  type CompressedBandData,
+  type RawBandData,
+} from './band/compressor';
 import { BandFactory } from './band/factory';
+import { decompress } from './compressor';
 import { StorageKey } from './storageKey';
 import { TrackFactory } from './track/factory';
 import type { Track } from './track/track';
@@ -104,9 +109,12 @@ export class BandcampStorage {
       return null;
     }
 
-    const bandData = BandDataCompressor.decompress(bandStorageObject);
-    const albumIds: number[] = bandData.metadata.albums || [];
-    const trackIds: number[] = bandData.metadata.tracks || [];
+    const bandData = decompress(
+      bandStorageObject as CompressedBandData,
+      new BandDataCompressor(),
+    ) as RawBandData;
+    const albumIds: number[] = bandData.metadata.albumIds;
+    const trackIds: number[] = bandData.metadata.trackIds;
 
     if (albumIds.length === 0 && trackIds.length === 0) {
       return BandFactory.fromStorage(bandStorageObject);

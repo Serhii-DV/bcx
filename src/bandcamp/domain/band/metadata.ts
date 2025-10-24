@@ -41,9 +41,9 @@ export class BandMetadata implements StorableObject, Compressable {
       created: this.created.toISOString(),
       currency: this.currency,
       // Save Album IDs instead of full Album objects to avoid redundancy
-      albums: this.albums.map((album) => album.id),
+      albumIds: this.albums.map((album) => album.id),
       // Save Track IDs instead of full Track objects to avoid redundancy
-      tracks: this.tracks.map((track) => track.id),
+      trackIds: this.tracks.map((track) => track.id),
     };
   }
 
