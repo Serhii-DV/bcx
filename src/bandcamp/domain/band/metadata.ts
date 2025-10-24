@@ -1,6 +1,7 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
 import type { Album } from '../album/album';
 import { type Compressable, compress, decompress } from '../compressor';
+import { bandMetadataCompressor } from '../shared';
 import type { Track } from '../track/track';
 import {
   BandMetadataCompressor,
@@ -9,14 +10,16 @@ import {
 } from './metadataCompressor';
 
 export class BandMetadata implements StorableObject, Compressable {
-  public readonly compressor = new BandMetadataCompressor();
-
   constructor(
     public created: Date,
     public currency: string,
     public albums: Album[],
     public tracks: Track[],
   ) {}
+
+  get compressor(): BandMetadataCompressor {
+    return bandMetadataCompressor;
+  }
 
   static create(
     created: string | Date,

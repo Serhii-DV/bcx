@@ -3,14 +3,13 @@ import { Artist } from '../artist';
 import { Artwork } from '../artwork';
 import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
+import { albumDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
 import type { Track } from '../track/track';
 import { Url } from '../url/url';
 import { AlbumDataCompressor, type RawAlbumData } from './compressor';
 
 export class Album implements Storable, Compressable {
-  public readonly compressor = new AlbumDataCompressor();
-
   constructor(
     public url: Url,
     public artist: Artist,
@@ -21,6 +20,10 @@ export class Album implements Storable, Compressable {
     public tracks: Track[] = [],
     public metadata?: Metadata,
   ) {}
+
+  get compressor(): AlbumDataCompressor {
+    return albumDataCompressor;
+  }
 
   toString(): string {
     const year =

@@ -1,4 +1,4 @@
-import type { CompressedData, Compressor, RawData } from '../compressor';
+import type { CompressedData, RawData, RawDataCompressor } from '../compressor';
 
 export interface RawBandMetadata extends RawData {
   created: string;
@@ -14,7 +14,7 @@ export interface CompressedBandMetadata extends CompressedData {
   t?: number[]; // trackIds
 }
 
-export class BandMetadataCompressor implements Compressor {
+export class BandMetadataCompressor implements RawDataCompressor {
   compress(data: RawBandMetadata): CompressedBandMetadata {
     return {
       c: data.created,

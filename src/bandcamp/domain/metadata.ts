@@ -6,10 +6,9 @@ import {
   type RawMetadataData,
 } from './metadataCompressor';
 import { Price } from './price';
+import { metadataCompressor } from './shared';
 
 export class Metadata implements StorableObject, Compressable {
-  public readonly compressor = new MetadataCompressor();
-
   constructor(
     public price: Price,
     public publisher: string,
@@ -17,6 +16,10 @@ export class Metadata implements StorableObject, Compressable {
     public modified: Date,
     public keywords: string[],
   ) {}
+
+  get compressor(): MetadataCompressor {
+    return metadataCompressor;
+  }
 
   get year(): number {
     return this.published.getFullYear();

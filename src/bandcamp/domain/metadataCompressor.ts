@@ -1,4 +1,4 @@
-import type { CompressedData, Compressor } from './compressor';
+import type { CompressedData, RawDataCompressor } from './compressor';
 import {
   type CompressedPriceData,
   PriceDataCompressor,
@@ -21,12 +21,12 @@ export interface CompressedMetadataData extends CompressedData {
   k: string[]; // keywords
 }
 
-export class MetadataCompressor implements Compressor {
-  private readonly priceCompressor = new PriceDataCompressor();
+export class MetadataCompressor implements RawDataCompressor {
+  constructor(private priceDataCompressor: PriceDataCompressor) {}
 
   compress(data: RawMetadataData): CompressedMetadataData {
     return {
-      p: this.priceCompressor.compress(data.price),
+      p: this.priceDataCompressor.compress(data.price),
       b: data.publisher,
       d: data.published,
       m: data.modified,
@@ -36,7 +36,7 @@ export class MetadataCompressor implements Compressor {
 
   decompress(data: CompressedMetadataData): RawMetadataData {
     return {
-      price: this.priceCompressor.decompress(data.p),
+      price: this.priceDataCompressor.decompress(data.p),
       publisher: data.b,
       published: data.d,
       modified: data.m,

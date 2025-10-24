@@ -1,4 +1,4 @@
-import type { CompressedData, Compressor, RawData } from './compressor';
+import type { CompressedData, RawData, RawDataCompressor } from './compressor';
 
 export interface RawPriceData extends RawData {
   amount: number;
@@ -10,7 +10,7 @@ export interface CompressedPriceData extends CompressedData {
   c: string; // currency
 }
 
-export class PriceDataCompressor implements Compressor {
+export class PriceDataCompressor implements RawDataCompressor {
   compress(data: RawPriceData): CompressedPriceData {
     return {
       a: data.amount,

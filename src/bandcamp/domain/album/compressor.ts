@@ -4,7 +4,7 @@ import {
   MetadataCompressor,
   type RawMetadataData,
 } from '../metadataCompressor';
-import { UrlCompressor } from '../url/compressor';
+import type { UrlCompressor } from '../url/compressor';
 
 export interface RawAlbumData extends RawData {
   id: number;
@@ -29,8 +29,10 @@ export interface CompressedAlbumData extends CompressedData {
 }
 
 export class AlbumDataCompressor implements RawDataCompressor {
-  private readonly metadataCompressor = new MetadataCompressor();
-  private readonly urlCompressor = new UrlCompressor();
+  constructor(
+    private urlCompressor: UrlCompressor,
+    private metadataCompressor: MetadataCompressor,
+  ) {}
 
   compress(data: RawAlbumData): CompressedAlbumData {
     return {

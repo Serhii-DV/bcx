@@ -32,7 +32,7 @@ export interface RawDataCompressor
 export interface StringCompressor extends Compressor<string, string> {}
 
 export interface Compressable {
-  readonly compressor: RawDataCompressor;
+  get compressor(): RawDataCompressor;
   toRawData(): RawData;
 }
 

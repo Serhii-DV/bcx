@@ -3,14 +3,13 @@ import type { Artist } from '../artist';
 import type { Artwork } from '../artwork';
 import { type Compressable, compress } from '../compressor';
 import type { Metadata } from '../metadata';
+import { trackDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
 import { Url } from '../url/url';
 import { type RawTrackData, TrackDataCompressor } from './compressor';
 import { TrackTime } from './time';
 
 export class Track implements Storable, Compressable {
-  public readonly compressor = new TrackDataCompressor();
-
   constructor(
     public id: number,
     public url: Url,
@@ -21,6 +20,10 @@ export class Track implements Storable, Compressable {
     public albumId?: number,
     public metadata?: Metadata,
   ) {}
+
+  get compressor(): TrackDataCompressor {
+    return trackDataCompressor;
+  }
 
   toStorableData(): StorableData {
     const key = StorageKey.trackKey(this.id);
