@@ -114,8 +114,8 @@ export class BandcampStorage {
     );
     const band = BandFactory.fromRawData(bandRawData);
 
-    const albumIds: number[] = bandRawData.metadata.albumIds;
-    const trackIds: number[] = bandRawData.metadata.trackIds;
+    const albumIds: number[] = bandRawData.metadata?.albumIds || [];
+    const trackIds: number[] = bandRawData.metadata?.trackIds || [];
 
     if (albumIds.length === 0 && trackIds.length === 0) {
       return band;
