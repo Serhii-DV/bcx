@@ -1,6 +1,7 @@
 import { storage } from 'src/core/shared';
-import type { StorableData, StorageObject } from 'src/core/storage';
+import type { StorableData } from 'src/core/storage';
 import { Album } from './album/album';
+import type { CompressedAlbumData, RawAlbumData } from './album/compressor';
 import { AlbumFactory } from './album/factory';
 import { Band } from './band/band';
 import { type CompressedBandData } from './band/compressor';
@@ -237,15 +238,18 @@ export class BandcampStorage {
   static async getAlbums(albums: Album[]): Promise<Album[]> {
     const albumsStorableData =
       await BandcampStorage.getAlbumsStorableData(albums);
-    const albumsData: StorageObject[] = Object.values(
-      albumsStorableData,
-    ).filter(
-      (data): data is object => typeof data === 'object' && data !== null,
-    );
+    const albumsData: RawAlbumData[] = Object.values(albumsStorableData)
+      .filter(
+        (data): data is object => typeof data === 'object' && data !== null,
+      )
+      .map((albumObj) => {
+        return AlbumFactory.createRawData(albumObj as CompressedAlbumData);
+      });
+
+    // Collect all unique track IDs from loaded albums
     const trackIds: number[] = [];
-    albumsData.forEach((albumStorageObject) => {
-      const ids: number[] = albumStorageObject.trackIds || [];
-      ids.forEach((id) => {
+    albumsData.forEach((albumRawData) => {
+      albumRawData.trackIds.forEach((id) => {
         if (!trackIds.includes(id)) {
           trackIds.push(id);
         }
@@ -257,16 +261,15 @@ export class BandcampStorage {
     const loadedTracksMap = new Map(tracks.map((track) => [track.id, track]));
 
     const loadedAlbums = albumsData
-      .map((albumStorageObject) => {
-        const album = AlbumFactory.fromStorage(albumStorageObject);
-        const trackIds: number[] = albumStorageObject.trackIds || [];
+      .map((albumRawData) => {
+        const album = AlbumFactory.fromRawData(albumRawData);
 
-        if (trackIds.length === 0) {
+        if (albumRawData.trackIds.length === 0) {
           return album;
         }
 
         // Map track IDs to loaded Track objects
-        album.tracks = trackIds
+        album.tracks = albumRawData.trackIds
           .map((trackId) => loadedTracksMap.get(trackId))
           .filter((track): track is Track => track !== undefined);
 

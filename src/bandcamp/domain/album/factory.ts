@@ -55,8 +55,12 @@ export class AlbumFactory {
     );
   }
 
-  static fromCompressedData(data: CompressedAlbumData): Album {
-    const rawData = decompress(data, albumDataCompressor) as RawAlbumData;
+  static createRawData(compressedData: CompressedAlbumData): RawAlbumData {
+    return decompress(compressedData, albumDataCompressor) as RawAlbumData;
+  }
+
+  static fromCompressedData(compressedData: CompressedAlbumData): Album {
+    const rawData = this.createRawData(compressedData);
 
     return this.fromRawData(rawData);
   }
