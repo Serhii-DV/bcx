@@ -3,6 +3,7 @@ import type { StorableData, StorageObject } from 'src/core/storage';
 import { Album } from './album/album';
 import { AlbumFactory } from './album/factory';
 import { Band } from './band/band';
+import { BandDataCompressor } from './band/compressor';
 import { BandFactory } from './band/factory';
 import { StorageKey } from './storageKey';
 import { TrackFactory } from './track/factory';
@@ -103,8 +104,9 @@ export class BandcampStorage {
       return null;
     }
 
-    const albumIds: number[] = bandStorageObject.metadata.albums || [];
-    const trackIds: number[] = bandStorageObject.metadata.tracks || [];
+    const bandData = BandDataCompressor.decompress(bandStorageObject);
+    const albumIds: number[] = bandData.metadata.albums || [];
+    const trackIds: number[] = bandData.metadata.tracks || [];
 
     if (albumIds.length === 0 && trackIds.length === 0) {
       return BandFactory.fromStorage(bandStorageObject);

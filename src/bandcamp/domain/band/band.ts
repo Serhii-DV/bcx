@@ -1,9 +1,13 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
+import { type Compressable, compress } from '../compressor';
 import { StorageKey } from '../storageKey';
 import type { Url } from '../url';
+import { BandDataCompressor, type RawBandData } from './compressor';
 import type { BandMetadata } from './metadata';
 
-export class Band implements Storable {
+export class Band implements Storable, Compressable {
+  public readonly compressor = new BandDataCompressor();
+
   constructor(
     public id: number,
     public name: string,
@@ -27,6 +31,10 @@ export class Band implements Storable {
   }
 
   toStorageObject(): StorageObject {
+    return compress(this);
+  }
+
+  toRawData(): RawBandData {
     return {
       id: this.id,
       name: this.name,

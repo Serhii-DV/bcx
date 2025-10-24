@@ -10,6 +10,7 @@ import type {
 import { Price } from '../price';
 import { bandcampPageData } from '../shared';
 import { Url } from '../url';
+import { type CompressedTrackData, TrackDataCompressor } from './compressor';
 import { TrackTime } from './time';
 import { Track } from './track';
 
@@ -139,15 +140,20 @@ export class TrackFactory {
   }
 
   static fromStorage(track: StorageObject): Track {
+    const decompressed = TrackDataCompressor.decompress(
+      track as CompressedTrackData,
+    );
     return TrackFactory.create(
-      track.id,
-      track.url,
-      track.artist,
-      track.title,
-      track.time,
-      track.artId,
-      track.albumId,
-      track.metadata ? Metadata.fromStorageObject(track.metadata) : undefined,
+      decompressed.id,
+      decompressed.url,
+      decompressed.artist,
+      decompressed.title,
+      decompressed.time,
+      decompressed.artworkId,
+      decompressed.albumId,
+      decompressed.metadata
+        ? Metadata.fromStorageObject(decompressed.metadata)
+        : undefined,
     );
   }
 }

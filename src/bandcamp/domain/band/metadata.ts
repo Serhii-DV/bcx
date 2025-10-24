@@ -1,8 +1,16 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
 import type { Album } from '../album/album';
+import { type Compressable, compress, decompress } from '../compressor';
 import type { Track } from '../track/track';
+import {
+  BandMetadataCompressor,
+  type CompressedBandMetadata,
+  type RawBandMetadata,
+} from './metadataCompressor';
 
-export class BandMetadata implements StorableObject {
+export class BandMetadata implements StorableObject, Compressable {
+  public readonly compressor = new BandMetadataCompressor();
+
   constructor(
     public created: Date,
     public currency: string,
@@ -25,6 +33,10 @@ export class BandMetadata implements StorableObject {
   }
 
   toStorageObject(): StorageObject {
+    return compress(this);
+  }
+
+  toRawData(): RawBandMetadata {
     return {
       created: this.created.toISOString(),
       currency: this.currency,
@@ -38,11 +50,10 @@ export class BandMetadata implements StorableObject {
   static fromStorageObject(data: StorageObject): BandMetadata {
     // Note: albums and tracks arrays will contain IDs, not full objects
     // The actual Album and Track objects should be reconstructed elsewhere
-    return BandMetadata.create(
-      data.created,
-      data.currency,
-      data.albums || [],
-      data.tracks || [],
-    );
+    const metadata = decompress(
+      data as CompressedBandMetadata,
+      new BandMetadataCompressor(),
+    ) as RawBandMetadata;
+    return BandMetadata.create(metadata.created, metadata.currency, [], []);
   }
 }

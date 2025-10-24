@@ -1,12 +1,16 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { Artist } from '../artist';
 import { Artwork } from '../artwork';
+import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
 import { StorageKey } from '../storageKey';
 import type { Track } from '../track/track';
 import { Url } from '../url';
+import { AlbumDataCompressor, type RawAlbumData } from './compressor';
 
-export class Album implements Storable {
+export class Album implements Storable, Compressable {
+  public readonly compressor = new AlbumDataCompressor();
+
   constructor(
     public url: Url,
     public artist: Artist,
@@ -34,11 +38,15 @@ export class Album implements Storable {
   }
 
   toStorageObject(): StorageObject {
+    return compress(this);
+  }
+
+  toRawData(): RawAlbumData {
     return {
+      id: this.id,
       url: this.url.toString(),
       artist: this.artist.toString(),
       title: this.title,
-      id: this.id,
       artworkId: this.artwork.id,
       bandId: this.bandId,
       // Save Track IDs instead of full Track objects to avoid redundancy

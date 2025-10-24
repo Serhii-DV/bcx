@@ -2,6 +2,7 @@ import type { StorageObject } from 'src/core/storage';
 import { removeInvisibleChars } from 'src/utils/string';
 import { Artist } from '../artist';
 import { Artwork } from '../artwork';
+import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import type {
   AlbumRelease,
@@ -13,6 +14,11 @@ import { TrackFactory } from '../track/factory';
 import type { Track } from '../track/track';
 import { Url } from '../url';
 import { Album } from './album';
+import {
+  AlbumDataCompressor,
+  type CompressedAlbumData,
+  type RawAlbumData,
+} from './compressor';
 
 export class AlbumFactory {
   static create(
@@ -40,15 +46,22 @@ export class AlbumFactory {
   }
 
   static fromStorageObject(data: StorageObject): Album {
+    const albumData = decompress(
+      data as CompressedAlbumData,
+      new AlbumDataCompressor(),
+    ) as RawAlbumData;
+
     return this.create(
-      data.url,
-      data.artist,
-      data.title,
-      data.id,
-      data.artworkId,
-      data.bandId,
-      data.tracks || [],
-      data.metadata ? Metadata.fromStorageObject(data.metadata) : undefined,
+      albumData.url,
+      albumData.artist,
+      albumData.title,
+      albumData.id,
+      albumData.artworkId,
+      albumData.bandId,
+      [],
+      albumData.metadata
+        ? Metadata.fromStorageObject(albumData.metadata)
+        : undefined,
     );
   }
 

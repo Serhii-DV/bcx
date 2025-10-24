@@ -1,7 +1,15 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
+import { type Compressable, compress, decompress } from './compressor';
+import {
+  type CompressedMetadataData,
+  MetadataCompressor,
+  type RawMetadataData,
+} from './metadataCompressor';
 import { Price } from './price';
 
-export class Metadata implements StorableObject {
+export class Metadata implements StorableObject, Compressable {
+  public readonly compressor = new MetadataCompressor();
+
   constructor(
     public price: Price,
     public publisher: string,
@@ -35,8 +43,12 @@ export class Metadata implements StorableObject {
   }
 
   toStorageObject(): StorageObject {
+    return compress(this);
+  }
+
+  toRawData(): RawMetadataData {
     return {
-      price: this.price.toStorageObject(),
+      price: this.price.toRawData(),
       publisher: this.publisher,
       published: this.published.toISOString(),
       modified: this.modified.toISOString(),
@@ -45,12 +57,17 @@ export class Metadata implements StorableObject {
   }
 
   static fromStorageObject(data: StorageObject): Metadata {
+    const decompressed = decompress(
+      data as CompressedMetadataData,
+      new MetadataCompressor(),
+    ) as RawMetadataData;
+
     return Metadata.create(
-      Price.create(data.price.amount, data.price.currency),
-      data.publisher,
-      data.published,
-      data.modified,
-      data.keywords,
+      Price.create(decompressed.price.amount, decompressed.price.currency),
+      decompressed.publisher,
+      decompressed.published,
+      decompressed.modified,
+      decompressed.keywords,
     );
   }
 }

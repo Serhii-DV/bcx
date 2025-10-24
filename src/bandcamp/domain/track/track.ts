@@ -1,12 +1,16 @@
 import type { Storable, StorableData } from 'src/core/storage';
 import type { Artist } from '../artist';
 import type { Artwork } from '../artwork';
+import { type Compressable, compress } from '../compressor';
 import type { Metadata } from '../metadata';
 import { StorageKey } from '../storageKey';
 import { Url } from '../url';
+import { type RawTrackData, TrackDataCompressor } from './compressor';
 import { TrackTime } from './time';
 
-export class Track implements Storable {
+export class Track implements Storable, Compressable {
+  public readonly compressor = new TrackDataCompressor();
+
   constructor(
     public id: number,
     public url: Url,
@@ -28,13 +32,17 @@ export class Track implements Storable {
   }
 
   toStorageObject(): StorableData {
+    return compress(this);
+  }
+
+  toRawData(): RawTrackData {
     return {
       id: this.id,
       url: this.url.toString(),
       artist: this.artist.toString(),
       title: this.title,
       time: this.time.toString(),
-      artId: this.artwork.id,
+      artworkId: this.artwork.id,
       albumId: this.albumId,
       metadata: this.metadata?.toStorageObject(),
     };

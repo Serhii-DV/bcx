@@ -1,9 +1,8 @@
 import type { StorageObject } from 'src/core/storage';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import { Album } from '../album/album';
-import { TrackFactory } from '../track/factory';
 import { Url } from '../url';
 import { Band } from './band';
+import { BandDataCompressor } from './compressor';
 import { BandMetadata } from './metadata';
 
 export class BandFactory {
@@ -29,12 +28,13 @@ export class BandFactory {
     return new Band(bandId, bandName, bandUrl, metadata);
   }
 
-  static fromStorage(band: StorageObject): Band {
+  static fromStorage(data: StorageObject): Band {
+    const bandData = BandDataCompressor.decompress(data as any);
     return BandFactory.fromRawData(
-      band.id,
-      band.name,
-      band.url,
-      BandMetadata.fromStorageObject(band.metadata),
+      bandData.id,
+      bandData.name,
+      bandData.url,
+      BandMetadata.fromStorageObject(bandData.metadata),
     );
   }
 }
