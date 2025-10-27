@@ -12,7 +12,7 @@ import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import { Url } from '../url/url';
-import { createMetadataElement, createReleaseBadgeElement } from './helper';
+import { createBadgeElement, createMetadataElement } from './helper';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -122,7 +122,7 @@ export class PageMusic {
     arrayUnique(badgeValues)
       .sort()
       .forEach((value) => {
-        const badge = createReleaseBadgeElement(value);
+        const badge = createBadgeElement(value);
         releaseMetadataElement.appendChild(badge);
       });
 

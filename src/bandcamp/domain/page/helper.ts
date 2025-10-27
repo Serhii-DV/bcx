@@ -15,7 +15,7 @@ function handleSearchBadgeOnClick(badge: HTMLElement): void {
   });
 }
 
-export function createReleaseBadgeElement(
+export function createBadgeElement(
   query: string,
   className?: string,
 ): HTMLElement {
