@@ -108,6 +108,10 @@ function setupDataList(): void {
     options.push(album.toString());
   });
 
+  musicSearchData.keywords.forEach((keyword) => {
+    options.push(keyword.value + ' (' + keyword.count + ')');
+  });
+
   createDataListForInput(options, filterInput);
 }
 
@@ -122,6 +126,11 @@ function initIsotope(): void {
     album.tracks.forEach((track) => {
       filterValue += ' ' + track.artist.toString();
     });
+
+    // Include keywords in filter value
+    if (album.metadata) {
+      filterValue += ' ' + album.metadata.keywords.join(', ');
+    }
 
     gridElement?.setAttribute('data-filter-value', filterValue.toLowerCase());
   });

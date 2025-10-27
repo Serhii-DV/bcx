@@ -2,6 +2,7 @@ import { countOccurrences } from 'src/utils/array';
 import type {
   ArtistSearchData,
   MusicSearchData,
+  ValueCountSearchData,
 } from '$lib/components/bcx/types';
 import { Band } from '../domain/band/band';
 
@@ -11,6 +12,7 @@ export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
     bands: [band],
     albums: band.metadata.albums,
     tracks: band.metadata.tracks,
+    keywords: createKeywordsSearchDataFromBand(band),
   };
 }
 
@@ -18,11 +20,13 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
   const allArtists: ArtistSearchData[] = [];
   const allAlbums = bands.flatMap((band) => band.metadata.albums);
   const allTracks = bands.flatMap((band) => band.metadata.tracks);
+  const allKeywords: ValueCountSearchData[] = [];
 
   // Aggregate all artists from all bands
   bands.forEach((band) => {
     const searchData = createMusicSearchDataFromBand(band);
     allArtists.push(...searchData.artists);
+    allKeywords.push(...searchData.keywords);
   });
 
   return {
@@ -30,6 +34,7 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
     bands: bands,
     albums: allAlbums,
     tracks: allTracks,
+    keywords: allKeywords,
   };
 }
 
@@ -56,5 +61,34 @@ function createArtistSearchData(band: Band): ArtistSearchData[] {
   return Array.from(counts.entries()).map(([name, count]) => ({
     name: name,
     albumCount: count,
+  }));
+}
+
+function createKeywordsSearchDataFromBand(band: Band): ValueCountSearchData[] {
+  const keywords: string[] = [];
+
+  band.metadata.albums.forEach((album) => {
+    if (album.metadata) {
+      keywords.push(...album.metadata.keywords);
+    }
+  });
+
+  band.metadata.tracks.forEach((track) => {
+    if (track.metadata) {
+      keywords.push(...track.metadata.keywords);
+    }
+  });
+
+  return createValueCountSearchDataFromStrings(keywords);
+}
+
+function createValueCountSearchDataFromStrings(
+  values: string[],
+): ValueCountSearchData[] {
+  const counts = countOccurrences(values.sort());
+
+  return Array.from(counts.entries()).map(([value, count]) => ({
+    value: value,
+    count: count,
   }));
 }
