@@ -20,7 +20,7 @@ export function createBadgeElement(
   className?: string,
 ): HTMLElement {
   const badge = createElement(
-    `<span class="bcx-badge ${className}" title="Filter by: ${query}" data-search-query="${query}">${query}</span>`,
+    `<span class="bcx-badge ${className ?? ''}" title="Filter by: ${query}" data-search-query="${query}">${query}</span>`,
   ) as HTMLElement;
 
   handleSearchBadgeOnClick(badge);

@@ -95,36 +95,40 @@ export class PageMusic {
     gridItem: HTMLElement,
     release: Release,
   ): void {
-    const badgeValues: string[] = [];
+    const releaseMetadataElement = createMetadataElement();
 
-    if (release.artist) {
-      release.artist.names.forEach((artistName) => {
-        badgeValues.push(artistName);
-      });
+    const appendBadge = (value: string, className?: string): void => {
+      const badge = createBadgeElement(value, className);
+      releaseMetadataElement.appendChild(badge);
+    };
+
+    // Show release year first
+    if (release.metadata?.year) {
+      appendBadge(release.metadata.year.toString(), 'bcx-badge-year');
     }
+
+    // Then, artist names
+    const artistNames = release.artist?.names || [];
 
     // For albums, also include artists from tracks
     if (release instanceof Album) {
       release.tracks.forEach((track) => {
-        track.artist.names.forEach((artistName) => {
-          badgeValues.push(artistName);
-        });
+        artistNames.push(...track.artist.names);
       });
     }
 
-    // Append release year
-    if (release.metadata?.year) {
-      badgeValues.push(release.metadata.year.toString());
-    }
-
-    const releaseMetadataElement = createMetadataElement();
-
-    arrayUnique(badgeValues)
+    arrayUnique(artistNames)
       .sort()
-      .forEach((value) => {
-        const badge = createBadgeElement(value);
-        releaseMetadataElement.appendChild(badge);
+      .forEach((artistName) => {
+        appendBadge(artistName, 'bcx-badge-artist');
       });
+
+    // Keywords for albums
+    if (release instanceof Album && release.metadata) {
+      release.metadata.keywords.forEach((keyword) => {
+        appendBadge(keyword, 'bcx-badge-keyword');
+      });
+    }
 
     gridItem.insertAdjacentElement('beforeend', releaseMetadataElement);
   }
