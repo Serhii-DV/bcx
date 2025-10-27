@@ -18,17 +18,17 @@ import { Track } from './track';
 export class TrackFactory {
   static create(
     id: string | number,
-    url: string | Url | URL,
     artist: string | Artist,
     title: string,
-    time: string | TrackTime,
     artwork: string | number | Artwork,
+    url?: string | Url | URL,
+    time?: string | TrackTime,
     albumId?: number,
     metadata?: Metadata,
   ): Track {
     const trackId =
       typeof id === 'string' ? parseInt(id.replace('track-', ''), 10) : id;
-    const trackUrl = Url.parse(url);
+    const trackUrl = url ? Url.parse(url) : undefined;
     const trackTime =
       typeof time === 'string' ? TrackTime.fromString(time) : time;
 
@@ -44,11 +44,11 @@ export class TrackFactory {
 
     return new Track(
       trackId,
-      trackUrl,
       trackArtist,
       title,
-      trackTime,
       trackArtwork,
+      trackUrl,
+      trackTime,
       albumId,
       metadata,
     );
@@ -62,7 +62,9 @@ export class TrackFactory {
     const url = schema.mainEntityOfPage;
     const mainArtist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
     const { artist, title } = Artist.fromTrackTitle(schema.name, mainArtist);
-    const time = TrackTime.fromDuration(schema.duration);
+    const time = schema.duration
+      ? TrackTime.fromDuration(schema.duration)
+      : undefined;
     // albumId is not available in schema, try to get it from pagedata
     const albumId = bandcampPageData.albumId || undefined;
     const artId =
@@ -87,11 +89,11 @@ export class TrackFactory {
 
     return TrackFactory.create(
       trackId,
-      url,
       artist,
       title,
-      time,
       artId,
+      url,
+      time,
       albumId,
       metadata,
     );
@@ -120,16 +122,18 @@ export class TrackFactory {
           ? trackItem.item.byArtist.name
           : schema.byArtist.name,
       );
-      const time = TrackTime.fromDuration(trackItem.item.duration);
+      const time = trackItem.item.duration
+        ? TrackTime.fromDuration(trackItem.item.duration)
+        : undefined;
       const artId = albumArtId;
 
       const track = TrackFactory.create(
         trackId,
-        url,
         artist,
         title,
-        time,
         artId,
+        url,
+        time,
         albumId,
         undefined,
       );
@@ -143,11 +147,11 @@ export class TrackFactory {
   static fromRawData(rawData: RawTrackData): Track {
     return TrackFactory.create(
       rawData.id,
-      rawData.url,
       rawData.artist,
       rawData.title,
-      rawData.time,
       rawData.artworkId,
+      rawData.url,
+      rawData.time,
       rawData.albumId,
       rawData.metadata ? Metadata.fromRawData(rawData.metadata) : undefined,
     );

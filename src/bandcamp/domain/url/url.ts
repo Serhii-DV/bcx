@@ -4,9 +4,21 @@ const bandcampHost = 'bandcamp.com';
 
 export class Url extends URL {
   static parse(url: string | Url | URL): Url {
-    if (url instanceof Url) return url;
-    if (url instanceof URL) return new Url(url.toString());
-    return new Url(url);
+    let urlString: string;
+
+    if (url instanceof Url) {
+      urlString = url.toString();
+    } else if (url instanceof URL) {
+      urlString = url.toString();
+    } else {
+      urlString = url;
+    }
+
+    try {
+      return new Url(urlString);
+    } catch (error) {
+      throw new Error(`Invalid URL: ${urlString}`);
+    }
   }
 
   get uuid(): string | undefined {

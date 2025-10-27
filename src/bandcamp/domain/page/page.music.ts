@@ -282,11 +282,11 @@ export class PageMusic {
         case 'track':
           return TrackFactory.create(
             itemId.id,
-            url,
             artist,
             title,
-            '00:00:00',
             artworkId,
+            url,
+            '00:00:00',
           );
       }
     } catch (error) {

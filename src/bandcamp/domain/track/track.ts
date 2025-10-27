@@ -12,11 +12,11 @@ import { TrackTime } from './time';
 export class Track implements Storable, Compressable {
   constructor(
     public id: number,
-    public url: Url,
     public artist: Artist,
     public title: string,
-    public time: TrackTime,
     public artwork: Artwork,
+    public url?: Url,
+    public time?: TrackTime,
     public albumId?: number,
     public metadata?: Metadata,
   ) {}
@@ -27,11 +27,14 @@ export class Track implements Storable, Compressable {
 
   toStorableData(): StorableData {
     const key = StorageKey.trackKey(this.id);
-    const urlKey = StorageKey.urlKey(this.url);
-    return {
-      [key]: this.toStorageObject(),
-      [urlKey]: key,
-    };
+    const data: StorableData = { [key]: this.toStorageObject() };
+
+    if (this.url) {
+      const urlKey = StorageKey.urlKey(this.url);
+      data[urlKey] = key;
+    }
+
+    return data;
   }
 
   toStorageObject(): StorableData {
@@ -41,11 +44,11 @@ export class Track implements Storable, Compressable {
   toRawData(): RawTrackData {
     return {
       id: this.id,
-      url: this.url.toString(),
       artist: this.artist.toString(),
       title: this.title,
-      time: this.time.toString(),
       artworkId: this.artwork.id,
+      url: this.url?.toString(),
+      time: this.time?.toString(),
       albumId: this.albumId,
       metadata: this.metadata?.toRawData(),
     };
