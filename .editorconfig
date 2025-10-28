@@ -8,3 +8,6 @@ indent_size = 2
 
 [**.{css,js,json,html}]
 charset = utf-8
+
+[makefile]
+indent_style = tab
