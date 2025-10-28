@@ -7,6 +7,7 @@ import Isotope from 'isotope-layout';
 import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
+import { getTracksArtistNames } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
@@ -120,16 +121,15 @@ function initIsotope(): void {
     const gridElement = musicGrid.querySelector(
       '[data-item-id="album-' + album.id + '"]',
     );
+
     let filterValue = album.toString();
 
     // Include artists from tracks in filter value
-    album.tracks.forEach((track) => {
-      filterValue += ' ' + track.artist.toString();
-    });
+    filterValue += ', ' + getTracksArtistNames(album.tracks).join(', ');
 
     // Include keywords in filter value
     if (album.metadata) {
-      filterValue += ' ' + album.metadata.keywords.join(', ');
+      filterValue += ', ' + album.metadata.keywords.join(', ');
     }
 
     gridElement?.setAttribute('data-filter-value', filterValue.toLowerCase());
