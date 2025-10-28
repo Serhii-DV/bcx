@@ -14,11 +14,11 @@ export class Artist {
     this.joins = joins.map((join) => join.trim());
   }
 
-  get value(): string {
-    return this.asArray.join(' ');
+  toString(): string {
+    return this.toArray().join(' ');
   }
 
-  get asArray(): string[] {
+  toArray(): string[] {
     const result: string[] = [];
     for (let i = 0; i < this.names.length; i++) {
       result.push(this.names[i]);
@@ -45,10 +45,6 @@ export class Artist {
       ? []
       : (input.match(/[,/+•|]| Vs | & +/g) || []).map((join) => join.trim());
     return new Artist(names, joins);
-  }
-
-  toString(): string {
-    return this.value;
   }
 
   static fromTrackTitle(

@@ -24,30 +24,30 @@ describe('ReleaseArtist', () => {
   describe('asString', () => {
     it('should return the correct artist string', () => {
       const artist = new Artist(['Band One', 'Band Two'], [' & ']);
-      expect(artist.value).toBe('Band One & Band Two');
+      expect(artist.toString()).toBe('Band One & Band Two');
     });
 
     it('should return a single artist name if no joins exist', () => {
       const artist = new Artist(['Solo Musician']);
-      expect(artist.value).toBe('Solo Musician');
+      expect(artist.toString()).toBe('Solo Musician');
     });
 
     it('should cache the result after the first call', () => {
       const artist = new Artist(['Artist1', 'Artist2'], [' / ']);
-      expect(artist.value).toBe('Artist1 / Artist2');
-      expect(artist.value).toBe('Artist1 / Artist2'); // Check caching behavior
+      expect(artist.toString()).toBe('Artist1 / Artist2');
+      expect(artist.toString()).toBe('Artist1 / Artist2'); // Check caching behavior
     });
   });
 
   describe('asArray', () => {
     it('should return names and joins interleaved', () => {
       const artist = new Artist(['A', 'B', 'C'], [' & ', ' feat. ']);
-      expect(artist.asArray).toEqual(['A', '&', 'B', 'feat.', 'C']);
+      expect(artist.toArray()).toEqual(['A', '&', 'B', 'feat.', 'C']);
     });
 
     it('should return only names if no joins are present', () => {
       const artist = new Artist(['X', 'Y']);
-      expect(artist.asArray).toEqual(['X', 'Y']);
+      expect(artist.toArray()).toEqual(['X', 'Y']);
     });
   });
 
