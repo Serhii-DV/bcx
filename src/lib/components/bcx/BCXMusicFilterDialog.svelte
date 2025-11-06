@@ -9,6 +9,7 @@ import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { Track } from 'src/bandcamp/domain/track/track';
 import { console } from 'src/utils/console';
+import { onMount } from 'svelte';
 import * as Command from '$lib/components/ui/command/index.js';
 import {
   type ArtistSearchData,
@@ -114,8 +115,22 @@ const shouldShowResults = $derived(
   searchQuery.trim().length >= minSearchLength,
 );
 
+onMount(() => {
+  console.log(
+    '[BCXMusicFilterDialog]',
+    'Mounted artists:',
+    data.artists.length,
+    'bands:',
+    data.bands.length,
+    'albums:',
+    data.albums.length,
+    'data:',
+    data,
+  );
+});
+
 function handleArtistSelect(artist: ArtistSearchData) {
-  console.log(`🎤 BCX: Artist selected "${artist.name}"`);
+  console.log(`[BCXMusicFilterDialog]`, `🎤 Artist selected "${artist.name}"`);
   if (onArtistSelect) {
     onArtistSelect(artist);
   }
@@ -123,7 +138,7 @@ function handleArtistSelect(artist: ArtistSearchData) {
 }
 
 function handleBandSelect(band: Band) {
-  console.log(`🎵 BCX: Band selected "${band.name}"`);
+  console.log(`[BCXMusicFilterDialog]`, `🎵 Band selected "${band.name}"`);
   if (onBandSelect) {
     onBandSelect(band);
   }
@@ -132,7 +147,8 @@ function handleBandSelect(band: Band) {
 
 function handleAlbumSelect(album: Album) {
   console.log(
-    `💿 BCX: Album selected "${album.title}" by ${album.artist.toString()}`,
+    `[BCXMusicFilterDialog]`,
+    `💿 Album selected "${album.title}" by ${album.artist.toString()}`,
   );
   if (onAlbumSelect) {
     onAlbumSelect(album);
@@ -142,7 +158,8 @@ function handleAlbumSelect(album: Album) {
 
 function handleTrackSelect(track: Track) {
   console.log(
-    `🎶 BCX: Track selected "${track.title}" by ${track.artist.toString()}`,
+    `[BCXMusicFilterDialog]`,
+    `🎶 Track selected "${track.title}" by ${track.artist.toString()}`,
   );
   if (onTrackSelect) {
     onTrackSelect(track);
@@ -216,7 +233,7 @@ function handleKeydown(event: KeyboardEvent) {
             {#each filteredData.tracks as track}
               <Command.Item onSelect={() => handleTrackSelect(track)}>
                 <span>{track.artist.toString()} - {track.title}{#if track.metadata?.year} - {track.metadata.year}{/if}</span>
-                <br><span class="text-muted-foreground">{track.url.hostname}</span>
+                <br><span class="text-muted-foreground">{track.url?.hostname}</span>
               </Command.Item>
             {/each}
           </Command.Group>

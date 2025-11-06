@@ -11,6 +11,7 @@ import {
   getMenuBarFeedButton,
 } from 'src/bandcamp/domain/page/menuBar';
 import { console } from 'src/utils/console';
+import { onMount } from 'svelte';
 import * as Command from '$lib/components/ui/command/index.js';
 import BCXDevCommandDialog from './BCXDevCommandDialog.svelte';
 
@@ -31,8 +32,12 @@ let {
 let devDialogOpen = $state(false);
 let commandInput = $state('');
 
+onMount(() => {
+  console.log('[BCXMainCommandDialog]', 'Mounted');
+});
+
 function handleSearchArtistAlbum() {
-  console.log('🎵 BCX: Search Artist/Album selected');
+  console.log('[BCXMainCommandDialog]', '🎵 Search Artist/Album selected');
   if (onSearchArtistAlbum) {
     onSearchArtistAlbum();
   }
@@ -50,7 +55,7 @@ function handleCollectionSelect() {
 }
 
 function handleProfileSelect() {
-  console.log('👤 BCX: Profile selected');
+  console.log('[BCXMainCommandDialog]', '👤 Profile selected');
   if (onProfileSelect) {
     onProfileSelect();
   }
@@ -58,7 +63,7 @@ function handleProfileSelect() {
 }
 
 function handleSettingsSelect() {
-  console.log('⚙️ BCX: Settings selected');
+  console.log('[BCXMainCommandDialog]', '⚙️ Settings selected');
   if (onSettingsSelect) {
     onSettingsSelect();
   }
