@@ -6,6 +6,7 @@ import { AlbumFactory } from './album/factory';
 import { Band } from './band/band';
 import { type CompressedBandData } from './band/compressor';
 import { BandFactory } from './band/factory';
+import { bandDataCompressor } from './shared';
 import { StorageKey } from './storageKey';
 import { TrackFactory } from './track/factory';
 import type { Track } from './track/track';
@@ -60,13 +61,13 @@ export class BandcampStorage {
         delete bandsStorableData[key];
       }
 
-      const objBand = bandsStorableData[key];
-      objBand?.metadata?.albums.forEach((albumId: number) => {
+      const band = bandDataCompressor.decompress(bandsStorableData[key]);
+      band?.metadata?.albumIds.forEach((albumId: number) => {
         const albumKey = StorageKey.albumKey(albumId);
         if (releaseKeys.includes(albumKey)) return;
         releaseKeys.push(albumKey);
       });
-      objBand?.metadata?.tracks.forEach((trackId: number) => {
+      band?.metadata?.trackIds.forEach((trackId: number) => {
         const trackKey = StorageKey.trackKey(trackId);
         if (releaseKeys.includes(trackKey)) return;
         releaseKeys.push(trackKey);

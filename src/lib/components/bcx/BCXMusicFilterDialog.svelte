@@ -8,7 +8,7 @@ import type { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { Track } from 'src/bandcamp/domain/track/track';
-import { console } from 'src/utils/console';
+import { arrayPreview, console } from 'src/utils/console';
 import { onMount } from 'svelte';
 import * as Command from '$lib/components/ui/command/index.js';
 import {
@@ -119,13 +119,17 @@ onMount(() => {
   console.log(
     '[BCXMusicFilterDialog]',
     'Mounted artists:',
-    data.artists.length,
-    'bands:',
-    data.bands.length,
-    'albums:',
-    data.albums.length,
-    'data:',
-    data,
+    ...arrayPreview(data.artists),
+  );
+  console.log(
+    '[BCXMusicFilterDialog]',
+    'Mounted bands:',
+    ...arrayPreview(data.bands),
+  );
+  console.log(
+    '[BCXMusicFilterDialog]',
+    'Mounted albums:',
+    ...arrayPreview(data.albums),
   );
 });
 
