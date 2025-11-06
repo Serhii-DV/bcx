@@ -6,13 +6,10 @@ import {
 } from 'src/utils/string';
 
 export class Artist {
-  public names: string[];
-  public joins: string[];
-
-  constructor(names: string[], joins: string[] = []) {
-    this.names = names;
-    this.joins = joins.map((join) => join.trim());
-  }
+  constructor(
+    public readonly names: string[],
+    public readonly joins: string[] = [],
+  ) {}
 
   toString(): string {
     return this.toArray().join(' ');
@@ -30,7 +27,7 @@ export class Artist {
   }
 
   static fromString(input: string): Artist {
-    if (input === undefined) {
+    if (input === '') {
       return new Artist(['']);
     }
 
