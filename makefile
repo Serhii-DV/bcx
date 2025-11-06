@@ -3,39 +3,34 @@
 # ==========================================================
 
 # --- Apps ---
-RUN        = pnpm
+PNPM_BIN = pnpm
 
 # Default target
 .DEFAULT_GOAL := help
 
-## help: Display this help message
 .PHONY: help
-help:
-	@echo "Available commands:"
-	@echo ""
-	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/## /  /' | column -t -s ':'
+help: ## Display this help message
+	@printf "\033[33mUsage:\033[0m\n  make [target] [arg=\"val\"...]\n\n\033[33mTargets:\033[0m\n"
+	@grep -hE '^[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | sort | \
+	  awk 'BEGIN {FS = ": ## "}; {printf "  \033[32m%-15s\033[0m %s\n", $$1, $$2}'
 
-## install: Install dependencies
 .PHONY: install
-install:
-	$(RUN) install
+install: ## Install dependencies
+	$(PNPM_BIN) install
 
-## setup: Setup development environment
 .PHONY: setup
-setup: install
-	$(RUN) setup
+setup: ## Setup development environment
+	$(MAKE) install
+	$(PNPM_BIN) setup
 
-## build: Build production assets
 .PHONY: build
-build:
-	$(RUN) build
+build: ## Build production assets
+	$(PNPM_BIN) build
 
-## dev: Start development server
 .PHONY: dev
-dev:
-	$(RUN) dev
+dev: ## Start development server
+	$(PNPM_BIN) dev
 
-## test: Run tests
 .PHONY: test
-test:
-	$(RUN) test
+test: ## Run tests
+	$(PNPM_BIN) test
