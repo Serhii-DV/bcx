@@ -1,4 +1,4 @@
-import { arrayUnique } from 'src/utils/array';
+import { arrayUnique, countOccurrences } from 'src/utils/array';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { console } from 'src/utils/console';
 import { element, elementHtml, elements, injectCssFile } from 'src/utils/dom';
@@ -12,7 +12,11 @@ import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import { Url } from '../url/url';
-import { createBadgeElement, createMetadataElement } from './helper';
+import {
+  createBadgeElement,
+  createMetadataElement,
+  createQueryCountBadgeElement,
+} from './helper';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -30,6 +34,7 @@ export class PageMusic {
   public band: Band;
   public musicGridElement: HTMLElement | null = null;
   public musicGridItemElements: HTMLElement[];
+  public queryCountMap: Map<string, number> = new Map();
 
   private constructor() {
     elementHtml()?.classList.add('bcx-page-music');
@@ -54,6 +59,7 @@ export class PageMusic {
 
     console.log('[page.music]', '[band]', pageMusic.band);
 
+    pageMusic.queryCountMap = pageMusic.createQueryCountMap();
     pageMusic.appendMetadataToReleases();
     return pageMusic;
   }
@@ -69,6 +75,43 @@ export class PageMusic {
     );
   }
 
+  private createQueryCountMap(): Map<string, number> {
+    const queries: string[] = [];
+
+    this.band.metadata.albums.forEach((album) => {
+      queries.push(...this.releaseToQueries(album));
+    });
+
+    this.band.metadata.tracks.forEach((track) => {
+      queries.push(...this.releaseToQueries(track));
+    });
+
+    return countOccurrences(queries);
+  }
+
+  private releaseToQueries(release: Release): string[] {
+    const queries: string[] = [];
+    if (release.metadata) {
+      queries.push(release.metadata.year.toString());
+
+      if (release instanceof Album) {
+        queries.push(...release.metadata.keywords);
+      }
+    }
+
+    const artistNames = release.artist?.names || [];
+
+    if (release instanceof Album) {
+      release.tracks.forEach((track) => {
+        artistNames.push(...track.artist.names);
+      });
+    }
+
+    queries.push(...arrayUnique(artistNames).sort());
+
+    return queries;
+  }
+
   private appendMetadataToReleases(): void {
     this.band.metadata.albums.forEach((album) => {
       const gridItem = element(
@@ -77,7 +120,7 @@ export class PageMusic {
       );
       if (!gridItem) return;
 
-      this.appendBadgesToGridItem(gridItem, album);
+      this.appendReleaseBadgesToGridItem(gridItem, album);
     });
 
     this.band.metadata.tracks.forEach((track) => {
@@ -87,24 +130,39 @@ export class PageMusic {
       );
       if (!gridItem) return;
 
-      this.appendBadgesToGridItem(gridItem, track);
+      this.appendReleaseBadgesToGridItem(gridItem, track);
     });
   }
 
-  private appendBadgesToGridItem(
+  private appendReleaseBadgesToGridItem(
     gridItem: HTMLElement,
     release: Release,
   ): void {
     const releaseMetadataElement = createMetadataElement();
 
-    const appendBadge = (value: string, className?: string): void => {
-      const badge = createBadgeElement(value, className);
+    const appendBadge = (
+      query: string,
+      title: string,
+      className?: string,
+    ): void => {
+      if (!query) return;
+      const count = this.queryCountMap.get(query) || 0;
+      const badge = createQueryCountBadgeElement(
+        query,
+        count,
+        title,
+        className,
+      );
       releaseMetadataElement.appendChild(badge);
     };
 
     // Show release year first
     if (release.metadata?.year) {
-      appendBadge(release.metadata.year.toString(), 'bcx-badge-year');
+      appendBadge(
+        release.metadata.year.toString(),
+        'Filter by year',
+        'bcx-badge-year',
+      );
     }
 
     // Then, artist names
@@ -120,13 +178,13 @@ export class PageMusic {
     arrayUnique(artistNames)
       .sort()
       .forEach((artistName) => {
-        appendBadge(artistName, 'bcx-badge-artist');
+        appendBadge(artistName, 'Filter by artist', 'bcx-badge-artist');
       });
 
     // Keywords for albums
     if (release instanceof Album && release.metadata) {
       release.metadata.keywords.forEach((keyword) => {
-        appendBadge(keyword, 'bcx-badge-keyword');
+        appendBadge(keyword, 'Filter by keyword', 'bcx-badge-keyword');
       });
     }
 

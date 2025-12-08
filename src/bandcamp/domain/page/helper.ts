@@ -16,16 +16,29 @@ function handleSearchBadgeOnClick(badge: HTMLElement): void {
 }
 
 export function createBadgeElement(
+  value: string,
   query: string,
+  title: string,
   className?: string,
 ): HTMLElement {
   const badge = createElement(
-    `<span class="bcx-badge ${className ?? ''}" title="Filter by: ${query}" data-search-query="${query}">${query}</span>`,
+    `<span class="bcx-badge ${className ?? ''}" title="${title}" data-search-query="${query}">${value}</span>`,
   ) as HTMLElement;
 
   handleSearchBadgeOnClick(badge);
 
   return badge;
+}
+
+export function createQueryCountBadgeElement(
+  query: string,
+  count: number,
+  title: string,
+  className?: string,
+): HTMLElement {
+  const value = query + (count > 1 ? ` (${count})` : '');
+  title += '\n' + query + '\n' + `On this page: ${count}`;
+  return createBadgeElement(value, query, title, className);
 }
 
 export function createReleaseYearElement(
