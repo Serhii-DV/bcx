@@ -33,6 +33,7 @@ onDOMReady(async () => {
       target: filterContainer,
       props: {
         band,
+        queryCountMap: musicPage.queryCountMap,
         musicGrid,
         musicGridItems: musicPage.musicGridItemElements,
       },

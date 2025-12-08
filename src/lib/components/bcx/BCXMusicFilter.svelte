@@ -7,8 +7,10 @@ import Isotope from 'isotope-layout';
 import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
+import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
 import { getTracksArtistNames } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
+import { arrayUnique } from 'src/utils/array';
 import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
@@ -18,11 +20,12 @@ import filterStyles from './BCXMusicFilter.css?inline';
 
 interface Props {
   band: Band;
+  queryCountMap?: Map<string, number>;
   musicGrid: HTMLElement;
   musicGridItems: HTMLElement[];
 }
 
-let { band, musicGrid, musicGridItems }: Props = $props();
+let { band, queryCountMap, musicGrid, musicGridItems }: Props = $props();
 
 // Component state
 let filterInput: HTMLInputElement | null = $state(null);
@@ -35,6 +38,7 @@ let previousQuery = '';
 let visibleCount = $state(0);
 let totalCount = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
+let badgeContainer: HTMLElement | null = $state(null);
 
 // Reactive values
 $effect(() => {
@@ -65,6 +69,7 @@ onMount(() => {
   injectStyles();
   initIsotope();
   setupDataList();
+  renderBadges();
 
   // Watch for browser navigation (Back/Forward buttons)
   window.addEventListener('popstate', handlePopState);
@@ -221,6 +226,63 @@ function clearFilter(): void {
   }
 }
 
+function renderBadges(): void {
+  if (badgeContainer === null) return;
+
+  // Clear existing badges
+  badgeContainer.innerHTML = '';
+
+  // Collect unique years from albums
+  const years: string[] = [];
+  band.metadata.albums.forEach((album: Album) => {
+    const year = album.metadata?.year.toString();
+    if (year) {
+      years.push(year);
+    }
+  });
+
+  // Create year badges
+  arrayUnique(years)
+    .sort()
+    .forEach((year) => {
+      const query = year;
+      if (query) {
+        const count = queryCountMap?.get(query) || 0;
+        const badgeElement = createQueryCountBadgeElement(
+          query,
+          count,
+          'Filter by year',
+          'bcx-badge-year',
+        );
+        badgeContainer?.appendChild(badgeElement);
+      }
+    });
+
+  // Collect unique keywords from albums
+  const keywords: string[] = [];
+  band.metadata.albums.forEach((album: Album) => {
+    album.metadata?.keywords.forEach((keyword) => {
+      keywords.push(keyword);
+    });
+  });
+
+  arrayUnique(keywords)
+    .sort()
+    .forEach((keyword) => {
+      const query = keyword;
+      if (query) {
+        const count = queryCountMap?.get(query) || 0;
+        const badgeElement = createQueryCountBadgeElement(
+          query,
+          count,
+          'Filter by keyword',
+          'bcx-badge-keyword',
+        );
+        badgeContainer?.appendChild(badgeElement);
+      }
+    });
+}
+
 function injectStyles(): void {
   // Check if styles are already injected
   if (document.getElementById('bcx-filter-styles')) {
@@ -293,5 +355,8 @@ function destroy(): void {
 
   <div class="filter-results-count">
     Showing {visibleCount} of {totalCount} albums
+  </div>
+
+  <div class="bcx-filter-badges" bind:this={badgeContainer}>
   </div>
 </div>

@@ -68,3 +68,7 @@
 .filtered-hidden {
   display: none !important;
 }
+
+.bcx-filter-badges {
+  margin: 20px 0 0;
+}
