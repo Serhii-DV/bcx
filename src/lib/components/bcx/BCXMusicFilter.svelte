@@ -232,14 +232,34 @@ function renderBadges(): void {
   // Clear existing badges
   badgeContainer.innerHTML = '';
 
-  // Collect unique years from albums
+  // Collect unique years and artists from albums
   const years: string[] = [];
+  const artists: string[] = [];
   band.metadata.albums.forEach((album: Album) => {
     const year = album.metadata?.year.toString();
     if (year) {
       years.push(year);
     }
+
+    artists.push(...album.artist.names);
   });
+
+  // Create artist badges
+  arrayUnique(artists)
+    .sort()
+    .forEach((artist) => {
+      const query = artist;
+      if (query) {
+        const count = queryCountMap?.get(query) || 0;
+        const badgeElement = createQueryCountBadgeElement(
+          query,
+          count,
+          'Filter by artist',
+          'bcx-badge-artist',
+        );
+        badgeContainer?.appendChild(badgeElement);
+      }
+    });
 
   // Create year badges
   arrayUnique(years)
@@ -316,6 +336,9 @@ function destroy(): void {
 </script>
 
 <div class="bcx-filter-container">
+
+  <div class="bcx-filter-badges" bind:this={badgeContainer}></div>
+
   <div class="bcx-filter-input-container">
     <input
       id="bcx-filter-input"
@@ -357,6 +380,4 @@ function destroy(): void {
     Showing {visibleCount} of {totalCount} albums
   </div>
 
-  <div class="bcx-filter-badges" bind:this={badgeContainer}>
-  </div>
 </div>
