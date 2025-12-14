@@ -3,6 +3,7 @@
  * BCX Music Filter Component
  */
 
+import { Tabs } from 'bits-ui';
 import Isotope from 'isotope-layout';
 import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import type { Album } from 'src/bandcamp/domain/album/album';
@@ -363,24 +364,40 @@ function destroy(): void {
 <div class="bcx-filter-container">
 
   <div class="bcx-filter-badges">
-    <details>
-      <summary>Filter Options</summary>
+    <Tabs.Root value="artists" class="bcx-tabs-root">
+      <Tabs.List class="bcx-tabs-list">
+        <Tabs.Trigger
+          value="artists"
+          class="bcx-tabs-trigger"
+        >
+          Filter by Artists
+        </Tabs.Trigger>
+        <Tabs.Trigger
+          value="years"
+          class="bcx-tabs-trigger"
+        >
+          Filter by Years
+        </Tabs.Trigger>
+        <Tabs.Trigger
+          value="keywords"
+          class="bcx-tabs-trigger"
+        >
+          Filter by Keywords
+        </Tabs.Trigger>
+      </Tabs.List>
 
-      <details>
-        <summary>Artists</summary>
+      <Tabs.Content value="artists" class="bcx-tabs-content">
         <div bind:this={artistBadgesContainer}></div>
-      </details>
+      </Tabs.Content>
 
-      <details>
-        <summary>Years</summary>
+      <Tabs.Content value="years" class="bcx-tabs-content">
         <div bind:this={yearsBadgesContainer}></div>
-      </details>
+      </Tabs.Content>
 
-      <details>
-        <summary>Keywords</summary>
+      <Tabs.Content value="keywords" class="bcx-tabs-content">
         <div bind:this={keywordsBadgesContainer}></div>
-      </details>
-    </details>
+      </Tabs.Content>
+    </Tabs.Root>
   </div>
 
   <div class="bcx-filter-input-container">
