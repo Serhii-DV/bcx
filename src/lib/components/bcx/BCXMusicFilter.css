@@ -62,6 +62,46 @@
 .filter-results-count {
   font-size: 14px;
   color: #666;
+  margin-top: 12px;
+}
+
+.results-text {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.progress-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.results-progress {
+  flex: 1;
+  height: 8px;
+  border: none;
+  background-color: rgba(128, 128, 128, 0.2);
+  overflow: hidden;
+}
+
+.results-progress::-webkit-progress-bar {
+  background-color: rgba(128, 128, 128, 0.2);
+}
+
+.results-progress::-webkit-progress-value {
+  background: #6b8e23;
+}
+
+.results-progress::-moz-progress-bar {
+  background: #6b8e23;
+}
+
+.progress-percentage {
+  font-size: 12px;
+  color: #666;
+  min-width: 35px;
+  text-align: right;
 }
 
 /* Hide filtered out items */

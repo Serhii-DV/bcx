@@ -438,7 +438,7 @@ function destroy(): void {
   </div>
 
   <div class="filter-results-count">
-    Showing {visibleCount} of {totalCount} albums
+    Showing {visibleCount} of {totalCount} albums ({((visibleCount / totalCount) * 100).toFixed(2)}%)
   </div>
 
 </div>
