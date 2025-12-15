@@ -364,7 +364,7 @@ function destroy(): void {
 <div class="bcx-filter-container">
 
   <div class="bcx-filter-badges">
-    <Tabs.Root value="artists" class="bcx-tabs-root">
+    <Tabs.Root value="search-only" class="bcx-tabs-root">
       <Tabs.List class="bcx-tabs-list">
         <Tabs.Trigger
           value="search-only"
