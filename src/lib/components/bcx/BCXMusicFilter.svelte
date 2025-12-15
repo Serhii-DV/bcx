@@ -367,6 +367,12 @@ function destroy(): void {
     <Tabs.Root value="artists" class="bcx-tabs-root">
       <Tabs.List class="bcx-tabs-list">
         <Tabs.Trigger
+          value="search-only"
+          class="bcx-tabs-trigger"
+        >
+          Search Only
+        </Tabs.Trigger>
+        <Tabs.Trigger
           value="artists"
           class="bcx-tabs-trigger"
         >
@@ -396,6 +402,10 @@ function destroy(): void {
 
       <Tabs.Content value="keywords" class="bcx-tabs-content">
         <div bind:this={keywordsBadgesContainer}></div>
+      </Tabs.Content>
+
+      <Tabs.Content value="search-only" class="bcx-tabs-content">
+        <div></div>
       </Tabs.Content>
     </Tabs.Root>
   </div>
