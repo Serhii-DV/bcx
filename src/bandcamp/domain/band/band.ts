@@ -1,4 +1,5 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
+import type { Album } from '../album/album';
 import { type Compressable, compress } from '../compressor';
 import { bandDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
@@ -16,6 +17,42 @@ export class Band implements Storable, Compressable {
 
   get hasReleases(): boolean {
     return this.metadata.albums.length > 0 || this.metadata.tracks.length > 0;
+  }
+
+  get artistNames(): string[] {
+    const artistNames = new Set<string>();
+
+    // Collect unique artists from albums
+    this.metadata.albums.forEach((album: Album) => {
+      album.artist.names.forEach((name: string) => artistNames.add(name));
+    });
+
+    return Array.from(artistNames).sort();
+  }
+
+  get years(): number[] {
+    const years = new Set<number>();
+
+    this.metadata.albums.forEach((album: Album) => {
+      const year = album.metadata?.year;
+      if (year) {
+        years.add(year);
+      }
+    });
+
+    return Array.from(years).sort((a, b) => a - b);
+  }
+
+  get keywords(): string[] {
+    const keywords = new Set<string>();
+
+    this.metadata.albums.forEach((album: Album) => {
+      album.metadata?.keywords.forEach((keyword: string) => {
+        keywords.add(keyword);
+      });
+    });
+
+    return Array.from(keywords).sort();
   }
 
   get compressor(): BandDataCompressor {

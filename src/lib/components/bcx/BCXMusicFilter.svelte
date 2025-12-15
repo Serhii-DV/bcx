@@ -11,7 +11,6 @@ import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
 import { getTracksArtistNames } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
-import { arrayUnique } from 'src/utils/array';
 import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
@@ -235,28 +234,20 @@ function renderArtistBadges(): void {
   // Clear existing badges
   artistBadgesContainer.innerHTML = '';
 
-  // Collect unique artists from albums
-  const artists: string[] = [];
-  band.metadata.albums.forEach((album: Album) => {
-    artists.push(...album.artist.names);
-  });
-
   // Create artist badges
-  arrayUnique(artists)
-    .sort()
-    .forEach((artist) => {
-      const query = artist;
-      if (query) {
-        const count = queryCountMap?.get(query) || 0;
-        const badgeElement = createQueryCountBadgeElement(
-          query,
-          count,
-          'Filter by artist',
-          'bcx-badge-artist',
-        );
-        artistBadgesContainer?.appendChild(badgeElement);
-      }
-    });
+  band.artistNames.forEach((artist) => {
+    const query = artist;
+    if (query) {
+      const count = queryCountMap?.get(query) || 0;
+      const badgeElement = createQueryCountBadgeElement(
+        query,
+        count,
+        'Filter by artist',
+        'bcx-badge-artist',
+      );
+      artistBadgesContainer?.appendChild(badgeElement);
+    }
+  });
 }
 
 function renderYearBadges(): void {
@@ -265,31 +256,20 @@ function renderYearBadges(): void {
   // Clear existing badges
   yearsBadgesContainer.innerHTML = '';
 
-  // Collect unique years from albums
-  const years: string[] = [];
-  band.metadata.albums.forEach((album: Album) => {
-    const year = album.metadata?.year.toString();
-    if (year) {
-      years.push(year);
+  // Create year badges
+  band.years.forEach((year) => {
+    const query = year.toString();
+    if (query) {
+      const count = queryCountMap?.get(query) || 0;
+      const badgeElement = createQueryCountBadgeElement(
+        query,
+        count,
+        'Filter by year',
+        'bcx-badge-year',
+      );
+      yearsBadgesContainer?.appendChild(badgeElement);
     }
   });
-
-  // Create year badges
-  arrayUnique(years)
-    .sort()
-    .forEach((year) => {
-      const query = year;
-      if (query) {
-        const count = queryCountMap?.get(query) || 0;
-        const badgeElement = createQueryCountBadgeElement(
-          query,
-          count,
-          'Filter by year',
-          'bcx-badge-year',
-        );
-        yearsBadgesContainer?.appendChild(badgeElement);
-      }
-    });
 }
 
 function renderKeywordBadges(): void {
@@ -298,29 +278,19 @@ function renderKeywordBadges(): void {
   // Clear existing badges
   keywordsBadgesContainer.innerHTML = '';
 
-  // Collect unique keywords from albums
-  const keywords: string[] = [];
-  band.metadata.albums.forEach((album: Album) => {
-    album.metadata?.keywords.forEach((keyword) => {
-      keywords.push(keyword);
-    });
+  band.keywords.forEach((keyword) => {
+    const query = keyword;
+    if (query) {
+      const count = queryCountMap?.get(query) || 0;
+      const badgeElement = createQueryCountBadgeElement(
+        query,
+        count,
+        'Filter by keyword',
+        'bcx-badge-keyword',
+      );
+      keywordsBadgesContainer?.appendChild(badgeElement);
+    }
   });
-
-  arrayUnique(keywords)
-    .sort()
-    .forEach((keyword) => {
-      const query = keyword;
-      if (query) {
-        const count = queryCountMap?.get(query) || 0;
-        const badgeElement = createQueryCountBadgeElement(
-          query,
-          count,
-          'Filter by keyword',
-          'bcx-badge-keyword',
-        );
-        keywordsBadgesContainer?.appendChild(badgeElement);
-      }
-    });
 }
 
 function renderBadges(): void {
