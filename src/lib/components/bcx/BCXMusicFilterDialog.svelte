@@ -204,8 +204,10 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Bands ({filteredData.bands.length} of {data.bands.length})">
             {#each filteredData.bands as band}
               <Command.Item onSelect={() => handleBandSelect(band)}>
+              <div>
                 <span>{band.name}{#if band.metadata.albums?.length}&nbsp;({band.metadata.albums.length}){/if}</span>
                 <br><span class="text-muted-foreground">{band.url.hostname}</span>
+              </div>
               </Command.Item>
             {/each}
           </Command.Group>
@@ -220,8 +222,10 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Albums ({filteredData.albums.length} of {data.albums.length})">
             {#each filteredData.albums as album}
               <Command.Item onSelect={() => handleAlbumSelect(album)}>
-                <span>{album.toString()}</span>
-                <br><span class="text-muted-foreground">{album.url.hostname}</span>
+                <div>
+                  <span>{album.toString()}</span>
+                  <br><span class="text-muted-foreground text-xs">{album.url.withoutProtocol}</span>
+                </div>
               </Command.Item>
             {/each}
           </Command.Group>
@@ -236,8 +240,10 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Tracks ({filteredData.tracks.length} of {data.tracks.length})">
             {#each filteredData.tracks as track}
               <Command.Item onSelect={() => handleTrackSelect(track)}>
-                <span>{track.artist.toString()} - {track.title}{#if track.metadata?.year} - {track.metadata.year}{/if}</span>
-                <br><span class="text-muted-foreground">{track.url?.hostname}</span>
+                <div>
+                  <span>{track.artist.toString()} - {track.title}{#if track.metadata?.year} - {track.metadata.year}{/if}</span>
+                  <br><span class="text-muted-foreground text-xs">{track.url?.withoutProtocol}</span>
+                </div>
               </Command.Item>
             {/each}
           </Command.Group>
