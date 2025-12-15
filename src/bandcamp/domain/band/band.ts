@@ -1,8 +1,10 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
+import { arrayUnique } from 'src/utils/array';
 import type { Album } from '../album/album';
 import { type Compressable, compress } from '../compressor';
 import { bandDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
+import type { Track } from '../track/track';
 import type { Url } from '../url/url';
 import { BandDataCompressor, type RawBandData } from './compressor';
 import type { BandMetadata } from './metadata';
@@ -20,39 +22,57 @@ export class Band implements Storable, Compressable {
   }
 
   get artistNames(): string[] {
-    const artistNames = new Set<string>();
-
-    // Collect unique artists from albums
-    this.metadata.albums.forEach((album: Album) => {
-      album.artist.names.forEach((name: string) => artistNames.add(name));
-    });
-
-    return Array.from(artistNames).sort();
+    return arrayUnique(this.artistNamesAll).sort();
   }
 
-  get years(): number[] {
-    const years = new Set<number>();
+  get artistNamesAll(): string[] {
+    const artistNames: string[] = [];
+
+    // Collect all artists from albums
+    this.metadata.albums.forEach((album: Album) => {
+      artistNames.push(...album.artist.names);
+    });
+
+    this.metadata.tracks.forEach((track: Track) => {
+      artistNames.push(...track.artist.names);
+    });
+
+    return artistNames;
+  }
+
+  get years(): string[] {
+    return arrayUnique(this.yearsAll).sort();
+  }
+
+  get yearsAll(): string[] {
+    const years: number[] = [];
 
     this.metadata.albums.forEach((album: Album) => {
       const year = album.metadata?.year;
       if (year) {
-        years.add(year);
+        years.push(year);
       }
     });
 
-    return Array.from(years).sort((a, b) => a - b);
+    return years.map((year) => year.toString());
   }
 
   get keywords(): string[] {
-    const keywords = new Set<string>();
+    return arrayUnique(this.keywordsAll).sort();
+  }
+
+  get keywordsAll(): string[] {
+    const keywords: string[] = [];
 
     this.metadata.albums.forEach((album: Album) => {
-      album.metadata?.keywords.forEach((keyword: string) => {
-        keywords.add(keyword);
-      });
+      keywords.push(...(album.metadata?.keywords || []));
     });
 
-    return Array.from(keywords).sort();
+    this.metadata.tracks.forEach((track: Track) => {
+      keywords.push(...(track.metadata?.keywords || []));
+    });
+
+    return keywords;
   }
 
   get compressor(): BandDataCompressor {

@@ -1,8 +1,9 @@
-import { arrayUnique, countOccurrences } from 'src/utils/array';
+import { arrayUnique, createQueryCountMap } from 'src/utils/array';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { console } from 'src/utils/console';
 import { element, elementHtml, elements, injectCssFile } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
+import type { QueryCountMap } from '$lib/components/bcx';
 import { Album } from '../album/album';
 import { AlbumFactory } from '../album/factory';
 import { Band } from '../band/band';
@@ -12,11 +13,7 @@ import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import { Url } from '../url/url';
-import {
-  createBadgeElement,
-  createMetadataElement,
-  createQueryCountBadgeElement,
-} from './helper';
+import { createMetadataElement, createQueryCountBadgeElement } from './helper';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -34,7 +31,7 @@ export class PageMusic {
   public band: Band;
   public musicGridElement: HTMLElement | null = null;
   public musicGridItemElements: HTMLElement[];
-  public queryCountMap: Map<string, number> = new Map();
+  public queryCountMap: QueryCountMap = new Map();
 
   private constructor() {
     elementHtml()?.classList.add('bcx-page-music');
@@ -75,7 +72,7 @@ export class PageMusic {
     );
   }
 
-  private createQueryCountMap(): Map<string, number> {
+  private createQueryCountMap(): QueryCountMap {
     const queries: string[] = [];
 
     this.band.metadata.albums.forEach((album) => {
@@ -86,7 +83,7 @@ export class PageMusic {
       queries.push(...this.releaseToQueries(track));
     });
 
-    return countOccurrences(queries);
+    return createQueryCountMap(queries);
   }
 
   private releaseToQueries(release: Release): string[] {

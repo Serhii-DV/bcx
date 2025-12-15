@@ -17,10 +17,11 @@ import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import filterStyles from './BCXMusicFilter.css?inline';
+import type { QueryCountMap } from './types';
 
 interface Props {
   band: Band;
-  queryCountMap?: Map<string, number>;
+  queryCountMap?: QueryCountMap;
   musicGrid: HTMLElement;
   musicGridItems: HTMLElement[];
 }
@@ -105,8 +106,8 @@ function setupDataList(): void {
   const options: string[] = [];
 
   // Add artists
-  musicSearchData.artists.forEach((artist) => {
-    options.push(artist.name + ' (' + artist.albumCount + ')');
+  musicSearchData.artists.forEach((artistName, count) => {
+    options.push(artistName + ' (' + count + ')');
   });
 
   // We don't need to show other bands on the band page
@@ -116,8 +117,8 @@ function setupDataList(): void {
     options.push(album.toString());
   });
 
-  musicSearchData.keywords.forEach((keyword) => {
-    options.push(keyword.value + ' (' + keyword.count + ')');
+  musicSearchData.keywords.forEach((keyword, count) => {
+    options.push(keyword + ' (' + count + ')');
   });
 
   createDataListForInput(options, filterInput);

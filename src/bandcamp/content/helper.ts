@@ -1,32 +1,32 @@
-import { countOccurrences } from 'src/utils/array';
-import type {
-  ArtistSearchData,
-  MusicSearchData,
-  ValueCountSearchData,
-} from '$lib/components/bcx/types';
+import { createQueryCountMap } from 'src/utils/array';
+import type { MusicSearchData } from '$lib/components/bcx/types';
 import { Band } from '../domain/band/band';
 
 export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
   return {
-    artists: createArtistSearchData(band),
+    artists: band.artistNames,
     bands: [band],
     albums: band.metadata.albums,
     tracks: band.metadata.tracks,
-    keywords: createKeywordsSearchDataFromBand(band),
+    keywords: band.keywords,
+    queryCountMap: createQueryCountMap([]),
   };
 }
 
 export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
-  const allArtists: ArtistSearchData[] = [];
+  const queries: string[] = [];
+  const allArtists: string[] = [];
   const allAlbums = bands.flatMap((band) => band.metadata.albums);
   const allTracks = bands.flatMap((band) => band.metadata.tracks);
-  const allKeywords: ValueCountSearchData[] = [];
+  const allKeywords: string[] = [];
 
   // Aggregate all artists from all bands
   bands.forEach((band) => {
     const searchData = createMusicSearchDataFromBand(band);
     allArtists.push(...searchData.artists);
     allKeywords.push(...searchData.keywords);
+    queries.push(...band.artistNamesAll);
+    queries.push(...band.keywordsAll);
   });
 
   return {
@@ -35,60 +35,6 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
     albums: allAlbums,
     tracks: allTracks,
     keywords: allKeywords,
+    queryCountMap: createQueryCountMap(queries),
   };
-}
-
-/**
- * Creates artist search data from a band by extracting and counting all artist names
- * from the band's albums.
- *
- * @param band - The band to extract artist data from
- * @returns An array of ArtistSearchData with names and album counts
- */
-function createArtistSearchData(band: Band): ArtistSearchData[] {
-  const albumArtists: string[] = [];
-
-  band.metadata.albums.forEach((album) => {
-    albumArtists.push(...album.artist.names);
-  });
-
-  band.metadata.tracks.forEach((track) => {
-    albumArtists.push(...track.artist.names);
-  });
-
-  const counts = countOccurrences(albumArtists.sort());
-
-  return Array.from(counts.entries()).map(([name, count]) => ({
-    name: name,
-    albumCount: count,
-  }));
-}
-
-function createKeywordsSearchDataFromBand(band: Band): ValueCountSearchData[] {
-  const keywords: string[] = [];
-
-  band.metadata.albums.forEach((album) => {
-    if (album.metadata) {
-      keywords.push(...album.metadata.keywords);
-    }
-  });
-
-  band.metadata.tracks.forEach((track) => {
-    if (track.metadata) {
-      keywords.push(...track.metadata.keywords);
-    }
-  });
-
-  return createValueCountSearchDataFromStrings(keywords);
-}
-
-function createValueCountSearchDataFromStrings(
-  values: string[],
-): ValueCountSearchData[] {
-  const counts = countOccurrences(values.sort());
-
-  return Array.from(counts.entries()).map(([value, count]) => ({
-    value: value,
-    count: count,
-  }));
 }

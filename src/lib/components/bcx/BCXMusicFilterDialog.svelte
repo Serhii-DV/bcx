@@ -11,11 +11,20 @@ import type { Track } from 'src/bandcamp/domain/track/track';
 import { arrayPreview, console } from 'src/utils/console';
 import { onMount } from 'svelte';
 import * as Command from '$lib/components/ui/command/index.js';
-import {
-  type ArtistSearchData,
-  emptyMusicSearchData,
-  type MusicSearchData,
-} from './types';
+import { emptyMusicSearchData, type MusicSearchData } from './types';
+
+interface Props {
+  open?: boolean;
+  portalProps?: DialogPrimitive.PortalProps;
+  placeholder?: string;
+  emptyMessage?: string;
+  minSearchLength?: number;
+  data: MusicSearchData;
+  onArtistSelect?: ((artist: string) => void) | null;
+  onBandSelect?: ((band: Band) => void) | null;
+  onAlbumSelect?: ((album: Album) => void) | null;
+  onTrackSelect?: ((track: Track) => void) | null;
+}
 
 let {
   open = $bindable(false),
@@ -28,18 +37,7 @@ let {
   onBandSelect = null,
   onAlbumSelect = null,
   onTrackSelect = null,
-}: {
-  open?: boolean;
-  portalProps?: DialogPrimitive.PortalProps;
-  placeholder?: string;
-  emptyMessage?: string;
-  minSearchLength?: number;
-  data: MusicSearchData;
-  onArtistSelect?: ((artist: ArtistSearchData) => void) | null;
-  onBandSelect?: ((band: Band) => void) | null;
-  onAlbumSelect?: ((album: Album) => void) | null;
-  onTrackSelect?: ((track: Track) => void) | null;
-} = $props();
+}: Props = $props();
 
 // biome-ignore lint: reactive variable declaration
 let searchQuery = $state('');
@@ -52,13 +50,13 @@ const filteredData = $derived.by(() => {
   const query = searchQuery.trim().toLowerCase();
 
   // Filter artists
-  const artistsStartsWith = data.artists.filter((artist) =>
-    artist.name.toLowerCase().startsWith(query),
+  const artistsStartsWith = data.artists.filter((artist: string) =>
+    artist.toLowerCase().startsWith(query),
   );
   const artistsIncludes = data.artists.filter(
     (artist) =>
-      !artist.name.toLowerCase().startsWith(query) &&
-      artist.name.toLowerCase().includes(query),
+      !artist.toLowerCase().startsWith(query) &&
+      artist.toLowerCase().includes(query),
   );
 
   // Filter bands
@@ -133,12 +131,12 @@ onMount(() => {
   );
 });
 
-function handleArtistSelect(artist: ArtistSearchData) {
-  console.log(`[BCXMusicFilterDialog]`, `🎤 Artist selected "${artist.name}"`);
+function handleArtistSelect(artist: string) {
+  console.log(`[BCXMusicFilterDialog]`, `🎤 Artist selected "${artist}"`);
   if (onArtistSelect) {
     onArtistSelect(artist);
   }
-  searchQuery = artist.name;
+  searchQuery = artist;
 }
 
 function handleBandSelect(band: Band) {
@@ -189,7 +187,7 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Artists ({filteredData.artists.length} of {data.artists.length})">
             {#each filteredData.artists as artist}
               <Command.Item onSelect={() => handleArtistSelect(artist)}>
-                <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span><br>
+                <span>{artist}{#if data.queryCountMap.has(artist) && data.queryCountMap.get(artist)}&nbsp;({data.queryCountMap.get(artist)}){/if}</span><br>
               </Command.Item>
             {/each}
           </Command.Group>

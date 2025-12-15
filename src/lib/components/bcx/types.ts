@@ -13,12 +13,15 @@ export interface ArtistSearchData {
   albumCount?: number;
 }
 
+export type QueryCountMap = Map<string, number>;
+
 export interface MusicSearchData {
-  artists: ArtistSearchData[];
+  artists: string[];
   bands: Band[];
   albums: Album[];
   tracks: Track[];
-  keywords: ValueCountSearchData[];
+  keywords: string[];
+  queryCountMap: QueryCountMap;
 }
 
 export const emptyMusicSearchData: MusicSearchData = {
@@ -27,4 +30,5 @@ export const emptyMusicSearchData: MusicSearchData = {
   albums: [],
   tracks: [],
   keywords: [],
+  queryCountMap: new Map<string, number>(),
 };
