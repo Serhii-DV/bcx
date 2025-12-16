@@ -1,40 +1,41 @@
-import { createQueryCountMap } from 'src/utils/array';
+import { console } from 'src/utils/console';
 import type { MusicSearchData } from '$lib/components/bcx/types';
+import type { Album } from '../domain/album/album';
 import { Band } from '../domain/band/band';
+import type { Track } from '../domain/track/track';
 
 export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
+  console.log('[createMusicSearchDataFromBand] band:', band);
   return {
-    artists: band.artistNames,
+    artists: band.metadata.artists,
     bands: [band],
     albums: band.metadata.albums,
-    tracks: band.metadata.tracks,
-    keywords: band.keywords,
-    queryCountMap: createQueryCountMap([]),
+    tracks: band.metadata.trackReleases,
+    keywords: band.metadata.keywords,
+    queries: band.metadata.queries,
   };
 }
 
 export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
-  const queries: string[] = [];
-  const allArtists: string[] = [];
-  const allAlbums = bands.flatMap((band) => band.metadata.albums);
-  const allTracks = bands.flatMap((band) => band.metadata.tracks);
-  const allKeywords: string[] = [];
+  const artists: string[] = bands.flatMap((band) => band.metadata.artists);
+  const albums: Album[] = bands.flatMap((band) => band.metadata.albums);
+  const tracks: Track[] = bands.flatMap((band) => band.metadata.trackReleases);
+  const keywords: string[] = bands.flatMap((band) => band.metadata.keywords);
+  const queries: string[] = bands.flatMap((band) => band.metadata.queries);
 
   // Aggregate all artists from all bands
   bands.forEach((band) => {
-    const searchData = createMusicSearchDataFromBand(band);
-    allArtists.push(...searchData.artists);
-    allKeywords.push(...searchData.keywords);
-    queries.push(...band.artistNamesAll);
-    queries.push(...band.keywordsAll);
+    artists.push(...band.metadata.artists);
+    keywords.push(...band.metadata.keywords);
+    queries.push(...band.metadata.queries);
   });
 
   return {
-    artists: allArtists,
-    bands: bands,
-    albums: allAlbums,
-    tracks: allTracks,
-    keywords: allKeywords,
-    queryCountMap: createQueryCountMap(queries),
+    artists,
+    bands,
+    albums,
+    tracks,
+    keywords,
+    queries,
   };
 }

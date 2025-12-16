@@ -21,6 +21,10 @@ export class Track implements Storable, Compressable {
     public metadata?: Metadata,
   ) {}
 
+  get isRelease(): boolean {
+    return this.albumId !== undefined;
+  }
+
   get compressor(): TrackDataCompressor {
     return trackDataCompressor;
   }

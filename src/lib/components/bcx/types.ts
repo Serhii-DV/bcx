@@ -21,7 +21,7 @@ export interface MusicSearchData {
   albums: Album[];
   tracks: Track[];
   keywords: string[];
-  queryCountMap: QueryCountMap;
+  queries: string[];
 }
 
 export const emptyMusicSearchData: MusicSearchData = {
@@ -30,5 +30,5 @@ export const emptyMusicSearchData: MusicSearchData = {
   albums: [],
   tracks: [],
   keywords: [],
-  queryCountMap: new Map<string, number>(),
+  queries: [],
 };

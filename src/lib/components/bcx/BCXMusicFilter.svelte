@@ -11,6 +11,7 @@ import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
 import { getTracksArtistNames } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
+import { createQueryCountMap } from 'src/utils/array';
 import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
@@ -103,10 +104,12 @@ function setupDataList(): void {
   if (!filterInput) return;
 
   const musicSearchData = createMusicSearchDataFromBand(band);
+  const queryCountMap = createQueryCountMap(musicSearchData.queries);
   const options: string[] = [];
 
   // Add artists
-  musicSearchData.artists.forEach((artistName, count) => {
+  musicSearchData.artists.forEach((artistName) => {
+    const count = queryCountMap.get(artistName) || 0;
     options.push(artistName + ' (' + count + ')');
   });
 
@@ -117,7 +120,8 @@ function setupDataList(): void {
     options.push(album.toString());
   });
 
-  musicSearchData.keywords.forEach((keyword, count) => {
+  musicSearchData.keywords.forEach((keyword) => {
+    const count = queryCountMap.get(keyword) || 0;
     options.push(keyword + ' (' + count + ')');
   });
 
@@ -236,7 +240,7 @@ function renderArtistBadges(): void {
   artistBadgesContainer.innerHTML = '';
 
   // Create artist badges
-  band.artistNames.forEach((artist) => {
+  band.metadata.artists.forEach((artist) => {
     const query = artist;
     if (query) {
       const count = queryCountMap?.get(query) || 0;
@@ -258,7 +262,7 @@ function renderYearBadges(): void {
   yearsBadgesContainer.innerHTML = '';
 
   // Create year badges
-  band.years.forEach((year) => {
+  band.metadata.years.forEach((year) => {
     const query = year.toString();
     if (query) {
       const count = queryCountMap?.get(query) || 0;
@@ -279,7 +283,7 @@ function renderKeywordBadges(): void {
   // Clear existing badges
   keywordsBadgesContainer.innerHTML = '';
 
-  band.keywords.forEach((keyword) => {
+  band.metadata.keywords.forEach((keyword) => {
     const query = keyword;
     if (query) {
       const count = queryCountMap?.get(query) || 0;

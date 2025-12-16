@@ -1,4 +1,5 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
+import { arrayUnique } from 'src/utils/array';
 import type { Album } from '../album/album';
 import { type Compressable, compress, decompress } from '../compressor';
 import { bandMetadataCompressor } from '../shared';
@@ -16,6 +17,77 @@ export class BandMetadata implements StorableObject, Compressable {
     public albums: Album[],
     public tracks: Track[],
   ) {}
+
+  get trackReleases(): Track[] {
+    return this.tracks.filter((track: Track) => track.isRelease);
+  }
+
+  /**
+   * Get unique artist names associated with the band's releases, sorted alphabetically.
+   */
+  get artists(): string[] {
+    return arrayUnique(this.releaseArtistNames).sort();
+  }
+
+  /**
+   * Get all artist names associated with the band's releases, including duplicates.
+   */
+  get releaseArtistNames(): string[] {
+    const artistNames: string[] = [];
+
+    this.albums.forEach((album: Album) => {
+      artistNames.push(...album.artist.names);
+    });
+
+    this.trackReleases.forEach((track: Track) => {
+      artistNames.push(...track.artist.names);
+    });
+
+    return artistNames;
+  }
+
+  get years(): string[] {
+    return arrayUnique(this.releaseYears).sort();
+  }
+
+  get releaseYears(): string[] {
+    const years: number[] = [];
+
+    this.albums.forEach((album: Album) => {
+      const year = album.metadata?.year;
+      if (year) {
+        years.push(year);
+      }
+    });
+
+    return years.map((year) => year.toString());
+  }
+
+  get keywords(): string[] {
+    return arrayUnique(this.releaseKeywords).sort();
+  }
+
+  get releaseKeywords(): string[] {
+    const keywords: string[] = [];
+
+    this.albums.forEach((album: Album) => {
+      keywords.push(...(album.metadata?.keywords || []));
+    });
+
+    this.trackReleases.forEach((track: Track) => {
+      keywords.push(...(track.metadata?.keywords || []));
+    });
+
+    return keywords;
+  }
+
+  get queries(): string[] {
+    const queries: string[] = [];
+    queries.push(...this.releaseArtistNames);
+    queries.push(...this.releaseKeywords);
+    queries.push(...this.releaseYears);
+    return queries;
+  }
 
   get compressor(): BandMetadataCompressor {
     return bandMetadataCompressor;
