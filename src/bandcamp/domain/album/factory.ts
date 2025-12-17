@@ -28,9 +28,10 @@ export class AlbumFactory {
     tracks: Track[] = [],
     metadata?: Metadata,
   ): Album {
+    const albumArtist = Artist.fromString(artist);
     return new Album(
       typeof url === 'string' ? new Url(url) : url,
-      Artist.fromString(artist),
+      albumArtist,
       removeInvisibleChars(title),
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id,
       new Artwork(
