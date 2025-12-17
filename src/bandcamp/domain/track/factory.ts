@@ -1,5 +1,6 @@
 import type { StorageObject } from 'src/core/storage';
-import { Artist } from '../artist';
+import { Artist } from '../artist/artist';
+import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
@@ -33,7 +34,7 @@ export class TrackFactory {
       typeof time === 'string' ? TrackTime.fromString(time) : time;
 
     const trackArtist =
-      typeof artist === 'string' ? Artist.fromString(artist) : artist;
+      typeof artist === 'string' ? ArtistFactory.fromString(artist) : artist;
 
     const trackArtwork =
       artwork instanceof Artwork
@@ -61,7 +62,10 @@ export class TrackFactory {
 
     const url = schema.mainEntityOfPage;
     const mainArtist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
-    const { artist, title } = Artist.fromTrackTitle(schema.name, mainArtist);
+    const { artist, title } = ArtistFactory.fromTrackTitle(
+      schema.name,
+      mainArtist,
+    );
     const time = schema.duration
       ? TrackTime.fromDuration(schema.duration)
       : undefined;
@@ -116,7 +120,7 @@ export class TrackFactory {
         (prop: PropertyValue) => prop.name === 'track_id',
       )?.value as number;
       const url = trackItem.item.mainEntityOfPage;
-      const { artist, title } = Artist.fromTrackTitle(
+      const { artist, title } = ArtistFactory.fromTrackTitle(
         trackItem.item.name,
         trackItem.item.byArtist
           ? trackItem.item.byArtist.name

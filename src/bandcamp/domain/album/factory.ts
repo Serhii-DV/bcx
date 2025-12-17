@@ -1,6 +1,6 @@
 import type { StorageObject } from 'src/core/storage';
 import { removeInvisibleChars } from 'src/utils/string';
-import { Artist } from '../artist';
+import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
@@ -16,7 +16,6 @@ import type { Track } from '../track/track';
 import { Url } from '../url/url';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
-
 export class AlbumFactory {
   static create(
     url: string | Url,
@@ -28,7 +27,7 @@ export class AlbumFactory {
     tracks: Track[] = [],
     metadata?: Metadata,
   ): Album {
-    const albumArtist = Artist.fromString(artist);
+    const albumArtist = ArtistFactory.fromString(artist);
     return new Album(
       typeof url === 'string' ? new Url(url) : url,
       albumArtist,
