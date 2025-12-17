@@ -1,4 +1,3 @@
-import { console } from 'src/utils/console';
 import {
   containsOneOf,
   removeInvisibleChars,
@@ -12,13 +11,14 @@ export class ArtistFactory {
   private static cache = new ArtistMemoryCache();
 
   static fromString(input: string): Artist {
-    const cached = this.cache.get(input);
+    const processedInput = trim(removeInvisibleChars(input), ' -\n');
+    const cached = this.cache.get(processedInput);
     if (cached) {
       return cached;
     }
 
-    const artist = this.parseArtist(input);
-    this.cache.set(input, artist);
+    const artist = this.parseArtist(processedInput);
+    this.cache.set(processedInput, artist);
     return artist;
   }
 
@@ -53,35 +53,13 @@ export class ArtistFactory {
       return new Artist(['']);
     }
 
-    const processedInput = trim(removeInvisibleChars(input), ' -\n');
-
-    const useOriginal = containsOneOf(processedInput, ['V/A']);
-
-    if (processedInput === 'God Body Disconnect') {
-      console.log('ArtistFactory.parseArtist - before split', {
-        input: processedInput,
-        useOriginal,
-        regex: /[,/+•|]| Vs | & +/,
-      });
-    }
-
+    const useOriginal = containsOneOf(input, ['V/A']);
     const names: string[] = useOriginal
-      ? [processedInput]
-      : splitString(processedInput, /[,/+•|]| Vs | & +/);
+      ? [input]
+      : splitString(input, /[,/+•|]| Vs | & +/);
     const joins: string[] = useOriginal
       ? []
-      : (processedInput.match(/[,/+•|]| Vs | & +/g) || []).map((join) =>
-          join.trim(),
-        );
-
-    if (processedInput === 'God Body Disconnect') {
-      console.log('ArtistFactory.parseArtist - after split', {
-        input: processedInput,
-        names: names,
-        namesLength: names.length,
-        joins: joins,
-      });
-    }
+      : (input.match(/[,/+•|]| Vs | & +/g) || []).map((join) => join.trim());
 
     return new Artist(names, joins);
   }
