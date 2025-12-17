@@ -3,6 +3,7 @@ import { arrayUnique } from 'src/utils/array';
 import type { Album } from '../album/album';
 import { type Compressable, compress, decompress } from '../compressor';
 import { bandMetadataCompressor } from '../shared';
+import { getArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
 import {
   BandMetadataCompressor,
@@ -39,9 +40,7 @@ export class BandMetadata implements StorableObject, Compressable {
       artistNames.push(...album.artist.names);
     });
 
-    this.trackReleases.forEach((track: Track) => {
-      artistNames.push(...track.artist.names);
-    });
+    artistNames.push(...getArtistNamesFromTracks(this.trackReleases));
 
     return artistNames;
   }

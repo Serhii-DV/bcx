@@ -9,7 +9,7 @@ import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
-import { getTracksArtistNames } from 'src/bandcamp/domain/track/helper';
+import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { createQueryCountMap } from 'src/utils/array';
 import { console } from 'src/utils/console';
@@ -137,7 +137,8 @@ function initIsotope(): void {
     let filterValue = album.toString();
 
     // Include artists from tracks in filter value
-    filterValue += ', ' + getTracksArtistNames(album.tracks).join(', ');
+    filterValue +=
+      ', ' + getUniqueArtistNamesFromTracks(album.tracks).join(', ');
 
     // Include keywords in filter value
     if (album.metadata) {

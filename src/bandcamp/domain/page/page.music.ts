@@ -11,6 +11,7 @@ import type { RawBandData } from '../band/compressor';
 import { BandFactory } from '../band/factory';
 import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
+import { getArtistNamesFromTracks } from '../track/helper';
 import { Track } from '../track/track';
 import { Url } from '../url/url';
 import { createMetadataElement, createQueryCountBadgeElement } from './helper';
@@ -56,7 +57,9 @@ export class PageMusic {
 
     console.log('[page.music]', '[band]', pageMusic.band);
 
-    pageMusic.queryCountMap = pageMusic.createQueryCountMap();
+    pageMusic.queryCountMap = createQueryCountMap(
+      pageMusic.band.metadata.queries,
+    );
     pageMusic.appendMetadataToReleases();
     return pageMusic;
   }
@@ -70,43 +73,6 @@ export class PageMusic {
     this.band.metadata.tracks = releases.filter(
       (release): release is Track => release instanceof Track,
     );
-  }
-
-  private createQueryCountMap(): QueryCountMap {
-    const queries: string[] = [];
-
-    this.band.metadata.albums.forEach((album) => {
-      queries.push(...this.releaseToQueries(album));
-    });
-
-    this.band.metadata.tracks.forEach((track) => {
-      queries.push(...this.releaseToQueries(track));
-    });
-
-    return createQueryCountMap(queries);
-  }
-
-  private releaseToQueries(release: Release): string[] {
-    const queries: string[] = [];
-    if (release.metadata) {
-      queries.push(release.metadata.year.toString());
-
-      if (release instanceof Album) {
-        queries.push(...release.metadata.keywords);
-      }
-    }
-
-    const artistNames = release.artist?.names || [];
-
-    if (release instanceof Album) {
-      release.tracks.forEach((track) => {
-        artistNames.push(...track.artist.names);
-      });
-    }
-
-    queries.push(...arrayUnique(artistNames).sort());
-
-    return queries;
   }
 
   private appendMetadataToReleases(): void {
@@ -162,14 +128,11 @@ export class PageMusic {
       );
     }
 
-    // Then, artist names
     const artistNames = release.artist?.names || [];
 
     // For albums, also include artists from tracks
     if (release instanceof Album) {
-      release.tracks.forEach((track) => {
-        artistNames.push(...track.artist.names);
-      });
+      artistNames.push(...getArtistNamesFromTracks(release.tracks));
     }
 
     arrayUnique(artistNames)
