@@ -240,7 +240,7 @@ function renderArtistBadges(): void {
   artistBadgesContainer.innerHTML = '';
 
   // Create artist badges
-  band.metadata.artists.forEach((artist) => {
+  band.metadata.artistNames.forEach((artist) => {
     const query = artist;
     if (query) {
       const count = queryCountMap?.get(query) || 0;

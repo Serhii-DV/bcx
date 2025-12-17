@@ -25,7 +25,7 @@ export class BandMetadata implements StorableObject, Compressable {
   /**
    * Get unique artist names associated with the band's releases, sorted alphabetically.
    */
-  get artists(): string[] {
+  get artistNames(): string[] {
     return arrayUnique(this.releaseArtistNames).sort();
   }
 
