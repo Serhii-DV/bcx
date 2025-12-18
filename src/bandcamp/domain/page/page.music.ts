@@ -60,6 +60,7 @@ export class PageMusic {
       pageMusic.band.metadata.queries,
     );
     pageMusic.appendMetadataToReleases();
+
     return pageMusic;
   }
 
@@ -141,15 +142,12 @@ export class PageMusic {
       metadataElement.appendChild(badge);
     }
 
-    const artistNames = album.artist?.names || [];
+    // We need to collect artist names from both album and tracks as "cloned" data
+    const artistNames = [...(album.artist?.names || [])];
 
     // For albums, also include artists from tracks
     artistNames.push(...getArtistNamesFromTracks(album.tracks));
-    console.log(
-      '[createAlbumMetadataElement]',
-      artistNames,
-      this.createBadgeWithCount,
-    );
+
     arrayUnique(artistNames)
       .sort()
       .map((artistName) => this.createArtistNameBadgeElement(artistName))
