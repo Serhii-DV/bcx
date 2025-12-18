@@ -38,7 +38,6 @@ export class PageMusic {
     elementHtml()?.classList.add('bcx-page-music');
 
     this.band = this.createBand();
-
     this.musicGridElement = element('#music-grid');
     if (!this.musicGridElement) {
       console.log('[page.music]', 'No #music-grid found on this page');
@@ -83,7 +82,8 @@ export class PageMusic {
       );
       if (!gridItem) return;
 
-      this.appendReleaseBadgesToGridItem(gridItem, album);
+      const albumMetadataElement = this.createAlbumMetadataElement(album);
+      gridItem.insertAdjacentElement('beforeend', albumMetadataElement);
     });
 
     this.band.metadata.tracks.forEach((track) => {
@@ -93,62 +93,105 @@ export class PageMusic {
       );
       if (!gridItem) return;
 
-      this.appendReleaseBadgesToGridItem(gridItem, track);
+      const trackMetadataElement = this.createTrackMetadataElement(track);
+      gridItem.insertAdjacentElement('beforeend', trackMetadataElement);
     });
   }
 
-  private appendReleaseBadgesToGridItem(
-    gridItem: HTMLElement,
-    release: Release,
-  ): void {
-    const releaseMetadataElement = createMetadataElement();
+  private createBadgeWithCount(
+    query: string,
+    title: string,
+    className?: string,
+  ): HTMLElement {
+    const count = this.queryCountMap.get(query) || 0;
+    return createQueryCountBadgeElement(query, count, title, className);
+  }
 
-    const appendBadge = (
-      query: string,
-      title: string,
-      className?: string,
-    ): void => {
-      if (!query) return;
-      const count = this.queryCountMap.get(query) || 0;
-      const badge = createQueryCountBadgeElement(
-        query,
-        count,
-        title,
-        className,
-      );
-      releaseMetadataElement.appendChild(badge);
-    };
+  private createYearBadgeElement(year: number): HTMLElement {
+    return createQueryCountBadgeElement(
+      year.toString(),
+      1,
+      'Filter by year',
+      'bcx-badge-year',
+    );
+  }
 
-    // Show release year first
-    if (release.metadata?.year) {
-      appendBadge(
-        release.metadata.year.toString(),
-        'Filter by year',
-        'bcx-badge-year',
-      );
+  private createArtistNameBadgeElement(artistName: string): HTMLElement {
+    return this.createBadgeWithCount(
+      artistName,
+      'Filter by artist',
+      'bcx-badge-artist',
+    );
+  }
+
+  private createKeywordBadgeElement(keyword: string): HTMLElement {
+    return this.createBadgeWithCount(
+      keyword,
+      'Filter by keyword',
+      'bcx-badge-keyword',
+    );
+  }
+
+  private createAlbumMetadataElement(album: Album): HTMLElement {
+    const metadataElement = createMetadataElement();
+
+    // Show album year first
+    if (album.metadata?.year) {
+      const badge = this.createYearBadgeElement(album.metadata.year);
+      metadataElement.appendChild(badge);
     }
 
-    const artistNames = release.artist?.names || [];
+    const artistNames = album.artist?.names || [];
 
     // For albums, also include artists from tracks
-    if (release instanceof Album) {
-      artistNames.push(...getArtistNamesFromTracks(release.tracks));
-    }
-
+    artistNames.push(...getArtistNamesFromTracks(album.tracks));
+    console.log(
+      '[createAlbumMetadataElement]',
+      artistNames,
+      this.createBadgeWithCount,
+    );
     arrayUnique(artistNames)
       .sort()
-      .forEach((artistName) => {
-        appendBadge(artistName, 'Filter by artist', 'bcx-badge-artist');
+      .map((artistName) => this.createArtistNameBadgeElement(artistName))
+      .forEach((badge) => {
+        metadataElement.appendChild(badge);
       });
 
-    // Keywords for albums
-    if (release instanceof Album && release.metadata) {
-      release.metadata.keywords.forEach((keyword) => {
-        appendBadge(keyword, 'Filter by keyword', 'bcx-badge-keyword');
+    // Keywords
+    album.metadata?.keywords
+      .map((keyword) => this.createKeywordBadgeElement(keyword))
+      .forEach((badge) => {
+        metadataElement.appendChild(badge);
       });
+
+    return metadataElement;
+  }
+
+  private createTrackMetadataElement(track: Track): HTMLElement {
+    const metadataElement = createMetadataElement();
+
+    // Show album year first
+    if (track.metadata?.year) {
+      const badge = this.createYearBadgeElement(track.metadata.year);
+      metadataElement.appendChild(badge);
     }
 
-    gridItem.insertAdjacentElement('beforeend', releaseMetadataElement);
+    // Artist names
+    arrayUnique(track.artist?.names || [])
+      .sort()
+      .map((artistName) => this.createArtistNameBadgeElement(artistName))
+      .forEach((badge) => {
+        metadataElement.appendChild(badge);
+      });
+
+    // Keywords
+    track.metadata?.keywords
+      .map((keyword) => this.createKeywordBadgeElement(keyword))
+      .forEach((badge) => {
+        metadataElement.appendChild(badge);
+      });
+
+    return metadataElement;
   }
 
   /**
