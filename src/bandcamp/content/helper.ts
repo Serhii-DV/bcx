@@ -3,16 +3,6 @@ import type { Album } from '../domain/album/album';
 import { Band } from '../domain/band/band';
 import type { Track } from '../domain/track/track';
 
-export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
-  return {
-    artists: band.metadata.artistNames,
-    bands: [band],
-    albums: band.metadata.albums,
-    tracks: band.metadata.trackReleases,
-    keywords: band.metadata.keywords,
-  };
-}
-
 export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
   const artists: string[] = bands.flatMap((band) => band.metadata.artistNames);
   const albums: Album[] = bands.flatMap((band) => band.metadata.albums);

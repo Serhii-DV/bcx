@@ -5,7 +5,6 @@
 
 import { Tabs } from 'bits-ui';
 import Isotope from 'isotope-layout';
-import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
@@ -102,11 +101,10 @@ onDestroy(() => {
 function setupDataList(): void {
   if (!filterInput) return;
 
-  const musicSearchData = createMusicSearchDataFromBand(band);
   const options: string[] = [];
 
   // Add artists
-  musicSearchData.artists.forEach((artistName) => {
+  band.metadata.artistNames.forEach((artistName) => {
     const count = queryCountMap?.get(artistName) || 0;
     options.push(artistName + ' (' + count + ')');
   });
@@ -114,11 +112,11 @@ function setupDataList(): void {
   // We don't need to show other bands on the band page
 
   // Add albums
-  musicSearchData.albums.forEach((album) => {
+  band.metadata.albums.forEach((album) => {
     options.push(album.toString());
   });
 
-  musicSearchData.keywords.forEach((keyword) => {
+  band.metadata.keywords.forEach((keyword) => {
     const count = queryCountMap?.get(keyword) || 0;
     options.push(keyword + ' (' + count + ')');
   });
