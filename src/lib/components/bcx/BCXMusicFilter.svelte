@@ -11,7 +11,6 @@ import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
 import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
-import { createQueryCountMap } from 'src/utils/array';
 import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
@@ -104,12 +103,11 @@ function setupDataList(): void {
   if (!filterInput) return;
 
   const musicSearchData = createMusicSearchDataFromBand(band);
-  const queryCountMap = createQueryCountMap(musicSearchData.queries);
   const options: string[] = [];
 
   // Add artists
   musicSearchData.artists.forEach((artistName) => {
-    const count = queryCountMap.get(artistName) || 0;
+    const count = queryCountMap?.get(artistName) || 0;
     options.push(artistName + ' (' + count + ')');
   });
 
@@ -121,7 +119,7 @@ function setupDataList(): void {
   });
 
   musicSearchData.keywords.forEach((keyword) => {
-    const count = queryCountMap.get(keyword) || 0;
+    const count = queryCountMap?.get(keyword) || 0;
     options.push(keyword + ' (' + count + ')');
   });
 
