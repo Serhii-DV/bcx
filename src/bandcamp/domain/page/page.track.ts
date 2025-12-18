@@ -9,12 +9,12 @@ export class PageTrack {
 
   constructor() {
     const schema = getMusicRecordingSchema();
-    console.log('[TrackPage]', 'Schema:', schema);
+    console.log('[PageTrack]', 'Schema:', schema);
 
     this.track = TrackFactory.fromSchema(schema!);
     this.isStandaloneTrack = this.detectIfStandaloneTrack(schema!);
 
-    console.log('[TrackPage]', 'Extracted track:', this.track);
+    console.log('[PageTrack]', 'Extracted track:', this.track);
   }
 
   private detectIfStandaloneTrack(schema: MusicRecordingSchema): boolean {

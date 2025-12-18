@@ -40,7 +40,7 @@ export class PageMusic {
     this.band = this.createBand();
     this.musicGridElement = element('#music-grid');
     if (!this.musicGridElement) {
-      console.log('[page.music]', 'No #music-grid found on this page');
+      console.log('[PageMusic]', 'No #music-grid found on this page');
     }
 
     this.musicGridItemElements = elements(
@@ -54,7 +54,7 @@ export class PageMusic {
     const pageMusic = new PageMusic();
     await pageMusic.initReleases();
 
-    console.log('[page.music]', '[band]', pageMusic.band);
+    console.log('[PageMusic]', '[band]', pageMusic.band);
 
     pageMusic.queryCountMap = createQueryCountMap(
       pageMusic.band.metadata.queries,
