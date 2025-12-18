@@ -10,7 +10,6 @@ export function createMusicSearchDataFromBand(band: Band): MusicSearchData {
     albums: band.metadata.albums,
     tracks: band.metadata.trackReleases,
     keywords: band.metadata.keywords,
-    queries: band.metadata.queries,
   };
 }
 
@@ -19,7 +18,6 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
   const albums: Album[] = bands.flatMap((band) => band.metadata.albums);
   const tracks: Track[] = bands.flatMap((band) => band.metadata.trackReleases);
   const keywords: string[] = bands.flatMap((band) => band.metadata.keywords);
-  const queries: string[] = bands.flatMap((band) => band.metadata.queries);
 
   return {
     artists,
@@ -27,6 +25,5 @@ export function createMusicSearchDataFromBands(bands: Band[]): MusicSearchData {
     albums,
     tracks,
     keywords,
-    queries,
   };
 }

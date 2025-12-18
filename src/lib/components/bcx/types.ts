@@ -21,7 +21,6 @@ export interface MusicSearchData {
   albums: Album[];
   tracks: Track[];
   keywords: string[];
-  queries: string[];
 }
 
 export const emptyMusicSearchData: MusicSearchData = {
@@ -30,5 +29,4 @@ export const emptyMusicSearchData: MusicSearchData = {
   albums: [],
   tracks: [],
   keywords: [],
-  queries: [],
 };
