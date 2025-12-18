@@ -86,7 +86,7 @@ export class PageMusic {
       gridItem.insertAdjacentElement('beforeend', albumMetadataElement);
     });
 
-    this.band.metadata.tracks.forEach((track) => {
+    this.band.metadata.trackReleases.forEach((track) => {
       const gridItem = element(
         `.music-grid-item[data-item-id="track-${track.id}"]`,
         this.musicGridElement,
