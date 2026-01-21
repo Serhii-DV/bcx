@@ -351,12 +351,6 @@ function destroy(): void {
           Filter by Artists
         </Tabs.Trigger>
         <Tabs.Trigger
-          value="years"
-          class="bcx-tabs-trigger"
-        >
-          Filter by Years
-        </Tabs.Trigger>
-        <Tabs.Trigger
           value="keywords"
           class="bcx-tabs-trigger"
         >
@@ -366,10 +360,6 @@ function destroy(): void {
 
       <Tabs.Content value="artists" class="bcx-tabs-content">
         <div bind:this={artistBadgesContainer}></div>
-      </Tabs.Content>
-
-      <Tabs.Content value="years" class="bcx-tabs-content">
-        <div bind:this={yearsBadgesContainer}></div>
       </Tabs.Content>
 
       <Tabs.Content value="keywords" class="bcx-tabs-content">
@@ -417,6 +407,10 @@ function destroy(): void {
         </svg>
       </button>
     {/if}
+  </div>
+
+  <div class="filter-by-years">
+    <span class="bcx-badges-container" bind:this={yearsBadgesContainer}></span>
   </div>
 
   <div class="filter-results-count">
