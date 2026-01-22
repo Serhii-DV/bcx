@@ -60,9 +60,8 @@
 }
 
 .filter-results-count {
-  font-size: 14px;
+  font-size: 12px;
   color: #666;
-  margin-top: 12px;
 }
 
 .results-text {
@@ -110,11 +109,19 @@
 }
 
 .bcx-filter-badges {
-  margin: 0 0 20px 0;
+  margin: 10px 0 0;
 }
 
 .bcx-filter-badges .bcx-badge {
   font-size: 80%;
+}
+
+.bcx-filter-badges details summary {
+  cursor: pointer;
+}
+
+.bcx-filter-badges .bcx-badges-container {
+  padding: 5px 0;
 }
 
 /* Tabs Component Styling */

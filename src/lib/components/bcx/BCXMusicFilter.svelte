@@ -3,7 +3,6 @@
  * BCX Music Filter Component
  */
 
-import { Tabs } from 'bits-ui';
 import Isotope from 'isotope-layout';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
@@ -37,6 +36,8 @@ let searchQuery = $state(
 let previousQuery = '';
 let visibleCount = $state(0);
 let totalCount = $state(0);
+let artistsCount = band.metadata.artistNames.length;
+let keywordsCount = band.metadata.keywords.length;
 let storeUnsubscribe: (() => void) | null = null;
 let artistBadgesContainer: HTMLElement | null = $state(null);
 let yearsBadgesContainer: HTMLElement | null = $state(null);
@@ -334,44 +335,6 @@ function destroy(): void {
 </script>
 
 <div class="bcx-filter-container">
-
-  <div class="bcx-filter-badges">
-    <Tabs.Root value="search-only" class="bcx-tabs-root">
-      <Tabs.List class="bcx-tabs-list">
-        <Tabs.Trigger
-          value="search-only"
-          class="bcx-tabs-trigger"
-        >
-          Search Only
-        </Tabs.Trigger>
-        <Tabs.Trigger
-          value="artists"
-          class="bcx-tabs-trigger"
-        >
-          Filter by Artists
-        </Tabs.Trigger>
-        <Tabs.Trigger
-          value="keywords"
-          class="bcx-tabs-trigger"
-        >
-          Filter by Keywords
-        </Tabs.Trigger>
-      </Tabs.List>
-
-      <Tabs.Content value="artists" class="bcx-tabs-content">
-        <div bind:this={artistBadgesContainer}></div>
-      </Tabs.Content>
-
-      <Tabs.Content value="keywords" class="bcx-tabs-content">
-        <div bind:this={keywordsBadgesContainer}></div>
-      </Tabs.Content>
-
-      <Tabs.Content value="search-only" class="bcx-tabs-content">
-        <div></div>
-      </Tabs.Content>
-    </Tabs.Root>
-  </div>
-
   <div class="bcx-filter-input-container">
     <input
       id="bcx-filter-input"
@@ -409,12 +372,26 @@ function destroy(): void {
     {/if}
   </div>
 
-  <div class="filter-by-years">
-    <span class="bcx-badges-container" bind:this={yearsBadgesContainer}></span>
+  <div class="filter-results-count">
+    Showing {visibleCount} of {totalCount} albums
   </div>
 
-  <div class="filter-results-count">
-    Showing {visibleCount} of {totalCount} albums ({((visibleCount / totalCount) * 100).toFixed(2)}%)
+  <div class="bcx-filter-badges filter-by-years">
+    <div class="bcx-badges-container" bind:this={yearsBadgesContainer}></div>
+  </div>
+
+  <div class="bcx-filter-badges filter-by-artists">
+    <details>
+      <summary>Artists ({artistsCount})</summary>
+      <div class="bcx-badges-container" bind:this={artistBadgesContainer}></div>
+    </details>
+  </div>
+
+  <div class="bcx-filter-badges filter-by-keywords">
+    <details>
+      <summary>Keywords ({keywordsCount})</summary>
+      <div class="bcx-badges-container" bind:this={keywordsBadgesContainer}></div>
+    </details>
   </div>
 
 </div>
