@@ -30,6 +30,7 @@ let { band, queryCountMap, musicGrid, musicGridItems }: Props = $props();
 let filterInput: HTMLInputElement | null = $state(null);
 let debounceTimer: NodeJS.Timeout | null = null;
 let musicIsotope: Isotope | null = null;
+let artistsIsotope: Isotope | null = null;
 let searchQuery = $state(
   currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '',
 );
@@ -42,6 +43,7 @@ let storeUnsubscribe: (() => void) | null = null;
 let artistBadgesContainer: HTMLElement | null = $state(null);
 let yearsBadgesContainer: HTMLElement | null = $state(null);
 let keywordsBadgesContainer: HTMLElement | null = $state(null);
+let activeSortOption = $state<'a-z' | 'z-a' | 'count' | null>(null);
 
 // Reactive values
 $effect(() => {
@@ -248,8 +250,23 @@ function renderArtistBadges(): void {
         'Filter by artist',
         'bcx-badge-artist',
       );
+      badgeElement.setAttribute('data-count', count.toString());
       artistBadgesContainer?.appendChild(badgeElement);
     }
+  });
+
+  initArtistsIsotope(artistBadgesContainer);
+}
+
+function initArtistsIsotope(artistBadgesContainer: HTMLElement): void {
+  // Initialize Isotope with options
+  artistsIsotope = new Isotope(artistBadgesContainer, {
+    itemSelector: '.bcx-badge-artist',
+    layoutMode: 'fitRows',
+    getSortData: {
+      query: '[data-search-query]',
+      count: '[data-count] parseInt',
+    },
   });
 }
 
@@ -383,7 +400,38 @@ function destroy(): void {
   <div class="bcx-filter-badges filter-by-artists">
     <details>
       <summary>Artists ({artistsCount})</summary>
-      <div class="bcx-filters-container"></div>
+      <div class="bcx-sort-badges-container">
+        <button
+          type="button"
+          class="bcx-sort-badges-button {activeSortOption === 'a-z' ? 'is-checked' : ''}"
+          onclick={() => {
+            activeSortOption = 'a-z';
+            artistsIsotope?.arrange({ sortBy: 'query', sortAscending: true });
+          }}
+          title="Sort artists alphabetically"
+          aria-label="Sort artists alphabetically"
+        >A-Z</button>
+        <button
+          type="button"
+          class="bcx-sort-badges-button {activeSortOption === 'z-a' ? 'is-checked' : ''}"
+          onclick={() => {
+            activeSortOption = 'z-a';
+            artistsIsotope?.arrange({ sortBy: 'query', sortAscending: false });
+          }}
+          title="Sort artists reverse alphabetically"
+          aria-label="Sort artists reverse alphabetically"
+        >Z-A</button>
+        <button
+          type="button"
+          class="bcx-sort-badges-button {activeSortOption === 'count' ? 'is-checked' : ''}"
+          onclick={() => {
+            activeSortOption = 'count';
+            artistsIsotope?.arrange({ sortBy: 'count', sortAscending: false });
+          }}
+          title="Sort artists by count"
+          aria-label="Sort artists by count"
+        >Count</button>
+      </div>
       <div class="bcx-badges-container" bind:this={artistBadgesContainer}></div>
     </details>
   </div>
