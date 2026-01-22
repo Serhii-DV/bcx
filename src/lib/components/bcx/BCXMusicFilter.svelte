@@ -29,7 +29,7 @@ let { band, queryCountMap, musicGrid, musicGridItems }: Props = $props();
 // Component state
 let filterInput: HTMLInputElement | null = $state(null);
 let debounceTimer: NodeJS.Timeout | null = null;
-let isotope: Isotope | null = null;
+let musicIsotope: Isotope | null = null;
 let searchQuery = $state(
   currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '',
 );
@@ -70,7 +70,7 @@ onMount(() => {
   visibleCount = musicGridItems.length;
 
   injectStyles();
-  initIsotope();
+  initMusicIsotope();
   setupDataList();
   renderBadges();
 
@@ -125,7 +125,7 @@ function setupDataList(): void {
   createDataListForInput(options, filterInput);
 }
 
-function initIsotope(): void {
+function initMusicIsotope(): void {
   band.metadata.albums.forEach((album: Album) => {
     const gridElement = musicGrid.querySelector(
       '[data-item-id="album-' + album.id + '"]',
@@ -157,7 +157,7 @@ function initIsotope(): void {
   });
 
   // Initialize Isotope with options
-  isotope = new Isotope(musicGrid, {
+  musicIsotope = new Isotope(musicGrid, {
     itemSelector: '.music-grid-item',
     layoutMode: 'fitRows',
   });
@@ -207,10 +207,10 @@ function handleChange(event: Event): void {
 }
 
 function filterItems(query: string): void {
-  if (!isotope) return;
+  if (!musicIsotope) return;
 
   const filter = query ? `[data-filter-value*="${query}"]` : '*';
-  isotope.arrange({ filter });
+  musicIsotope.arrange({ filter });
 
   // Update visible count
   if (query) {
@@ -321,9 +321,9 @@ function destroy(): void {
   }
 
   // Clean up Isotope
-  if (isotope) {
-    isotope.destroy();
-    isotope = null;
+  if (musicIsotope) {
+    musicIsotope.destroy();
+    musicIsotope = null;
   }
 
   // Remove injected styles
@@ -383,6 +383,7 @@ function destroy(): void {
   <div class="bcx-filter-badges filter-by-artists">
     <details>
       <summary>Artists ({artistsCount})</summary>
+      <div class="bcx-filters-container"></div>
       <div class="bcx-badges-container" bind:this={artistBadgesContainer}></div>
     </details>
   </div>
