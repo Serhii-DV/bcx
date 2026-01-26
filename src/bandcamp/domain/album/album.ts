@@ -1,12 +1,15 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
-import { Artist } from '../artist';
+import type { Artist } from '../artist/artist';
 import { Artwork } from '../artwork';
+import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
+import { albumDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
 import type { Track } from '../track/track';
-import { Url } from '../url';
+import { Url } from '../url/url';
+import { AlbumDataCompressor, type RawAlbumData } from './compressor';
 
-export class Album implements Storable {
+export class Album implements Storable, Compressable {
   constructor(
     public url: Url,
     public artist: Artist,
@@ -17,6 +20,10 @@ export class Album implements Storable {
     public tracks: Track[] = [],
     public metadata?: Metadata,
   ) {}
+
+  get compressor(): AlbumDataCompressor {
+    return albumDataCompressor;
+  }
 
   toString(): string {
     const year =
@@ -34,16 +41,20 @@ export class Album implements Storable {
   }
 
   toStorageObject(): StorageObject {
+    return compress(this);
+  }
+
+  toRawData(): RawAlbumData {
     return {
+      id: this.id,
       url: this.url.toString(),
       artist: this.artist.toString(),
       title: this.title,
-      id: this.id,
       artworkId: this.artwork.id,
       bandId: this.bandId,
       // Save Track IDs instead of full Track objects to avoid redundancy
       trackIds: this.tracks.map((track) => track.id),
-      metadata: this.metadata ? this.metadata.toStorageObject() : undefined,
+      metadata: this.metadata?.toRawData(),
     };
   }
 }

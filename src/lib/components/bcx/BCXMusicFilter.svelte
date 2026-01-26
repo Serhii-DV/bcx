@@ -4,29 +4,33 @@
  */
 
 import Isotope from 'isotope-layout';
-import { createMusicSearchDataFromBand } from 'src/bandcamp/content/helper';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
+import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
+import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
+import BCXBadgeSection from './BCXBadgeSection.svelte';
 import filterStyles from './BCXMusicFilter.css?inline';
+import type { QueryCountMap } from './types';
 
 interface Props {
   band: Band;
+  queryCountMap?: QueryCountMap;
   musicGrid: HTMLElement;
   musicGridItems: HTMLElement[];
 }
 
-let { band, musicGrid, musicGridItems }: Props = $props();
+let { band, queryCountMap, musicGrid, musicGridItems }: Props = $props();
 
 // Component state
 let filterInput: HTMLInputElement | null = $state(null);
 let debounceTimer: NodeJS.Timeout | null = null;
-let isotope: Isotope | null = null;
+let musicIsotope: Isotope | null = null;
 let searchQuery = $state(
   currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '',
 );
@@ -34,6 +38,7 @@ let previousQuery = '';
 let visibleCount = $state(0);
 let totalCount = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
+let yearsBadgesContainer: HTMLElement | null = $state(null);
 
 // Reactive values
 $effect(() => {
@@ -62,8 +67,9 @@ onMount(() => {
   visibleCount = musicGridItems.length;
 
   injectStyles();
-  initIsotope();
+  initMusicIsotope();
   setupDataList();
+  renderBadges();
 
   // Watch for browser navigation (Back/Forward buttons)
   window.addEventListener('popstate', handlePopState);
@@ -93,35 +99,45 @@ onDestroy(() => {
 function setupDataList(): void {
   if (!filterInput) return;
 
-  const musicSearchData = createMusicSearchDataFromBand(band);
   const options: string[] = [];
 
   // Add artists
-  musicSearchData.artists.forEach((artist) => {
-    options.push(artist.name + ' (' + artist.albumCount + ')');
+  band.metadata.artistNames.forEach((artistName) => {
+    const count = queryCountMap?.get(artistName) || 0;
+    options.push(artistName + ' (' + count + ')');
   });
 
   // We don't need to show other bands on the band page
 
   // Add albums
-  musicSearchData.albums.forEach((album) => {
+  band.metadata.albums.forEach((album) => {
     options.push(album.toString());
+  });
+
+  band.metadata.keywords.forEach((keyword) => {
+    const count = queryCountMap?.get(keyword) || 0;
+    options.push(keyword + ' (' + count + ')');
   });
 
   createDataListForInput(options, filterInput);
 }
 
-function initIsotope(): void {
+function initMusicIsotope(): void {
   band.metadata.albums.forEach((album: Album) => {
     const gridElement = musicGrid.querySelector(
       '[data-item-id="album-' + album.id + '"]',
     );
+
     let filterValue = album.toString();
 
     // Include artists from tracks in filter value
-    album.tracks.forEach((track) => {
-      filterValue += ' ' + track.artist.toString();
-    });
+    filterValue +=
+      ', ' + getUniqueArtistNamesFromTracks(album.tracks).join(', ');
+
+    // Include keywords in filter value
+    if (album.metadata) {
+      filterValue += ', ' + album.metadata.keywords.join(', ');
+    }
 
     gridElement?.setAttribute('data-filter-value', filterValue.toLowerCase());
   });
@@ -138,7 +154,7 @@ function initIsotope(): void {
   });
 
   // Initialize Isotope with options
-  isotope = new Isotope(musicGrid, {
+  musicIsotope = new Isotope(musicGrid, {
     itemSelector: '.music-grid-item',
     layoutMode: 'fitRows',
   });
@@ -188,10 +204,10 @@ function handleChange(event: Event): void {
 }
 
 function filterItems(query: string): void {
-  if (!isotope) return;
+  if (!musicIsotope) return;
 
   const filter = query ? `[data-filter-value*="${query}"]` : '*';
-  isotope.arrange({ filter });
+  musicIsotope.arrange({ filter });
 
   // Update visible count
   if (query) {
@@ -210,6 +226,32 @@ function clearFilter(): void {
   if (filterInput) {
     filterInput.value = '';
   }
+}
+
+function renderYearBadges(): void {
+  if (yearsBadgesContainer === null) return;
+
+  // Clear existing badges
+  yearsBadgesContainer.innerHTML = '';
+
+  // Create year badges
+  band.metadata.years.forEach((year) => {
+    const query = year.toString();
+    if (query) {
+      const count = queryCountMap?.get(query) || 0;
+      const badgeElement = createQueryCountBadgeElement(
+        query,
+        count,
+        'Filter by year',
+        'bcx-badge-year',
+      );
+      yearsBadgesContainer?.appendChild(badgeElement);
+    }
+  });
+}
+
+function renderBadges(): void {
+  renderYearBadges();
 }
 
 function injectStyles(): void {
@@ -231,9 +273,9 @@ function destroy(): void {
   }
 
   // Clean up Isotope
-  if (isotope) {
-    isotope.destroy();
-    isotope = null;
+  if (musicIsotope) {
+    musicIsotope.destroy();
+    musicIsotope = null;
   }
 
   // Remove injected styles
@@ -285,4 +327,27 @@ function destroy(): void {
   <div class="filter-results-count">
     Showing {visibleCount} of {totalCount} albums
   </div>
+
+  <div class="bcx-filter-badges filter-by-years">
+    <div class="bcx-badges-container" bind:this={yearsBadgesContainer}></div>
+  </div>
+
+  <BCXBadgeSection
+    title="Artists"
+    items={band.metadata.artistNames}
+    queryCountMap={queryCountMap}
+    badgeClass="bcx-badge-artist"
+    tooltipText="Filter by artist"
+    showSorting={true}
+  />
+
+  <BCXBadgeSection
+    title="Keywords"
+    items={band.metadata.keywords}
+    queryCountMap={queryCountMap}
+    badgeClass="bcx-badge-keyword"
+    tooltipText="Filter by keyword"
+    showSorting={true}
+  />
+
 </div>

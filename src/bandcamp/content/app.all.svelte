@@ -67,17 +67,16 @@ function handleBandSelect(band: Band) {
   const searchValue = band.name;
   musicFilterStore.setSearchQuery(searchValue);
 
+  // Open the band URL in the current tab
+  window.location.href = band.url.toString();
+
   // Optional: Show confirmation
   console.log(`🔍 BCX: Filtering music grid for artist "${searchValue}"`);
 }
 
 function handleAlbumSelect(album: Album) {
-  // Set the search query for the music filter using the store
-  const searchValue = `${album.artist} - ${album.title}`;
-  musicFilterStore.setSearchQuery(searchValue);
-
-  // Optional: Show confirmation
-  console.log(`🔍 BCX: Filtering music grid for "${searchValue}"`);
+  // Open the album URL in the current tab
+  window.location.href = album.url.toString();
 }
 
 function handleSearchArtistAlbum() {

@@ -8,13 +8,23 @@ import type { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { Track } from 'src/bandcamp/domain/track/track';
-import { console } from 'src/utils/console';
+import { arrayPreview, console } from 'src/utils/console';
+import { onMount } from 'svelte';
 import * as Command from '$lib/components/ui/command/index.js';
-import {
-  type ArtistSearchData,
-  emptyMusicSearchData,
-  type MusicSearchData,
-} from './types';
+import { emptyMusicSearchData, type MusicSearchData } from './types';
+
+interface Props {
+  open?: boolean;
+  portalProps?: DialogPrimitive.PortalProps;
+  placeholder?: string;
+  emptyMessage?: string;
+  minSearchLength?: number;
+  data: MusicSearchData;
+  onArtistSelect?: ((artist: string) => void) | null;
+  onBandSelect?: ((band: Band) => void) | null;
+  onAlbumSelect?: ((album: Album) => void) | null;
+  onTrackSelect?: ((track: Track) => void) | null;
+}
 
 let {
   open = $bindable(false),
@@ -27,18 +37,7 @@ let {
   onBandSelect = null,
   onAlbumSelect = null,
   onTrackSelect = null,
-}: {
-  open?: boolean;
-  portalProps?: DialogPrimitive.PortalProps;
-  placeholder?: string;
-  emptyMessage?: string;
-  minSearchLength?: number;
-  data: MusicSearchData;
-  onArtistSelect?: ((artist: ArtistSearchData) => void) | null;
-  onBandSelect?: ((band: Band) => void) | null;
-  onAlbumSelect?: ((album: Album) => void) | null;
-  onTrackSelect?: ((track: Track) => void) | null;
-} = $props();
+}: Props = $props();
 
 // biome-ignore lint: reactive variable declaration
 let searchQuery = $state('');
@@ -51,13 +50,13 @@ const filteredData = $derived.by(() => {
   const query = searchQuery.trim().toLowerCase();
 
   // Filter artists
-  const artistsStartsWith = data.artists.filter((artist) =>
-    artist.name.toLowerCase().startsWith(query),
+  const artistsStartsWith = data.artists.filter((artist: string) =>
+    artist.toLowerCase().startsWith(query),
   );
   const artistsIncludes = data.artists.filter(
     (artist) =>
-      !artist.name.toLowerCase().startsWith(query) &&
-      artist.name.toLowerCase().includes(query),
+      !artist.toLowerCase().startsWith(query) &&
+      artist.toLowerCase().includes(query),
   );
 
   // Filter bands
@@ -114,16 +113,34 @@ const shouldShowResults = $derived(
   searchQuery.trim().length >= minSearchLength,
 );
 
-function handleArtistSelect(artist: ArtistSearchData) {
-  console.log(`🎤 BCX: Artist selected "${artist.name}"`);
+onMount(() => {
+  console.log(
+    '[BCXMusicFilterDialog]',
+    'Mounted artists:',
+    ...arrayPreview(data.artists),
+  );
+  console.log(
+    '[BCXMusicFilterDialog]',
+    'Mounted bands:',
+    ...arrayPreview(data.bands),
+  );
+  console.log(
+    '[BCXMusicFilterDialog]',
+    'Mounted albums:',
+    ...arrayPreview(data.albums),
+  );
+});
+
+function handleArtistSelect(artist: string) {
+  console.log(`[BCXMusicFilterDialog]`, `🎤 Artist selected "${artist}"`);
   if (onArtistSelect) {
     onArtistSelect(artist);
   }
-  searchQuery = artist.name;
+  searchQuery = artist;
 }
 
 function handleBandSelect(band: Band) {
-  console.log(`🎵 BCX: Band selected "${band.name}"`);
+  console.log(`[BCXMusicFilterDialog]`, `🎵 Band selected "${band.name}"`);
   if (onBandSelect) {
     onBandSelect(band);
   }
@@ -132,7 +149,8 @@ function handleBandSelect(band: Band) {
 
 function handleAlbumSelect(album: Album) {
   console.log(
-    `💿 BCX: Album selected "${album.title}" by ${album.artist.toString()}`,
+    `[BCXMusicFilterDialog]`,
+    `💿 Album selected "${album.title}" by ${album.artist.toString()}`,
   );
   if (onAlbumSelect) {
     onAlbumSelect(album);
@@ -142,7 +160,8 @@ function handleAlbumSelect(album: Album) {
 
 function handleTrackSelect(track: Track) {
   console.log(
-    `🎶 BCX: Track selected "${track.title}" by ${track.artist.toString()}`,
+    `[BCXMusicFilterDialog]`,
+    `🎶 Track selected "${track.title}" by ${track.artist.toString()}`,
   );
   if (onTrackSelect) {
     onTrackSelect(track);
@@ -168,7 +187,7 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Artists ({filteredData.artists.length} of {data.artists.length})">
             {#each filteredData.artists as artist}
               <Command.Item onSelect={() => handleArtistSelect(artist)}>
-                <span>{artist.name}{#if artist.albumCount}&nbsp;({artist.albumCount}){/if}</span><br>
+                <span>{artist}{#if data.queryCountMap.has(artist) && data.queryCountMap.get(artist)}&nbsp;({data.queryCountMap.get(artist)}){/if}</span><br>
               </Command.Item>
             {/each}
           </Command.Group>
@@ -183,8 +202,10 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Bands ({filteredData.bands.length} of {data.bands.length})">
             {#each filteredData.bands as band}
               <Command.Item onSelect={() => handleBandSelect(band)}>
+              <div>
                 <span>{band.name}{#if band.metadata.albums?.length}&nbsp;({band.metadata.albums.length}){/if}</span>
                 <br><span class="text-muted-foreground">{band.url.hostname}</span>
+              </div>
               </Command.Item>
             {/each}
           </Command.Group>
@@ -199,8 +220,10 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Albums ({filteredData.albums.length} of {data.albums.length})">
             {#each filteredData.albums as album}
               <Command.Item onSelect={() => handleAlbumSelect(album)}>
-                <span>{album.toString()}</span>
-                <br><span class="text-muted-foreground">{album.url.hostname}</span>
+                <div>
+                  <span>{album.toString()}</span>
+                  <br><span class="text-muted-foreground text-xs">{album.url.withoutProtocol}</span>
+                </div>
               </Command.Item>
             {/each}
           </Command.Group>
@@ -215,8 +238,10 @@ function handleKeydown(event: KeyboardEvent) {
           <Command.Group heading="Tracks ({filteredData.tracks.length} of {data.tracks.length})">
             {#each filteredData.tracks as track}
               <Command.Item onSelect={() => handleTrackSelect(track)}>
-                <span>{track.artist.toString()} - {track.title}{#if track.metadata?.year} - {track.metadata.year}{/if}</span>
-                <br><span class="text-muted-foreground">{track.url.hostname}</span>
+                <div>
+                  <span>{track.artist.toString()} - {track.title}{#if track.metadata?.year} - {track.metadata.year}{/if}</span>
+                  <br><span class="text-muted-foreground text-xs">{track.url?.withoutProtocol}</span>
+                </div>
               </Command.Item>
             {/each}
           </Command.Group>

@@ -1,9 +1,12 @@
 import { storage } from 'src/core/shared';
-import type { StorableData, StorageObject } from 'src/core/storage';
+import type { StorableData } from 'src/core/storage';
 import { Album } from './album/album';
+import type { CompressedAlbumData, RawAlbumData } from './album/compressor';
 import { AlbumFactory } from './album/factory';
 import { Band } from './band/band';
+import { type CompressedBandData } from './band/compressor';
 import { BandFactory } from './band/factory';
+import { bandDataCompressor } from './shared';
 import { StorageKey } from './storageKey';
 import { TrackFactory } from './track/factory';
 import type { Track } from './track/track';
@@ -58,13 +61,13 @@ export class BandcampStorage {
         delete bandsStorableData[key];
       }
 
-      const objBand = bandsStorableData[key];
-      objBand?.metadata?.albums.forEach((albumId: number) => {
+      const band = bandDataCompressor.decompress(bandsStorableData[key]);
+      band?.metadata?.albumIds.forEach((albumId: number) => {
         const albumKey = StorageKey.albumKey(albumId);
         if (releaseKeys.includes(albumKey)) return;
         releaseKeys.push(albumKey);
       });
-      objBand?.metadata?.tracks.forEach((trackId: number) => {
+      band?.metadata?.trackIds.forEach((trackId: number) => {
         const trackKey = StorageKey.trackKey(trackId);
         if (releaseKeys.includes(trackKey)) return;
         releaseKeys.push(trackKey);
@@ -103,11 +106,16 @@ export class BandcampStorage {
       return null;
     }
 
-    const albumIds: number[] = bandStorageObject.metadata.albums || [];
-    const trackIds: number[] = bandStorageObject.metadata.tracks || [];
+    const bandRawData = BandFactory.createRawData(
+      bandStorageObject as CompressedBandData,
+    );
+    const band = BandFactory.fromRawData(bandRawData);
+
+    const albumIds: number[] = bandRawData.metadata?.albumIds || [];
+    const trackIds: number[] = bandRawData.metadata?.trackIds || [];
 
     if (albumIds.length === 0 && trackIds.length === 0) {
-      return BandFactory.fromStorage(bandStorageObject);
+      return band;
     }
 
     const albums = BandcampStorage.getAlbumsByAlbumIdsFromStorableData(
@@ -120,7 +128,6 @@ export class BandcampStorage {
       trackIds,
     );
 
-    const band = BandFactory.fromStorage(bandStorageObject);
     band.metadata.albums = albums;
     band.metadata.tracks = tracks;
 
@@ -137,7 +144,7 @@ export class BandcampStorage {
       const albumKey = StorageKey.albumKey(albumId);
       const albumObj = storableData[albumKey];
       if (!albumObj) return;
-      albums.push(AlbumFactory.fromStorageObject(albumObj));
+      albums.push(AlbumFactory.fromStorage(albumObj));
     });
 
     return albums;
@@ -232,15 +239,14 @@ export class BandcampStorage {
   static async getAlbums(albums: Album[]): Promise<Album[]> {
     const albumsStorableData =
       await BandcampStorage.getAlbumsStorableData(albums);
-    const albumsData: StorageObject[] = Object.values(
-      albumsStorableData,
-    ).filter(
-      (data): data is object => typeof data === 'object' && data !== null,
-    );
+    const rawAlbumDataArr: RawAlbumData[] = Object.values(albumsStorableData)
+      .filter((obj): obj is object => typeof obj === 'object' && obj !== null)
+      .map((obj) => AlbumFactory.createRawData(obj as CompressedAlbumData));
+
+    // Collect all unique track IDs from loaded albums
     const trackIds: number[] = [];
-    albumsData.forEach((albumStorageObject) => {
-      const ids: number[] = albumStorageObject.trackIds || [];
-      ids.forEach((id) => {
+    rawAlbumDataArr.forEach((rawAlbumData) => {
+      rawAlbumData.trackIds.forEach((id) => {
         if (!trackIds.includes(id)) {
           trackIds.push(id);
         }
@@ -251,17 +257,16 @@ export class BandcampStorage {
     const tracks = await BandcampStorage.getTracksByTrackIds(trackIds);
     const loadedTracksMap = new Map(tracks.map((track) => [track.id, track]));
 
-    const loadedAlbums = albumsData
-      .map((albumStorageObject) => {
-        const album = AlbumFactory.fromStorageObject(albumStorageObject);
-        const trackIds: number[] = albumStorageObject.trackIds || [];
+    const loadedAlbums = rawAlbumDataArr
+      .map((rawAlbumData) => {
+        const album = AlbumFactory.fromRawData(rawAlbumData);
 
-        if (trackIds.length === 0) {
+        if (rawAlbumData.trackIds.length === 0) {
           return album;
         }
 
         // Map track IDs to loaded Track objects
-        album.tracks = trackIds
+        album.tracks = rawAlbumData.trackIds
           .map((trackId) => loadedTracksMap.get(trackId))
           .filter((track): track is Track => track !== undefined);
 

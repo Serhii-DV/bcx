@@ -1,7 +1,8 @@
 import type { StorageObject } from 'src/core/storage';
 import { removeInvisibleChars } from 'src/utils/string';
-import { Artist } from '../artist';
+import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork';
+import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import type {
   AlbumRelease,
@@ -9,11 +10,12 @@ import type {
   PropertyValue,
 } from '../page/schema';
 import { Price } from '../price';
+import { albumDataCompressor } from '../shared';
 import { TrackFactory } from '../track/factory';
 import type { Track } from '../track/track';
-import { Url } from '../url';
+import { Url } from '../url/url';
 import { Album } from './album';
-
+import { type CompressedAlbumData, type RawAlbumData } from './compressor';
 export class AlbumFactory {
   static create(
     url: string | Url,
@@ -25,9 +27,10 @@ export class AlbumFactory {
     tracks: Track[] = [],
     metadata?: Metadata,
   ): Album {
+    const albumArtist = ArtistFactory.fromString(artist);
     return new Album(
       typeof url === 'string' ? new Url(url) : url,
-      Artist.fromString(artist),
+      albumArtist,
       removeInvisibleChars(title),
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id,
       new Artwork(
@@ -39,17 +42,31 @@ export class AlbumFactory {
     );
   }
 
-  static fromStorageObject(data: StorageObject): Album {
+  static fromRawData(rawData: RawAlbumData): Album {
     return this.create(
-      data.url,
-      data.artist,
-      data.title,
-      data.id,
-      data.artworkId,
-      data.bandId,
-      data.tracks || [],
-      data.metadata ? Metadata.fromStorageObject(data.metadata) : undefined,
+      rawData.url,
+      rawData.artist,
+      rawData.title,
+      rawData.id,
+      rawData.artworkId,
+      rawData.bandId,
+      [],
+      rawData.metadata ? Metadata.fromRawData(rawData.metadata) : undefined,
     );
+  }
+
+  static createRawData(compressedData: CompressedAlbumData): RawAlbumData {
+    return decompress(compressedData, albumDataCompressor) as RawAlbumData;
+  }
+
+  static fromCompressedData(compressedData: CompressedAlbumData): Album {
+    const rawData = this.createRawData(compressedData);
+
+    return this.fromRawData(rawData);
+  }
+
+  static fromStorage(data: StorageObject): Album {
+    return this.fromCompressedData(data as CompressedAlbumData);
   }
 
   /**

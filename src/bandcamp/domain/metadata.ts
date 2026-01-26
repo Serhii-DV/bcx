@@ -1,7 +1,14 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
+import { type Compressable, compress, decompress } from './compressor';
+import {
+  type CompressedMetadataData,
+  MetadataCompressor,
+  type RawMetadataData,
+} from './metadataCompressor';
 import { Price } from './price';
+import { metadataCompressor } from './shared';
 
-export class Metadata implements StorableObject {
+export class Metadata implements StorableObject, Compressable {
   constructor(
     public price: Price,
     public publisher: string,
@@ -9,6 +16,10 @@ export class Metadata implements StorableObject {
     public modified: Date,
     public keywords: string[],
   ) {}
+
+  get compressor(): MetadataCompressor {
+    return metadataCompressor;
+  }
 
   get year(): number {
     return this.published.getFullYear();
@@ -35,8 +46,12 @@ export class Metadata implements StorableObject {
   }
 
   toStorageObject(): StorageObject {
+    return compress(this);
+  }
+
+  toRawData(): RawMetadataData {
     return {
-      price: this.price.toStorageObject(),
+      price: this.price.toRawData(),
       publisher: this.publisher,
       published: this.published.toISOString(),
       modified: this.modified.toISOString(),
@@ -44,13 +59,28 @@ export class Metadata implements StorableObject {
     };
   }
 
-  static fromStorageObject(data: StorageObject): Metadata {
+  static fromRawData(rawData: RawMetadataData): Metadata {
     return Metadata.create(
-      Price.create(data.price.amount, data.price.currency),
-      data.publisher,
-      data.published,
-      data.modified,
-      data.keywords,
+      Price.fromRawData(rawData.price),
+      rawData.publisher,
+      rawData.published,
+      rawData.modified,
+      rawData.keywords || [],
+    );
+  }
+
+  static fromStorageObject(data: StorageObject): Metadata {
+    const decompressed = decompress(
+      data as CompressedMetadataData,
+      metadataCompressor,
+    ) as RawMetadataData;
+
+    return Metadata.create(
+      Price.create(decompressed.price.amount, decompressed.price.currency),
+      decompressed.publisher,
+      decompressed.published,
+      decompressed.modified,
+      decompressed.keywords,
     );
   }
 }

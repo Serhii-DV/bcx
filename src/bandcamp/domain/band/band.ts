@@ -1,9 +1,12 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
+import { type Compressable, compress } from '../compressor';
+import { bandDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
-import type { Url } from '../url';
+import type { Url } from '../url/url';
+import { BandDataCompressor, type RawBandData } from './compressor';
 import type { BandMetadata } from './metadata';
 
-export class Band implements Storable {
+export class Band implements Storable, Compressable {
   constructor(
     public id: number,
     public name: string,
@@ -12,7 +15,13 @@ export class Band implements Storable {
   ) {}
 
   get hasReleases(): boolean {
-    return this.metadata.albums.length > 0 || this.metadata.tracks.length > 0;
+    return (
+      this.metadata.albums.length > 0 || this.metadata.trackReleases.length > 0
+    );
+  }
+
+  get compressor(): BandDataCompressor {
+    return bandDataCompressor;
   }
 
   toStorableData(): StorableData {
@@ -27,11 +36,15 @@ export class Band implements Storable {
   }
 
   toStorageObject(): StorageObject {
+    return compress(this);
+  }
+
+  toRawData(): RawBandData {
     return {
       id: this.id,
       name: this.name,
       url: this.url.toString(),
-      metadata: this.metadata.toStorageObject(),
+      metadata: this.metadata.toRawData(),
     };
   }
 }

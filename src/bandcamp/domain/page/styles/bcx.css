@@ -2,12 +2,6 @@
 
 .bcx-page-music .bcx-release-metadata {
   display: block;
-  font-weight: normal;
-  font-size: 75%;
-}
-
-.bcx-page-music .bcx-release-metadata .bcx-badge {
-  cursor: pointer;
 }
 
 .bcx-page-album .bcx-release-year {

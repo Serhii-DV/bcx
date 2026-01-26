@@ -1,9 +1,9 @@
-import type { StorageObject } from 'src/core/storage';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import { Album } from '../album/album';
-import { TrackFactory } from '../track/factory';
-import { Url } from '../url';
+import { decompress } from '../compressor';
+import { bandDataCompressor } from '../shared';
+import { Url } from '../url/url';
 import { Band } from './band';
+import { type CompressedBandData, type RawBandData } from './compressor';
 import { BandMetadata } from './metadata';
 
 export class BandFactory {
@@ -16,25 +16,17 @@ export class BandFactory {
     return new Band(id, name, url, metadata);
   }
 
-  static fromRawData(
-    id: string | number,
-    name: string,
-    url: string | Url,
-    metadata: BandMetadata,
-  ): Band {
-    const bandId = typeof id === 'string' ? parseInt(id, 10) : id;
-    const bandName = trim(removeInvisibleChars(name), ' -\n');
-    const bandUrl = url instanceof Url ? url : new Url(url);
+  static fromRawData(rawData: RawBandData): Band {
+    const bandId =
+      typeof rawData.id === 'string' ? parseInt(rawData.id, 10) : rawData.id;
+    const bandName = trim(removeInvisibleChars(rawData.name), ' -\n');
+    const bandUrl = new Url(rawData.url);
+    const metadata = BandMetadata.fromRawData(rawData.metadata);
 
     return new Band(bandId, bandName, bandUrl, metadata);
   }
 
-  static fromStorage(band: StorageObject): Band {
-    return BandFactory.fromRawData(
-      band.id,
-      band.name,
-      band.url,
-      BandMetadata.fromStorageObject(band.metadata),
-    );
+  static createRawData(compressedData: CompressedBandData): RawBandData {
+    return decompress(compressedData, bandDataCompressor) as RawBandData;
   }
 }

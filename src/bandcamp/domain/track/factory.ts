@@ -1,6 +1,8 @@
 import type { StorageObject } from 'src/core/storage';
-import { Artist } from '../artist';
+import { Artist } from '../artist/artist';
+import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork';
+import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import type {
   MusicAlbumSchema,
@@ -8,30 +10,31 @@ import type {
   PropertyValue,
 } from '../page/schema';
 import { Price } from '../price';
-import { bandcampPageData } from '../shared';
-import { Url } from '../url';
+import { bandcampPageData, trackDataCompressor } from '../shared';
+import { Url } from '../url/url';
+import { type CompressedTrackData, type RawTrackData } from './compressor';
 import { TrackTime } from './time';
 import { Track } from './track';
 
 export class TrackFactory {
   static create(
     id: string | number,
-    url: string | Url | URL,
     artist: string | Artist,
     title: string,
-    time: string | TrackTime,
     artwork: string | number | Artwork,
+    url?: string | Url | URL,
+    time?: string | TrackTime,
     albumId?: number,
     metadata?: Metadata,
   ): Track {
     const trackId =
       typeof id === 'string' ? parseInt(id.replace('track-', ''), 10) : id;
-    const trackUrl = Url.parse(url);
+    const trackUrl = url ? Url.parse(url) : undefined;
     const trackTime =
       typeof time === 'string' ? TrackTime.fromString(time) : time;
 
     const trackArtist =
-      typeof artist === 'string' ? Artist.fromString(artist) : artist;
+      typeof artist === 'string' ? ArtistFactory.fromString(artist) : artist;
 
     const trackArtwork =
       artwork instanceof Artwork
@@ -42,11 +45,11 @@ export class TrackFactory {
 
     return new Track(
       trackId,
-      trackUrl,
       trackArtist,
       title,
-      trackTime,
       trackArtwork,
+      trackUrl,
+      trackTime,
       albumId,
       metadata,
     );
@@ -59,8 +62,13 @@ export class TrackFactory {
 
     const url = schema.mainEntityOfPage;
     const mainArtist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
-    const { artist, title } = Artist.fromTrackTitle(schema.name, mainArtist);
-    const time = TrackTime.fromDuration(schema.duration);
+    const { artist, title } = ArtistFactory.fromTrackTitle(
+      schema.name,
+      mainArtist,
+    );
+    const time = schema.duration
+      ? TrackTime.fromDuration(schema.duration)
+      : undefined;
     // albumId is not available in schema, try to get it from pagedata
     const albumId = bandcampPageData.albumId || undefined;
     const artId =
@@ -85,11 +93,11 @@ export class TrackFactory {
 
     return TrackFactory.create(
       trackId,
-      url,
       artist,
       title,
-      time,
       artId,
+      url,
+      time,
       albumId,
       metadata,
     );
@@ -112,22 +120,24 @@ export class TrackFactory {
         (prop: PropertyValue) => prop.name === 'track_id',
       )?.value as number;
       const url = trackItem.item.mainEntityOfPage;
-      const { artist, title } = Artist.fromTrackTitle(
+      const { artist, title } = ArtistFactory.fromTrackTitle(
         trackItem.item.name,
         trackItem.item.byArtist
           ? trackItem.item.byArtist.name
           : schema.byArtist.name,
       );
-      const time = TrackTime.fromDuration(trackItem.item.duration);
+      const time = trackItem.item.duration
+        ? TrackTime.fromDuration(trackItem.item.duration)
+        : undefined;
       const artId = albumArtId;
 
       const track = TrackFactory.create(
         trackId,
-        url,
         artist,
         title,
-        time,
         artId,
+        url,
+        time,
         albumId,
         undefined,
       );
@@ -138,16 +148,29 @@ export class TrackFactory {
     return tracks;
   }
 
-  static fromStorage(track: StorageObject): Track {
+  static fromRawData(rawData: RawTrackData): Track {
     return TrackFactory.create(
-      track.id,
-      track.url,
-      track.artist,
-      track.title,
-      track.time,
-      track.artId,
-      track.albumId,
-      track.metadata ? Metadata.fromStorageObject(track.metadata) : undefined,
+      rawData.id,
+      rawData.artist,
+      rawData.title,
+      rawData.artworkId,
+      rawData.url,
+      rawData.time,
+      rawData.albumId,
+      rawData.metadata ? Metadata.fromRawData(rawData.metadata) : undefined,
     );
+  }
+
+  static fromCompressedData(data: CompressedTrackData): Track {
+    const rawData = decompress(
+      data as CompressedTrackData,
+      trackDataCompressor,
+    ) as RawTrackData;
+
+    return this.fromRawData(rawData);
+  }
+
+  static fromStorage(track: StorageObject): Track {
+    return this.fromCompressedData(track as CompressedTrackData);
   }
 }

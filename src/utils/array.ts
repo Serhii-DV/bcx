@@ -1,3 +1,5 @@
+import type { QueryCountMap } from '$lib/components/bcx';
+
 export function arrayUnique(arr: string[] | string[][]): string[] {
   return [...new Set(arr.flat())];
 }
@@ -26,7 +28,7 @@ export function arrayUnique(arr: string[] | string[][]): string[] {
  * console.log(counts.get('Banana')); // 1
  * ```
  */
-export function countOccurrences(arr: string[]): Map<string, number> {
+export function createQueryCountMap(arr: string[]): QueryCountMap {
   const items = new Map<string, number>();
 
   for (const item of arr) {

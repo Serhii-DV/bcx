@@ -2,7 +2,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.2em 0.2em;
+  padding: 0.2em 0.4em;
   line-height: 1;
   border-radius: 5px;
   background-color: transparent;
@@ -15,6 +15,9 @@
     background-color 0.2s,
     color 0.2s,
     border-color 0.2s;
+  cursor: pointer;
+  font-size: 75%;
+  font-weight: normal;
 }
 
 .bcx-badge:hover {
@@ -43,4 +46,20 @@
   background-color: #e0f2fe;
   color: #075985;
   border-color: #bae6fd;
+}
+
+.bcx-badge-year {
+  color: #1caf54;
+}
+
+.bcx-badge-year:hover {
+  border-color: #1caf54;
+}
+
+.bcx-badge-keyword {
+  color: #854d0e;
+}
+
+.bcx-badge-keyword:hover {
+  border-color: #854d0e;
 }
