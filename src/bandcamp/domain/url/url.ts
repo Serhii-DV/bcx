@@ -97,7 +97,7 @@ export class Url extends URL {
 
   get isMusic(): boolean {
     const path = this.pathname;
-    return path === '/' || path === '/music';
+    return path === '/' || path.includes('/music');
   }
 
   get isAlbum(): boolean {

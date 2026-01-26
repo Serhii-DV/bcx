@@ -109,8 +109,14 @@ describe('Bandcamp Url', () => {
       expect(bandcampUrl.isMusic).toBe(true);
     });
 
-    it('should return true for Bandcamp music pages with URL query parameters', () => {
+    it('should return true for Bandcamp music pages with URL query parameters (end with `music`)', () => {
       const validUrl = 'https://artist.bandcamp.com/music?q=search';
+      const bandcampUrl = new Url(validUrl);
+      expect(bandcampUrl.isMusic).toBe(true);
+    });
+
+    it('should return true for Bandcamp music pages with URL query parameters (end with `music/`)', () => {
+      const validUrl = 'https://artist.bandcamp.com/music/?q=search';
       const bandcampUrl = new Url(validUrl);
       expect(bandcampUrl.isMusic).toBe(true);
     });
