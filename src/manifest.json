@@ -16,7 +16,7 @@
     },
     {
       "js": ["bandcamp.page.music.js"],
-      "matches": ["https://*.bandcamp.com/", "https://*.bandcamp.com/music*"],
+      "matches": ["https://*.bandcamp.com/", "https://*.bandcamp.com/music/*"],
       "run_at": "document_start"
     },
     {
