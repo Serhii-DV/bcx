@@ -112,10 +112,6 @@
   margin: 10px 0 0;
 }
 
-.bcx-filter-badges .bcx-badge {
-  font-size: 80%;
-}
-
 .bcx-filter-badges details summary {
   cursor: pointer;
 }
@@ -125,7 +121,7 @@
 }
 
 .bcx-sort-badges-container {
-  margin: 5px 0 0;
+  margin: 5px 0 5px 5px;
   display: flex;
   align-items: center;
 }
