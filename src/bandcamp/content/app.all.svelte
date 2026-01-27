@@ -144,9 +144,6 @@ Use Ctrl+D to toggle"
 <!-- Side Panel -->
 <BCXSidePanel
   open={drawerOpen}
-  onSearchMusic={() => { albumSearchOpen = true; drawerOpen = false; }}
-  onProfile={handleProfileSelect}
-  onSettings={handleSettingsSelect}
   onClose={() => drawerOpen = false}
 />
 {/if}
