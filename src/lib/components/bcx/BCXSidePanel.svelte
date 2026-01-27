@@ -1,4 +1,5 @@
 <script lang="ts">
+import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { PageMusic } from 'src/bandcamp/domain/page/page.music';
 import { Button } from '$lib/components/ui/button';
 import BcxTreeView from './BcxTreeView.svelte';
@@ -21,18 +22,31 @@ const treeData: TreeItem[] = [];
 
 if (pageMusic instanceof PageMusic) {
   const band = pageMusic.band;
+  const queryCountMap = pageMusic.queryCountMap;
+  const children = band.metadata.artistNames.map((artist) => {
+    const count = queryCountMap.get(artist) || 0;
+    const label = createQueryCountString(artist, count);
+    const artistChildren: TreeItem[] = [];
+
+    band.metadata.albums.forEach((album) => {
+      if (album.artist.names.includes(artist)) {
+        artistChildren.push({
+          label: album.toString(),
+        });
+      }
+    });
+
+    return {
+      label,
+      open: false,
+      children: artistChildren,
+    } as TreeItem;
+  });
 
   treeData.push({
-    id: '2',
     label: 'Page Artists',
     open: true,
-    children: band.metadata.artistNames.map(
-      (artistName) =>
-        ({
-          label: artistName,
-          open: false,
-        }) as TreeItem,
-    ),
+    children,
   });
 }
 
@@ -114,7 +128,9 @@ function handleTreeItemClick(item: TreeItem) {
         <div class="space-y-4">
 
           <!-- Tree View Demo -->
-          <BcxTreeView items={treeData} onItemClick={handleTreeItemClick} />
+          <div class="text-md font-medium text-white" style="background-color: #24282a">
+            <BcxTreeView items={treeData} onItemClick={handleTreeItemClick} />
+          </div>
 
           <!-- Extension Info -->
           <div class="p-3 bg-gray-50/60 dark:bg-gray-700/60 rounded-lg backdrop-blur-sm">
@@ -134,13 +150,6 @@ function handleTreeItemClick(item: TreeItem) {
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="border-t border-gray-200/30 dark:border-gray-700/30 p-4">
-        <Button variant="destructive" onclick={onClose} class="w-full">
-          Close Panel
-        </Button>
       </div>
     </div>
   </div>

@@ -15,13 +15,13 @@ function handleItemClick(item: TreeItem) {
 </script>
 
 {#if items.length > 0}
-  <ol style="background-color: #24282a;">
+  <ol>
     {#each items as item}
       <li>
         {#if item.children && item.children.length > 0}
           <details bind:open={item.open} class="group">
             <summary
-              class="cursor-pointer select-none rounded px-2 py-1 text-sm font-medium text-white hover:bg-white/10 transition-colors"
+              class="cursor-pointer select-none px-2 py-1 hover:bg-white/10 transition-colors"
               onclick={() => handleItemClick(item)}
             >
               {item.label}
@@ -32,7 +32,7 @@ function handleItemClick(item: TreeItem) {
           </details>
         {:else}
           <button
-            class="w-full cursor-pointer text-left rounded px-2 py-1 text-sm text-gray-200 hover:bg-white/10 transition-colors"
+            class="w-full cursor-pointer text-left px-2 py-1 text-gray-200 hover:bg-white/10 transition-colors"
             onclick={() => handleItemClick(item)}
           >
             <span class="ml-2">{item.label}</span>

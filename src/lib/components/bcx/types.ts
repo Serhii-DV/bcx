@@ -32,7 +32,7 @@ export const emptyMusicSearchData: MusicSearchData = {
 };
 
 export interface TreeItem {
-  id: string;
+  id?: string;
   label: string;
   children?: TreeItem[];
   open?: boolean;
