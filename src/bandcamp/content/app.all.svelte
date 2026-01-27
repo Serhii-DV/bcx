@@ -1,8 +1,9 @@
 <script lang="ts">
-import { TerminalIcon } from 'lucide-svelte';
+import { PanelLeft, TerminalIcon } from 'lucide-svelte';
 import { console } from 'src/utils/console';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
+import { BCXSidePanel } from '$lib/components/bcx';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
 import type { MusicSearchData } from '$lib/components/bcx/types';
@@ -21,6 +22,7 @@ let { bands = [] }: Props = $props();
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
+let drawerOpen = $state(false);
 
 // Derive music search data from bands prop
 let musicSearchData: MusicSearchData = $derived(
@@ -35,6 +37,11 @@ function handleKeydown(e: KeyboardEvent) {
   // Ctrl+M
   onCtrlKey('m', e, () => {
     albumSearchOpen = !albumSearchOpen;
+  });
+
+  // Ctrl+D for drawer
+  onCtrlKey('d', e, () => {
+    drawerOpen = !drawerOpen;
   });
 }
 
@@ -103,6 +110,15 @@ Use Ctrl+/ to toggle"
   >
     <TerminalIcon /> BCX
   </button>
+
+  <button
+    class="bcx-drawer-button"
+    title="BCX - Side Panel.
+Use Ctrl+D to toggle"
+    onclick={() => drawerOpen = true}
+  >
+    <PanelLeft />
+  </button>
 {/if}
 
 {#if shadowContainer}
@@ -123,6 +139,15 @@ Use Ctrl+/ to toggle"
   emptyMessage="No artists or albums found"
   onBandSelect={handleBandSelect}
   onAlbumSelect={handleAlbumSelect}
+/>
+
+<!-- Side Panel -->
+<BCXSidePanel
+  open={drawerOpen}
+  onSearchMusic={() => { albumSearchOpen = true; drawerOpen = false; }}
+  onProfile={handleProfileSelect}
+  onSettings={handleSettingsSelect}
+  onClose={() => drawerOpen = false}
 />
 {/if}
 
@@ -148,6 +173,7 @@ Use Ctrl+/ to toggle"
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
   }
 
   :global(.bcx-trigger-button:hover) {
@@ -161,4 +187,38 @@ Use Ctrl+/ to toggle"
     outline: none;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   }
+
+  /* BCX Drawer Button Styles */
+  :global(.bcx-drawer-button) {
+    background: #1f2937;
+    border: 1px solid #374151;
+    color: #f9fafb;
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: fixed;
+    bottom: 20px;
+    right: 140px; /* Position to the left of the BCX button */
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :global(.bcx-drawer-button:hover) {
+    background: #374151;
+    border-color: #4b5563;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  :global(.bcx-drawer-button:focus) {
+    background: #374151;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  }
+
+
 </style>
