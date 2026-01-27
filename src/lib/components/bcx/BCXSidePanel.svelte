@@ -110,14 +110,11 @@ function handleTreeItemClick(item: TreeItem) {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-y-auto p-4">
+      <div class="flex-1 overflow-y-auto">
         <div class="space-y-4">
 
           <!-- Tree View Demo -->
-          <div class="p-3 bg-gray-50/60 dark:bg-gray-700/60 rounded-lg backdrop-blur-sm">
-            <h3 class="font-medium text-gray-900 dark:text-white mb-3">Page Navigation</h3>
-            <BcxTreeView items={treeData} onItemClick={handleTreeItemClick} />
-          </div>
+          <BcxTreeView items={treeData} onItemClick={handleTreeItemClick} />
 
           <!-- Extension Info -->
           <div class="p-3 bg-gray-50/60 dark:bg-gray-700/60 rounded-lg backdrop-blur-sm">
