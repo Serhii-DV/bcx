@@ -32,7 +32,7 @@ function handleItemClick(item: TreeItem) {
           </details>
         {:else}
           <button
-            class="w-full cursor-pointer text-left rounded px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100/60 dark:hover:bg-gray-600/60 transition-colors"
+            class="w-full cursor-pointer text-left rounded px-2 py-1 text-sm text-gray dark:text-gray-400 hover:bg-gray-100/60 dark:hover:bg-gray-600/60 transition-colors"
             onclick={() => handleItemClick(item)}
           >
             <span class="ml-2">{item.label}</span>

@@ -1,87 +1,83 @@
 <script lang="ts">
+import { PageMusic } from 'src/bandcamp/domain/page/page.music';
 import { Button } from '$lib/components/ui/button';
 import BcxTreeView from './BcxTreeView.svelte';
 import type { TreeItem } from './types';
 
 interface Props {
+  pageMusic?: PageMusic;
   open?: boolean;
   onClose?: () => void;
 }
 
-let { open = false, onClose = () => {} }: Props = $props();
+let {
+  pageMusic = undefined,
+  open = false,
+  onClose = () => {},
+}: Props = $props();
 
 // Demo tree data
-const treeData: TreeItem[] = [
-  {
-    id: '1',
-    label: 'Music Library',
-    open: true,
-    children: [
-      {
-        id: '1.1',
-        label: 'Albums',
-        children: [
-          {
-            id: '1.1.1',
-            label: 'Rock',
-            children: [
-              { id: '1.1.1.1', label: 'Classic Rock' },
-              { id: '1.1.1.2', label: 'Progressive Rock' },
-              { id: '1.1.1.3', label: 'Alternative Rock' },
-            ],
-          },
-          {
-            id: '1.1.2',
-            label: 'Electronic',
-            children: [
-              { id: '1.1.2.1', label: 'Ambient' },
-              { id: '1.1.2.2', label: 'Techno' },
-              { id: '1.1.2.3', label: 'Drum & Bass' },
-            ],
-          },
-          { id: '1.1.3', label: 'Jazz' },
-        ],
-      },
-      {
-        id: '1.2',
-        label: 'Artists',
-        children: [
-          { id: '1.2.1', label: 'Favorites' },
-          { id: '1.2.2', label: 'Recently Played' },
-          { id: '1.2.3', label: 'Discovered' },
-        ],
-      },
-      { id: '1.3', label: 'Playlists' },
-    ],
-  },
-  {
+const treeData: TreeItem[] = [];
+
+if (pageMusic instanceof PageMusic) {
+  const band = pageMusic.band;
+
+  treeData.push({
     id: '2',
-    label: 'Discovery Tools',
-    open: false,
-    children: [
-      {
-        id: '2.1',
-        label: 'Search Filters',
-        children: [
-          { id: '2.1.1', label: 'Genre Filters' },
-          { id: '2.1.2', label: 'Price Range' },
-          { id: '2.1.3', label: 'Release Date' },
-        ],
-      },
-      { id: '2.2', label: 'Recommendations' },
-      { id: '2.3', label: 'Trending' },
-    ],
-  },
-  {
-    id: '3',
-    label: 'Settings',
-    children: [
-      { id: '3.1', label: 'Appearance' },
-      { id: '3.2', label: 'Keyboard Shortcuts' },
-      { id: '3.3', label: 'Privacy' },
-    ],
-  },
-];
+    label: 'Page Artists',
+    open: true,
+    children: band.metadata.artistNames.map(
+      (artistName) =>
+        ({
+          label: artistName,
+          open: false,
+        }) as TreeItem,
+    ),
+  });
+}
+
+treeData.push({
+  id: '1',
+  label: 'Music Library',
+  open: false,
+  children: [
+    {
+      id: '1.1',
+      label: 'Albums',
+      children: [
+        {
+          id: '1.1.1',
+          label: 'Rock',
+          children: [
+            { id: '1.1.1.1', label: 'Classic Rock' },
+            { id: '1.1.1.2', label: 'Progressive Rock' },
+            { id: '1.1.1.3', label: 'Alternative Rock' },
+          ],
+        },
+        {
+          id: '1.1.2',
+          label: 'Electronic',
+          children: [
+            { id: '1.1.2.1', label: 'Ambient' },
+            { id: '1.1.2.2', label: 'Techno' },
+            { id: '1.1.2.3', label: 'Drum & Bass' },
+          ],
+        },
+        { id: '1.1.3', label: 'Jazz' },
+      ],
+    },
+    {
+      id: '1.2',
+      label: 'Artists',
+      children: [
+        { id: '1.2.1', label: 'Favorites' },
+        { id: '1.2.2', label: 'Recently Played' },
+        { id: '1.2.3', label: 'Discovered' },
+      ],
+    },
+    { id: '1.3', label: 'Playlists' },
+  ],
+});
 
 function handleTreeItemClick(item: TreeItem) {
   console.log('Tree item clicked:', item.label);

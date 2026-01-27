@@ -10,14 +10,16 @@ import type { MusicSearchData } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
+import type { PageMusic } from '../domain/page/page.music';
 import { createMusicSearchDataFromBands } from './helper';
 
 // Props interface
 interface Props {
   bands?: Band[];
+  pageMusic?: PageMusic;
 }
 
-let { bands = [] }: Props = $props();
+let { bands = [], pageMusic = undefined }: Props = $props();
 
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
@@ -143,6 +145,7 @@ Use Ctrl+D to toggle"
 
 <!-- Side Panel -->
 <BCXSidePanel
+  pageMusic={pageMusic}
   open={drawerOpen}
   onClose={() => drawerOpen = false}
 />

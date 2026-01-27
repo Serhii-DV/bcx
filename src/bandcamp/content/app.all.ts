@@ -6,6 +6,7 @@ import { injectCssFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { arrayPreview, console } from 'src/utils/console';
+import { PageMusic } from '../domain/page/page.music';
 import { BandcampStorage } from '../domain/storage';
 
 onDOMReady(async () => {
@@ -32,10 +33,17 @@ onDOMReady(async () => {
       ...arrayPreview(bands),
     );
 
+    let pageMusic = undefined;
+
+    if (currentPageUrl.isMusic) {
+      pageMusic = await PageMusic.init();
+    }
+
     mount(App, {
       target: shadowRoot,
       props: {
         bands,
+        pageMusic,
       },
     });
   } catch (error) {
