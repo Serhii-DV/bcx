@@ -30,3 +30,10 @@ export const emptyMusicSearchData: MusicSearchData = {
   tracks: [],
   keywords: [],
 };
+
+export interface TreeItem {
+  id: string;
+  label: string;
+  children?: TreeItem[];
+  open?: boolean;
+}

@@ -6,4 +6,5 @@ export { default as BCXMainCommandDialog } from './BCXMainCommandDialog.svelte';
 export { default as BCXMusicFilter } from './BCXMusicFilter.svelte';
 export { default as BCXMusicFilterDialog } from './BCXMusicFilterDialog.svelte';
 export { default as BCXSidePanel } from './BCXSidePanel.svelte';
+export { default as BcxTreeView } from './BcxTreeView.svelte';
 export * from './types';
