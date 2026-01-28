@@ -1,4 +1,10 @@
-import type { TreeItem } from '$lib/components/bcx';
+import type { TreeItem } from './treeItem';
+import {
+  findItemByPath,
+  generateTreeHierarchy,
+  getParentPath,
+  getVisibleItems,
+} from './utils';
 
 export class TreeData {
   treeItems: TreeItem[];
@@ -28,46 +34,51 @@ export class TreeData {
     return this.visibleItems[this.visibleItems.length - 1];
   }
 
-  getVisibleItemIndexByPath(path: string): number {
+  visibleIndex(path: string): number {
     return this.visibleItems.findIndex((item) => item.path === path);
   }
-}
 
-function generateTreeHierarchy(
-  items: TreeItem[],
-  level: number = 0,
-  parentPath: string = '',
-): TreeItem[] {
-  return items.map((item, index) => {
-    const currentPath = parentPath ? `${parentPath}.${index}` : `${index}`;
-    const enhancedItem: TreeItem = {
-      ...item,
-      level,
-      path: currentPath,
-    };
-
-    if (item.children && item.children.length > 0) {
-      enhancedItem.children = generateTreeHierarchy(
-        item.children,
-        level + 1,
-        currentPath,
-      );
+  findVisible(index: number): TreeItem | null {
+    if (index >= 0 && index < this.visibleItems.length) {
+      return this.visibleItems[index];
     }
-
-    return enhancedItem;
-  });
-}
-
-// Flatten the tree to get all visible items for navigation
-function getVisibleItems(
-  items: TreeItem[],
-  result: TreeItem[] = [],
-): TreeItem[] {
-  for (const item of items) {
-    result.push(item);
-    if (item.children && item.children.length > 0 && item.open) {
-      getVisibleItems(item.children, result);
-    }
+    return null;
   }
-  return result;
+
+  findNextVisible(index: number): TreeItem | null {
+    if (index < this.visibleItems.length - 1) {
+      const nextIndex = index + 1;
+      return this.visibleItems[nextIndex];
+    }
+    return null;
+  }
+
+  findPrevVisible(index: number): TreeItem | null {
+    if (index > 0) {
+      const prevIndex = index - 1;
+      return this.visibleItems[prevIndex];
+    }
+    return null;
+  }
+
+  findByPath(path?: string | null): TreeItem | null {
+    if (!path) return null;
+    return findItemByPath(this.visibleItems, path);
+  }
+
+  findParentByPath(path?: string | null): TreeItem | null {
+    const parentPath = getParentPath(path);
+    if (!parentPath) return null;
+    return this.findByPath(parentPath);
+  }
+
+  findFirstChildByPath(path?: string | null): TreeItem | null {
+    const nextIndex = this.visibleIndex(path ?? '') + 1;
+
+    if (nextIndex < this.visibleItems.length) {
+      return this.visibleItems[nextIndex];
+    }
+
+    return null;
+  }
 }

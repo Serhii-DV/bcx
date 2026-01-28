@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/treeData';
-import type { TreeItem } from './types';
+import type { TreeItem } from 'src/app/treeview/treeItem';
+import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
 
 interface Props {
   treeData: TreeData;
@@ -11,9 +12,9 @@ let { treeData, onItemClick = () => {} }: Props = $props();
 let treeContainer: HTMLDivElement;
 let focusedPath: string | null = $state(null);
 
-function handleItemClick(item: TreeItem) {
+function handleItemClick(item?: TreeItem | null) {
+  if (!item) return;
   focusedPath = item.path ?? null;
-  console.log('[treeview] handleItemClick', item, 'focusedPath:', focusedPath);
   onItemClick(item);
 }
 
@@ -22,84 +23,54 @@ function handleKeyDown(event: KeyboardEvent) {
 
   event.preventDefault();
 
-  const currentIndex = treeData.getVisibleItemIndexByPath(focusedPath ?? '');
+  const currentIndex = treeData.visibleIndex(focusedPath ?? '');
 
-  console.log(
-    '[treeview]',
-    event.key,
-    'focusedPath:',
-    focusedPath,
-    'currentIndex:',
-    currentIndex,
-    'visibleItems:',
-    treeData.visibleItems.length,
-  );
   switch (event.key) {
     case 'ArrowDown':
-      if (currentIndex < treeData.visibleItems.length - 1) {
-        const nextIndex = currentIndex + 1;
-        const nextItem = treeData.visibleItems[nextIndex];
-        focusTreeItem(nextItem);
-      }
+      focusTreeItem(treeData.findNextVisible(currentIndex));
       break;
 
     case 'ArrowUp':
-      if (currentIndex > 0) {
-        const prevIndex = currentIndex - 1;
-        const prevItem = treeData.visibleItems[prevIndex];
-        focusTreeItem(prevItem);
-      }
+      focusTreeItem(treeData.findPrevVisible(currentIndex));
       break;
 
     case 'ArrowRight':
       if (currentIndex >= 0) {
-        const currentItem = treeData.visibleItems[currentIndex];
-        if (currentItem.children && currentItem.children.length > 0) {
-          if (!currentItem.open) {
-            currentItem.open = true;
-          } else {
-            // Move to first child
-            const nextVisibleItems = treeData.visibleItems;
-            const nextIndex =
-              nextVisibleItems.findIndex((item) => item.path === focusedPath) +
-              1;
-            if (nextIndex < nextVisibleItems.length) {
-              const nextItem = nextVisibleItems[nextIndex];
-              focusTreeItem(nextItem);
-            }
-          }
+        const currentItem = treeData.findVisible(currentIndex);
+
+        if (!currentItem) {
+          break;
+        }
+
+        if (!isNodeExpanded(currentItem)) {
+          expandNode(currentItem);
+        } else {
+          // Move to first child
+          focusTreeItem(treeData.findFirstChildByPath(focusedPath));
         }
       }
       break;
 
     case 'ArrowLeft':
       if (currentIndex >= 0) {
-        const currentItem = treeData.visibleItems[currentIndex];
-        if (
-          currentItem.children &&
-          currentItem.children.length > 0 &&
-          currentItem.open
-        ) {
-          currentItem.open = false;
+        const currentItem = treeData.findVisible(currentIndex);
+
+        if (!currentItem) {
+          break;
+        }
+
+        if (isNodeExpanded(currentItem)) {
+          collapseNode(currentItem);
         } else {
           // Move to parent
-          const parentPath = getParentPath(currentItem.path);
-          if (parentPath) {
-            const parentItem = findItemByPath(treeData.items, parentPath);
-            if (parentItem) {
-              focusTreeItem(parentItem);
-            }
-          }
+          focusTreeItem(treeData.findParentByPath(currentItem.path));
         }
       }
       break;
 
     case 'Enter':
     case ' ':
-      if (currentIndex >= 0) {
-        const currentItem = treeData.visibleItems[currentIndex];
-        handleItemClick(currentItem);
-      }
+      handleItemClick(treeData.findVisible(currentIndex));
       break;
 
     case 'Home':
@@ -112,39 +83,55 @@ function handleKeyDown(event: KeyboardEvent) {
   }
 }
 
-function focusTreeItem(item?: TreeItem) {
-  if (item && item.path) {
-    focusElement(item.path);
-  }
+function elementByPath(path?: string): HTMLElement | null {
+  if (!path || !treeContainer) return null;
+  return treeContainer.querySelector(`[data-path="${path}"]`) as HTMLElement;
 }
 
-function focusElement(path: string) {
-  const element = treeContainer.querySelector(
-    `[data-path="${path}"]`,
-  ) as HTMLElement;
+function focusTreeItem(item?: TreeItem | null) {
+  if (!item || !item.path) {
+    return;
+  }
 
-  if (element) {
-    focusedPath = path;
+  const element = elementByPath(item.path);
+
+  if (!element) {
+    return;
+  }
+
+  focusedPath = item.path;
+
+  if (element instanceof HTMLDetailsElement) {
+    element.querySelector('summary')?.focus();
+  } else {
     element.focus();
   }
 }
 
-function getParentPath(path?: string): string | null {
-  if (!path) return null;
-  const parts = path.split('/');
-  if (parts.length <= 1) return null;
-  return parts.slice(0, -1).join('/');
+function collapseNode(item: TreeItem) {
+  if (!isNode(item)) {
+    return;
+  }
+
+  const element = elementByPath(item.path);
+
+  if (element instanceof HTMLDetailsElement) {
+    item.open = false;
+    element.open = false;
+  }
 }
 
-function findItemByPath(items: TreeItem[], path: string): TreeItem | null {
-  for (const item of items) {
-    if (item.path === path) return item;
-    if (item.children) {
-      const found = findItemByPath(item.children, path);
-      if (found) return found;
-    }
+function expandNode(item: TreeItem) {
+  if (!isNode(item)) {
+    return;
   }
-  return null;
+
+  const element = elementByPath(item.path);
+
+  if (element instanceof HTMLDetailsElement) {
+    item.open = true;
+    element.open = true;
+  }
 }
 </script>
 
@@ -157,12 +144,12 @@ function findItemByPath(items: TreeItem[], path: string): TreeItem | null {
             <details
               bind:open={item.open}
               class="group"
+              data-level="{item.level}"
+              data-path="{item.path}"
             >
               <summary
                 class="cursor-pointer select-none px-2 py-1 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
                 class:focused={focusedPath === item.path}
-                data-level="{item.level}"
-                data-path="{item.path}"
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={() => handleItemClick(item)}
               >

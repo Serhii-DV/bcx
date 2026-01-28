@@ -1,9 +1,9 @@
 <script lang="ts">
 import { TreeData } from 'src/app/treeview/treeData';
+import type { TreeItem } from 'src/app/treeview/treeItem';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { PageMusic } from 'src/bandcamp/domain/page/page.music';
 import BcxTreeView from './BcxTreeView.svelte';
-import type { TreeItem } from './types';
 
 interface Props {
   pageMusic?: PageMusic;
