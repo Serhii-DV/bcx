@@ -1,7 +1,7 @@
 <script lang="ts">
+import { TreeData } from 'src/app/treeview/treeData';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { PageMusic } from 'src/bandcamp/domain/page/page.music';
-import { Button } from '$lib/components/ui/button';
 import BcxTreeView from './BcxTreeView.svelte';
 import type { TreeItem } from './types';
 
@@ -17,34 +17,7 @@ let {
   onClose = () => {},
 }: Props = $props();
 
-// Helper function to generate level and path for tree items
-function generateTreeHierarchy(
-  items: TreeItem[],
-  level: number = 0,
-  parentPath: string = '',
-): TreeItem[] {
-  return items.map((item, index) => {
-    const currentPath = parentPath ? `${parentPath}.${index}` : `${index}`;
-    const enhancedItem: TreeItem = {
-      ...item,
-      level,
-      path: currentPath,
-    };
-
-    if (item.children && item.children.length > 0) {
-      enhancedItem.children = generateTreeHierarchy(
-        item.children,
-        level + 1,
-        currentPath,
-      );
-    }
-
-    return enhancedItem;
-  });
-}
-
-// Demo tree data
-const treeData: TreeItem[] = [];
+const treeData = new TreeData();
 
 if (pageMusic instanceof PageMusic) {
   const band = pageMusic.band;
@@ -69,14 +42,14 @@ if (pageMusic instanceof PageMusic) {
     } as TreeItem;
   });
 
-  treeData.push({
+  treeData.add({
     label: 'Page Artists',
     open: true,
     children,
   });
 }
 
-treeData.push({
+treeData.add({
   id: '1',
   label: 'Music Library',
   open: false,
@@ -129,9 +102,6 @@ function handleTreeItemClick(item: TreeItem) {
     item.path,
   );
 }
-
-// Generate hierarchy for all tree data
-const enhancedTreeData = generateTreeHierarchy(treeData);
 </script>
 
 {#if open}
@@ -165,7 +135,7 @@ const enhancedTreeData = generateTreeHierarchy(treeData);
 
           <!-- Tree View Demo -->
           <div class="text-md font-medium text-white" style="background-color: #24282a">
-            <BcxTreeView items={enhancedTreeData} onItemClick={handleTreeItemClick} />
+            <BcxTreeView treeData={treeData} onItemClick={handleTreeItemClick} />
           </div>
 
           <!-- Extension Info -->
