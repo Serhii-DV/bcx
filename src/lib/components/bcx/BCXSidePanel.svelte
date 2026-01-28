@@ -17,6 +17,32 @@ let {
   onClose = () => {},
 }: Props = $props();
 
+// Helper function to generate level and path for tree items
+function generateTreeHierarchy(
+  items: TreeItem[],
+  level: number = 0,
+  parentPath: string = '',
+): TreeItem[] {
+  return items.map((item, index) => {
+    const currentPath = parentPath ? `${parentPath}.${index}` : `${index}`;
+    const enhancedItem: TreeItem = {
+      ...item,
+      level,
+      path: currentPath,
+    };
+
+    if (item.children && item.children.length > 0) {
+      enhancedItem.children = generateTreeHierarchy(
+        item.children,
+        level + 1,
+        currentPath,
+      );
+    }
+
+    return enhancedItem;
+  });
+}
+
 // Demo tree data
 const treeData: TreeItem[] = [];
 
@@ -94,8 +120,18 @@ treeData.push({
 });
 
 function handleTreeItemClick(item: TreeItem) {
-  console.log('Tree item clicked:', item.label);
+  console.log(
+    'Tree item clicked:',
+    item.label,
+    'Level:',
+    item.level,
+    'Path:',
+    item.path,
+  );
 }
+
+// Generate hierarchy for all tree data
+const enhancedTreeData = generateTreeHierarchy(treeData);
 </script>
 
 {#if open}
@@ -129,7 +165,7 @@ function handleTreeItemClick(item: TreeItem) {
 
           <!-- Tree View Demo -->
           <div class="text-md font-medium text-white" style="background-color: #24282a">
-            <BcxTreeView items={treeData} onItemClick={handleTreeItemClick} />
+            <BcxTreeView items={enhancedTreeData} onItemClick={handleTreeItemClick} />
           </div>
 
           <!-- Extension Info -->

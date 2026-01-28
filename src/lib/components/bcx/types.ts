@@ -36,4 +36,6 @@ export interface TreeItem {
   label: string;
   children?: TreeItem[];
   open?: boolean;
+  level?: number;
+  path?: string;
 }

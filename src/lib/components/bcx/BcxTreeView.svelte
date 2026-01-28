@@ -19,7 +19,12 @@ function handleItemClick(item: TreeItem) {
       {#each items as item}
         <li>
           {#if item.children && item.children.length > 0}
-            <details bind:open={item.open} class="group">
+            <details
+              bind:open={item.open}
+              class="group"
+              data-level="{item.level}"
+              data-path="{item.path}"
+            >
               <summary
                 class="cursor-pointer select-none px-2 py-1 hover:bg-white/10 transition-colors"
                 onclick={() => handleItemClick(item)}
@@ -33,6 +38,8 @@ function handleItemClick(item: TreeItem) {
           {:else}
             <button
               class="w-full cursor-pointer text-left px-2 py-1 text-gray-200 hover:bg-white/10 transition-colors"
+              data-level="{item.level}"
+              data-path="{item.path}"
               onclick={() => handleItemClick(item)}
             >
               <span class="ml-2">{item.label}</span>
