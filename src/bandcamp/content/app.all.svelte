@@ -1,5 +1,7 @@
 <script lang="ts">
 import { PanelLeft, TerminalIcon } from 'lucide-svelte';
+import { TreeData } from 'src/app/treeview/treeData';
+import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
 import { console } from 'src/utils/console';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
@@ -10,7 +12,7 @@ import type { MusicSearchData } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
-import type { PageMusic } from '../domain/page/page.music';
+import { PageMusic } from '../domain/page/page.music';
 import { createMusicSearchDataFromBands } from './helper';
 
 // Props interface
@@ -30,6 +32,16 @@ let drawerOpen = $state(false);
 let musicSearchData: MusicSearchData = $derived(
   createMusicSearchDataFromBands(bands),
 );
+
+const treeData = new TreeData();
+
+if (pageMusic instanceof PageMusic) {
+  const bandItemTree = TreeItemFactory.fromBand(
+    pageMusic.band,
+    pageMusic.queryCountMap,
+  );
+  treeData.add(bandItemTree);
+}
 
 function handleKeydown(e: KeyboardEvent) {
   onCtrlKey('/', e, () => {
@@ -145,7 +157,7 @@ Use Ctrl+D to toggle"
 
 <!-- Side Panel -->
 <BCXSidePanel
-  pageMusic={pageMusic}
+  treeData={treeData}
   open={drawerOpen}
   onClose={() => drawerOpen = false}
 />

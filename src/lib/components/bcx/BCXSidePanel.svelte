@@ -1,96 +1,15 @@
 <script lang="ts">
 import { TreeData } from 'src/app/treeview/treeData';
 import type { TreeItem } from 'src/app/treeview/treeItem';
-import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
-import { PageMusic } from 'src/bandcamp/domain/page/page.music';
 import BcxTreeView from './BcxTreeView.svelte';
 
 interface Props {
-  pageMusic?: PageMusic;
+  treeData: TreeData;
   open?: boolean;
   onClose?: () => void;
 }
 
-let {
-  pageMusic = undefined,
-  open = false,
-  onClose = () => {},
-}: Props = $props();
-
-const treeData = new TreeData();
-
-if (pageMusic instanceof PageMusic) {
-  const band = pageMusic.band;
-  const queryCountMap = pageMusic.queryCountMap;
-  const children = band.metadata.artistNames.map((artist) => {
-    const count = queryCountMap.get(artist) || 0;
-    const label = createQueryCountString(artist, count);
-    const artistChildren: TreeItem[] = [];
-
-    band.metadata.albums.forEach((album) => {
-      if (album.artist.names.includes(artist)) {
-        artistChildren.push({
-          label: album.toString(),
-        });
-      }
-    });
-
-    return {
-      label,
-      open: false,
-      children: artistChildren,
-    } as TreeItem;
-  });
-
-  treeData.add({
-    label: 'Page Artists',
-    open: true,
-    children,
-  });
-}
-
-treeData.add({
-  id: '1',
-  label: 'Music Library',
-  open: false,
-  children: [
-    {
-      id: '1.1',
-      label: 'Albums',
-      children: [
-        {
-          id: '1.1.1',
-          label: 'Rock',
-          children: [
-            { id: '1.1.1.1', label: 'Classic Rock' },
-            { id: '1.1.1.2', label: 'Progressive Rock' },
-            { id: '1.1.1.3', label: 'Alternative Rock' },
-          ],
-        },
-        {
-          id: '1.1.2',
-          label: 'Electronic',
-          children: [
-            { id: '1.1.2.1', label: 'Ambient' },
-            { id: '1.1.2.2', label: 'Techno' },
-            { id: '1.1.2.3', label: 'Drum & Bass' },
-          ],
-        },
-        { id: '1.1.3', label: 'Jazz' },
-      ],
-    },
-    {
-      id: '1.2',
-      label: 'Artists',
-      children: [
-        { id: '1.2.1', label: 'Favorites' },
-        { id: '1.2.2', label: 'Recently Played' },
-        { id: '1.2.3', label: 'Discovered' },
-      ],
-    },
-    { id: '1.3', label: 'Playlists' },
-  ],
-});
+let { treeData, open = false, onClose = () => {} }: Props = $props();
 
 function handleTreeItemClick(item: TreeItem) {
   console.log(
@@ -113,7 +32,7 @@ function handleTreeItemClick(item: TreeItem) {
   ></button>
 
   <!-- Side Panel -->
-  <div class="fixed inset-y-0 left-0 z-[999998] w-80 bg-white/0 dark:bg-gray-800/0 backdrop-blur-md border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+  <div class="fixed inset-y-0 left-0 z-[999998] w-100 bg-white/0 dark:bg-gray-800/0 backdrop-blur-md border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl">
     <div class="flex h-full flex-col">
       <!-- Header -->
       <div class="border-b border-gray-200/30 dark:border-gray-700/30 p-4">

@@ -5,4 +5,5 @@ export interface TreeItem {
   open?: boolean;
   level?: number;
   path?: string;
+  href?: string;
 }

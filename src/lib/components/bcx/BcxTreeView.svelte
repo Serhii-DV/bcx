@@ -137,7 +137,7 @@ function expandNode(item: TreeItem) {
 
 {#snippet treeItems(items: TreeItem[])}
   {#if items.length > 0}
-    <ol>
+    <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
       {#each items as item}
         <li>
           {#if item.children && item.children.length > 0}
@@ -148,28 +148,29 @@ function expandNode(item: TreeItem) {
               data-path="{item.path}"
             >
               <summary
-                class="cursor-pointer select-none px-2 py-1 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+                class="cursor-pointer select-none px-0 py-1 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={() => handleItemClick(item)}
               >
                 {item.label}
               </summary>
-              <ol class="ml-3 mt-1 border-l border-gray-500/50 pl-2">
+              <!-- <div class="ml-2 mt-0 border-l border-gray-500/50 pl-2"> -->
                 {@render treeItems(item.children)}
-              </ol>
+              <!-- </div> -->
             </details>
           {:else}
-            <button
-              class="w-full cursor-pointer text-left px-2 py-1 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+            <a
+              class="block w-full cursor-pointer text-left px-0 py-1 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
               tabindex={focusedPath === item.path ? 0 : -1}
               onclick={() => handleItemClick(item)}
+              href="{item.href || '#'}"
             >
-              <span class="ml-2">{item.label}</span>
-            </button>
+              <span class="ml-2 text-nowrap">{item.label}</span>
+            </a>
           {/if}
         </li>
       {/each}
@@ -179,7 +180,7 @@ function expandNode(item: TreeItem) {
 
 <div
   bind:this={treeContainer}
-  class="tree-view"
+  class="tree-view pr-2 py-2"
   role="tree"
   tabindex="0"
   onkeydown={handleKeyDown}
