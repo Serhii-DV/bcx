@@ -1,6 +1,7 @@
 <script lang="ts">
 import { TreeData } from 'src/app/treeview/treeData';
 import type { TreeItem } from 'src/app/treeview/treeItem';
+import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeView from './BcxTreeView.svelte';
 
 interface Props {
@@ -11,15 +12,11 @@ interface Props {
 
 let { treeData, open = false, onClose = () => {} }: Props = $props();
 
-function handleTreeItemClick(item: TreeItem) {
-  console.log(
-    'Tree item clicked:',
-    item.label,
-    'Level:',
-    item.level,
-    'Path:',
-    item.path,
-  );
+function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
+  if (event?.currentTarget instanceof HTMLAnchorElement) {
+    event?.preventDefault();
+  }
+  musicFilterStore.setSearchQuery(item.label);
 }
 </script>
 

@@ -5,17 +5,20 @@ import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
 
 interface Props {
   treeData: TreeData;
-  onItemClick?: (item: TreeItem) => void;
+  onItemClick?: (item: TreeItem, event?: MouseEvent) => void;
 }
 
 let { treeData, onItemClick = () => {} }: Props = $props();
 let treeContainer: HTMLDivElement;
 let focusedPath: string | null = $state(null);
 
-function handleItemClick(item?: TreeItem | null) {
+function handleItemClick(item?: TreeItem | null, e?: MouseEvent) {
   if (!item) return;
   focusedPath = item.path ?? null;
-  onItemClick(item);
+
+  if (onItemClick) {
+    onItemClick(item, e);
+  }
 }
 
 function handleKeyDown(event: KeyboardEvent) {
@@ -142,16 +145,19 @@ function expandNode(item: TreeItem) {
         <li>
           {#if item.children && item.children.length > 0}
             <details
-              bind:open={item.open}
+              open={item.open}
               class="group"
               data-level="{item.level}"
               data-path="{item.path}"
+              ontoggle={(e) => {
+                item.open = e.currentTarget.open;
+              }}
             >
               <summary
                 class="cursor-pointer select-none px-0 py-1 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
-                onclick={() => handleItemClick(item)}
+                onclick={(e) => handleItemClick(item, e)}
               >
                 {item.label}
               </summary>
@@ -166,7 +172,7 @@ function expandNode(item: TreeItem) {
               data-level="{item.level}"
               data-path="{item.path}"
               tabindex={focusedPath === item.path ? 0 : -1}
-              onclick={() => handleItemClick(item)}
+              onclick={(e) => handleItemClick(item, e)}
               href="{item.href || '#'}"
             >
               <span class="ml-2 text-nowrap">{item.label}</span>
