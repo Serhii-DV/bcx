@@ -455,7 +455,7 @@ export class PageMusic {
       return null;
     }
 
-    const src = artworkImg.getAttribute('src');
+    const src = artworkImg.getAttribute('data-original');
     if (!src) {
       return null;
     }
