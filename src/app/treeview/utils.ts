@@ -67,3 +67,20 @@ export function findItemByPath(
   }
   return null;
 }
+
+export function hasDescendantMatchingQuery(
+  item: TreeItem,
+  query: string,
+): boolean {
+  if (isNode(item) && item.children) {
+    for (const child of item.children) {
+      if (child.query?.includes(query)) {
+        return true;
+      }
+      if (hasDescendantMatchingQuery(child, query)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

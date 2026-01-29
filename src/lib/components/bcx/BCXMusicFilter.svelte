@@ -54,6 +54,7 @@ $effect(() => {
 
     handleFilterChange(searchQuery);
     updateUrlQueryParamValue(MUSIC_FILTER_QUERY_PARAM, searchQuery);
+    musicFilterStore.setSearchQuery(searchQuery);
   }
 });
 

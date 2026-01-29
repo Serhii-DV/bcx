@@ -1,8 +1,14 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/treeData';
 import type { TreeItem } from 'src/app/treeview/treeItem';
-import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
+import {
+  hasDescendantMatchingQuery,
+  isNode,
+  isNodeExpanded,
+} from 'src/app/treeview/utils';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
+import { onDestroy, onMount } from 'svelte';
+import { musicFilterStore } from '$lib/stores/musicFilter';
 
 interface Props {
   treeData: TreeData;
@@ -12,6 +18,60 @@ interface Props {
 let { treeData, onItemClick = () => {} }: Props = $props();
 let treeContainer: HTMLDivElement;
 let focusedPath: string | null = $state(null);
+let searchQuery = $state('');
+let storeUnsubscribe: (() => void) | null = null;
+
+// Reactive values
+$effect(() => {
+  if (searchQuery && searchQuery.trim() !== '') {
+    console.log('[searchQuery]', '[BcxTreeView]', 'effect', searchQuery);
+    // Expand all nodes that contain matching items
+    treeData.items.forEach((item) => {
+      if (!isNode(item)) {
+        return;
+      }
+      const hasMatchingDescendant = hasDescendantMatchingQuery(
+        item,
+        searchQuery,
+      );
+      console.log(
+        '[searchQuery]',
+        '[BcxTreeView]',
+        'effect',
+        'hasMatchingDescendant',
+        item,
+        hasMatchingDescendant,
+      );
+      if (hasMatchingDescendant && !item.open) {
+        expandNode(item);
+      }
+    });
+  } else {
+    // Optional: Collapse all nodes when search is cleared
+    // Uncomment if you want this behavior:
+    // treeData.items.forEach((item) => {
+    //   if (isNode(item) && item.open) {
+    //     collapseNode(item);
+    //   }
+    // });
+  }
+});
+
+onMount(() => {
+  // Subscribe to store updates
+  storeUnsubscribe = musicFilterStore.subscribe((state) => {
+    console.log('[setSearchQuery]', 'BcxTreeView subscribe', state);
+    if (state.searchQuery !== searchQuery) {
+      searchQuery = state.searchQuery || '';
+    }
+  });
+});
+
+onDestroy(() => {
+  if (storeUnsubscribe) {
+    storeUnsubscribe();
+  }
+});
 
 function handleItemClick(item?: TreeItem | null, e?: MouseEvent) {
   if (!item) return;
