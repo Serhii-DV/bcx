@@ -27,7 +27,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["bandcamp.page.all.css"],
+      "resources": ["bandcamp.page.all.css", "assets/0.gif"],
       "matches": ["https://*.bandcamp.com/*"]
     },
     {

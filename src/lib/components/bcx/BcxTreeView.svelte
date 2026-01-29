@@ -2,6 +2,7 @@
 import type { TreeData } from 'src/app/treeview/treeData';
 import type { TreeItem } from 'src/app/treeview/treeItem';
 import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
+import { getExtensionUrl } from 'src/utils/chrome.runtime';
 
 interface Props {
   treeData: TreeData;
@@ -136,6 +137,18 @@ function expandNode(item: TreeItem) {
     element.open = true;
   }
 }
+
+function updateTreeImages(detailsElement: HTMLDetailsElement) {
+  const images = detailsElement.querySelectorAll(
+    ':scope > ol > li > a > img.bcx-tree-item-img',
+  ) as NodeListOf<HTMLImageElement>;
+  images.forEach((img) => {
+    const dataSrc = img.getAttribute('data-src');
+    if (dataSrc && img.src !== dataSrc) {
+      img.src = dataSrc;
+    }
+  });
+}
 </script>
 
 {#snippet treeItems(items: TreeItem[])}
@@ -151,6 +164,10 @@ function expandNode(item: TreeItem) {
               data-path="{item.path}"
               ontoggle={(e) => {
                 item.open = e.currentTarget.open;
+                // Update images when details is opened
+                if (e.currentTarget.open) {
+                  updateTreeImages(e.currentTarget);
+                }
               }}
             >
               <summary
@@ -176,7 +193,7 @@ function expandNode(item: TreeItem) {
               href="{item.href || '#'}"
             >
               {#if item.image}
-              <img src="{item.image}" alt="{item.label}" class="w-6 h-6 flex-shrink-0" />
+              <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
               {/if}
               <span class="ml-2 text-nowrap">{item.label}</span>
             </a>

@@ -65,6 +65,12 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
         js: isProd ? 'source-map' : 'cheap-module-source-map',
       },
       assetPrefix: './',
+      copy: [
+        {
+          from: './src/assets',
+          to: './assets',
+        },
+      ],
     },
     html: {
       outputStructure: 'flat',
