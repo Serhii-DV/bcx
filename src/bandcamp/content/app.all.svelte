@@ -49,7 +49,6 @@ $effect(() => {
   const pgBody = element('#pgBd');
   if (pgBody === null) return;
 
-  console.log('Current window width:', window.innerWidth);
   const curLeft = (window.innerWidth - 950) / 2;
   const sidePanelWidth = 400;
 
