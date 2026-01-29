@@ -29,4 +29,6 @@ export const musicFilterStore = {
   },
 
   getState: () => ({ ...filterState }),
+
+  getSubscribersCount: () => subscribers.size,
 };
