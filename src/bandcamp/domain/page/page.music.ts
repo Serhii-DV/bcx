@@ -28,6 +28,8 @@ interface MusicGridClientItem {
 
 type Release = Album | Track;
 
+let pageMusic: PageMusic | null = null;
+
 export class PageMusic {
   public band: Band;
   public musicGridElement: HTMLElement | null = null;
@@ -50,8 +52,12 @@ export class PageMusic {
   }
 
   static async init(): Promise<PageMusic> {
+    if (pageMusic instanceof PageMusic) {
+      return pageMusic;
+    }
+
     await injectCssFile(getExtensionUrl('bandcamp.page.music.css'));
-    const pageMusic = new PageMusic();
+    pageMusic = new PageMusic();
     await pageMusic.initReleases();
 
     console.log('[PageMusic]', '[band]', pageMusic.band);
