@@ -6,7 +6,10 @@
 import Isotope from 'isotope-layout';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
-import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
+import {
+  createQueryCountBadgeElement,
+  createQueryCountString,
+} from 'src/bandcamp/domain/page/helper';
 import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { console } from 'src/utils/console';
@@ -104,7 +107,7 @@ function setupDataList(): void {
   // Add artists
   band.metadata.artistNames.forEach((artistName) => {
     const count = queryCountMap?.get(artistName) || 0;
-    options.push(artistName + ' (' + count + ')');
+    options.push(createQueryCountString(artistName, count));
   });
 
   // We don't need to show other bands on the band page
@@ -116,7 +119,7 @@ function setupDataList(): void {
 
   band.metadata.keywords.forEach((keyword) => {
     const count = queryCountMap?.get(keyword) || 0;
-    options.push(keyword + ' (' + count + ')');
+    options.push(createQueryCountString(keyword, count));
   });
 
   createDataListForInput(options, filterInput);

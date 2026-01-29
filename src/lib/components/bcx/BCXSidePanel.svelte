@@ -16,7 +16,8 @@ function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
   if (event?.currentTarget instanceof HTMLAnchorElement) {
     event?.preventDefault();
   }
-  musicFilterStore.setSearchQuery(item.label);
+  if (!item.query) return;
+  musicFilterStore.setSearchQuery(item.query);
 }
 </script>
 

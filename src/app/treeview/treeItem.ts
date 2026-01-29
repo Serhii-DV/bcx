@@ -6,4 +6,5 @@ export interface TreeItem {
   level?: number;
   path?: string;
   href?: string;
+  query?: string;
 }

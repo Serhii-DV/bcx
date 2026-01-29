@@ -40,6 +40,7 @@ function createBandArtistsReleasesTreeItems(
       if (album.artist.names.includes(artist)) {
         artistChildren.push({
           label: album.toString(),
+          query: album.toString(),
           href: album.url.toString(),
         });
       }
@@ -47,6 +48,7 @@ function createBandArtistsReleasesTreeItems(
 
     return {
       label,
+      query: artist,
       open: false,
       children: artistChildren,
     } as TreeItem;
@@ -65,6 +67,7 @@ function createBandYearsTreeItem(
 
     return {
       label,
+      query: year.toString(),
     };
   });
 
@@ -85,6 +88,7 @@ function createBandKeywordsTreeItem(
 
     return {
       label,
+      query: keyword,
     };
   });
 
