@@ -8,6 +8,7 @@ import { currentPageUrl } from 'src/core/shared';
 import { arrayPreview, console } from 'src/utils/console';
 import { PageMusic } from '../domain/page/page.music';
 import { BandcampStorage } from '../domain/storage';
+import './app.music';
 
 onDOMReady(async () => {
   if (!currentPageUrl.isBandcamp) {
