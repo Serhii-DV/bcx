@@ -3,6 +3,7 @@ import { PanelLeft, TerminalIcon } from 'lucide-svelte';
 import { TreeData } from 'src/app/treeview/treeData';
 import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
 import { console } from 'src/utils/console';
+import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel } from '$lib/components/bcx';
@@ -26,7 +27,7 @@ let { bands = [], pageMusic = undefined }: Props = $props();
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
-let drawerOpen = $state(false);
+let sidePanelOpen = $state(false);
 
 // Derive music search data from bands prop
 let musicSearchData: MusicSearchData = $derived(
@@ -43,6 +44,22 @@ if (pageMusic instanceof PageMusic) {
   treeData.add(bandItemTree);
 }
 
+// Effect to change main BC block position when side panel is open
+$effect(() => {
+  const pgBody = element('#pgBd');
+  if (pgBody === null) return;
+
+  console.log('Current window width:', window.innerWidth);
+  const curLeft = (window.innerWidth - 950) / 2;
+  const sidePanelWidth = 400;
+
+  if (curLeft < sidePanelWidth) {
+    pgBody.style.left = sidePanelOpen
+      ? `${sidePanelWidth - curLeft + 20}px`
+      : '';
+  }
+});
+
 function handleKeydown(e: KeyboardEvent) {
   onCtrlKey('/', e, () => {
     commandOpen = !commandOpen;
@@ -55,7 +72,7 @@ function handleKeydown(e: KeyboardEvent) {
 
   // Ctrl+D for drawer
   onCtrlKey('d', e, () => {
-    drawerOpen = !drawerOpen;
+    sidePanelOpen = !sidePanelOpen;
   });
 }
 
@@ -129,7 +146,7 @@ Use Ctrl+/ to toggle"
     class="bcx-drawer-button"
     title="BCX - Side Panel.
 Use Ctrl+D to toggle"
-    onclick={() => drawerOpen = true}
+    onclick={() => sidePanelOpen = true}
   >
     <PanelLeft />
   </button>
@@ -158,8 +175,8 @@ Use Ctrl+D to toggle"
 <!-- Side Panel -->
 <BCXSidePanel
   treeData={treeData}
-  open={drawerOpen}
-  onClose={() => drawerOpen = false}
+  open={sidePanelOpen}
+  onClose={() => sidePanelOpen = false}
 />
 {/if}
 
