@@ -42,6 +42,7 @@ function createBandArtistsReleasesTreeItems(
           label: album.toString(),
           query: album.toString(),
           href: album.url.toString(),
+          image: album.artwork.tinySizeUrl,
         });
       }
     });

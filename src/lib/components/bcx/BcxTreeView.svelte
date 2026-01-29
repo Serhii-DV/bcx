@@ -175,6 +175,9 @@ function expandNode(item: TreeItem) {
               onclick={(e) => handleItemClick(item, e)}
               href="{item.href || '#'}"
             >
+              {#if item.image}
+              <img src="{item.image}" alt="{item.label}" class="w-6 h-6 flex-shrink-0" />
+              {/if}
               <span class="ml-2 text-nowrap">{item.label}</span>
             </a>
           {/if}
