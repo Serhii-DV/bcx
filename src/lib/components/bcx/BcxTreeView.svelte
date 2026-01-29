@@ -159,7 +159,7 @@ function expandNode(item: TreeItem) {
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleItemClick(item, e)}
               >
-                {item.label}
+                <span>{item.label}</span>
               </summary>
               <!-- <div class="ml-2 mt-0 border-l border-gray-500/50 pl-2"> -->
                 {@render treeItems(item.children)}
@@ -167,7 +167,7 @@ function expandNode(item: TreeItem) {
             </details>
           {:else}
             <a
-              class="block w-full cursor-pointer text-left px-0 py-1 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+              class="block w-full cursor-pointer ml-2 pl-2 text-left px-0 py-1 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
@@ -186,7 +186,7 @@ function expandNode(item: TreeItem) {
 
 <div
   bind:this={treeContainer}
-  class="tree-view pr-2 py-2"
+  class="bcx-tree-view pr-2 py-2"
   role="tree"
   tabindex="0"
   onkeydown={handleKeyDown}
@@ -199,3 +199,35 @@ function expandNode(item: TreeItem) {
 >
   {@render treeItems(treeData.items)}
 </div>
+
+<style>
+:is([open]:is(.bcx-tree-view details) > summary)::before {
+  transform: rotate(90deg);
+}
+
+:is(.bcx-tree-view details) summary {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+:is(:is(.bcx-tree-view details) summary)::before {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  margin: 0.25rem;
+  content: "";
+  background-color: currentcolor;
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
+          mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
+  -webkit-mask-size: cover;
+          mask-size: cover;
+}
+
+.bcx-tree-view a, .bcx-tree-view span:not(.highlight-container) {
+    display: inline-flex;
+    padding-block: .25rem;
+    vertical-align: middle;
+}
+</style>
