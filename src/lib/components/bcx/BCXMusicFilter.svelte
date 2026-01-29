@@ -17,7 +17,6 @@ import { createDataListForInput } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
-import BCXBadgeSection from './BCXBadgeSection.svelte';
 import filterStyles from './BCXMusicFilter.css?inline';
 import type { QueryCountMap } from './types';
 
@@ -334,23 +333,5 @@ function destroy(): void {
   <div class="bcx-filter-badges filter-by-years">
     <div class="bcx-badges-container" bind:this={yearsBadgesContainer}></div>
   </div>
-
-  <BCXBadgeSection
-    title="Artists"
-    items={band.metadata.artistNames}
-    queryCountMap={queryCountMap}
-    badgeClass="bcx-badge-artist"
-    tooltipText="Filter by artist"
-    showSorting={true}
-  />
-
-  <BCXBadgeSection
-    title="Keywords"
-    items={band.metadata.keywords}
-    queryCountMap={queryCountMap}
-    badgeClass="bcx-badge-keyword"
-    tooltipText="Filter by keyword"
-    showSorting={true}
-  />
 
 </div>
