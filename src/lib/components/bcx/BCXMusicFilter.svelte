@@ -13,7 +13,7 @@ import {
 import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { createDataListForInput } from 'src/utils/dom';
+import { createDataListForInput, element } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
@@ -217,6 +217,21 @@ function filterItems(query: string): void {
       const filterValue = musicGridItem.getAttribute('data-filter-value') || '';
       return filterValue.includes(query);
     });
+
+    // Lazy load images for visible items
+    visibleItems.forEach((item) => {
+      const img = element(
+        'img.lazy[src="/img/0.gif"]',
+        item,
+      ) as HTMLImageElement | null;
+      if (!img || !img.dataset.original) {
+        return;
+      }
+      img.src = img.dataset.original;
+      img.classList.remove('lazy');
+      img.removeAttribute('data-original');
+    });
+
     visibleCount = visibleItems.length;
   } else {
     visibleCount = totalCount;
