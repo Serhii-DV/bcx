@@ -21,13 +21,6 @@ function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
 </script>
 
 {#if open}
-  <!-- Overlay -->
-  <button
-    class="fixed inset-0 z-[999997] bg-black/30"
-    onclick={onClose}
-    aria-label="Close"
-  ></button>
-
   <!-- Side Panel -->
   <div class="fixed inset-y-0 left-0 z-[999998] w-100 bg-white/0 dark:bg-gray-800/0 backdrop-blur-md border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl">
     <div class="flex h-full flex-col">
