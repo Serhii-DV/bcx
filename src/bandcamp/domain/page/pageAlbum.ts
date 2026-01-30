@@ -11,6 +11,8 @@ import {
   type MusicAlbumSchema,
 } from './schema';
 
+let pageAlbum: PageAlbum | null = null;
+
 export class PageAlbum {
   /**
    * @throws Error if schema is not found or invalid
@@ -20,12 +22,19 @@ export class PageAlbum {
   }
 
   static async init(): Promise<PageAlbum> {
+    if (pageAlbum) {
+      return pageAlbum;
+    }
+
+    console.log('[PageAlbum]', 'Initializing PageAlbum');
+
     await injectCssFile(getExtensionUrl('bandcamp.page.album.css'));
 
     const schema = getMusicAlbumSchema();
     console.log('[PageAlbum]', '[Schema]', schema);
 
-    const pageAlbum = new PageAlbum(AlbumFactory.createFromSchema(schema!));
+    const album = AlbumFactory.createFromSchema(schema!);
+    pageAlbum = new PageAlbum(album);
     await pageAlbum.loadTracksFromStorage();
 
     console.log('[PageAlbum]', '[Album]', pageAlbum.album);

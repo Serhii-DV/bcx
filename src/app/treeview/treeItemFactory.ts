@@ -1,10 +1,12 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
+import { createQueryCountMap } from 'src/utils/array';
 import type { QueryCountMap } from '$lib/components/bcx';
 import type { TreeItem } from './treeItem';
 
 export class TreeItemFactory {
-  static fromBand(band: Band, queryCountMap: QueryCountMap): TreeItem {
+  static fromBand(band: Band): TreeItem {
+    const queryCountMap = createQueryCountMap(band.metadata.queries);
     const children: TreeItem[] = [];
 
     children.push({

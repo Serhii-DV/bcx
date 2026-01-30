@@ -45,11 +45,10 @@ export class BandcampStorage {
     return await storage.set(storageData);
   }
 
-  static async getBands(): Promise<Band[]> {
-    const bandIds: number[] = await this.getBandsIds();
-
+  static async getBands(bandIds: number[] = []): Promise<Band[]> {
     if (bandIds.length === 0) {
-      return [];
+      const bandIds: number[] = await this.getBandsIds();
+      return this.getBands(bandIds);
     }
 
     const bandsStorableData = await this.getBandsStorableData(bandIds);
