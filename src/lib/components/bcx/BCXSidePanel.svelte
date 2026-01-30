@@ -77,7 +77,7 @@ function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
   }
 
   :global(#bcx-side-panel) {
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgb(31 41 55 / 56%);
     width: 400px;
   }
 </style>
