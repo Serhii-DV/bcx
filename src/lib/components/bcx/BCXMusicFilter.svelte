@@ -274,45 +274,46 @@ function destroy(): void {
 </script>
 
 <div class="bcx-filter-container">
-  <div class="bcx-filter-input-container">
-    <input
-      id="bcx-filter-input"
-      bind:this={filterInput}
-      bind:value={searchQuery}
-      oninput={handleInput}
-      onchange={handleChange}
-      type="text"
-      class="bcx-filter-input"
-      placeholder="Search for artists or albums..."
-    />
+  <div class="bcx-filter-main-row">
+    <div class="bcx-filter-input-container">
+      <input
+        id="bcx-filter-input"
+        bind:this={filterInput}
+        bind:value={searchQuery}
+        oninput={handleInput}
+        onchange={handleChange}
+        type="text"
+        class="bcx-filter-input"
+        placeholder="Search for artists or albums..."
+      />
 
-    {#if searchQuery.trim()}
-      <button
-        type="button"
-        class="bcx-filter-clear-button"
-        onclick={clearFilter}
-        title="Clear search"
-        aria-label="Clear search"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+      {#if searchQuery.trim()}
+        <button
+          type="button"
+          class="bcx-filter-clear-button"
+          onclick={clearFilter}
+          title="Clear search"
+          aria-label="Clear search"
         >
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    {/if}
-  </div>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      {/if}
+    </div>
 
-  <div class="filter-results-count">
-    Showing {visibleCount} of {totalCount} albums
+    <div class="filter-results-count" title="{visibleCount} of {totalCount} items shown">
+      {visibleCount} / {totalCount}
+    </div>
   </div>
-
 </div>
