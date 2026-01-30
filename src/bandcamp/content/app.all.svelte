@@ -1,5 +1,5 @@
 <script lang="ts">
-import { PanelLeft, TerminalIcon } from 'lucide-svelte';
+import { TerminalIcon } from 'lucide-svelte';
 import { TreeData } from 'src/app/treeview/treeData';
 import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
 import { console } from 'src/utils/console';
@@ -7,6 +7,7 @@ import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel } from '$lib/components/bcx';
+import BCXDrawerButton from '$lib/components/bcx/BCXDrawerButton.svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
 import type { MusicSearchData } from '$lib/components/bcx/types';
@@ -141,14 +142,10 @@ Use Ctrl+/ to toggle"
     <TerminalIcon /> BCX
   </button>
 
-  <button
-    class="bcx-drawer-button"
-    title="BCX - Side Panel.
-Use Ctrl+D to toggle"
-    onclick={() => sidePanelOpen = true}
-  >
-    <PanelLeft />
-  </button>
+  <BCXDrawerButton
+    sidePanelOpen={sidePanelOpen}
+    onToggle={() => sidePanelOpen = !sidePanelOpen}
+  />
 {/if}
 
 {#if shadowContainer}
@@ -215,38 +212,5 @@ Use Ctrl+D to toggle"
     outline: none;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   }
-
-  /* BCX Drawer Button Styles */
-  :global(.bcx-drawer-button) {
-    background: #1f2937;
-    border: 1px solid #374151;
-    color: #f9fafb;
-    border-radius: 8px;
-    padding: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: fixed;
-    bottom: 20px;
-    right: 140px; /* Position to the left of the BCX button */
-    z-index: 999999;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  :global(.bcx-drawer-button:hover) {
-    background: #374151;
-    border-color: #4b5563;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  }
-
-  :global(.bcx-drawer-button:focus) {
-    background: #374151;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-  }
-
 
 </style>
