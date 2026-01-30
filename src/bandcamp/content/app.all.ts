@@ -11,6 +11,8 @@ import { BandcampStorage } from '../domain/storage';
 import './app.music';
 import './app.album';
 import './app.track';
+import { TreeData } from 'src/app/treeview/treeData';
+import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
 
 onDOMReady(async () => {
   if (!currentPageUrl.isBandcamp) {
@@ -36,17 +38,22 @@ onDOMReady(async () => {
       ...arrayPreview(bands),
     );
 
-    let pageMusic = undefined;
+    const treeData = new TreeData();
 
     if (currentPageUrl.isMusic) {
-      pageMusic = await PageMusic.init();
+      const pageMusic = await PageMusic.init();
+      const bandItemTree = TreeItemFactory.fromBand(
+        pageMusic.band,
+        pageMusic.queryCountMap,
+      );
+      treeData.add(bandItemTree);
     }
 
     mount(App, {
       target: shadowRoot,
       props: {
         bands,
-        pageMusic,
+        treeData,
       },
     });
   } catch (error) {

@@ -1,7 +1,6 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
 import { TreeData } from 'src/app/treeview/treeData';
-import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
 import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
@@ -14,16 +13,15 @@ import type { MusicSearchData } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
-import { PageMusic } from '../domain/page/pageMusic';
 import { createMusicSearchDataFromBands } from './helper';
 
 // Props interface
 interface Props {
   bands?: Band[];
-  pageMusic?: PageMusic;
+  treeData?: TreeData;
 }
 
-let { bands = [], pageMusic = undefined }: Props = $props();
+let { bands = [], treeData = new TreeData() }: Props = $props();
 
 let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
@@ -34,16 +32,6 @@ let sidePanelOpen = $state(false);
 let musicSearchData: MusicSearchData = $derived(
   createMusicSearchDataFromBands(bands),
 );
-
-const treeData = new TreeData();
-
-if (pageMusic instanceof PageMusic) {
-  const bandItemTree = TreeItemFactory.fromBand(
-    pageMusic.band,
-    pageMusic.queryCountMap,
-  );
-  treeData.add(bandItemTree);
-}
 
 // Effect to change main BC block position when side panel is open
 $effect(() => {
