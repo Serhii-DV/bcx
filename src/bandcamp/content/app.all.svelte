@@ -14,7 +14,7 @@ import type { MusicSearchData } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
-import { PageMusic } from '../domain/page/page.music';
+import { PageMusic } from '../domain/page/pageMusic';
 import { createMusicSearchDataFromBands } from './helper';
 
 // Props interface

@@ -9,6 +9,8 @@ import { arrayPreview, console } from 'src/utils/console';
 import { PageMusic } from '../domain/page/pageMusic';
 import { BandcampStorage } from '../domain/storage';
 import './app.music';
+import './app.album';
+import './app.track';
 
 onDOMReady(async () => {
   if (!currentPageUrl.isBandcamp) {
