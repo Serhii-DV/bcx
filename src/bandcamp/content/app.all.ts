@@ -6,7 +6,7 @@ import { injectCssFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { arrayPreview, console } from 'src/utils/console';
-import { PageMusic } from '../domain/page/page.music';
+import { PageMusic } from '../domain/page/pageMusic';
 import { BandcampStorage } from '../domain/storage';
 import './app.music';
 
