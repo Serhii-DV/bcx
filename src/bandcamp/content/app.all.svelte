@@ -172,7 +172,6 @@ Use Ctrl+/ to toggle"
 <BCXSidePanel
   treeData={treeData}
   open={sidePanelOpen}
-  onClose={() => sidePanelOpen = false}
 />
 {/if}
 

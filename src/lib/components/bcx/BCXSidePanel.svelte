@@ -7,10 +7,9 @@ import BcxTreeView from './BcxTreeView.svelte';
 interface Props {
   treeData: TreeData;
   open?: boolean;
-  onClose?: () => void;
 }
 
-let { treeData, open = false, onClose = () => {} }: Props = $props();
+let { treeData, open = false }: Props = $props();
 
 function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
   if (event?.currentTarget instanceof HTMLAnchorElement) {
