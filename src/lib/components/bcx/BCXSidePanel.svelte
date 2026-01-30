@@ -1,6 +1,7 @@
 <script lang="ts">
 import { TreeData } from 'src/app/treeview/treeData';
 import type { TreeItem } from 'src/app/treeview/treeItem';
+import { currentPageUrl } from 'src/core/shared';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeView from './BcxTreeView.svelte';
 
@@ -12,6 +13,12 @@ interface Props {
 let { treeData, open = false }: Props = $props();
 
 function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
+  if (!currentPageUrl.isMusic) {
+    // Only handle clicks on music pages
+    // on other pages it must open the page normally
+    return;
+  }
+
   if (event?.currentTarget instanceof HTMLAnchorElement) {
     event?.preventDefault();
   }
