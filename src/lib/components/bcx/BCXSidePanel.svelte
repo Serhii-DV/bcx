@@ -21,55 +21,49 @@ function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
 }
 </script>
 
-{#if open}
-  <!-- Side Panel -->
-  <div class="fixed inset-y-0 left-0 z-[999998] w-100 bg-white/0 dark:bg-gray-800/0 backdrop-blur-md border-r border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-    <div class="flex h-full flex-col">
-      <!-- Header -->
-      <div class="border-b border-gray-200/30 dark:border-gray-700/30 p-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-white dark:text-white">BCX Side Panel</h2>
-          <button
-            onclick={onClose}
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            title="Close panel"
-          >
-            ✕
-          </button>
-        </div>
+<!-- Side Panel -->
+<div
+  id="bcx-side-panel"
+  class="fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white border-r transition-transform duration-300 ease-in-out {open ? 'block' : 'hidden'}"
+>
+  <div class="flex h-full flex-col">
+    <!-- Header -->
+    <div class="border-b border-gray-200/30 dark:border-gray-700/30 p-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">BCX Side Panel</h2>
       </div>
+    </div>
 
-      <!-- Content -->
-      <div class="flex-1 overflow-y-auto">
-        <div class="space-y-4">
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto">
+      <div class="space-y-4">
 
-          <!-- Tree View Demo -->
-          <div class="text-md font-medium text-white" style="background-color: #24282a">
-            <BcxTreeView treeData={treeData} onItemClick={handleTreeItemClick} />
-          </div>
+        <!-- Tree View Demo -->
+        <div class="text-md">
+          <BcxTreeView treeData={treeData} onItemClick={handleTreeItemClick} />
+        </div>
 
-          <!-- Extension Info -->
-          <div class="p-3 bg-gray-50/60 dark:bg-gray-700/60 rounded-lg backdrop-blur-sm">
-            <h3 class="font-medium text-gray-900 dark:text-white mb-2">Extension Info</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              BCX enhances your Bandcamp experience with powerful search and filtering tools.
-            </p>
-          </div>
+        <!-- Extension Info -->
+        <div class="p-3">
+          <h3 class="mb-2">Extension Info</h3>
+          <p class="text-sm">
+            BCX enhances your Bandcamp experience with powerful search and filtering tools.
+          </p>
+        </div>
 
-          <!-- Keyboard Shortcuts -->
-          <div class="p-3 bg-gray-50/60 dark:bg-gray-700/60 rounded-lg backdrop-blur-sm">
-            <h3 class="font-medium text-gray-900 dark:text-white mb-2">Keyboard Shortcuts</h3>
-            <div class="space-y-1 text-sm text-gray-600 dark:text-gray-300">
-              <div><kbd class="kbd">Ctrl+/</kbd> Open command menu</div>
-              <div><kbd class="kbd">Ctrl+M</kbd> Search music</div>
-              <div><kbd class="kbd">Ctrl+D</kbd> Toggle panel</div>
-            </div>
+        <!-- Keyboard Shortcuts -->
+        <div class="p-3">
+          <h3 class="mb-2">Keyboard Shortcuts</h3>
+          <div class="space-y-1 text-sm">
+            <div><kbd class="kbd">Ctrl+/</kbd> Open command menu</div>
+            <div><kbd class="kbd">Ctrl+M</kbd> Search music</div>
+            <div><kbd class="kbd">Ctrl+D</kbd> Toggle panel</div>
           </div>
         </div>
       </div>
     </div>
   </div>
-{/if}
+</div>
 
 <style>
   /* Custom kbd styling */
@@ -81,5 +75,10 @@ function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
     font-size: 0.75rem;
     font-family: monospace;
     border: 1px solid #4b5563;
+  }
+
+  :global(#bcx-side-panel) {
+    background-color: rgba(0, 0, 0, 0.9);
+    width: 400px;
   }
 </style>
