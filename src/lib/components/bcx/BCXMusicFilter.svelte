@@ -6,10 +6,7 @@
 import Isotope from 'isotope-layout';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
-import {
-  createQueryCountBadgeElement,
-  createQueryCountString,
-} from 'src/bandcamp/domain/page/helper';
+import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { console } from 'src/utils/console';
@@ -40,7 +37,6 @@ let previousQuery = '';
 let visibleCount = $state(0);
 let totalCount = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
-let yearsBadgesContainer: HTMLElement | null = $state(null);
 
 // Reactive values
 $effect(() => {
@@ -72,7 +68,6 @@ onMount(() => {
   injectStyles();
   initMusicIsotope();
   setupDataList();
-  renderBadges();
 
   // Watch for browser navigation (Back/Forward buttons)
   window.addEventListener('popstate', handlePopState);
@@ -246,32 +241,6 @@ function clearFilter(): void {
   }
 }
 
-function renderYearBadges(): void {
-  if (yearsBadgesContainer === null) return;
-
-  // Clear existing badges
-  yearsBadgesContainer.innerHTML = '';
-
-  // Create year badges
-  band.metadata.years.forEach((year) => {
-    const query = year.toString();
-    if (query) {
-      const count = queryCountMap?.get(query) || 0;
-      const badgeElement = createQueryCountBadgeElement(
-        query,
-        count,
-        'Filter by year',
-        'bcx-badge-year',
-      );
-      yearsBadgesContainer?.appendChild(badgeElement);
-    }
-  });
-}
-
-function renderBadges(): void {
-  renderYearBadges();
-}
-
 function injectStyles(): void {
   // Check if styles are already injected
   if (document.getElementById('bcx-filter-styles')) {
@@ -344,10 +313,6 @@ function destroy(): void {
 
   <div class="filter-results-count">
     Showing {visibleCount} of {totalCount} albums
-  </div>
-
-  <div class="bcx-filter-badges filter-by-years">
-    <div class="bcx-badges-container" bind:this={yearsBadgesContainer}></div>
   </div>
 
 </div>
