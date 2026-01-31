@@ -5,7 +5,7 @@ import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
-import { BCXSidePanel } from '$lib/components/bcx';
+import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
 import BCXDrawerButton from '$lib/components/bcx/BCXDrawerButton.svelte';
 import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
 import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
@@ -32,6 +32,47 @@ let sidePanelOpen = $state(false);
 let musicSearchData: MusicSearchData = $derived(
   createMusicSearchDataFromBands(bands),
 );
+
+// Tour configuration
+const tourSteps = [
+  {
+    id: 'welcome',
+    title: '🎉 Welcome to BCX!',
+    message:
+      "Welcome to Bandcamp Explorer! Let's take a quick tour of the main features.",
+  },
+  {
+    id: 'drawer-button',
+    targetElement: '#bcx-drawer-button',
+    title: '📂 Side Panel',
+    message:
+      'This button opens the side panel where you can explore your music collection. You can also use <kbd>Ctrl+D</kbd> to toggle it.',
+    useShadowRoot: true,
+  },
+  {
+    id: 'main-button',
+    targetElement: '#bcx-trigger-button',
+    title: '⚡ Quick Actions',
+    message:
+      'Click here or press <kbd>Ctrl+/</kbd> to open the command palette for quick access to all BCX features.',
+    useShadowRoot: true,
+  },
+  {
+    id: 'music-filter',
+    targetElement: '#bcx-filter-input',
+    title: '🔍 Smart Search',
+    message:
+      'Use this search to filter artists, albums, and tracks. It works in real-time as you type!',
+    delay: 1000,
+  },
+  {
+    id: 'filter-results',
+    targetElement: '.filter-results-count',
+    title: '📊 Results Counter',
+    message:
+      'This shows the number of matching results as you search. It helps you see how many items match your current filter.',
+  },
+];
 
 // Effect to change main BC block position when side panel is open
 $effect(() => {
@@ -122,6 +163,7 @@ function handleSettingsSelect() {
 
 {#if shadowContainer}
   <button
+    id="bcx-trigger-button"
     class="bcx-trigger-button"
     title="BCX - Bandcamp Extension Menu.
 Use Ctrl+/ to toggle"
@@ -160,6 +202,14 @@ Use Ctrl+/ to toggle"
 <BCXSidePanel
   treeData={treeData}
   open={sidePanelOpen}
+/>
+
+<!-- Tour -->
+<BCXTour
+  steps={tourSteps}
+  autoStart={true}
+  onTourComplete={() => console.log('🎉 Tour completed!')}
+  onTourSkipped={() => console.log('⏭️ Tour skipped')}
 />
 {/if}
 

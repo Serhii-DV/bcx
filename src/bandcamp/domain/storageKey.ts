@@ -6,6 +6,7 @@ const BAND_KEY_PREFIX = '/b/';
 const ALBUM_KEY_PREFIX = '/a/';
 const TRACK_KEY_PREFIX = '/t/';
 const BANDS_KEY = '/bands';
+const TOUR_COMPLETE_KEY = '/ui/tour-complete';
 
 export class StorageKey {
   static bandKey(bandId: number): string {
@@ -42,5 +43,9 @@ export class StorageKey {
 
   static isBandsKey(key: string): boolean {
     return key === BANDS_KEY;
+  }
+
+  static onboardingTourCompletedKey(): string {
+    return TOUR_COMPLETE_KEY;
   }
 }

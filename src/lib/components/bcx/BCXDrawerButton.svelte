@@ -1,5 +1,6 @@
 <script lang="ts">
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-svelte';
+import { onMount } from 'svelte';
 
 interface Props {
   sidePanelOpen: boolean;
@@ -11,6 +12,11 @@ let { sidePanelOpen, onToggle }: Props = $props();
 let drawerButton: HTMLElement | null = $state(null);
 let isNearButton = $state(false);
 let cursorY = $state(0);
+
+// Initial positioning setup
+onMount(() => {
+  // Component is ready
+});
 
 // Effect to position the drawer button relative to the side panel
 $effect(() => {
@@ -51,17 +57,22 @@ function handleMouseMove(e: MouseEvent) {
   // Update cursor Y position
   cursorY = e.clientY;
 }
+
+function handleButtonClick() {
+  onToggle();
+}
 </script>
 
 <svelte:document onmousemove={handleMouseMove} />
 
 <button
+  id="bcx-drawer-button"
   bind:this={drawerButton}
   class="bcx-drawer-button"
   class:near-edge={isNearButton}
   title="BCX - Side Panel.
 Use Ctrl+D to toggle"
-  onclick={onToggle}
+  onclick={handleButtonClick}
 >
   {#if sidePanelOpen}
     <PanelLeftOpen size="16" />
@@ -111,4 +122,6 @@ Use Ctrl+D to toggle"
     outline: none;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   }
+
+
 </style>
