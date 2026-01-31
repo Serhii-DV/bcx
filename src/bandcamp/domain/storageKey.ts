@@ -22,7 +22,11 @@ export class StorageKey {
   }
 
   static urlKey(url: Url): string {
-    return url.uuid;
+    const uuid = url.uuid;
+    if (!uuid) {
+      throw new Error('URL UUID is undefined');
+    }
+    return uuid;
   }
 
   static bandsKey(): string {
