@@ -1,6 +1,7 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
 import { TreeData } from 'src/app/treeview/treeData';
+import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
@@ -204,13 +205,15 @@ Use Ctrl+/ to toggle"
   open={sidePanelOpen}
 />
 
-<!-- Tour -->
+<!-- Tour (only on music pages) -->
+{#if currentPageUrl.isMusic}
 <BCXTour
   steps={tourSteps}
   autoStart={true}
   onTourComplete={() => console.log('🎉 Tour completed!')}
   onTourSkipped={() => console.log('⏭️ Tour skipped')}
 />
+{/if}
 {/if}
 
 
