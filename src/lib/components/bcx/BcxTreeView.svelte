@@ -231,7 +231,7 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
               }}
             >
               <summary
-                class="cursor-pointer select-none px-0 py-1 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+                class="cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleItemClick(item, e)}
@@ -244,7 +244,7 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
             </details>
           {:else}
             <a
-              class="block w-full cursor-pointer ml-2 pl-2 text-left px-0 py-1 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+              class="block w-full cursor-pointer ml-2 text-left px-0 py-1 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
@@ -255,7 +255,7 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
               {#if item.image}
               <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
               {/if}
-              <span class="ml-2 text-nowrap">{item.label}</span>
+              <span class="ml-2 text-wrap">{item.label}</span>
             </a>
           {/if}
         </li>
@@ -310,4 +310,9 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
     padding-block: .25rem;
     vertical-align: middle;
 }
+
+.bcx-tree-view .bcx-tree-item-img {
+    margin-top: 0.125rem;
+}
+
 </style>
