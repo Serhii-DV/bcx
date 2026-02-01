@@ -1,6 +1,8 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
+import { Url } from 'src/bandcamp/domain/url/url';
+import { History } from 'src/core/history';
 import { createQueryCountMap } from 'src/utils/array';
 import type { QueryCountMap } from '$lib/components/bcx';
 import type { TreeItem } from './treeItem';
@@ -28,6 +30,48 @@ export class TreeItemFactory {
       children,
     };
   }
+
+  static fromAlbum(album: Album): TreeItem {
+    return {
+      label: album.toString(),
+      query: album.toString(),
+      href: album.url.toString(),
+      image: album.artwork.tinySizeUrl,
+    };
+  }
+
+  static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
+    const url = item.url ? Url.parse(item.url) : undefined;
+
+    return {
+      label: item.title || item.url || 'No Title',
+      href: url?.toString(),
+    };
+  }
+
+  static async fromHistory(): Promise<TreeItem> {
+    try {
+      const items = await History.search({
+        text: 'bandcamp.com',
+        maxResults: 200,
+        startTime: 0,
+      });
+
+      return {
+        label: `History (${items.length})`,
+        children: items.map(TreeItemFactory.fromHistoryItem),
+      };
+    } catch (error) {
+      console.error(
+        '[TreeItemFactory.fromHistory]',
+        'Failed to load history:',
+        error,
+      );
+      return {
+        label: 'History (error)',
+      };
+    }
+  }
 }
 
 function createBandArtistsReleasesTreeItems(
@@ -39,7 +83,7 @@ function createBandArtistsReleasesTreeItems(
     const label = createQueryCountString(artist, count);
     const artistChildren: TreeItem[] = band.metadata.albums
       .filter((album) => album.artist.names.includes(artist))
-      .map(createAlbumTreeItem);
+      .map(TreeItemFactory.fromAlbum);
 
     return {
       label,
@@ -52,15 +96,6 @@ function createBandArtistsReleasesTreeItems(
   return children;
 }
 
-function createAlbumTreeItem(album: Album): TreeItem {
-  return {
-    label: album.toString(),
-    query: album.toString(),
-    href: album.url.toString(),
-    image: album.artwork.tinySizeUrl,
-  };
-}
-
 function createBandYearsTreeItem(
   band: Band,
   queryCountMap: QueryCountMap,
@@ -71,7 +106,7 @@ function createBandYearsTreeItem(
     const label = createQueryCountString(query, count);
     const children: TreeItem[] = band.metadata
       .albumsByYear(year)
-      .map(createAlbumTreeItem);
+      .map(TreeItemFactory.fromAlbum);
 
     return {
       label,

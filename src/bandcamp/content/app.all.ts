@@ -74,6 +74,7 @@ async function createTreeDataForBand(band: Band | null): Promise<TreeData> {
 
   const bandReleasesTreeItem = TreeItemFactory.fromBrand(band);
   treeData.add(bandReleasesTreeItem);
+  treeData.add(await TreeItemFactory.fromHistory());
 
   return treeData;
 }
