@@ -1,3 +1,4 @@
+import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { createQueryCountMap } from 'src/utils/array';
@@ -5,7 +6,7 @@ import type { QueryCountMap } from '$lib/components/bcx';
 import type { TreeItem } from './treeItem';
 
 export class TreeItemFactory {
-  static fromBand(band: Band): TreeItem {
+  static fromBrand(band: Band): TreeItem {
     const queryCountMap = createQueryCountMap(band.metadata.queries);
     const children: TreeItem[] = [];
 
@@ -36,18 +37,9 @@ function createBandArtistsReleasesTreeItems(
   const children = band.metadata.artistNames.map((artist) => {
     const count = queryCountMap.get(artist) || 0;
     const label = createQueryCountString(artist, count);
-    const artistChildren: TreeItem[] = [];
-
-    band.metadata.albums.forEach((album) => {
-      if (album.artist.names.includes(artist)) {
-        artistChildren.push({
-          label: album.toString(),
-          query: album.toString(),
-          href: album.url.toString(),
-          image: album.artwork.tinySizeUrl,
-        });
-      }
-    });
+    const artistChildren: TreeItem[] = band.metadata.albums
+      .filter((album) => album.artist.names.includes(artist))
+      .map(createAlbumTreeItem);
 
     return {
       label,
@@ -60,17 +52,31 @@ function createBandArtistsReleasesTreeItems(
   return children;
 }
 
+function createAlbumTreeItem(album: Album): TreeItem {
+  return {
+    label: album.toString(),
+    query: album.toString(),
+    href: album.url.toString(),
+    image: album.artwork.tinySizeUrl,
+  };
+}
+
 function createBandYearsTreeItem(
   band: Band,
   queryCountMap: QueryCountMap,
 ): TreeItem {
   const children: TreeItem[] = band.metadata.years.map((year) => {
-    const count = queryCountMap.get(year) || 0;
-    const label = createQueryCountString(year.toString(), count);
+    const query = year.toString();
+    const count = queryCountMap.get(query) || 0;
+    const label = createQueryCountString(query, count);
+    const children: TreeItem[] = band.metadata
+      .albumsByYear(year)
+      .map(createAlbumTreeItem);
 
     return {
       label,
-      query: year.toString(),
+      query,
+      children,
     };
   });
 

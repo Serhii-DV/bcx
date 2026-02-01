@@ -4,6 +4,10 @@ export function arrayUnique(arr: string[] | string[][]): string[] {
   return [...new Set(arr.flat())];
 }
 
+export function arrayNumberUnique(arr: number[]): number[] {
+  return [...new Set(arr)];
+}
+
 /**
  * Counts the occurrences of each unique element in an array of strings.
  *

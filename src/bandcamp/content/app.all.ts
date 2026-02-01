@@ -40,7 +40,6 @@ onDOMReady(async () => {
       ...arrayPreview(bands),
     );
 
-    const treeData = new TreeData();
     let band: Band | null = null;
 
     if (currentPageUrl.isMusic) {
@@ -52,10 +51,7 @@ onDOMReady(async () => {
       band = bands[0];
     }
 
-    if (band) {
-      const bandItemTree = TreeItemFactory.fromBand(band);
-      treeData.add(bandItemTree);
-    }
+    const treeData = await createTreeDataForBand(band);
 
     mount(App, {
       target: shadowRoot,
@@ -68,3 +64,16 @@ onDOMReady(async () => {
     console.error('[app.all]', 'Failed to setup content script:', error);
   }
 });
+
+async function createTreeDataForBand(band: Band | null): Promise<TreeData> {
+  const treeData = new TreeData();
+
+  if (!band) {
+    return treeData;
+  }
+
+  const bandReleasesTreeItem = TreeItemFactory.fromBrand(band);
+  treeData.add(bandReleasesTreeItem);
+
+  return treeData;
+}
