@@ -31,7 +31,7 @@ export function createBadgeElement(
 }
 
 export function createQueryCountString(query: string, count: number): string {
-  return query + (count > 1 ? ` (${count})` : '');
+  return query + (count ? ` (${count})` : '');
 }
 
 export function createQueryCountBadgeElement(
