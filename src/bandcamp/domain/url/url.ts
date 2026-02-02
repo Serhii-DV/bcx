@@ -22,7 +22,17 @@ export class Url extends URL {
   }
 
   get uuid(): string | undefined {
-    return uuid5(this.toString(), uuid5.URL);
+    return uuid5(this.hostnameWithPathnameAndProtocol, uuid5.URL);
+  }
+
+  /**
+   * Returns the hostname and pathname of the URL.
+   *
+   * Examples:
+   * https://subdomain.bandcamp.com/path?query=1#hash -> https://subdomain.bandcamp.com/path
+   */
+  get hostnameWithPathnameAndProtocol(): string {
+    return `${this.protocol}//${this.hostname}${this.pathname}`;
   }
 
   /**
