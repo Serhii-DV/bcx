@@ -97,6 +97,45 @@ export class BandcampStorage {
     return bands;
   }
 
+  static async getByUuids(uuids: string[]): Promise<(Band | Album)[]> {
+    const uuidMap = await storage.get(uuids);
+    const keys: string[] = [];
+
+    for (const key in uuidMap) {
+      const value = uuidMap[key];
+
+      if (typeof value !== 'string') {
+        continue;
+      }
+
+      // Only consider band and album keys for now
+      if (StorageKey.isBandKey(value) || StorageKey.isAlbumKey(value)) {
+        keys.push(value);
+      }
+    }
+
+    const storableData = await storage.get(keys);
+    const objects: (Band | Album)[] = [];
+
+    for (const key in storableData) {
+      if (StorageKey.isBandKey(key)) {
+        const band = this.createBandFromStorageObject(
+          storableData[key],
+          storableData,
+        );
+        if (band) {
+          objects.push(band);
+        }
+      } else if (StorageKey.isAlbumKey(key)) {
+        const album = AlbumFactory.fromStorage(storableData[key]);
+        if (album) {
+          objects.push(album);
+        }
+      }
+    }
+
+    return objects;
+  }
   private static createBandFromStorageObject(
     bandStorageObject: any,
     storableData: StorableData,
