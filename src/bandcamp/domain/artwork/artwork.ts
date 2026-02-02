@@ -1,7 +1,15 @@
 import { ArtworkSize } from './artworkSize';
 
+export enum ArtworkType {
+  Album = 'album',
+  Band = 'band',
+}
+
 export class Artwork {
-  constructor(public id: number) {}
+  constructor(
+    public id: number,
+    public type: ArtworkType = ArtworkType.Album,
+  ) {}
 
   // Convenient getter properties for common sizes
 
@@ -54,10 +62,13 @@ export class Artwork {
    */
   public getUrl(sizeId: number): string | null {
     const sizeInfo = ArtworkSize.getById(sizeId);
+
     if (!sizeInfo) {
       return null;
     }
 
-    return `https://f4.bcbits.com/img/a${this.id}_${sizeId}.${sizeInfo.format}`;
+    const idPrefix = this.type === ArtworkType.Band ? '' : 'a';
+
+    return `https://f4.bcbits.com/img/${idPrefix}${this.id}_${sizeId}.${sizeInfo.format}`;
   }
 }
