@@ -6,6 +6,7 @@ export interface RawBandData extends RawData {
   id: number;
   name: string;
   url: string;
+  artworkId: number;
   metadata: RawBandMetadata;
 }
 
@@ -13,6 +14,7 @@ export interface CompressedBandData extends CompressedData {
   i: number; // id
   n: string; // name
   u: string; // compressed url
+  a: number; // artworkId
   m: RawBandMetadata; // metadata
 }
 
@@ -24,6 +26,7 @@ export class BandDataCompressor implements RawDataCompressor {
       i: data.id,
       n: data.name,
       u: this.urlCompressor.compress(data.url),
+      a: data.artworkId,
       m: data.metadata,
     };
   }
@@ -33,6 +36,7 @@ export class BandDataCompressor implements RawDataCompressor {
       id: data.i,
       name: data.n,
       url: this.urlCompressor.decompress(data.u),
+      artworkId: data.a,
       metadata: data.m,
     };
   }

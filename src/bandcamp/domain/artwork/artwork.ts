@@ -11,6 +11,14 @@ export class Artwork {
     public type: ArtworkType = ArtworkType.Album,
   ) {}
 
+  static createForBand(id: number): Artwork {
+    return new Artwork(id, ArtworkType.Band);
+  }
+
+  static createForAlbum(id: number): Artwork {
+    return new Artwork(id, ArtworkType.Album);
+  }
+
   // Convenient getter properties for common sizes
 
   /**
@@ -70,5 +78,20 @@ export class Artwork {
     const idPrefix = this.type === ArtworkType.Band ? '' : 'a';
 
     return `https://f4.bcbits.com/img/${idPrefix}${this.id}_${sizeId}.${sizeInfo.format}`;
+  }
+
+  static fromUrl(url: string): Artwork | null {
+    const urlPattern = /\/img\/(a?)(\d+)_(\d+)\.(jpg|png|jpeg|webp)/;
+    const match = url.match(urlPattern);
+
+    if (!match) {
+      return null;
+    }
+
+    const isBand = match[1] === '';
+    const id = parseInt(match[2], 10);
+    const type = isBand ? ArtworkType.Band : ArtworkType.Album;
+
+    return new Artwork(id, type);
   }
 }

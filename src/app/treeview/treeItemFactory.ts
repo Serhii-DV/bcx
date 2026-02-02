@@ -27,6 +27,7 @@ export class TreeItemFactory {
 
     return {
       label: band.name,
+      image: band.artwork.tinySizeUrl,
       open: true,
       children,
     };

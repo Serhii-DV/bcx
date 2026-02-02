@@ -6,6 +6,7 @@ import { removeInvisibleChars, trim } from 'src/utils/string';
 import type { QueryCountMap } from '$lib/components/bcx';
 import { Album } from '../album/album';
 import { AlbumFactory } from '../album/factory';
+import { Artwork } from '../artwork/artwork';
 import { Band } from '../band/band';
 import type { RawBandData } from '../band/compressor';
 import { BandFactory } from '../band/factory';
@@ -482,10 +483,14 @@ export class PageMusic {
       throw new Error('No band data found on this page');
     }
 
+    const linkElement = element('link[rel="image_src"]') as HTMLLinkElement;
+    const artwork = Artwork.fromUrl(linkElement!.href || '');
+
     const rawData: RawBandData = {
       id: bandData.id,
       name: bandData.name,
       url: bandData.url,
+      artworkId: artwork ? artwork.id : 0,
       metadata: {
         created: bandData.create_date,
         currency: bandData.currency,

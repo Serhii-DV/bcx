@@ -200,7 +200,8 @@ function expandNode(item: TreeItem) {
 
 function updateTreeImages(detailsElement: HTMLDetailsElement) {
   const images = detailsElement.querySelectorAll(
-    ':scope > ol > li > a > img.bcx-tree-item-img',
+    ':scope > ol > li > a > img.bcx-tree-item-img, ' +
+      ':scope > summary > img.bcx-tree-item-img',
   ) as NodeListOf<HTMLImageElement>;
   images.forEach((img) => {
     const dataSrc = img.getAttribute('data-src');
@@ -236,6 +237,9 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleItemClick(item, e)}
               >
+                {#if item.image}
+                <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
+                {/if}
                 <span>{item.label}</span>
               </summary>
               <!-- <div class="ml-2 mt-0 border-l border-gray-500/50 pl-2"> -->
@@ -313,6 +317,10 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
 
 .bcx-tree-view .bcx-tree-item-img {
     margin-top: 0.125rem;
+}
+
+.bcx-tree-view details > summary > .bcx-tree-item-img {
+    margin-right: 0.5rem;
 }
 
 </style>

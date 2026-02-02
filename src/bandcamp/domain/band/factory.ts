@@ -1,4 +1,5 @@
 import { removeInvisibleChars, trim } from 'src/utils/string';
+import { Artwork } from '../artwork/artwork';
 import { decompress } from '../compressor';
 import { bandDataCompressor } from '../shared';
 import { Url } from '../url/url';
@@ -11,9 +12,10 @@ export class BandFactory {
     id: number,
     name: string,
     url: Url,
+    artwork: Artwork,
     metadata: BandMetadata,
   ): Band {
-    return new Band(id, name, url, metadata);
+    return new Band(id, name, url, artwork, metadata);
   }
 
   static fromRawData(rawData: RawBandData): Band {
@@ -23,7 +25,13 @@ export class BandFactory {
     const bandUrl = new Url(rawData.url);
     const metadata = BandMetadata.fromRawData(rawData.metadata);
 
-    return new Band(bandId, bandName, bandUrl, metadata);
+    return new Band(
+      bandId,
+      bandName,
+      bandUrl,
+      Artwork.createForBand(rawData.artworkId),
+      metadata,
+    );
   }
 
   static createRawData(compressedData: CompressedBandData): RawBandData {
