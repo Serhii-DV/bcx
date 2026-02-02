@@ -1,7 +1,7 @@
-import { create } from 'domain';
 import type { Album } from 'src/bandcamp/domain/album/album';
-import type { Band } from 'src/bandcamp/domain/band/band';
+import { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
+import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { Url } from 'src/bandcamp/domain/url/url';
 import { History } from 'src/core/history';
 import { createQueryCountMap } from 'src/utils/array';
@@ -70,15 +70,46 @@ export class TreeItemFactory {
         startTime: 0,
       });
       const children: TreeItem[] = [];
+      const uuids = new Set<string>();
 
       historyItems.forEach((item) => {
-        const url = item.url ? Url.parse(item.url) : undefined;
+        const url = createUrlFromHistoryItem(item);
 
         if (!url || !url.isBandcamp || url.isRegular) {
           return;
         }
 
-        const historyItem = TreeItemFactory.fromHistoryItem(item);
+        const uuid = url.uuid;
+        if (uuid && !uuids.has(uuid)) {
+          uuids.add(uuid);
+        }
+      });
+
+      const bandsAndAlbums: (Band | Album)[] = await BandcampStorage.getByUuids(
+        Array.from(uuids),
+      );
+      const uuidTreeItemsMap = new Map<string, TreeItem>();
+
+      bandsAndAlbums.forEach((entity) => {
+        const treeItem =
+          entity instanceof Band
+            ? TreeItemFactory.fromBrand(entity)
+            : TreeItemFactory.fromAlbum(entity);
+
+        uuidTreeItemsMap.set(entity.url.uuid!, treeItem);
+      });
+
+      historyItems.forEach((item) => {
+        const url = createUrlFromHistoryItem(item);
+        if (!url) {
+          return;
+        }
+        const uuid = url.uuid;
+        if (!uuid || !uuids.has(uuid)) {
+          return;
+        }
+        const historyItem =
+          uuidTreeItemsMap.get(uuid) || TreeItemFactory.fromHistoryItem(item);
         const dateItem = TreeItemFactory.fromDate(
           new Date(item.lastVisitTime as number),
         );
@@ -199,4 +230,18 @@ function createBandKeywordsTreeItem(
     open: false,
     children,
   };
+}
+
+function createUrlFromHistoryItem(
+  item: chrome.history.HistoryItem,
+): Url | undefined {
+  if (!item.url) {
+    return undefined;
+  }
+
+  try {
+    return Url.parse(item.url);
+  } catch {
+    return undefined;
+  }
 }
