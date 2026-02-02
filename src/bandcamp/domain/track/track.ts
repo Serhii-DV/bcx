@@ -1,6 +1,6 @@
 import type { Storable, StorableData } from 'src/core/storage';
 import type { Artist } from '../artist/artist';
-import type { Artwork } from '../artwork';
+import type { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import type { Metadata } from '../metadata';
 import { trackDataCompressor } from '../shared';

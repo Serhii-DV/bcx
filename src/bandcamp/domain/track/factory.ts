@@ -1,7 +1,7 @@
 import type { StorageObject } from 'src/core/storage';
 import { Artist } from '../artist/artist';
 import { ArtistFactory } from '../artist/factory';
-import { Artwork } from '../artwork';
+import { Artwork } from '../artwork/artwork';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import type {
