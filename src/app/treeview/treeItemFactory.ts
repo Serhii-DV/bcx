@@ -1,3 +1,4 @@
+import { create } from 'domain';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
@@ -17,7 +18,7 @@ export class TreeItemFactory {
         'Artist/Releases',
         band.metadata.artistNames.length,
       ),
-      open: true,
+      open: false,
       children: createBandArtistsReleasesTreeItems(band, queryCountMap),
     });
 
@@ -49,17 +50,74 @@ export class TreeItemFactory {
     };
   }
 
+  static fromDate(date: Date): TreeItem {
+    const label = date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+
+    return {
+      label,
+    };
+  }
+
   static async fromHistory(): Promise<TreeItem> {
     try {
-      const items = await History.search({
+      const historyItems = await History.search({
         text: 'bandcamp.com',
         maxResults: 200,
         startTime: 0,
       });
+      const children: TreeItem[] = [];
+
+      historyItems.forEach((item) => {
+        const url = item.url ? Url.parse(item.url) : undefined;
+
+        if (!url || !url.isBandcamp || url.isRegular) {
+          return;
+        }
+
+        const historyItem = TreeItemFactory.fromHistoryItem(item);
+        const dateItem = TreeItemFactory.fromDate(
+          new Date(item.lastVisitTime as number),
+        );
+        const childrenDateItem = children.find(
+          (child) => child.label === dateItem.label,
+        );
+
+        if (childrenDateItem) {
+          childrenDateItem.children = childrenDateItem.children || [];
+          const childrenHistoryItem = childrenDateItem.children.find(
+            (child) => child.label === historyItem.label,
+          );
+
+          if (childrenHistoryItem) {
+            return;
+          }
+
+          childrenDateItem.children!.push(historyItem);
+        } else {
+          children.push({
+            ...dateItem,
+            children: [historyItem],
+          });
+        }
+      });
+
+      // Update labels with counts
+      children.forEach((child) => {
+        if (child.children) {
+          child.label = createQueryCountString(
+            child.label,
+            child.children.length,
+          );
+        }
+      });
 
       return {
-        label: `History (${items.length})`,
-        children: items.map(TreeItemFactory.fromHistoryItem),
+        label: createQueryCountString(`History`, children.length),
+        children,
       };
     } catch (error) {
       console.error(
