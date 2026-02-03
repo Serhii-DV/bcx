@@ -64,6 +64,12 @@ describe('Url', () => {
 
   describe('withoutPathAndSearchAndHash', () => {
     it('should return the protocol and hostname of the URL', () => {
+      const url = new Url('https://subdomain.domain.com');
+      expect(url.withoutPathAndSearchAndHash.toString()).toBe(
+        'https://subdomain.domain.com/',
+      );
+    });
+    it('should return the protocol and hostname of the URL with path', () => {
       const url = new Url('https://subdomain.domain.com/path');
       expect(url.withoutPathAndSearchAndHash.toString()).toBe(
         'https://subdomain.domain.com/',

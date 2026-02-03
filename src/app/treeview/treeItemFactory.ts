@@ -2,7 +2,9 @@ import type { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
+  isBandcampMusicUrl,
   isBandcampRegularUrl,
   isBandcampUrl,
 } from 'src/bandcamp/domain/url/helper';
@@ -47,11 +49,9 @@ export class TreeItemFactory {
   }
 
   static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
-    const url = item.url ? Url.create(item.url) : undefined;
-
     return {
       label: item.title || item.url || 'No Title',
-      href: url?.toString(),
+      href: Url.fromHistoryItem(item)?.toString(),
     };
   }
 
@@ -78,16 +78,23 @@ export class TreeItemFactory {
       const uuids = new Set<string>();
 
       historyItems.forEach((item) => {
-        const url = Url.fromHistoryItem(item);
+        let url = Url.fromHistoryItem(item);
 
         if (!url || !isBandcampUrl(url) || isBandcampRegularUrl(url)) {
           return;
         }
 
-        const uuid = url.uuid;
-        if (!uuids.has(uuid)) {
-          uuids.add(uuid);
+        if (isBandcampMusicUrl(url)) {
+          url = BandcampUrlFactory.createBandUrl(url);
         }
+
+        const uuid = url.uuid;
+
+        if (uuids.has(uuid)) {
+          return;
+        }
+
+        uuids.add(uuid);
       });
 
       const bandsAndAlbums: (Band | Album)[] = await BandcampStorage.getByUuids(
