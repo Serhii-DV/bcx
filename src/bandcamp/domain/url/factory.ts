@@ -4,7 +4,7 @@ export class BandcampUrlFactory {
   /**
    * Creates a band Url from the given Url.
    */
-  static bandUrl(url: Url): Url {
+  static createBandUrl(url: Url): Url {
     return url.withoutPathAndSearchAndHash;
   }
 }

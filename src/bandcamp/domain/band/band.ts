@@ -4,6 +4,7 @@ import type { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { bandDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
+import { BandcampUrlFactory } from '../url/factory';
 import { BandDataCompressor, type RawBandData } from './compressor';
 import type { BandMetadata } from './metadata';
 
@@ -28,7 +29,7 @@ export class Band implements Storable, Compressable {
 
   toStorableData(): StorableData {
     const key = StorageKey.bandKey(this.id);
-    const urlKey = StorageKey.urlKey(this.url);
+    const urlKey = BandcampUrlFactory.createBandUrl(this.url).uuid;
     const bandData: StorableData = {
       [key]: this.toStorageObject(),
       [urlKey]: key,

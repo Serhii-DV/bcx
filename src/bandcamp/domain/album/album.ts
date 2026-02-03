@@ -33,7 +33,7 @@ export class Album implements Storable, Compressable {
 
   toStorableData(): StorableData {
     const key = StorageKey.albumKey(this.id);
-    const urlKey = StorageKey.urlKey(this.url);
+    const urlKey = this.url.uuid;
     return {
       [key]: this.toStorageObject(),
       [urlKey]: key,

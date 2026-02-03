@@ -85,7 +85,7 @@ export class TreeItemFactory {
         }
 
         const uuid = url.uuid;
-        if (uuid && !uuids.has(uuid)) {
+        if (!uuids.has(uuid)) {
           uuids.add(uuid);
         }
       });
@@ -110,7 +110,7 @@ export class TreeItemFactory {
           return;
         }
         const uuid = url.uuid;
-        if (!uuid || !uuids.has(uuid)) {
+        if (!uuids.has(uuid)) {
           return;
         }
         const historyItem =

@@ -21,8 +21,16 @@ export class Url extends URL {
     }
   }
 
-  get uuid(): string | undefined {
-    return uuid5(this.toString(), uuid5.URL);
+  /**
+   * Generates a UUIDv5 based on the URL string.
+   * @throws Error if the UUID cannot be generated
+   */
+  get uuid(): string {
+    const uuid = uuid5(this.toString(), uuid5.URL);
+    if (!uuid) {
+      throw new Error('URL UUID is undefined for URL: ' + this.toString());
+    }
+    return uuid;
   }
 
   /**

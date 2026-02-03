@@ -1,11 +1,11 @@
 import type { Storable, StorableData } from 'src/core/storage';
+import type { Url } from 'src/core/url';
 import type { Artist } from '../artist/artist';
 import type { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import type { Metadata } from '../metadata';
 import { trackDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
-import { Url } from '../url/url';
 import { type RawTrackData, TrackDataCompressor } from './compressor';
 import { TrackTime } from './time';
 
@@ -34,8 +34,7 @@ export class Track implements Storable, Compressable {
     const data: StorableData = { [key]: this.toStorageObject() };
 
     if (this.url) {
-      const urlKey = StorageKey.urlKey(this.url);
-      data[urlKey] = key;
+      data[this.url.uuid] = key;
     }
 
     return data;
