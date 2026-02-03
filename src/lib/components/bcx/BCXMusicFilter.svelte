@@ -31,7 +31,7 @@ let filterInput: HTMLInputElement | null = $state(null);
 let debounceTimer: NodeJS.Timeout | null = null;
 let musicIsotope: Isotope | null = null;
 let searchQuery = $state(
-  currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '',
+  currentPageUrl.getSearchParam(MUSIC_FILTER_QUERY_PARAM) || '',
 );
 let previousQuery = '';
 let visibleCount = $state(0);
@@ -171,7 +171,7 @@ function updateUrlQueryParamValue(key: string, value: string): void {
 }
 
 function handlePopState(): void {
-  const q = currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '';
+  const q = currentPageUrl.getSearchParam(MUSIC_FILTER_QUERY_PARAM) || '';
   if (q !== searchQuery) {
     searchQuery = q;
     if (filterInput) filterInput.value = q;
