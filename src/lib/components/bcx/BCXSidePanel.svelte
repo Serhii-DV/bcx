@@ -1,6 +1,7 @@
 <script lang="ts">
 import { TreeData } from 'src/app/treeview/treeData';
 import type { TreeItem } from 'src/app/treeview/treeItem';
+import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl } from 'src/core/shared';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeView from './BcxTreeView.svelte';
@@ -13,7 +14,7 @@ interface Props {
 let { treeData, open = false }: Props = $props();
 
 function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
-  if (!currentPageUrl.isMusic) {
+  if (!isBandcampMusicUrl(currentPageUrl)) {
     // Only handle clicks on music pages
     // on other pages it must open the page normally
     return;
@@ -36,7 +37,7 @@ function handleTreeItemClick(item: TreeItem, event?: MouseEvent) {
     <!-- Header -->
     <div class="border-b border-gray-200/30 dark:border-gray-700/30 p-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold">BCX Side Panel</h2>
+        <h2 class="text-lg font-semibold">Music Explorer</h2>
       </div>
     </div>
 

@@ -3,9 +3,10 @@ import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { BandcampStorage } from '../domain/storage';
+import { isBandcampAlbumUrl } from '../domain/url/helper';
 
 onDOMReady(async () => {
-  if (!currentPageUrl.isAlbum) {
+  if (!isBandcampAlbumUrl(currentPageUrl)) {
     return;
   }
 

@@ -2,8 +2,12 @@ import type { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
-import { Url } from 'src/bandcamp/domain/url/url';
+import {
+  isBandcampRegularUrl,
+  isBandcampUrl,
+} from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
+import { Url } from 'src/core/url';
 import { createQueryCountMap } from 'src/utils/array';
 import type { QueryCountMap } from '$lib/components/bcx';
 import type { TreeItem } from './treeItem';
@@ -43,7 +47,7 @@ export class TreeItemFactory {
   }
 
   static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
-    const url = item.url ? Url.parse(item.url) : undefined;
+    const url = item.url ? Url.create(item.url) : undefined;
 
     return {
       label: item.title || item.url || 'No Title',
@@ -74,9 +78,9 @@ export class TreeItemFactory {
       const uuids = new Set<string>();
 
       historyItems.forEach((item) => {
-        const url = createUrlFromHistoryItem(item);
+        const url = Url.fromHistoryItem(item);
 
-        if (!url || !url.isBandcamp || url.isRegular) {
+        if (!url || !isBandcampUrl(url) || isBandcampRegularUrl(url)) {
           return;
         }
 
@@ -101,7 +105,7 @@ export class TreeItemFactory {
       });
 
       historyItems.forEach((item) => {
-        const url = createUrlFromHistoryItem(item);
+        const url = Url.fromHistoryItem(item);
         if (!url) {
           return;
         }
@@ -231,18 +235,4 @@ function createBandKeywordsTreeItem(
     open: false,
     children,
   };
-}
-
-function createUrlFromHistoryItem(
-  item: chrome.history.HistoryItem,
-): Url | undefined {
-  if (!item.url) {
-    return undefined;
-  }
-
-  try {
-    return Url.parse(item.url);
-  } catch {
-    return undefined;
-  }
 }

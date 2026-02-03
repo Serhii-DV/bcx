@@ -3,9 +3,10 @@ import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { PageTrack } from '../domain/page/pageTrack';
 import { BandcampStorage } from '../domain/storage';
+import { isBandcampTrackUrl } from '../domain/url/helper';
 
 onDOMReady(() => {
-  if (!currentPageUrl.isTrack) {
+  if (!isBandcampTrackUrl(currentPageUrl)) {
     return;
   }
 

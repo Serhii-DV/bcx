@@ -1,9 +1,9 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
+import type { Url } from 'src/core/url';
 import type { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { bandDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
-import type { Url } from '../url/url';
 import { BandDataCompressor, type RawBandData } from './compressor';
 import type { BandMetadata } from './metadata';
 

@@ -14,7 +14,6 @@ import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { getArtistNamesFromTracks } from '../track/helper';
 import { Track } from '../track/track';
-import { Url } from '../url/url';
 import { createMetadataElement, createQueryCountBadgeElement } from './helper';
 
 interface MusicGridClientItem {
@@ -405,10 +404,10 @@ export class PageMusic {
    * @param url - The URL (relative or absolute)
    * @returns Normalized absolute URL as Url object
    */
-  private normalizeUrl(url: string): Url {
+  private normalizeUrl(url: string): string {
     return url.startsWith('https://')
-      ? new Url(url)
-      : this.band.url.withPath(url);
+      ? url
+      : this.band.url.withPath(url).toString();
   }
 
   /**

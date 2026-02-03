@@ -1,8 +1,8 @@
+import { Url } from 'src/core/url';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import { Artwork } from '../artwork/artwork';
 import { decompress } from '../compressor';
 import { bandDataCompressor } from '../shared';
-import { Url } from '../url/url';
 import { Band } from './band';
 import { type CompressedBandData, type RawBandData } from './compressor';
 import { BandMetadata } from './metadata';
@@ -22,7 +22,7 @@ export class BandFactory {
     const bandId =
       typeof rawData.id === 'string' ? parseInt(rawData.id, 10) : rawData.id;
     const bandName = trim(removeInvisibleChars(rawData.name), ' -\n');
-    const bandUrl = new Url(rawData.url);
+    const bandUrl = Url.create(rawData.url);
     const metadata = BandMetadata.fromRawData(rawData.metadata);
 
     return new Band(

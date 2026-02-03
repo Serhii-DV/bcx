@@ -1,4 +1,5 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
+import type { Url } from 'src/core/url';
 import type { Artist } from '../artist/artist';
 import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
@@ -6,7 +7,6 @@ import { Metadata } from '../metadata';
 import { albumDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
 import type { Track } from '../track/track';
-import { Url } from '../url/url';
 import { AlbumDataCompressor, type RawAlbumData } from './compressor';
 
 export class Album implements Storable, Compressable {

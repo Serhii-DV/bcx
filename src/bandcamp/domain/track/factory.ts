@@ -1,4 +1,5 @@
 import type { StorageObject } from 'src/core/storage';
+import { Url } from 'src/core/url';
 import { Artist } from '../artist/artist';
 import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork/artwork';
@@ -11,7 +12,6 @@ import type {
 } from '../page/schema';
 import { Price } from '../price';
 import { bandcampPageData, trackDataCompressor } from '../shared';
-import { Url } from '../url/url';
 import { type CompressedTrackData, type RawTrackData } from './compressor';
 import { TrackTime } from './time';
 import { Track } from './track';
@@ -22,14 +22,14 @@ export class TrackFactory {
     artist: string | Artist,
     title: string,
     artwork: string | number | Artwork,
-    url?: string | Url | URL,
+    url?: string,
     time?: string | TrackTime,
     albumId?: number,
     metadata?: Metadata,
   ): Track {
     const trackId =
       typeof id === 'string' ? parseInt(id.replace('track-', ''), 10) : id;
-    const trackUrl = url ? Url.parse(url) : undefined;
+    const trackUrl = url ? Url.create(url) : undefined;
     const trackTime =
       typeof time === 'string' ? TrackTime.fromString(time) : time;
 

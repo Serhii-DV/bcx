@@ -5,9 +5,10 @@ import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
 import { PageMusic } from '../domain/page/pageMusic';
 import { BandcampStorage } from '../domain/storage';
+import { isBandcampMusicUrl } from '../domain/url/helper';
 
 onDOMReady(async () => {
-  if (!currentPageUrl.isMusic) {
+  if (!isBandcampMusicUrl(currentPageUrl)) {
     return;
   }
 

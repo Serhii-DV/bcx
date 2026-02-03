@@ -14,6 +14,7 @@ import type { MusicSearchData } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
+import { isBandcampMusicUrl } from '../domain/url/helper';
 import { createMusicSearchDataFromBands } from './helper';
 
 // Props interface
@@ -206,7 +207,7 @@ Use Ctrl+/ to toggle"
 />
 
 <!-- Tour (only on music pages) -->
-{#if currentPageUrl.isMusic}
+{#if isBandcampMusicUrl(currentPageUrl)}
 <BCXTour
   steps={tourSteps}
   autoStart={true}

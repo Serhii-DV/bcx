@@ -1,6 +1,7 @@
-import type { Url } from './url/url';
-
 // We use `/` at the start to avoid potential collisions with other keys and namespaces
+
+import type { Url } from 'src/core/url';
+
 // Also, it shows up nicely in the storage viewer before UUID values
 const BAND_KEY_PREFIX = '/b/';
 const ALBUM_KEY_PREFIX = '/a/';
