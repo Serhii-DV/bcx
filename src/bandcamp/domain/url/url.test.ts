@@ -64,7 +64,7 @@ describe('Bandcamp Url', () => {
       const validUrl =
         'https://artist.bandcamp.com/album/album-name?ref=source';
       const url = new Url(validUrl);
-      expect(url.withoutQueryParams).toBe(
+      expect(url.withoutSearch).toBe(
         'https://artist.bandcamp.com/album/album-name',
       );
     });

@@ -22,7 +22,7 @@ export class Url extends URL {
   }
 
   get uuid(): string | undefined {
-    return uuid5(this.hostnameWithPathnameAndProtocol, uuid5.URL);
+    return uuid5(this.withoutSearchAndQuery, uuid5.URL);
   }
 
   /**
@@ -31,7 +31,7 @@ export class Url extends URL {
    * Examples:
    * https://subdomain.bandcamp.com/path?query=1#hash -> https://subdomain.bandcamp.com/path
    */
-  get hostnameWithPathnameAndProtocol(): string {
+  get withoutSearchAndQuery(): string {
     return `${this.protocol}//${this.hostname}${this.pathname}`;
   }
 
@@ -83,10 +83,8 @@ export class Url extends URL {
    * Examples:
    * https://subdomain.bandcamp.com/path?query=1#hash -> https://subdomain.bandcamp.com/path#hash
    */
-  get withoutQueryParams(): string {
-    const urlCopy = new URL(this.toString());
-    urlCopy.search = '';
-    return urlCopy.toString();
+  get withoutSearch(): string {
+    return `${this.hostname}${this.pathname}${this.hash}`;
   }
 
   /**
