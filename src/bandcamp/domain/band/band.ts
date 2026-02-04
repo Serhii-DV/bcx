@@ -15,7 +15,9 @@ export class Band implements Storable, Compressable {
     public url: Url,
     public artwork: Artwork,
     public metadata: BandMetadata,
-  ) {}
+  ) {
+    this.url = BandcampUrlFactory.createBandUrl(url);
+  }
 
   get hasReleases(): boolean {
     return (
@@ -29,7 +31,7 @@ export class Band implements Storable, Compressable {
 
   toStorableData(): StorableData {
     const key = StorageKey.bandKey(this.id);
-    const urlKey = BandcampUrlFactory.createBandUrl(this.url).uuid;
+    const urlKey = this.url.uuid;
     const bandData: StorableData = {
       [key]: this.toStorageObject(),
       [urlKey]: key,

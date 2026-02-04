@@ -4,7 +4,6 @@ import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
-  isBandcampMusicUrl,
   isBandcampRegularUrl,
   isBandcampUrl,
 } from 'src/bandcamp/domain/url/helper';
@@ -15,26 +14,29 @@ import type { QueryCountMap } from '$lib/components/bcx';
 import type { TreeItem } from './treeItem';
 
 export class TreeItemFactory {
-  static fromBrand(band: Band): TreeItem {
+  static fromBand(band: Band, withChildren: boolean = true): TreeItem {
     const queryCountMap = createQueryCountMap(band.metadata.queries);
     const children: TreeItem[] = [];
 
-    children.push({
-      label: createQueryCountString(
-        'Artist/Releases',
-        band.metadata.artistNames.length,
-      ),
-      open: false,
-      children: createBandArtistsReleasesTreeItems(band, queryCountMap),
-    });
+    if (withChildren) {
+      children.push({
+        label: createQueryCountString(
+          'Artist/Releases',
+          band.metadata.artistNames.length,
+        ),
+        open: false,
+        children: createBandArtistsReleasesTreeItems(band, queryCountMap),
+      });
 
-    children.push(createBandYearsTreeItem(band, queryCountMap));
-    children.push(createBandKeywordsTreeItem(band, queryCountMap));
+      children.push(createBandYearsTreeItem(band, queryCountMap));
+      children.push(createBandKeywordsTreeItem(band, queryCountMap));
+    }
 
     return {
       label: band.name,
       image: band.artwork.tinySizeUrl,
-      open: true,
+      open: withChildren,
+      href: !withChildren ? band.url.toString() : undefined,
       children,
     };
   }
@@ -84,10 +86,7 @@ export class TreeItemFactory {
           return;
         }
 
-        if (isBandcampMusicUrl(url)) {
-          url = BandcampUrlFactory.createBandUrl(url);
-        }
-
+        url = BandcampUrlFactory.create(url);
         const uuid = url.uuid;
 
         if (uuids.has(uuid)) {
@@ -105,7 +104,7 @@ export class TreeItemFactory {
       bandsAndAlbums.forEach((entity) => {
         const treeItem =
           entity instanceof Band
-            ? TreeItemFactory.fromBrand(entity)
+            ? TreeItemFactory.fromBand(entity, false)
             : TreeItemFactory.fromAlbum(entity);
 
         uuidTreeItemsMap.set(entity.url.uuid!, treeItem);
