@@ -73,12 +73,11 @@ onDOMReady(async () => {
 async function createTreeDataForBand(band: Band | null): Promise<TreeData> {
   const treeData = new TreeData();
 
-  if (!band) {
-    return treeData;
+  if (band) {
+    const bandReleasesTreeItem = TreeItemFactory.fromBand(band);
+    treeData.add(bandReleasesTreeItem);
   }
 
-  const bandReleasesTreeItem = TreeItemFactory.fromBand(band);
-  treeData.add(bandReleasesTreeItem);
   treeData.add(await TreeItemFactory.fromHistory());
 
   return treeData;
