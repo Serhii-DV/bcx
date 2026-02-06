@@ -21,6 +21,11 @@ let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let storeUnsubscribe: (() => void) | null = null;
 
+// Expose method to parent component
+export function focusFirstItem() {
+  focusTreeItem(treeData.firstVisible);
+}
+
 // Reactive values
 $effect(() => {
   if (searchQuery && searchQuery.trim() !== '') {

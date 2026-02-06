@@ -13,6 +13,17 @@ interface Props {
 }
 
 let { treeData, open = false }: Props = $props();
+let treeViewRef: BcxTreeView;
+
+// Focus first item when panel opens
+$effect(() => {
+  if (open && treeViewRef) {
+    // Use setTimeout to ensure DOM is ready
+    setTimeout(() => {
+      treeViewRef.focusFirstItem();
+    }, 100);
+  }
+});
 
 function handleTreeItemClick(
   item: TreeItem,
@@ -65,7 +76,7 @@ function handleTreeItemClick(
 
         <!-- Tree View Demo -->
         <div class="text-md">
-          <BcxTreeView treeData={treeData} onItemClick={handleTreeItemClick} />
+          <BcxTreeView bind:this={treeViewRef} treeData={treeData} onItemClick={handleTreeItemClick} />
         </div>
 
         <!-- Extension Info -->
