@@ -150,15 +150,7 @@ export class TreeItemFactory {
         }
       });
 
-      // Update labels with counts
-      children.forEach((child) => {
-        if (child.children) {
-          child.label = createQueryCountString(
-            child.label,
-            child.children.length,
-          );
-        }
-      });
+      updateChildrenCounts(children);
 
       return {
         label: createQueryCountString(`History`, children.length),
@@ -187,29 +179,36 @@ export class TreeItemFactory {
     const children: TreeItem[] = [];
     children.push({
       label: 'Collection',
-      children: createFanCollectionTreeItems(pageData),
+      children: createTreeItemsFromItemCacheItems(
+        pageData.data.item_cache.collection,
+      ),
+    });
+    children.push({
+      label: 'Wishlist',
+      children: createTreeItemsFromItemCacheItems(
+        pageData.data.item_cache.wishlist,
+      ),
     });
 
+    updateChildrenCounts(children);
+
     return {
-      label: fan_data.name + ` (${fan_data.location})`,
+      label: `Fan: ${fan_data.name} (${fan_data.location})`,
       children,
     };
   }
 }
 
-function createFanCollectionTreeItems(pageData: BandcampPageData): TreeItem[] {
+function createTreeItemsFromItemCacheItems(items: any): TreeItem[] {
   const treeItems: TreeItem[] = [];
-  const { collection } = pageData.data.item_cache;
-
-  for (const key in collection) {
-    if (hasOwnProperty(collection, key)) {
-      const item = collection[key];
+  for (const key in items) {
+    if (hasOwnProperty(items, key)) {
+      const item = items[key];
       const album = AlbumFactory.fromFanPageDataCollectionItem(item);
       const treeItem = TreeItemFactory.fromAlbum(album);
       treeItems.push(treeItem);
     }
   }
-
   return treeItems;
 }
 
@@ -280,4 +279,13 @@ function createBandKeywordsTreeItem(
     open: false,
     children,
   };
+}
+
+function updateChildrenCounts(treeItems: TreeItem[]): void {
+  // Update labels with counts
+  treeItems.forEach((child) => {
+    if (child.children) {
+      child.label = createQueryCountString(child.label, child.children.length);
+    }
+  });
 }
