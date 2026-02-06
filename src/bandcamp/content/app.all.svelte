@@ -1,7 +1,7 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
 import { TreeData } from 'src/app/treeview/treeData';
-import { currentPageUrl } from 'src/core/shared';
+import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
@@ -14,6 +14,7 @@ import type { MusicSearchData } from '$lib/components/bcx/types';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
+import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 import { createMusicSearchDataFromBands } from './helper';
 
@@ -29,6 +30,14 @@ let shadowContainer: HTMLElement | null = $state(null);
 let commandOpen = $state(false);
 let albumSearchOpen = $state(false);
 let sidePanelOpen = $state(false);
+let sidePanelStateInitialized = $state(false);
+
+// Persist side panel state across page navigations (only after initial load)
+$effect(() => {
+  if (sidePanelStateInitialized) {
+    storage.set({ [SIDE_PANEL_OPEN_KEY]: sidePanelOpen });
+  }
+});
 
 // Derive music search data from bands prop
 let musicSearchData: MusicSearchData = $derived(
@@ -129,6 +138,15 @@ onMount(() => {
   } else {
     console.warn('❌ BCX: Could not find #bcx-app shadow root');
   }
+
+  // Restore side panel state from storage
+  storage.getByKey<boolean>(SIDE_PANEL_OPEN_KEY).then((result) => {
+    if (result !== undefined) {
+      sidePanelOpen = result;
+    }
+    // Mark as initialized after restoring state
+    sidePanelStateInitialized = true;
+  });
 });
 
 function handleBandSelect(band: Band) {
