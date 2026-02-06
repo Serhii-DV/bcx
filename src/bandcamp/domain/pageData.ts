@@ -1,5 +1,5 @@
 export class BandcampPageData {
-  constructor(private data: any = null) {}
+  constructor(public data: any = null) {}
 
   /** Returns the album ID if available */
   get albumId(): number | null {
@@ -16,13 +16,14 @@ export class BandcampPageData {
     return this.data?.title ?? null;
   }
 
-  /** Check if the data exists */
-  isAvailable(): boolean {
-    return this.data !== null;
-  }
-
   static fromJson(jsonString: string): BandcampPageData {
     const data = JSON.parse(jsonString);
     return new BandcampPageData(data);
+  }
+
+  static fromPageDataDomElement(): BandcampPageData {
+    const jsonString =
+      document.getElementById('pagedata')?.dataset.blob ?? '{}';
+    return BandcampPageData.fromJson(jsonString);
   }
 }

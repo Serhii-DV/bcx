@@ -15,6 +15,7 @@ import { TreeData } from 'src/app/treeview/treeData';
 import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
+import { BandcampPageData } from '../domain/pageData';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -76,6 +77,16 @@ async function createTreeDataForBand(band: Band | null): Promise<TreeData> {
   if (band) {
     const bandReleasesTreeItem = TreeItemFactory.fromBand(band);
     treeData.add(bandReleasesTreeItem);
+  }
+
+  const bandcampPageData = BandcampPageData.fromPageDataDomElement();
+
+  if (bandcampPageData) {
+    const fanPageDataTreeItem =
+      TreeItemFactory.fromBandcampFanPageData(bandcampPageData);
+    if (fanPageDataTreeItem) {
+      treeData.add(fanPageDataTreeItem);
+    }
   }
 
   treeData.add(await TreeItemFactory.fromHistory());

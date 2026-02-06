@@ -1,6 +1,8 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
+import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
+import type { BandcampPageData } from 'src/bandcamp/domain/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
@@ -10,6 +12,7 @@ import {
 import { History } from 'src/core/history';
 import { Url } from 'src/core/url';
 import { createQueryCountMap } from 'src/utils/array';
+import { hasOwnProperty } from 'src/utils/utils';
 import type { QueryCountMap } from '$lib/components/bcx';
 import type { TreeItem } from './treeItem';
 
@@ -172,6 +175,42 @@ export class TreeItemFactory {
       };
     }
   }
+
+  static fromBandcampFanPageData(pageData: BandcampPageData): TreeItem | null {
+    const { fan_data } = pageData.data;
+
+    if (!fan_data) {
+      return null;
+    }
+    console.log('fromBandcampFanPageData', pageData.data);
+
+    const children: TreeItem[] = [];
+    children.push({
+      label: 'Collection',
+      children: createFanCollectionTreeItems(pageData),
+    });
+
+    return {
+      label: fan_data.name + ` (${fan_data.location})`,
+      children,
+    };
+  }
+}
+
+function createFanCollectionTreeItems(pageData: BandcampPageData): TreeItem[] {
+  const treeItems: TreeItem[] = [];
+  const { collection } = pageData.data.item_cache;
+
+  for (const key in collection) {
+    if (hasOwnProperty(collection, key)) {
+      const item = collection[key];
+      const album = AlbumFactory.fromFanPageDataCollectionItem(item);
+      const treeItem = TreeItemFactory.fromAlbum(album);
+      treeItems.push(treeItem);
+    }
+  }
+
+  return treeItems;
 }
 
 function createBandArtistsReleasesTreeItems(
