@@ -12,7 +12,7 @@ import { musicFilterStore } from '$lib/stores/musicFilter';
 
 interface Props {
   treeData: TreeData;
-  onItemClick?: (item: TreeItem, event?: MouseEvent) => void;
+  onItemClick?: (item: TreeItem, event?: MouseEvent | KeyboardEvent) => void;
 }
 
 let { treeData, onItemClick = () => {} }: Props = $props();
@@ -73,7 +73,10 @@ onDestroy(() => {
   }
 });
 
-function handleItemClick(item?: TreeItem | null, e?: MouseEvent) {
+function handleItemClick(
+  item?: TreeItem | null,
+  e?: MouseEvent | KeyboardEvent,
+) {
   if (!item) return;
   focusedPath = item.path ?? null;
 
@@ -134,7 +137,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
     case 'Enter':
     case ' ':
-      handleItemClick(treeData.findVisible(currentIndex));
+      handleItemClick(treeData.findVisible(currentIndex), event);
       break;
 
     case 'Home':

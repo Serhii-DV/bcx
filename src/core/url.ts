@@ -110,4 +110,13 @@ export class Url extends URL {
 
     return new Url(`${this.protocol}//${this.hostname}${newPath}`);
   }
+
+  /**
+   * Checks if this URL has the same hostname as another URL.
+   * @param other The other URL to compare against
+   * @returns True if both URLs have the same hostname, false otherwise
+   */
+  hasSameHostname(other: Url): boolean {
+    return this.hostname === other.hostname;
+  }
 }
