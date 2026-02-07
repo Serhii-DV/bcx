@@ -12,17 +12,17 @@ export function isBandcampRegularUrl(url: Url): boolean {
 
 export function isBandcampMusicUrl(url: Url): boolean {
   const path = url.pathname;
-  return path === '/' || path.startsWith('/music');
+  return url.subdomain !== '' && (path === '/' || path.startsWith('/music'));
 }
 
 export function isBandcampAlbumUrl(url: Url): boolean {
   const path = url.pathname;
-  return path.startsWith('/album/');
+  return url.subdomain !== '' && path.startsWith('/album/');
 }
 
 export function isBandcampTrackUrl(url: Url): boolean {
   const path = url.pathname;
-  return path.startsWith('/track/');
+  return url.subdomain !== '' && path.startsWith('/track/');
 }
 
 export function isBandcampFeedUrl(url: Url): boolean {

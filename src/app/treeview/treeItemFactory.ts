@@ -6,8 +6,11 @@ import type { BandcampPageData } from 'src/bandcamp/domain/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
+  isBandcampAlbumUrl,
   isBandcampFeedUrl,
+  isBandcampMusicUrl,
   isBandcampRegularUrl,
+  isBandcampTrackUrl,
   isBandcampUrl,
 } from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
@@ -208,7 +211,15 @@ export class TreeItemFactory {
     let username: string | undefined = undefined;
     let name: string | undefined = undefined;
 
-    if (isBandcampFeedUrl(currentPageUrl)) {
+    if (
+      isBandcampMusicUrl(currentPageUrl) ||
+      isBandcampAlbumUrl(currentPageUrl) ||
+      isBandcampTrackUrl(currentPageUrl)
+    ) {
+      // We are on the music page
+      username = data.identities?.fan.username;
+      name = data.identities?.fan.name;
+    } else if (isBandcampFeedUrl(currentPageUrl)) {
       // We are on the feed page
       username = data.fan_info?.username;
       name = data.fan_info?.name;
