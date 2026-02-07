@@ -6,10 +6,12 @@ import type { BandcampPageData } from 'src/bandcamp/domain/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
+  isBandcampFeedUrl,
   isBandcampRegularUrl,
   isBandcampUrl,
 } from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
+import { currentPageUrl } from 'src/core/shared';
 import { Url } from 'src/core/url';
 import { createQueryCountMap } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
@@ -174,17 +176,20 @@ export class TreeItemFactory {
     if (!fan_data) {
       return null;
     }
-    console.log('fromBandcampFanPageData', pageData.data);
 
     const children: TreeItem[] = [];
     children.push({
       label: 'Collection',
+      href: BandcampUrlFactory.createCollectionUrl(
+        fan_data.username,
+      ).toString(),
       children: createTreeItemsFromItemCacheItems(
         pageData.data.item_cache.collection,
       ),
     });
     children.push({
       label: 'Wishlist',
+      href: BandcampUrlFactory.createWishlistUrl(fan_data.username).toString(),
       children: createTreeItemsFromItemCacheItems(
         pageData.data.item_cache.wishlist,
       ),
@@ -194,6 +199,55 @@ export class TreeItemFactory {
 
     return {
       label: `Fan: ${fan_data.name} (${fan_data.location})`,
+      children,
+    };
+  }
+
+  static createPersonalMenu(pageData: BandcampPageData): TreeItem {
+    const data = pageData.data;
+    let username: string | undefined = undefined;
+    let name: string | undefined = undefined;
+
+    if (isBandcampFeedUrl(currentPageUrl)) {
+      // We are on the feed page
+      username = data.fan_info?.username;
+      name = data.fan_info?.name;
+    } else if (data.active_tab) {
+      // We are on the personal user page
+      username = data.current_fan?.username;
+      name = username;
+    } else {
+      // We are on a regular page
+      username = data.fan_data?.username;
+      name = data.fan_name;
+    }
+
+    if (!username) {
+      return {
+        label: 'You: (not logged in)',
+        children: [
+          {
+            label: 'Login',
+            href: BandcampUrlFactory.createLoginUrl().toString(),
+          },
+        ],
+      };
+    }
+
+    const children: TreeItem[] = [];
+
+    children.push({
+      label: 'Feed',
+      href: BandcampUrlFactory.createFeedUrl(username).toString(),
+    });
+
+    children.push({
+      label: 'Collection',
+      href: BandcampUrlFactory.createCollectionUrl(username).toString(),
+    });
+
+    return {
+      label: `You: ${name}`,
       children,
     };
   }

@@ -1,4 +1,4 @@
-import type { Url } from 'src/core/url';
+import { Url } from 'src/core/url';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -36,5 +36,21 @@ export class BandcampUrlFactory {
    */
   static createTrackUrl(url: Url): Url {
     return url.withoutSearchAndHash;
+  }
+
+  static createCollectionUrl(username: string): Url {
+    return new Url(`https://bandcamp.com/${username}`);
+  }
+
+  static createWishlistUrl(username: string): Url {
+    return new Url(`https://bandcamp.com/${username}/wishlist`);
+  }
+
+  static createFeedUrl(username: string): Url {
+    return new Url(`https://bandcamp.com/${username}/feed`);
+  }
+
+  static createLoginUrl(): Url {
+    return new Url('https://bandcamp.com/login');
   }
 }

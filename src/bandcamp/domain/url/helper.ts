@@ -24,3 +24,8 @@ export function isBandcampTrackUrl(url: Url): boolean {
   const path = url.pathname;
   return path.startsWith('/track/');
 }
+
+export function isBandcampFeedUrl(url: Url): boolean {
+  const path = url.pathname;
+  return path.endsWith('/feed');
+}
