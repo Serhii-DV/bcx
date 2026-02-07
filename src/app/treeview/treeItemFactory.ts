@@ -81,7 +81,7 @@ export class TreeItemFactory {
     try {
       const historyItems = await History.search({
         text: 'bandcamp.com',
-        maxResults: 200,
+        maxResults: 1000,
         startTime: 0,
       });
       const children: TreeItem[] = [];
