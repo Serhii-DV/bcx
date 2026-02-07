@@ -281,13 +281,11 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
                 {/if}
                 <span>{item.label}</span>
               </summary>
-              <!-- <div class="ml-2 mt-0 border-l border-gray-500/50 pl-2"> -->
-                {@render treeItems(item.children)}
-              <!-- </div> -->
+              {@render treeItems(item.children)}
             </details>
           {:else}
             <a
-              class="block w-full cursor-pointer ml-2 text-left px-0 py-1 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+              class="block w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
