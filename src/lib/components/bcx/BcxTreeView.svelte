@@ -86,6 +86,7 @@ function handleItemClick(
   event?: MouseEvent | KeyboardEvent,
 ) {
   if (!item) return;
+
   focusedPath = item.path ?? null;
   let handleDefaultClick = true;
 
@@ -95,23 +96,25 @@ function handleItemClick(
       isBandcampMusicUrl(currentPageUrl) &&
       currentPageUrl.hasSameHostname(itemUrl);
     handleDefaultClick = !handleSearchQueryClick;
-  }
 
-  if (handleDefaultClick) {
-    // Handle default navigation for non-music pages (e.g., open in new tab)
-    // For keyboard events, manually navigate since we can't rely on default browser behavior
-    if (event instanceof KeyboardEvent && item.href) {
-      window.open(item.href, '_self');
+    // Prevent default navigation for music items and set the search query instead
+    if (event?.currentTarget instanceof HTMLAnchorElement) {
+      event?.preventDefault();
     }
-    return;
+
+    if (handleDefaultClick) {
+      // Handle default navigation for non-music pages (e.g., open in new tab)
+      // For keyboard events, manually navigate since we can't rely on default browser behavior
+      if (event instanceof KeyboardEvent && item.href) {
+        window.open(item.href, '_self');
+      }
+      return;
+    }
   }
 
-  // Prevent default navigation for music items and set the search query instead
-  if (event?.currentTarget instanceof HTMLAnchorElement) {
-    event?.preventDefault();
+  if (item.query) {
+    musicFilterStore.setSearchQuery(item.query);
   }
-  if (!item.query) return;
-  musicFilterStore.setSearchQuery(item.query);
 
   if (onItemClick) {
     onItemClick(item, event);
