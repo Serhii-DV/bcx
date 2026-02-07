@@ -6,6 +6,9 @@ import {
   isNode,
   isNodeExpanded,
 } from 'src/app/treeview/utils';
+import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
+import { currentPageUrl } from 'src/core/shared';
+import { Url } from 'src/core/url';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
@@ -80,13 +83,38 @@ onDestroy(() => {
 
 function handleItemClick(
   item?: TreeItem | null,
-  e?: MouseEvent | KeyboardEvent,
+  event?: MouseEvent | KeyboardEvent,
 ) {
   if (!item) return;
   focusedPath = item.path ?? null;
+  let handleDefaultClick = true;
+
+  if (item.href) {
+    const itemUrl = Url.create(item.href);
+    const handleSearchQueryClick =
+      isBandcampMusicUrl(currentPageUrl) &&
+      currentPageUrl.hasSameHostname(itemUrl);
+    handleDefaultClick = !handleSearchQueryClick;
+  }
+
+  if (handleDefaultClick) {
+    // Handle default navigation for non-music pages (e.g., open in new tab)
+    // For keyboard events, manually navigate since we can't rely on default browser behavior
+    if (event instanceof KeyboardEvent && item.href) {
+      window.open(item.href, '_self');
+    }
+    return;
+  }
+
+  // Prevent default navigation for music items and set the search query instead
+  if (event?.currentTarget instanceof HTMLAnchorElement) {
+    event?.preventDefault();
+  }
+  if (!item.query) return;
+  musicFilterStore.setSearchQuery(item.query);
 
   if (onItemClick) {
-    onItemClick(item, e);
+    onItemClick(item, event);
   }
 }
 

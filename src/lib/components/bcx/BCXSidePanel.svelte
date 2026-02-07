@@ -1,10 +1,5 @@
 <script lang="ts">
 import { TreeData } from 'src/app/treeview/treeData';
-import type { TreeItem } from 'src/app/treeview/treeItem';
-import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
-import { currentPageUrl } from 'src/core/shared';
-import { Url } from 'src/core/url';
-import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeView from './BcxTreeView.svelte';
 
 interface Props {
@@ -24,37 +19,6 @@ $effect(() => {
     }, 100);
   }
 });
-
-function handleTreeItemClick(
-  item: TreeItem,
-  event?: MouseEvent | KeyboardEvent,
-) {
-  let handleDefaultClick = true;
-
-  if (item.href) {
-    const itemUrl = Url.create(item.href);
-    const handleSearchQueryClick =
-      isBandcampMusicUrl(currentPageUrl) &&
-      currentPageUrl.hasSameHostname(itemUrl);
-    handleDefaultClick = !handleSearchQueryClick;
-  }
-
-  if (handleDefaultClick) {
-    // Handle default navigation for non-music pages (e.g., open in new tab)
-    // For keyboard events, manually navigate since we can't rely on default browser behavior
-    if (event instanceof KeyboardEvent && item.href) {
-      window.open(item.href, '_self');
-    }
-    return;
-  }
-
-  // Prevent default navigation for music items and set the search query instead
-  if (event?.currentTarget instanceof HTMLAnchorElement) {
-    event?.preventDefault();
-  }
-  if (!item.query) return;
-  musicFilterStore.setSearchQuery(item.query);
-}
 </script>
 
 <!-- Side Panel -->
@@ -76,7 +40,7 @@ function handleTreeItemClick(
 
         <!-- Tree View Demo -->
         <div class="text-md">
-          <BcxTreeView bind:this={treeViewRef} treeData={treeData} onItemClick={handleTreeItemClick} />
+          <BcxTreeView bind:this={treeViewRef} treeData={treeData} />
         </div>
 
         <!-- Extension Info -->
