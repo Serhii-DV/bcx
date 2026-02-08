@@ -12,7 +12,9 @@ export interface UserData {
 }
 
 export class BandcampPageData {
-  constructor(public data: any = null) {}
+  constructor(public data: any = null) {
+    console.log('[BandcampPageData]', this.data);
+  }
 
   /** Returns the album ID if available */
   get albumId(): number | null {
@@ -33,15 +35,11 @@ export class BandcampPageData {
     return detectUserDataFromPageData(this);
   }
 
-  static fromJson(jsonString: string): BandcampPageData {
-    const data = JSON.parse(jsonString);
-    return new BandcampPageData(data);
-  }
-
   static fromPageDataDomElement(): BandcampPageData {
     const jsonString =
       document.getElementById('pagedata')?.dataset.blob ?? '{}';
-    return BandcampPageData.fromJson(jsonString);
+    const data = JSON.parse(jsonString);
+    return new BandcampPageData(data);
   }
 }
 
