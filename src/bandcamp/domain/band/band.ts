@@ -1,12 +1,13 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
-import type { Url } from 'src/core/url';
-import type { Artwork } from '../artwork/artwork';
+import { Url } from 'src/core/url';
+import { removeInvisibleChars, trim } from 'src/utils/string';
+import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { bandDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
 import { BandcampUrlFactory } from '../url/factory';
 import { BandDataCompressor, type RawBandData } from './compressor';
-import type { BandMetadata } from './metadata';
+import { BandMetadata } from './metadata';
 
 export class Band implements Storable, Compressable {
   constructor(
@@ -17,6 +18,22 @@ export class Band implements Storable, Compressable {
     public metadata: BandMetadata,
   ) {
     this.url = BandcampUrlFactory.createBandUrl(url);
+  }
+
+  static create(
+    id: string | number,
+    name: string,
+    url: string,
+    artworkId: number,
+    metadata?: BandMetadata,
+  ): Band {
+    const bandId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const bandName = trim(removeInvisibleChars(name), ' -\n');
+    const bandUrl = Url.create(url);
+    const bandArtwork = Artwork.createForBand(artworkId);
+    const bandMetadata = metadata || new BandMetadata(new Date(), '', [], []);
+
+    return new Band(bandId, bandName, bandUrl, bandArtwork, bandMetadata);
   }
 
   get hasReleases(): boolean {

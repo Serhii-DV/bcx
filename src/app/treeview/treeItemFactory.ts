@@ -1,7 +1,6 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
-import { BandFactory } from 'src/bandcamp/domain/band/factory';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import type { BandcampPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
@@ -299,7 +298,7 @@ function createBandsTreeItemsFromItemsCache(items: any): TreeItem[] {
   for (const key in items) {
     if (hasOwnProperty(items, key)) {
       const item = items[key];
-      const band = BandFactory.create(
+      const band = Band.create(
         item.band_id,
         item.name,
         BandcampUrlFactory.generateBandUrlFromSubdomain(
