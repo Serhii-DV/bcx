@@ -222,6 +222,7 @@ Use Ctrl+/ to toggle"
 <BCXSidePanel
   treeData={treeData}
   open={sidePanelOpen}
+  animate={sidePanelStateInitialized}
 />
 
 <!-- Tour (only on music pages) -->

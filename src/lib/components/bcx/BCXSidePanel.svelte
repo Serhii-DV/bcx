@@ -5,9 +5,10 @@ import BcxTreeView from './BcxTreeView.svelte';
 interface Props {
   treeData: TreeData;
   open?: boolean;
+  animate?: boolean;
 }
 
-let { treeData, open = false }: Props = $props();
+let { treeData, open = false, animate = false }: Props = $props();
 let treeViewRef: BcxTreeView;
 
 // Focus first item when panel opens
@@ -24,7 +25,7 @@ $effect(() => {
 <!-- Side Panel -->
 <div
   id="bcx-side-panel"
-  class="fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white border-r transition-transform duration-300 ease-in-out {open ? 'block' : 'hidden'}"
+  class="fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white border-r transition-opacity duration-400 {animate ? (open ? 'side-panel-open' : 'side-panel-close') : (open ? '' : 'hidden')}"
 >
   <div class="flex h-full flex-col">
     <!-- Header -->
@@ -80,5 +81,26 @@ $effect(() => {
   :global(#bcx-side-panel) {
     background-color: rgb(31 41 55 / 56%);
     width: 400px;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  :global(.side-panel-open) {
+    animation: slideInLeft 0.4s ease-out forwards;
+  }
+
+  :global(.side-panel-close) {
+    display: none;
   }
 </style>
