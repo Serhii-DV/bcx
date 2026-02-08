@@ -7,7 +7,7 @@ import { PriceDataCompressor } from './priceCompressor';
 import { TrackDataCompressor } from './track/compressor';
 import { UrlCompressor } from './url/compressor';
 
-export const bandcampPageData = BandcampPageData.fromPageDataDomElement();
+export const bandcampPageData = BandcampPageData.load();
 export const urlCompressor = new UrlCompressor();
 export const priceDataCompressor = new PriceDataCompressor();
 export const metadataCompressor = new MetadataCompressor(priceDataCompressor);

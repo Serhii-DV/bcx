@@ -1,6 +1,8 @@
 import { currentPageUrl } from 'src/core/shared';
+import type { Url } from 'src/core/url';
 import {
   isBandcampAlbumUrl,
+  isBandcampDiscoverUrl,
   isBandcampFeedUrl,
   isBandcampMusicUrl,
   isBandcampTrackUrl,
@@ -32,7 +34,7 @@ export class BandcampPageData {
   }
 
   get userData(): UserData {
-    return detectUserDataFromPageData(this);
+    return detectUserDataFromPageData(this, currentPageUrl);
   }
 
   static fromPageDataDomElement(): BandcampPageData {
@@ -41,14 +43,36 @@ export class BandcampPageData {
     const data = JSON.parse(jsonString);
     return new BandcampPageData(data);
   }
+
+  static fromDiscoverAppDomElement(): BandcampPageData {
+    const jsonString =
+      document.getElementById('DiscoverApp')?.dataset.blob ?? '{}';
+    const data = JSON.parse(jsonString);
+    return new BandcampPageData(data);
+  }
+
+  static load(): BandcampPageData {
+    if (isBandcampDiscoverUrl(currentPageUrl)) {
+      return BandcampPageData.fromDiscoverAppDomElement();
+    }
+
+    return BandcampPageData.fromPageDataDomElement();
+  }
 }
 
-function detectUserDataFromPageData(pageData: BandcampPageData): UserData {
+function detectUserDataFromPageData(
+  pageData: BandcampPageData,
+  currentPageUrl: Url,
+): UserData {
   const data = pageData.data;
   let username: string | undefined = undefined;
   let name: string | undefined = undefined;
 
-  if (
+  if (isBandcampDiscoverUrl(currentPageUrl)) {
+    // We are on the discover page
+    username = data.pageContext?.identity?.fanUsername;
+    name = username;
+  } else if (
     isBandcampMusicUrl(currentPageUrl) ||
     isBandcampAlbumUrl(currentPageUrl) ||
     isBandcampTrackUrl(currentPageUrl)

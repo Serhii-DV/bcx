@@ -79,7 +79,7 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
     treeData.add(bandReleasesTreeItem);
   }
 
-  const bandcampPageData = BandcampPageData.fromPageDataDomElement();
+  const bandcampPageData = BandcampPageData.load();
 
   if (bandcampPageData) {
     treeData.add(TreeItemFactory.createPersonalMenu(bandcampPageData.userData));

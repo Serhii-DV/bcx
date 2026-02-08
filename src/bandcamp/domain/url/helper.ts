@@ -29,3 +29,8 @@ export function isBandcampFeedUrl(url: Url): boolean {
   const path = url.pathname;
   return path.endsWith('/feed');
 }
+
+export function isBandcampDiscoverUrl(url: Url): boolean {
+  const path = url.pathname;
+  return path.startsWith('/discover');
+}
