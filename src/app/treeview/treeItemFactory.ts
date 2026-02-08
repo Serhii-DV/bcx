@@ -201,9 +201,7 @@ export class TreeItemFactory {
       href: BandcampUrlFactory.createFollowingBandsUrl(
         fan_data.username,
       ).toString(),
-      children: createBandsTreeItemsFromItemsCache(
-        pageData.data.item_cache.following_bands,
-      ),
+      children: createFollowingBandsTreeItems(pageData),
     });
     children.push({
       label: 'Following Genres',
@@ -299,11 +297,13 @@ function createAlbumsTreeItemsFromItemsCache(items: any): TreeItem[] {
   return treeItems;
 }
 
-function createBandsTreeItemsFromItemsCache(items: any): TreeItem[] {
+function createFollowingBandsTreeItems(pageData: BandcampPageData): TreeItem[] {
   const treeItems: TreeItem[] = [];
-  for (const key in items) {
-    if (hasOwnProperty(items, key)) {
-      const item = items[key];
+  const bands = pageData.data?.item_cache?.following_bands;
+
+  for (const key in bands) {
+    if (hasOwnProperty(bands, key)) {
+      const item = bands[key];
       const band = Band.create(
         item.band_id,
         item.name,
