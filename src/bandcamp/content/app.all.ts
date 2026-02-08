@@ -57,7 +57,7 @@ onDOMReady(async () => {
       band = bands[0];
     }
 
-    const treeData = await createTreeDataForBand(band);
+    const treeData = await createTreeData(band);
 
     mount(App, {
       target: shadowRoot,
@@ -71,7 +71,7 @@ onDOMReady(async () => {
   }
 });
 
-async function createTreeDataForBand(band: Band | null): Promise<TreeData> {
+async function createTreeData(band: Band | null): Promise<TreeData> {
   const treeData = new TreeData();
 
   if (band) {

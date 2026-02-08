@@ -205,6 +205,13 @@ export class TreeItemFactory {
         pageData.data.item_cache.following_bands,
       ),
     });
+    children.push({
+      label: 'Following Genres',
+      href: BandcampUrlFactory.createFollowingGenresUrl(
+        fan_data.username,
+      ).toString(),
+      children: createFollowingGenresTreeItems(pageData),
+    });
 
     updateChildrenCounts(children);
 
@@ -306,6 +313,25 @@ function createBandsTreeItemsFromItemsCache(items: any): TreeItem[] {
         item.image_id,
       );
       const treeItem = TreeItemFactory.fromBand(band, false);
+      treeItems.push(treeItem);
+    }
+  }
+  return treeItems;
+}
+
+function createFollowingGenresTreeItems(
+  pageData: BandcampPageData,
+): TreeItem[] {
+  const treeItems: TreeItem[] = [];
+  const genres = pageData.data?.item_cache?.following_genres;
+
+  for (const key in genres) {
+    if (hasOwnProperty(genres, key)) {
+      const item = genres[key];
+      const treeItem: TreeItem = {
+        label: item.display_name,
+        href: item.tag_page_url,
+      };
       treeItems.push(treeItem);
     }
   }
