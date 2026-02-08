@@ -1,6 +1,11 @@
+import { removeInvisibleChars, trim } from 'src/utils/string';
+import { ArtistMemoryCache } from './cache';
+
 export class Artist {
-  private _stringCache?: string;
   public readonly joins: string[];
+
+  private _stringCache?: string;
+  private static cache = new ArtistMemoryCache();
 
   constructor(
     public readonly names: string[],
@@ -28,10 +33,24 @@ export class Artist {
     return result;
   }
 
-  static fromString(artistString: string): Artist {
-    // Handle special case for "V/A"
-    if (artistString.trim() === 'V/A') {
-      return new Artist(['V/A'], []);
+  static create(input: string): Artist {
+    const processedInput = trim(removeInvisibleChars(input), ' -\n');
+    const cached = this.cache.get(processedInput);
+
+    if (cached) {
+      return cached;
+    }
+
+    const artist = this.parse(processedInput);
+    this.cache.set(processedInput, artist);
+
+    return artist;
+  }
+
+  private static parse(input: string): Artist {
+    // Handle special cases
+    if (input === '' || input === 'V/A') {
+      return new Artist([input]);
     }
 
     // Define delimiters to split on
@@ -56,7 +75,7 @@ export class Artist {
 
     const regex = new RegExp(`\\s*(${delimiterPattern})\\s*`, 'gi');
 
-    const parts = artistString.split(regex);
+    const parts = input.split(regex);
     const names: string[] = [];
     const joins: string[] = [];
 

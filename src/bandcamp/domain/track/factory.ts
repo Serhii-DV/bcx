@@ -34,7 +34,7 @@ export class TrackFactory {
       typeof time === 'string' ? TrackTime.fromString(time) : time;
 
     const trackArtist =
-      typeof artist === 'string' ? ArtistFactory.fromString(artist) : artist;
+      typeof artist === 'string' ? Artist.create(artist) : artist;
 
     const trackArtwork =
       artwork instanceof Artwork

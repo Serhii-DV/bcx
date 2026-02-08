@@ -1,7 +1,7 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { Url } from 'src/core/url';
 import { removeInvisibleChars } from 'src/utils/string';
-import type { Artist } from '../artist/artist';
+import { Artist } from '../artist/artist';
 import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
@@ -34,7 +34,7 @@ export class Album implements Storable, Compressable {
     metadata?: Metadata,
   ): Album {
     const albumUrl = Url.create(url);
-    const albumArtist = ArtistFactory.fromString(artist);
+    const albumArtist = Artist.create(artist);
     const albumTitle = removeInvisibleChars(title);
     const albumId =
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id;

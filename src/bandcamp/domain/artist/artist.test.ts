@@ -51,27 +51,27 @@ describe('ReleaseArtist', () => {
     });
   });
 
-  describe('fromString', () => {
+  describe('create', () => {
     it('should split a string correctly into names and joins', () => {
-      const artist = Artist.fromString('Band1 & Band2 | Band3');
+      const artist = Artist.create('Band1 & Band2 | Band3');
       expect(artist.names).toEqual(['Band1', 'Band2', 'Band3']);
       expect(artist.joins).toEqual(['&', '|']);
     });
 
     it('should treat "V/A" as a single entity', () => {
-      const artist = Artist.fromString('V/A');
+      const artist = Artist.create('V/A');
       expect(artist.names).toEqual(['V/A']);
       expect(artist.joins).toEqual([]);
     });
 
     it('should handle different delimiters', () => {
-      const artist = Artist.fromString('A / B + C • D');
+      const artist = Artist.create('A / B + C • D');
       expect(artist.names).toEqual(['A', 'B', 'C', 'D']);
       expect(artist.joins).toEqual(['/', '+', '•']);
     });
 
     it('should handle spaces around delimiters properly', () => {
-      const artist = Artist.fromString('Artist 1 Vs Artist 2');
+      const artist = Artist.create('Artist 1 Vs Artist 2');
       expect(artist.names).toEqual(['Artist 1', 'Artist 2']);
       expect(artist.joins).toEqual(['Vs']);
     });
