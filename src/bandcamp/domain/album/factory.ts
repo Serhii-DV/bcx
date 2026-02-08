@@ -1,8 +1,4 @@
 import type { StorageObject } from 'src/core/storage';
-import { Url } from 'src/core/url';
-import { removeInvisibleChars } from 'src/utils/string';
-import { ArtistFactory } from '../artist/factory';
-import { Artwork } from '../artwork/artwork';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import type {
@@ -13,37 +9,11 @@ import type {
 import { Price } from '../price';
 import { albumDataCompressor } from '../shared';
 import { TrackFactory } from '../track/factory';
-import type { Track } from '../track/track';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
 export class AlbumFactory {
-  static create(
-    url: string,
-    artist: string,
-    title: string,
-    id: string | number,
-    artworkId: string | number,
-    bandId: string | number,
-    tracks: Track[] = [],
-    metadata?: Metadata,
-  ): Album {
-    const albumArtist = ArtistFactory.fromString(artist);
-    return new Album(
-      Url.create(url),
-      albumArtist,
-      removeInvisibleChars(title),
-      typeof id === 'string' ? parseInt(id.replace('album-', '')) : id,
-      new Artwork(
-        typeof artworkId === 'string' ? parseInt(artworkId) : artworkId,
-      ),
-      typeof bandId === 'string' ? parseInt(bandId) : bandId,
-      tracks,
-      metadata,
-    );
-  }
-
   static fromRawData(rawData: RawAlbumData): Album {
-    return this.create(
+    return Album.create(
       rawData.url,
       rawData.artist,
       rawData.title,
@@ -115,7 +85,7 @@ export class AlbumFactory {
       schema.keywords,
     );
 
-    return this.create(
+    return Album.create(
       url,
       artist,
       title,

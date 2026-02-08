@@ -5,7 +5,6 @@ import { element, elementHtml, elements, injectCssFile } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
 import type { QueryCountMap } from '$lib/components/bcx';
 import { Album } from '../album/album';
-import { AlbumFactory } from '../album/factory';
 import { Artwork } from '../artwork/artwork';
 import { Band } from '../band/band';
 import type { RawBandData } from '../band/compressor';
@@ -269,7 +268,7 @@ export class PageMusic {
   private createAlbumFromClientItem(item: MusicGridClientItem): Album | null {
     const albumUrl = this.normalizeUrl(item.page_url);
     const artist = item.artist || this.band.name;
-    return AlbumFactory.create(
+    return Album.create(
       albumUrl,
       artist,
       item.title,
@@ -335,14 +334,7 @@ export class PageMusic {
 
       switch (itemId.type) {
         case 'album':
-          return AlbumFactory.create(
-            url,
-            artist,
-            title,
-            itemId.id,
-            artworkId,
-            bandId,
-          );
+          return Album.create(url, artist, title, itemId.id, artworkId, bandId);
 
         case 'track':
           return TrackFactory.create(

@@ -1,5 +1,4 @@
-import type { Album } from 'src/bandcamp/domain/album/album';
-import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
+import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import type { BandcampPageData } from 'src/bandcamp/domain/pageData/pageData';
@@ -278,7 +277,7 @@ function createAlbumsTreeItemsFromItemsCache(items: any): TreeItem[] {
   for (const key in items) {
     if (hasOwnProperty(items, key)) {
       const item = items[key];
-      const album = AlbumFactory.create(
+      const album = Album.create(
         item.item_url,
         item.band_name,
         item.item_title,

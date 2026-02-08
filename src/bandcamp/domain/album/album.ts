@@ -1,6 +1,8 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
-import type { Url } from 'src/core/url';
+import { Url } from 'src/core/url';
+import { removeInvisibleChars } from 'src/utils/string';
 import type { Artist } from '../artist/artist';
+import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
@@ -20,6 +22,38 @@ export class Album implements Storable, Compressable {
     public tracks: Track[] = [],
     public metadata?: Metadata,
   ) {}
+
+  static create(
+    url: string,
+    artist: string,
+    title: string,
+    id: string | number,
+    artworkId: string | number,
+    bandId: string | number,
+    tracks: Track[] = [],
+    metadata?: Metadata,
+  ): Album {
+    const albumUrl = Url.create(url);
+    const albumArtist = ArtistFactory.fromString(artist);
+    const albumTitle = removeInvisibleChars(title);
+    const albumId =
+      typeof id === 'string' ? parseInt(id.replace('album-', '')) : id;
+    const albumArtwork = new Artwork(
+      typeof artworkId === 'string' ? parseInt(artworkId) : artworkId,
+    );
+    const albumBandId = typeof bandId === 'string' ? parseInt(bandId) : bandId;
+
+    return new Album(
+      albumUrl,
+      albumArtist,
+      albumTitle,
+      albumId,
+      albumArtwork,
+      albumBandId,
+      tracks,
+      metadata,
+    );
+  }
 
   get compressor(): AlbumDataCompressor {
     return albumDataCompressor;
