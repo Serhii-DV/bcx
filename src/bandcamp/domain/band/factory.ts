@@ -9,28 +9,28 @@ import { BandMetadata } from './metadata';
 
 export class BandFactory {
   static create(
-    id: number,
+    id: string | number,
     name: string,
-    url: Url,
-    artwork: Artwork,
-    metadata: BandMetadata,
+    url: string,
+    artworkId: number,
+    metadata?: BandMetadata,
   ): Band {
-    return new Band(id, name, url, artwork, metadata);
+    const bandId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const bandName = trim(removeInvisibleChars(name), ' -\n');
+    const bandUrl = Url.create(url);
+    const bandArtwork = Artwork.createForBand(artworkId);
+    const bandMetadata = metadata || new BandMetadata(new Date(), '', [], []);
+
+    return new Band(bandId, bandName, bandUrl, bandArtwork, bandMetadata);
   }
 
   static fromRawData(rawData: RawBandData): Band {
-    const bandId =
-      typeof rawData.id === 'string' ? parseInt(rawData.id, 10) : rawData.id;
-    const bandName = trim(removeInvisibleChars(rawData.name), ' -\n');
-    const bandUrl = Url.create(rawData.url);
-    const metadata = BandMetadata.fromRawData(rawData.metadata);
-
-    return new Band(
-      bandId,
-      bandName,
-      bandUrl,
-      Artwork.createForBand(rawData.artworkId),
-      metadata,
+    return this.create(
+      rawData.id,
+      rawData.name,
+      rawData.url,
+      rawData.artworkId,
+      BandMetadata.fromRawData(rawData.metadata),
     );
   }
 

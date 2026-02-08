@@ -126,15 +126,4 @@ export class AlbumFactory {
       metadata,
     );
   }
-
-  static fromFanPageDataCollectionItem(item: any): Album {
-    return this.create(
-      item.item_url,
-      item.band_name,
-      item.item_title,
-      item.album_id,
-      item.item_art_id,
-      item.band_id,
-    );
-  }
 }

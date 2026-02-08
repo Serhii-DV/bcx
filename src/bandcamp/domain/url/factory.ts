@@ -24,6 +24,10 @@ export class BandcampUrlFactory {
     return url.withoutPathAndSearchAndHash;
   }
 
+  static generateBandUrlFromSubdomain(subdomain: string): string {
+    return `https://${subdomain}.bandcamp.com/`;
+  }
+
   /**
    * Creates an album Url from the given Url.
    */
@@ -52,5 +56,15 @@ export class BandcampUrlFactory {
 
   static createLoginUrl(): Url {
     return new Url('https://bandcamp.com/login');
+  }
+
+  static createFollowingBandsUrl(username: string): Url {
+    return new Url(
+      `https://bandcamp.com/${username}/following/artists_and_labels`,
+    );
+  }
+
+  static createFollowingGenresUrl(username: string): Url {
+    return new Url(`https://bandcamp.com/${username}/following/genres`);
   }
 }

@@ -2,7 +2,7 @@ import { AlbumDataCompressor } from './album/compressor';
 import { BandDataCompressor } from './band/compressor';
 import { BandMetadataCompressor } from './band/metadataCompressor';
 import { MetadataCompressor } from './metadataCompressor';
-import { BandcampPageData } from './pageData';
+import { BandcampPageData } from './pageData/pageData';
 import { PriceDataCompressor } from './priceCompressor';
 import { TrackDataCompressor } from './track/compressor';
 import { UrlCompressor } from './url/compressor';

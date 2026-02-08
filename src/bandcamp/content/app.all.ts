@@ -15,7 +15,7 @@ import { TreeData } from 'src/app/treeview/treeData';
 import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
-import { BandcampPageData } from '../domain/pageData';
+import { BandcampPageData } from '../domain/pageData/pageData';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
