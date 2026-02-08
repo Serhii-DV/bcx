@@ -42,29 +42,27 @@ export class BandcampUrlFactory {
     return url.withoutSearchAndHash;
   }
 
-  static createCollectionUrl(username: string): Url {
-    return new Url(`https://bandcamp.com/${username}`);
+  static generateCollectionUrl(username: string): string {
+    return `https://bandcamp.com/${username}`;
   }
 
-  static createWishlistUrl(username: string): Url {
-    return new Url(`https://bandcamp.com/${username}/wishlist`);
+  static generateWishlistUrl(username: string): string {
+    return `https://bandcamp.com/${username}/wishlist`;
   }
 
-  static createFeedUrl(username: string): Url {
-    return new Url(`https://bandcamp.com/${username}/feed`);
+  static generateFeedUrl(username: string): string {
+    return `https://bandcamp.com/${username}/feed`;
   }
 
-  static createLoginUrl(): Url {
-    return new Url('https://bandcamp.com/login');
+  static generateLoginUrl(): string {
+    return 'https://bandcamp.com/login';
   }
 
-  static createFollowingBandsUrl(username: string): Url {
-    return new Url(
-      `https://bandcamp.com/${username}/following/artists_and_labels`,
-    );
+  static generateFollowingBandsUrl(username: string): string {
+    return `https://bandcamp.com/${username}/following/artists_and_labels`;
   }
 
-  static createFollowingGenresUrl(username: string): Url {
-    return new Url(`https://bandcamp.com/${username}/following/genres`);
+  static generateFollowingGenresUrl(username: string): string {
+    return `https://bandcamp.com/${username}/following/genres`;
   }
 }

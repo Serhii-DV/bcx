@@ -1,7 +1,10 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
-import type { BandcampPageData } from 'src/bandcamp/domain/pageData/pageData';
+import type {
+  BandcampPageData,
+  UserData,
+} from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
@@ -182,32 +185,26 @@ export class TreeItemFactory {
     const children: TreeItem[] = [];
     children.push({
       label: 'Collection',
-      href: BandcampUrlFactory.createCollectionUrl(
-        fan_data.username,
-      ).toString(),
+      href: BandcampUrlFactory.generateCollectionUrl(fan_data.username),
       children: createAlbumsTreeItemsFromItemsCache(
         pageData.data.item_cache.collection,
       ),
     });
     children.push({
       label: 'Wishlist',
-      href: BandcampUrlFactory.createWishlistUrl(fan_data.username).toString(),
+      href: BandcampUrlFactory.generateWishlistUrl(fan_data.username),
       children: createAlbumsTreeItemsFromItemsCache(
         pageData.data.item_cache.wishlist,
       ),
     });
     children.push({
       label: 'Following Bands',
-      href: BandcampUrlFactory.createFollowingBandsUrl(
-        fan_data.username,
-      ).toString(),
+      href: BandcampUrlFactory.generateFollowingBandsUrl(fan_data.username),
       children: createFollowingBandsTreeItems(pageData),
     });
     children.push({
       label: 'Following Genres',
-      href: BandcampUrlFactory.createFollowingGenresUrl(
-        fan_data.username,
-      ).toString(),
+      href: BandcampUrlFactory.generateFollowingGenresUrl(fan_data.username),
       children: createFollowingGenresTreeItems(pageData),
     });
 
@@ -219,40 +216,14 @@ export class TreeItemFactory {
     };
   }
 
-  static createPersonalMenu(pageData: BandcampPageData): TreeItem {
-    const data = pageData.data;
-    let username: string | undefined = undefined;
-    let name: string | undefined = undefined;
-
-    if (
-      isBandcampMusicUrl(currentPageUrl) ||
-      isBandcampAlbumUrl(currentPageUrl) ||
-      isBandcampTrackUrl(currentPageUrl)
-    ) {
-      // We are on the music page
-      username = data.identities?.fan.username;
-      name = data.identities?.fan.name;
-    } else if (isBandcampFeedUrl(currentPageUrl)) {
-      // We are on the feed page
-      username = data.fan_info?.username;
-      name = data.fan_info?.name;
-    } else if (data.active_tab) {
-      // We are on the personal user page
-      username = data.current_fan?.username;
-      name = username;
-    } else {
-      // We are on a regular page
-      username = data.fan_data?.username;
-      name = data.fan_name;
-    }
-
-    if (!username) {
+  static createPersonalMenu(userData: UserData): TreeItem {
+    if (!userData.username) {
       return {
         label: 'You: (not logged in)',
         children: [
           {
             label: 'Login',
-            href: BandcampUrlFactory.createLoginUrl().toString(),
+            href: BandcampUrlFactory.generateLoginUrl(),
           },
         ],
       };
@@ -262,16 +233,16 @@ export class TreeItemFactory {
 
     children.push({
       label: 'Feed',
-      href: BandcampUrlFactory.createFeedUrl(username).toString(),
+      href: BandcampUrlFactory.generateFeedUrl(userData.username),
     });
 
     children.push({
       label: 'Collection',
-      href: BandcampUrlFactory.createCollectionUrl(username).toString(),
+      href: BandcampUrlFactory.generateCollectionUrl(userData.username),
     });
 
     return {
-      label: `You: ${name}`,
+      label: `You: ${userData.name}`,
       children,
     };
   }

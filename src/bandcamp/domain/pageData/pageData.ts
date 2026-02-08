@@ -1,3 +1,16 @@
+import { currentPageUrl } from 'src/core/shared';
+import {
+  isBandcampAlbumUrl,
+  isBandcampFeedUrl,
+  isBandcampMusicUrl,
+  isBandcampTrackUrl,
+} from '../url/helper';
+
+export interface UserData {
+  username?: string;
+  name?: string;
+}
+
 export class BandcampPageData {
   constructor(public data: any = null) {}
 
@@ -16,6 +29,10 @@ export class BandcampPageData {
     return this.data?.title ?? null;
   }
 
+  get userData(): UserData {
+    return detectUserDataFromPageData(this);
+  }
+
   static fromJson(jsonString: string): BandcampPageData {
     const data = JSON.parse(jsonString);
     return new BandcampPageData(data);
@@ -26,4 +43,34 @@ export class BandcampPageData {
       document.getElementById('pagedata')?.dataset.blob ?? '{}';
     return BandcampPageData.fromJson(jsonString);
   }
+}
+
+function detectUserDataFromPageData(pageData: BandcampPageData): UserData {
+  const data = pageData.data;
+  let username: string | undefined = undefined;
+  let name: string | undefined = undefined;
+
+  if (
+    isBandcampMusicUrl(currentPageUrl) ||
+    isBandcampAlbumUrl(currentPageUrl) ||
+    isBandcampTrackUrl(currentPageUrl)
+  ) {
+    // We are on the music page
+    username = data.identities?.fan.username;
+    name = data.identities?.fan.name;
+  } else if (isBandcampFeedUrl(currentPageUrl)) {
+    // We are on the feed page
+    username = data.fan_info?.username;
+    name = data.fan_info?.name;
+  } else if (data.active_tab) {
+    // We are on the personal user page
+    username = data.current_fan?.username;
+    name = username;
+  } else {
+    // We are on a regular page
+    username = data.fan_data?.username;
+    name = data.fan_name;
+  }
+
+  return { username, name };
 }
