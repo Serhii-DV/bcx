@@ -26,7 +26,7 @@ let storeUnsubscribe: (() => void) | null = null;
 
 // Expose method to parent component
 export function focusFirstItem() {
-  focusTreeItem(treeData.firstVisible);
+  focusTreeItem(treeData.visibleFirst);
 }
 
 // Reactive values
@@ -127,14 +127,15 @@ function handleKeyDown(event: KeyboardEvent) {
   event.preventDefault();
 
   const currentIndex = treeData.visibleIndex(focusedPath ?? '');
+  const pageSize = 20; // Number of items to jump for PageUp/PageDown
 
   switch (event.key) {
     case 'ArrowDown':
-      focusTreeItem(treeData.findNextVisible(currentIndex));
+      focusTreeItem(treeData.visibleNext(currentIndex));
       break;
 
     case 'ArrowUp':
-      focusTreeItem(treeData.findPrevVisible(currentIndex));
+      focusTreeItem(treeData.visiblePrev(currentIndex));
       break;
 
     case 'ArrowRight':
@@ -177,12 +178,22 @@ function handleKeyDown(event: KeyboardEvent) {
       break;
 
     case 'Home':
-      focusTreeItem(treeData.firstVisible);
+      focusTreeItem(treeData.visibleFirst);
       break;
 
     case 'End':
-      focusTreeItem(treeData.lastVisible);
+      focusTreeItem(treeData.visibleLast);
       break;
+
+    case 'PageDown': {
+      focusTreeItem(treeData.visibleNext(currentIndex, pageSize));
+      break;
+    }
+
+    case 'PageUp': {
+      focusTreeItem(treeData.visiblePrev(currentIndex, pageSize));
+      break;
+    }
   }
 }
 
@@ -314,7 +325,7 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
   onfocus={() => {
     // Set initial focus to first item if none is focused
     if (!focusedPath) {
-      focusTreeItem(treeData.firstVisible);
+      focusTreeItem(treeData.visibleFirst);
     }
   }}
 >
