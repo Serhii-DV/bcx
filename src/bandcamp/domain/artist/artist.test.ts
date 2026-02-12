@@ -21,7 +21,7 @@ describe('ReleaseArtist', () => {
     });
   });
 
-  describe('asString', () => {
+  describe('toString', () => {
     it('should return the correct artist string', () => {
       const artist = new Artist(['Band One', 'Band Two'], [' & ']);
       expect(artist.toString()).toBe('Band One & Band Two');
@@ -39,7 +39,7 @@ describe('ReleaseArtist', () => {
     });
   });
 
-  describe('asArray', () => {
+  describe('toArray', () => {
     it('should return names and joins interleaved', () => {
       const artist = new Artist(['A', 'B', 'C'], [' & ', ' feat. ']);
       expect(artist.toArray()).toEqual(['A', '&', 'B', 'feat.', 'C']);
@@ -75,19 +75,28 @@ describe('ReleaseArtist', () => {
       expect(artist.names).toEqual(['Artist 1', 'Artist 2']);
       expect(artist.joins).toEqual(['Vs']);
     });
-  });
 
-  describe('toString', () => {
-    it('should return the same as asString', () => {
-      const artist = new Artist(['Artist X', 'Artist Y'], [' & ']);
-      expect(artist.toString()).toBe('Artist X & Artist Y');
-    });
+    const delimiters = [
+      ',',
+      '&',
+      '|',
+      '/',
+      '+',
+      '•',
+      'Vs',
+      'vs',
+      'VS',
+      'feat.',
+      'ft.',
+      'featuring',
+    ];
 
-    it('should correctly return a cached value on multiple calls', () => {
-      const artist = new Artist(['Solo Performer']);
-      const result1 = artist.toString();
-      const result2 = artist.toString();
-      expect(result1).toBe(result2);
+    delimiters.forEach((delimiter) => {
+      it(`should handle "${delimiter}" separated artist names`, () => {
+        const artist = Artist.create(`Artist 1${delimiter} Artist 2`);
+        expect(artist.names).toEqual(['Artist 1', 'Artist 2']);
+        expect(artist.joins).toEqual([delimiter]);
+      });
     });
   });
 });

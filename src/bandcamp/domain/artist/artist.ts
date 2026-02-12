@@ -55,6 +55,7 @@ export class Artist {
 
     // Define delimiters to split on
     const delimiters = [
+      ',',
       '&',
       '|',
       '/',
