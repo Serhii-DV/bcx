@@ -87,6 +87,11 @@ function handleItemClick(
 ) {
   if (!item) return;
 
+  if (item.onClick) {
+    item.onClick();
+    return;
+  }
+
   focusedPath = item.path ?? null;
   let handleDefaultClick = true;
 
