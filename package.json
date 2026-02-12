@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "rsbuild build --env production",
-    "dev": "rsbuild dev --open",
+    "dev": "rsbuild dev",
     "preview": "rsbuild preview",
     "check": "biome check",
     "fix": "biome check --write",
