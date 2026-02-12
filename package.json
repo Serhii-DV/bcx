@@ -43,6 +43,7 @@
     "@types/node": "^24.1.0",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
+    "baseline-browser-mapping": "^2.9.19",
     "bits-ui": "^2.9.1",
     "jsdom": "27.0.0",
     "shadcn-svelte": "^1.0.6",
