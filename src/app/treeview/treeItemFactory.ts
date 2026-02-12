@@ -1,11 +1,16 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
+import {
+  type BandcampItem,
+  PageCollection,
+} from 'src/bandcamp/domain/page/PageCollection';
 import type {
   BandcampPageData,
   UserData,
 } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { WISHLIST_KEY } from 'src/bandcamp/domain/storageKey';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
   isBandcampAlbumUrl,
@@ -16,7 +21,7 @@ import {
   isBandcampUrl,
 } from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
-import { currentPageUrl } from 'src/core/shared';
+import { currentPageUrl, storage } from 'src/core/shared';
 import { Url } from 'src/core/url';
 import { createQueryCountMap } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
@@ -175,7 +180,9 @@ export class TreeItemFactory {
     }
   }
 
-  static fromBandcampFanPageData(pageData: BandcampPageData): TreeItem | null {
+  static async fromBandcampFanPageData(
+    pageData: BandcampPageData,
+  ): Promise<TreeItem | null> {
     const { fan_data } = pageData.data;
 
     if (!fan_data) {
@@ -190,12 +197,34 @@ export class TreeItemFactory {
         pageData.data.item_cache.collection,
       ),
     });
+
+    const wishlistTreeItems: TreeItem[] = await loadWishlistTreeItems(pageData);
+
+    const pageCollection = new PageCollection();
+    wishlistTreeItems.unshift({
+      label: 'Refresh',
+      onClick: async (element: HTMLElement) => {
+        if (element.dataset.loading === 'true') {
+          return;
+        }
+
+        element.textContent = 'Loading...';
+        element.dataset.loading = 'true';
+
+        const wishlist = await pageCollection.loadWishlistItems({
+          includeSummaryFlags: true,
+        });
+        await storage.set({ [WISHLIST_KEY]: wishlist });
+
+        element.textContent = 'Loaded ' + wishlist.length + ' items';
+        element.dataset.loading = 'false';
+      },
+    });
+
     children.push({
       label: 'Wishlist',
       href: BandcampUrlFactory.generateWishlistUrl(fan_data.username),
-      children: createAlbumsTreeItemsFromItemsCache(
-        pageData.data.item_cache.wishlist,
-      ),
+      children: wishlistTreeItems,
     });
     children.push({
       label: 'Following Bands',
@@ -384,5 +413,35 @@ function updateChildrenCounts(treeItems: TreeItem[]): void {
     if (child.children) {
       child.label = createQueryCountString(child.label, child.children.length);
     }
+  });
+}
+
+async function loadWishlistTreeItems(
+  pageData: BandcampPageData,
+): Promise<TreeItem[]> {
+  let wishlist = await storage.getByKey(WISHLIST_KEY);
+
+  if (!wishlist) {
+    return createAlbumsTreeItemsFromItemsCache(
+      pageData.data.item_cache.wishlist,
+    );
+  }
+
+  const pageCollection = new PageCollection();
+  wishlist = await pageCollection.loadWishlistItems({
+    includeSummaryFlags: true,
+  });
+  await storage.set({ [WISHLIST_KEY]: wishlist });
+
+  return wishlist.map((item: BandcampItem) => {
+    const album = Album.create(
+      item.item_url,
+      item.band_name,
+      item.item_title,
+      item.album_id,
+      item.item_art_id,
+      item.band_id,
+    );
+    return TreeItemFactory.fromAlbum(album);
   });
 }

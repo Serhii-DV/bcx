@@ -10,6 +10,7 @@ import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl } from 'src/core/shared';
 import { Url } from 'src/core/url';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
+import { element } from 'src/utils/dom';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 
@@ -88,7 +89,7 @@ function handleItemClick(
   if (!item) return;
 
   if (item.onClick) {
-    item.onClick();
+    item.onClick(elementByPath(item.path) as HTMLElement);
     return;
   }
 

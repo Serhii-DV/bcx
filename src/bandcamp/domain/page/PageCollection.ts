@@ -1,0 +1,256 @@
+// PageCollection.ts (content-script friendly)
+
+export type PageData = {
+  fan_data: { fan_id: number };
+  collection_data?: { last_token: string };
+  wishlist_data?: { last_token: string };
+};
+
+export type CollectionSummary = {
+  tralbum_lookup: Record<string, { purchased?: boolean }>;
+};
+
+export type BandcampItem = {
+  tralbum_type: string;
+  tralbum_id: number;
+  token: string;
+
+  album_id: number;
+  band_id: number;
+  band_name: string;
+  item_art_id: number;
+  item_title: string;
+  item_url: string;
+  price: number;
+
+  isFree?: boolean;
+  isPurchased?: boolean;
+  isWishlisted?: boolean;
+};
+
+type ItemsResponse = {
+  error?: boolean;
+  error_message?: string;
+  items: BandcampItem[];
+  more_available: boolean;
+  last_token?: string; // unreliable per original userscript
+};
+
+type SummaryResponse = {
+  error?: boolean;
+  error_message?: string;
+  collection_summary?: CollectionSummary;
+};
+
+export type LoadOptions = {
+  pageSize?: number; // default 40
+  includeSummaryFlags?: boolean; // default true
+  signal?: AbortSignal;
+};
+
+interface BandcampTransport {
+  getJson<T>(url: string, signal?: AbortSignal): Promise<T>;
+  postJsonString<T>(
+    url: string,
+    payload: object,
+    signal?: AbortSignal,
+  ): Promise<T>;
+}
+
+/**
+ * Content-script transport using fetch().
+ * Runs in the page context (bandcamp.com), so same-origin requests usually work.
+ */
+export class FetchBandcampTransport implements BandcampTransport {
+  async getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+    const res = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      signal,
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status} from ${url}: ${text.slice(0, 300)}`);
+    }
+
+    return (await res.json()) as T;
+  }
+
+  /**
+   * Matches the userscript: POST JSON string with x-www-form-urlencoded content-type.
+   */
+  async postJsonString<T>(
+    url: string,
+    payload: object,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    const res = await fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      },
+      body: JSON.stringify(payload),
+      signal,
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status} from ${url}: ${text.slice(0, 300)}`);
+    }
+
+    return (await res.json()) as T;
+  }
+}
+
+export class PageCollection {
+  static readonly COLLECTION_SUMMARY_URL =
+    'https://bandcamp.com/api/fan/2/collection_summary';
+  static readonly COLLECTION_ITEMS_URL =
+    'https://bandcamp.com/api/fancollection/1/collection_items';
+  static readonly WISHLIST_ITEMS_URL =
+    'https://bandcamp.com/api/fancollection/1/wishlist_items';
+
+  private readonly doc: Document;
+  private readonly transport: BandcampTransport;
+
+  private pageData?: PageData;
+  private summary?: CollectionSummary | null;
+
+  constructor(args?: { doc?: Document; transport?: BandcampTransport }) {
+    this.doc = args?.doc ?? document;
+    this.transport = args?.transport ?? new FetchBandcampTransport();
+  }
+
+  /** Parse #pagedata[data-blob] once */
+  getPageData(): PageData {
+    if (this.pageData) return this.pageData;
+
+    const el = this.doc.querySelector<HTMLElement>('#pagedata');
+    if (!el) throw new Error('Bandcamp #pagedata element not found.');
+
+    const blob = el.getAttribute('data-blob');
+    if (!blob) throw new Error('Bandcamp #pagedata[data-blob] missing.');
+
+    this.pageData = JSON.parse(blob) as PageData;
+    return this.pageData;
+  }
+
+  /** Same now-token trick as userscript */
+  static makeNowToken(lastToken: string): string {
+    const now = Math.floor(Date.now() / 1000);
+    return lastToken.replace(/^\d+/, String(now));
+  }
+
+  async getCollectionSummary(opts?: {
+    force?: boolean;
+    signal?: AbortSignal;
+  }): Promise<CollectionSummary | null> {
+    if (!opts?.force && this.summary !== undefined) return this.summary;
+
+    try {
+      const json = await this.transport.getJson<SummaryResponse>(
+        PageCollection.COLLECTION_SUMMARY_URL,
+        opts?.signal,
+      );
+      this.summary = json.error ? null : (json.collection_summary ?? null);
+    } catch {
+      this.summary = null;
+    }
+    return this.summary;
+  }
+
+  private enrich(
+    items: BandcampItem[],
+    summary: CollectionSummary | null,
+  ): BandcampItem[] {
+    const lookup = summary?.tralbum_lookup ?? {};
+    return items.map((item) => {
+      const isFree = item.price === 0;
+
+      const lookupKey = `${item.tralbum_type}${item.tralbum_id}`;
+      const tralbum = lookup[lookupKey];
+
+      const isPurchased = !!(tralbum && tralbum.purchased);
+      const isWishlisted = !!(tralbum && !tralbum.purchased);
+
+      return { ...item, isFree, isPurchased, isWishlisted };
+    });
+  }
+
+  private async loadAllFromEndpoint(args: {
+    endpointUrl: string;
+    lastToken: string;
+    options?: LoadOptions;
+  }): Promise<BandcampItem[]> {
+    const { endpointUrl, lastToken, options } = args;
+
+    const pageSize = options?.pageSize ?? 40;
+    const includeSummaryFlags = options?.includeSummaryFlags ?? true;
+
+    const pageData = this.getPageData();
+    const fanId = pageData.fan_data.fan_id;
+
+    const summary = includeSummaryFlags
+      ? await this.getCollectionSummary({ signal: options?.signal })
+      : null;
+
+    let olderThanToken = PageCollection.makeNowToken(lastToken);
+    const all: BandcampItem[] = [];
+
+    while (true) {
+      if (options?.signal?.aborted)
+        throw new DOMException('Aborted', 'AbortError');
+
+      const parsed = await this.transport.postJsonString<ItemsResponse>(
+        endpointUrl,
+        { fan_id: fanId, older_than_token: olderThanToken, count: pageSize },
+        options?.signal,
+      );
+
+      if (parsed.error)
+        throw new Error(
+          parsed.error_message || 'Bandcamp API error while loading items.',
+        );
+
+      const batch = includeSummaryFlags
+        ? this.enrich(parsed.items, summary)
+        : parsed.items;
+      all.push(...batch);
+
+      if (!parsed.more_available) break;
+
+      // Workaround from userscript: last_token can be wrong, use last item token
+      const lastItem = parsed.items[parsed.items.length - 1];
+      if (!lastItem?.token) break;
+      olderThanToken = lastItem.token;
+    }
+
+    return all;
+  }
+
+  async loadWishlistItems(options?: LoadOptions): Promise<BandcampItem[]> {
+    const lastToken = this.getPageData().wishlist_data?.last_token;
+    if (!lastToken)
+      throw new Error('This page does not contain wishlist_data.last_token.');
+
+    return this.loadAllFromEndpoint({
+      endpointUrl: PageCollection.WISHLIST_ITEMS_URL,
+      lastToken,
+      options,
+    });
+  }
+
+  async loadCollectionItems(options?: LoadOptions): Promise<BandcampItem[]> {
+    const lastToken = this.getPageData().collection_data?.last_token;
+    if (!lastToken)
+      throw new Error('This page does not contain collection_data.last_token.');
+
+    return this.loadAllFromEndpoint({
+      endpointUrl: PageCollection.COLLECTION_ITEMS_URL,
+      lastToken,
+      options,
+    });
+  }
+}
