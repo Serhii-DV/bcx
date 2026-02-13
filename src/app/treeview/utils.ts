@@ -1,3 +1,4 @@
+import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import type { TreeItem } from './treeItem';
 
 export function isNode(item: TreeItem): boolean {
@@ -83,4 +84,13 @@ export function hasDescendantMatchingQuery(
     }
   }
   return false;
+}
+
+export function updateChildrenCounts(treeItems: TreeItem[]): void {
+  // Update labels with counts
+  treeItems.forEach((child) => {
+    if (child.children) {
+      child.label = createQueryCountString(child.label, child.children.length);
+    }
+  });
 }

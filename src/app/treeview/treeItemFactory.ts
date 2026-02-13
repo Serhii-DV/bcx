@@ -5,19 +5,13 @@ import type {
   BandcampPageData,
   UserData,
 } from 'src/bandcamp/domain/pageData/pageData';
-import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
-import {
-  isBandcampRegularUrl,
-  isBandcampUrl,
-} from 'src/bandcamp/domain/url/helper';
-import { History } from 'src/core/history';
-import { Url } from 'src/core/url';
 import { createQueryCountMap } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
 import type { QueryCountMap } from '$lib/components/bcx';
 import { Wishlist } from '../wishlist/Wishlist';
 import type { TreeItem } from './treeItem';
+import { updateChildrenCounts } from './utils';
 
 export class TreeItemFactory {
   static fromBand(band: Band, withChildren: boolean = true): TreeItem {
@@ -56,13 +50,6 @@ export class TreeItemFactory {
     };
   }
 
-  static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
-    return {
-      label: item.title || item.url || 'No Title',
-      href: Url.fromHistoryItem(item)?.toString(),
-    };
-  }
-
   static fromDate(date: Date): TreeItem {
     const label = date.toLocaleDateString(undefined, {
       year: 'numeric',
@@ -73,102 +60,6 @@ export class TreeItemFactory {
     return {
       label,
     };
-  }
-
-  static async fromHistory(): Promise<TreeItem> {
-    try {
-      const historyItems = await History.search({
-        text: 'bandcamp.com',
-        maxResults: 1000,
-        startTime: 0,
-      });
-      const children: TreeItem[] = [];
-      const uuids = new Set<string>();
-
-      historyItems.forEach((item) => {
-        let url = Url.fromHistoryItem(item);
-
-        if (!url || !isBandcampUrl(url) || isBandcampRegularUrl(url)) {
-          return;
-        }
-
-        url = BandcampUrlFactory.create(url);
-        const uuid = url.uuid;
-
-        if (uuids.has(uuid)) {
-          return;
-        }
-
-        uuids.add(uuid);
-      });
-
-      const bandsAndAlbums: (Band | Album)[] = await BandcampStorage.getByUuids(
-        Array.from(uuids),
-      );
-      const uuidTreeItemsMap = new Map<string, TreeItem>();
-
-      bandsAndAlbums.forEach((entity) => {
-        const treeItem =
-          entity instanceof Band
-            ? TreeItemFactory.fromBand(entity, false)
-            : TreeItemFactory.fromAlbum(entity);
-
-        uuidTreeItemsMap.set(entity.url.uuid!, treeItem);
-      });
-
-      historyItems.forEach((item) => {
-        const url = Url.fromHistoryItem(item);
-        if (!url) {
-          return;
-        }
-        const uuid = url.uuid;
-        if (!uuids.has(uuid)) {
-          return;
-        }
-        const historyItem =
-          uuidTreeItemsMap.get(uuid) || TreeItemFactory.fromHistoryItem(item);
-        const dateItem = TreeItemFactory.fromDate(
-          new Date(item.lastVisitTime as number),
-        );
-        const childrenDateItem = children.find(
-          (child) => child.label === dateItem.label,
-        );
-
-        if (childrenDateItem) {
-          childrenDateItem.children = childrenDateItem.children || [];
-          const childrenHistoryItem = childrenDateItem.children.find(
-            (child) => child.label === historyItem.label,
-          );
-
-          if (childrenHistoryItem) {
-            return;
-          }
-
-          childrenDateItem.children!.push(historyItem);
-        } else {
-          children.push({
-            ...dateItem,
-            children: [historyItem],
-          });
-        }
-      });
-
-      updateChildrenCounts(children);
-
-      return {
-        label: createQueryCountString(`History`, children.length),
-        children,
-      };
-    } catch (error) {
-      console.error(
-        '[TreeItemFactory.fromHistory]',
-        'Failed to load history:',
-        error,
-      );
-      return {
-        label: 'History (error)',
-      };
-    }
   }
 
   static async fromBandcampFanPageData(
@@ -371,13 +262,4 @@ function createBandKeywordsTreeItem(
     open: false,
     children,
   };
-}
-
-function updateChildrenCounts(treeItems: TreeItem[]): void {
-  // Update labels with counts
-  treeItems.forEach((child) => {
-    if (child.children) {
-      child.label = createQueryCountString(child.label, child.children.length);
-    }
-  });
 }
