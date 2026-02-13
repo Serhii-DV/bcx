@@ -6,6 +6,7 @@ import type {
   UserData,
 } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
+import { Url } from 'src/core/url';
 import { arrayUnique } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
 import { BandTreeItem } from './band/BandTreeItem';
@@ -51,6 +52,13 @@ export class TreeItemFactory {
       });
 
     return children;
+  }
+
+  static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
+    return {
+      label: item.title || item.url || 'No Title',
+      href: Url.fromHistoryItem(item)?.toString(),
+    };
   }
 
   static async fromBandcampFanPageData(

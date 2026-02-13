@@ -13,13 +13,6 @@ import type { TreeItem } from '../treeItem';
 import { TreeItemFactory } from '../treeItemFactory';
 
 export class HistoryTreeItem {
-  static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
-    return {
-      label: item.title || item.url || 'No Title',
-      href: Url.fromHistoryItem(item)?.toString(),
-    };
-  }
-
   static async create(): Promise<TreeItem> {
     try {
       const historyItems = await History.search({
@@ -71,7 +64,7 @@ export class HistoryTreeItem {
           return;
         }
         const historyItem =
-          uuidTreeItemsMap.get(uuid) || HistoryTreeItem.fromHistoryItem(item);
+          uuidTreeItemsMap.get(uuid) || TreeItemFactory.fromHistoryItem(item);
         const dateItem = TreeItemFactory.fromDate(
           new Date(item.lastVisitTime as number),
         );
