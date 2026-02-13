@@ -51,8 +51,15 @@ export class Storage {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage.getByKey]', key);
-        resolve(items[key] as T | undefined);
+        const data = items[key] as T | undefined;
+
+        if (Array.isArray(data)) {
+          console.log('[Storage.getByKey]', key, ...arrayPreview(data));
+        } else {
+          console.log('[Storage.getByKey]', key, data);
+        }
+
+        resolve(data);
       });
     });
   }
