@@ -8,7 +8,7 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { hasOwnProperty } from 'src/utils/utils';
 import { BandTreeItem } from './band/BandTreeItem';
 import type { TreeItem } from './treeItem';
-import { updateChildrenCounts } from './utils';
+import { updateTreeItemsCounts } from './utils';
 import { WishlistTreeItem } from './wishlist/WishlistTreeItem';
 
 export class TreeItemFactory {
@@ -63,11 +63,9 @@ export class TreeItemFactory {
       children: createFollowingGenresTreeItems(pageData),
     });
 
-    updateChildrenCounts(children);
-
     return {
       label: `Fan: ${fan_data.name} (${fan_data.location})`,
-      children,
+      children: updateTreeItemsCounts(children),
     };
   }
 

@@ -93,17 +93,13 @@ export function updateTreeItemCounts(treeItem: TreeItem): TreeItem {
   );
 
   if (treeItem.children) {
-    updateChildrenCounts(treeItem.children);
+    updateTreeItemsCounts(treeItem.children);
   }
 
   return treeItem;
 }
 
-export function updateChildrenCounts(treeItems: TreeItem[]): void {
-  // Update labels with counts
-  treeItems.forEach((child) => {
-    if (child.children) {
-      child.label = createQueryCountString(child.label, child.children.length);
-    }
-  });
+export function updateTreeItemsCounts(treeItems: TreeItem[]): TreeItem[] {
+  treeItems.forEach(updateTreeItemCounts);
+  return treeItems;
 }

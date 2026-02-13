@@ -1,27 +1,21 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
-import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
-import { createQueryCountMap } from 'src/utils/array';
-import type { QueryCountMap } from '$lib/components/bcx';
 import type { TreeItem } from '../treeItem';
 import { TreeItemFactory } from '../treeItemFactory';
+import { updateTreeItemsCounts } from '../utils';
 
 export class BandTreeItem {
   static create(band: Band, withChildren: boolean = true): TreeItem {
-    const queryCountMap = createQueryCountMap(band.metadata.queries);
     const children: TreeItem[] = [];
 
     if (withChildren) {
       children.push({
-        label: createQueryCountString(
-          'Artist/Releases',
-          band.metadata.artistNames.length,
-        ),
+        label: 'Artist/Releases',
         open: false,
-        children: createBandArtistsReleasesTreeItems(band, queryCountMap),
+        children: createBandArtistsReleasesTreeItems(band),
       });
 
-      children.push(createBandYearsTreeItem(band, queryCountMap));
-      children.push(createBandKeywordsTreeItem(band, queryCountMap));
+      children.push(createBandYearsTreeItem(band));
+      children.push(createBandKeywordsTreeItem(band));
     }
 
     return {
@@ -29,24 +23,19 @@ export class BandTreeItem {
       image: band.artwork.tinySizeUrl,
       open: withChildren,
       href: !withChildren ? band.url.toString() : undefined,
-      children,
+      children: updateTreeItemsCounts(children),
     };
   }
 }
 
-function createBandArtistsReleasesTreeItems(
-  band: Band,
-  queryCountMap: QueryCountMap,
-): TreeItem[] {
+function createBandArtistsReleasesTreeItems(band: Band): TreeItem[] {
   const children = band.metadata.artistNames.map((artist) => {
-    const count = queryCountMap.get(artist) || 0;
-    const label = createQueryCountString(artist, count);
     const artistChildren: TreeItem[] = band.metadata.albums
       .filter((album) => album.artist.names.includes(artist))
       .map(TreeItemFactory.fromAlbum);
 
     return {
-      label,
+      label: artist,
       query: artist,
       open: false,
       children: artistChildren,
@@ -56,48 +45,37 @@ function createBandArtistsReleasesTreeItems(
   return children;
 }
 
-function createBandYearsTreeItem(
-  band: Band,
-  queryCountMap: QueryCountMap,
-): TreeItem {
+function createBandYearsTreeItem(band: Band): TreeItem {
   const children: TreeItem[] = band.metadata.years.map((year) => {
     const query = year.toString();
-    const count = queryCountMap.get(query) || 0;
-    const label = createQueryCountString(query, count);
     const children: TreeItem[] = band.metadata
       .albumsByYear(year)
       .map(TreeItemFactory.fromAlbum);
 
     return {
-      label,
+      label: query,
       query,
       children,
     };
   });
 
   return {
-    label: createQueryCountString('Years', band.metadata.years.length),
+    label: 'Years',
     open: false,
     children,
   };
 }
 
-function createBandKeywordsTreeItem(
-  band: Band,
-  queryCountMap: QueryCountMap,
-): TreeItem {
+function createBandKeywordsTreeItem(band: Band): TreeItem {
   const children: TreeItem[] = band.metadata.keywords.map((keyword) => {
-    const count = queryCountMap.get(keyword) || 0;
-    const label = createQueryCountString(keyword, count);
-
     return {
-      label,
+      label: keyword,
       query: keyword,
     };
   });
 
   return {
-    label: createQueryCountString('Keywords', band.metadata.keywords.length),
+    label: 'Keywords',
     open: false,
     children,
   };
