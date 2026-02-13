@@ -103,3 +103,15 @@ export function updateTreeItemsCounts(treeItems: TreeItem[]): TreeItem[] {
   treeItems.forEach(updateTreeItemCounts);
   return treeItems;
 }
+
+export function updateTreeItemsQueryFromLabel(
+  treeItems: TreeItem[],
+): TreeItem[] {
+  treeItems.forEach((item) => {
+    item.query = item.label;
+    if (item.children) {
+      updateTreeItemsQueryFromLabel(item.children);
+    }
+  });
+  return treeItems;
+}

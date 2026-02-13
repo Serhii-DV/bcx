@@ -17,7 +17,6 @@ export class TreeItemFactory {
   static fromAlbum(album: Album): TreeItem {
     return {
       label: album.toString(),
-      query: album.toString(),
       href: album.url.toString(),
       image: album.artwork.tinySizeUrl,
     };
@@ -46,7 +45,6 @@ export class TreeItemFactory {
 
         return {
           label: artist,
-          query: artist,
           open: false,
           children: artistChildren,
         } as TreeItem;

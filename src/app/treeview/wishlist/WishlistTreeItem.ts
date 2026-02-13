@@ -13,17 +13,18 @@ const WISHLIST_KEY = '/wishlist';
 export class WishlistTreeItem {
   static async create(username: string): Promise<TreeItem> {
     const wishlistItems = await loadWishlistItemsFromStorage();
-    const treeItems: TreeItem[] = wishlistItems.map((item: BandcampItem) => {
-      const album = Album.create(
+    const albums = wishlistItems.map((item) =>
+      Album.create(
         item.item_url,
         item.band_name,
         item.item_title,
         item.album_id,
         item.item_art_id,
         item.band_id,
-      );
-      return TreeItemFactory.fromAlbum(album);
-    });
+      ),
+    );
+    const treeItems: TreeItem[] =
+      TreeItemFactory.fromAlbumsByArtistNames(albums);
 
     treeItems.unshift({
       label: 'Refresh',
