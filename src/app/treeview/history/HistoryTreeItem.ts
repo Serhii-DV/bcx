@@ -8,8 +8,8 @@ import {
 } from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
 import { Url } from 'src/core/url';
-import type { TreeItem } from '../treeview/treeItem';
-import { TreeItemFactory } from '../treeview/treeItemFactory';
+import type { TreeItem } from '../treeItem';
+import { TreeItemFactory } from '../treeItemFactory';
 
 export class HistoryTreeItem {
   static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {

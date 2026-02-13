@@ -9,9 +9,9 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { createQueryCountMap } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
 import type { QueryCountMap } from '$lib/components/bcx';
-import { WishlistTreeItem } from '../wishlist/WishlistTreeItem';
 import type { TreeItem } from './treeItem';
 import { updateChildrenCounts } from './utils';
+import { WishlistTreeItem } from './wishlist/WishlistTreeItem';
 
 export class TreeItemFactory {
   static fromBand(band: Band, withChildren: boolean = true): TreeItem {
