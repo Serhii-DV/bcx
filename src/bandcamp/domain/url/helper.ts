@@ -34,3 +34,13 @@ export function isBandcampDiscoverUrl(url: Url): boolean {
   const path = url.pathname;
   return path.startsWith('/discover');
 }
+
+export function isBandcampCollectionUrl(url: Url): boolean {
+  const path = url.pathname;
+  return path.startsWith('/collection');
+}
+
+export function isBandcampWishlistUrl(url: Url): boolean {
+  const path = url.pathname;
+  return path.endsWith('/wishlist');
+}

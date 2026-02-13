@@ -13,15 +13,11 @@ import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { WISHLIST_KEY } from 'src/bandcamp/domain/storageKey';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
-  isBandcampAlbumUrl,
-  isBandcampFeedUrl,
-  isBandcampMusicUrl,
   isBandcampRegularUrl,
-  isBandcampTrackUrl,
   isBandcampUrl,
 } from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
-import { currentPageUrl, storage } from 'src/core/shared';
+import { storage } from 'src/core/shared';
 import { Url } from 'src/core/url';
 import { createQueryCountMap } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
@@ -198,34 +194,7 @@ export class TreeItemFactory {
       ),
     });
 
-    const wishlistTreeItems: TreeItem[] = await loadWishlistTreeItems(pageData);
-
-    const pageCollection = new PageCollection();
-    wishlistTreeItems.unshift({
-      label: 'Refresh',
-      onClick: async (element: HTMLElement) => {
-        if (element.dataset.loading === 'true') {
-          return;
-        }
-
-        element.textContent = 'Loading...';
-        element.dataset.loading = 'true';
-
-        const wishlist = await pageCollection.loadWishlistItems({
-          includeSummaryFlags: true,
-        });
-        await storage.set({ [WISHLIST_KEY]: wishlist });
-
-        element.textContent = 'Loaded ' + wishlist.length + ' items';
-        element.dataset.loading = 'false';
-      },
-    });
-
-    children.push({
-      label: 'Wishlist',
-      href: BandcampUrlFactory.generateWishlistUrl(fan_data.username),
-      children: wishlistTreeItems,
-    });
+    children.push(await TreeItemFactory.createWishlistItems(fan_data.username));
     children.push({
       label: 'Following Bands',
       href: BandcampUrlFactory.generateFollowingBandsUrl(fan_data.username),
@@ -245,7 +214,45 @@ export class TreeItemFactory {
     };
   }
 
-  static createPersonalMenu(userData: UserData): TreeItem {
+  static async createWishlistItems(username: string): Promise<TreeItem> {
+    const wishlistItems = await loadWishlistItemsFromStorage();
+    const treeItems: TreeItem[] = wishlistItems.map((item: BandcampItem) => {
+      const album = Album.create(
+        item.item_url,
+        item.band_name,
+        item.item_title,
+        item.album_id,
+        item.item_art_id,
+        item.band_id,
+      );
+      return TreeItemFactory.fromAlbum(album);
+    });
+
+    treeItems.unshift({
+      label: 'Refresh',
+      onClick: async (element: HTMLElement) => {
+        if (element.dataset.loading === 'true') {
+          return;
+        }
+
+        element.textContent = 'Loading...';
+        element.dataset.loading = 'true';
+
+        const wishlistItems = await loadWishlistItems();
+
+        element.textContent = 'Loaded ' + wishlistItems.length + ' items';
+        element.dataset.loading = 'false';
+      },
+    });
+
+    return {
+      label: `Wishlist`,
+      href: BandcampUrlFactory.generateWishlistUrl(username),
+      children: treeItems,
+    };
+  }
+
+  static async createPersonalMenu(userData: UserData): Promise<TreeItem> {
     if (!userData.username) {
       return {
         label: 'You: (not logged in)',
@@ -269,6 +276,8 @@ export class TreeItemFactory {
       label: 'Collection',
       href: BandcampUrlFactory.generateCollectionUrl(userData.username),
     });
+
+    children.push(await TreeItemFactory.createWishlistItems(userData.username));
 
     return {
       label: `You: ${userData.name}`,
@@ -416,32 +425,16 @@ function updateChildrenCounts(treeItems: TreeItem[]): void {
   });
 }
 
-async function loadWishlistTreeItems(
-  pageData: BandcampPageData,
-): Promise<TreeItem[]> {
-  let wishlist = await storage.getByKey(WISHLIST_KEY);
+async function loadWishlistItemsFromStorage(): Promise<BandcampItem[]> {
+  return (await storage.getByKey(WISHLIST_KEY)) || [];
+}
 
-  if (!wishlist) {
-    return createAlbumsTreeItemsFromItemsCache(
-      pageData.data.item_cache.wishlist,
-    );
-  }
-
+async function loadWishlistItems(): Promise<BandcampItem[]> {
   const pageCollection = new PageCollection();
-  wishlist = await pageCollection.loadWishlistItems({
+  const wishlist = await pageCollection.loadWishlistItems({
     includeSummaryFlags: true,
   });
   await storage.set({ [WISHLIST_KEY]: wishlist });
 
-  return wishlist.map((item: BandcampItem) => {
-    const album = Album.create(
-      item.item_url,
-      item.band_name,
-      item.item_title,
-      item.album_id,
-      item.item_art_id,
-      item.band_id,
-    );
-    return TreeItemFactory.fromAlbum(album);
-  });
+  return wishlist;
 }

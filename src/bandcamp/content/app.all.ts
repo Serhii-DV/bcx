@@ -82,12 +82,19 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
   const bandcampPageData = BandcampPageData.load();
 
   if (bandcampPageData) {
-    treeData.add(TreeItemFactory.createPersonalMenu(bandcampPageData.userData));
+    treeData.add(
+      await TreeItemFactory.createPersonalMenu(bandcampPageData.userData),
+    );
 
-    const fanPageDataTreeItem =
-      await TreeItemFactory.fromBandcampFanPageData(bandcampPageData);
-    if (fanPageDataTreeItem) {
-      treeData.add(fanPageDataTreeItem);
+    if (
+      bandcampPageData.data.current_fan.fan_id !==
+      bandcampPageData.data.fan_data.fan_id
+    ) {
+      const fanPageDataTreeItem =
+        await TreeItemFactory.fromBandcampFanPageData(bandcampPageData);
+      if (fanPageDataTreeItem) {
+        treeData.add(fanPageDataTreeItem);
+      }
     }
   }
 
