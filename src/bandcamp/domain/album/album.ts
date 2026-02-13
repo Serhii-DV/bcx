@@ -2,7 +2,6 @@ import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { Url } from 'src/core/url';
 import { removeInvisibleChars } from 'src/utils/string';
 import { Artist } from '../artist/artist';
-import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';

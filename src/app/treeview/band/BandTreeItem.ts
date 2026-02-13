@@ -11,7 +11,7 @@ export class BandTreeItem {
       children.push({
         label: 'Artist/Releases',
         open: false,
-        children: createBandArtistsReleasesTreeItems(band),
+        children: TreeItemFactory.fromAlbumsByArtistNames(band.metadata.albums),
       });
 
       children.push(createBandYearsTreeItem(band));
@@ -26,23 +26,6 @@ export class BandTreeItem {
       children: updateTreeItemsCounts(children),
     };
   }
-}
-
-function createBandArtistsReleasesTreeItems(band: Band): TreeItem[] {
-  const children = band.metadata.artistNames.map((artist) => {
-    const artistChildren: TreeItem[] = band.metadata.albums
-      .filter((album) => album.artist.names.includes(artist))
-      .map(TreeItemFactory.fromAlbum);
-
-    return {
-      label: artist,
-      query: artist,
-      open: false,
-      children: artistChildren,
-    } as TreeItem;
-  });
-
-  return children;
 }
 
 function createBandYearsTreeItem(band: Band): TreeItem {

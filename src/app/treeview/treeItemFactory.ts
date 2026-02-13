@@ -1,10 +1,12 @@
 import { Album } from 'src/bandcamp/domain/album/album';
+import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
 import { Band } from 'src/bandcamp/domain/band/band';
 import type {
   BandcampPageData,
   UserData,
 } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
+import { arrayUnique } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
 import { BandTreeItem } from './band/BandTreeItem';
 import type { TreeItem } from './treeItem';
@@ -31,6 +33,26 @@ export class TreeItemFactory {
     return {
       label,
     };
+  }
+
+  static fromAlbumsByArtistNames(albums: Album[]): TreeItem[] {
+    const artistNames = getArtistNamesFromAlbums(albums);
+    const children = arrayUnique(artistNames)
+      .sort()
+      .map((artist) => {
+        const artistChildren: TreeItem[] = albums
+          .filter((album) => album.artist.names.includes(artist))
+          .map(TreeItemFactory.fromAlbum);
+
+        return {
+          label: artist,
+          query: artist,
+          open: false,
+          children: artistChildren,
+        } as TreeItem;
+      });
+
+    return children;
   }
 
   static async fromBandcampFanPageData(
