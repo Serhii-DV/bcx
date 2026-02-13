@@ -11,6 +11,7 @@ import { BandcampStorage } from '../domain/storage';
 import './app.music';
 import './app.album';
 import './app.track';
+import { BandTreeItem } from 'src/app/treeview/band/BandTreeItem';
 import { HistoryTreeItem } from 'src/app/treeview/history/HistoryTreeItem';
 import { TreeData } from 'src/app/treeview/treeData';
 import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
@@ -78,7 +79,7 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
   const treeData = new TreeData();
 
   if (band) {
-    const bandReleasesTreeItem = TreeItemFactory.fromBand(band);
+    const bandReleasesTreeItem = BandTreeItem.create(band);
     treeData.add(bandReleasesTreeItem);
   }
 

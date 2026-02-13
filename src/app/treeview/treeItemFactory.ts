@@ -1,46 +1,17 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
-import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import type {
   BandcampPageData,
   UserData,
 } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
-import { createQueryCountMap } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
-import type { QueryCountMap } from '$lib/components/bcx';
+import { BandTreeItem } from './band/BandTreeItem';
 import type { TreeItem } from './treeItem';
 import { updateChildrenCounts } from './utils';
 import { WishlistTreeItem } from './wishlist/WishlistTreeItem';
 
 export class TreeItemFactory {
-  static fromBand(band: Band, withChildren: boolean = true): TreeItem {
-    const queryCountMap = createQueryCountMap(band.metadata.queries);
-    const children: TreeItem[] = [];
-
-    if (withChildren) {
-      children.push({
-        label: createQueryCountString(
-          'Artist/Releases',
-          band.metadata.artistNames.length,
-        ),
-        open: false,
-        children: createBandArtistsReleasesTreeItems(band, queryCountMap),
-      });
-
-      children.push(createBandYearsTreeItem(band, queryCountMap));
-      children.push(createBandKeywordsTreeItem(band, queryCountMap));
-    }
-
-    return {
-      label: band.name,
-      image: band.artwork.tinySizeUrl,
-      open: withChildren,
-      href: !withChildren ? band.url.toString() : undefined,
-      children,
-    };
-  }
-
   static fromAlbum(album: Album): TreeItem {
     return {
       label: album.toString(),
@@ -167,7 +138,7 @@ function createFollowingBandsTreeItems(pageData: BandcampPageData): TreeItem[] {
         ),
         item.image_id,
       );
-      const treeItem = TreeItemFactory.fromBand(band, false);
+      const treeItem = BandTreeItem.create(band, false);
       treeItems.push(treeItem);
     }
   }
@@ -191,73 +162,4 @@ function createFollowingGenresTreeItems(
     }
   }
   return treeItems;
-}
-
-function createBandArtistsReleasesTreeItems(
-  band: Band,
-  queryCountMap: QueryCountMap,
-): TreeItem[] {
-  const children = band.metadata.artistNames.map((artist) => {
-    const count = queryCountMap.get(artist) || 0;
-    const label = createQueryCountString(artist, count);
-    const artistChildren: TreeItem[] = band.metadata.albums
-      .filter((album) => album.artist.names.includes(artist))
-      .map(TreeItemFactory.fromAlbum);
-
-    return {
-      label,
-      query: artist,
-      open: false,
-      children: artistChildren,
-    } as TreeItem;
-  });
-
-  return children;
-}
-
-function createBandYearsTreeItem(
-  band: Band,
-  queryCountMap: QueryCountMap,
-): TreeItem {
-  const children: TreeItem[] = band.metadata.years.map((year) => {
-    const query = year.toString();
-    const count = queryCountMap.get(query) || 0;
-    const label = createQueryCountString(query, count);
-    const children: TreeItem[] = band.metadata
-      .albumsByYear(year)
-      .map(TreeItemFactory.fromAlbum);
-
-    return {
-      label,
-      query,
-      children,
-    };
-  });
-
-  return {
-    label: createQueryCountString('Years', band.metadata.years.length),
-    open: false,
-    children,
-  };
-}
-
-function createBandKeywordsTreeItem(
-  band: Band,
-  queryCountMap: QueryCountMap,
-): TreeItem {
-  const children: TreeItem[] = band.metadata.keywords.map((keyword) => {
-    const count = queryCountMap.get(keyword) || 0;
-    const label = createQueryCountString(keyword, count);
-
-    return {
-      label,
-      query: keyword,
-    };
-  });
-
-  return {
-    label: createQueryCountString('Keywords', band.metadata.keywords.length),
-    open: false,
-    children,
-  };
 }
