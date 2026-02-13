@@ -1,6 +1,5 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
-import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
@@ -11,7 +10,6 @@ import { History } from 'src/core/history';
 import { Url } from 'src/core/url';
 import type { TreeItem } from '../treeview/treeItem';
 import { TreeItemFactory } from '../treeview/treeItemFactory';
-import { updateChildrenCounts } from '../treeview/utils';
 
 export class HistoryTreeItem {
   static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
@@ -99,10 +97,8 @@ export class HistoryTreeItem {
         }
       });
 
-      updateChildrenCounts(children);
-
       return {
-        label: createQueryCountString(`History`, children.length),
+        label: 'History',
         children,
       };
     } catch (error) {

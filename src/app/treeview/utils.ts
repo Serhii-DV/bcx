@@ -86,6 +86,19 @@ export function hasDescendantMatchingQuery(
   return false;
 }
 
+export function updateTreeItemCounts(treeItem: TreeItem): TreeItem {
+  treeItem.label = createQueryCountString(
+    treeItem.label,
+    treeItem.children?.length || 0,
+  );
+
+  if (treeItem.children) {
+    updateChildrenCounts(treeItem.children);
+  }
+
+  return treeItem;
+}
+
 export function updateChildrenCounts(treeItems: TreeItem[]): void {
   // Update labels with counts
   treeItems.forEach((child) => {

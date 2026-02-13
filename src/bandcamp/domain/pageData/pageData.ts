@@ -11,6 +11,7 @@ import {
 export interface UserData {
   username?: string;
   name?: string;
+  fan_id?: number;
 }
 
 export class BandcampPageData {
@@ -67,11 +68,13 @@ function detectUserDataFromPageData(
   const data = pageData.data;
   let username: string | undefined = undefined;
   let name: string | undefined = undefined;
+  let fan_id: number | undefined = undefined;
 
   if (isBandcampDiscoverUrl(currentPageUrl)) {
     // We are on the discover page
     username = data.pageContext?.identity?.fanUsername;
     name = username;
+    fan_id = data.pageContext?.identity?.fanId;
   } else if (
     isBandcampMusicUrl(currentPageUrl) ||
     isBandcampAlbumUrl(currentPageUrl) ||
@@ -80,10 +83,12 @@ function detectUserDataFromPageData(
     // We are on the music page
     username = data.identities?.fan.username;
     name = data.identities?.fan.name;
+    fan_id = data.identities?.fan.fan_id;
   } else if (isBandcampFeedUrl(currentPageUrl)) {
     // We are on the feed page
     username = data.fan_info?.username;
     name = data.fan_info?.name;
+    fan_id = data.fan_info?.fan_id;
   } else if (data.active_tab) {
     // We are on the personal user page
     username = data.current_fan?.username;

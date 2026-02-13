@@ -14,6 +14,8 @@ import './app.track';
 import { HistoryTreeItem } from 'src/app/history/HistoryTreeItem';
 import { TreeData } from 'src/app/treeview/treeData';
 import { TreeItemFactory } from 'src/app/treeview/treeItemFactory';
+import { updateTreeItemCounts } from 'src/app/treeview/utils';
+import { WishlistTreeItem } from 'src/app/wishlist/WishlistTreeItem';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { BandcampPageData } from '../domain/pageData/pageData';
@@ -81,25 +83,28 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
   }
 
   const bandcampPageData = BandcampPageData.load();
+  const userData = bandcampPageData.userData;
 
   if (bandcampPageData) {
-    treeData.add(
-      await TreeItemFactory.createPersonalMenu(bandcampPageData.userData),
-    );
+    treeData.add(await TreeItemFactory.createPersonalMenu(userData));
 
-    if (
-      bandcampPageData.data.current_fan.fan_id !==
-      bandcampPageData.data.fan_data.fan_id
-    ) {
+    if (userData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
       const fanPageDataTreeItem =
         await TreeItemFactory.fromBandcampFanPageData(bandcampPageData);
       if (fanPageDataTreeItem) {
         treeData.add(fanPageDataTreeItem);
       }
     }
+
+    // Add wishlist data
+    treeData.add(
+      updateTreeItemCounts(
+        await WishlistTreeItem.create(userData.username || ''),
+      ),
+    );
   }
 
-  treeData.add(await HistoryTreeItem.create());
+  treeData.add(updateTreeItemCounts(await HistoryTreeItem.create()));
 
   return treeData;
 }

@@ -125,8 +125,6 @@ export class TreeItemFactory {
       href: BandcampUrlFactory.generateCollectionUrl(userData.username),
     });
 
-    children.push(await WishlistTreeItem.create(userData.username));
-
     return {
       label: `You: ${userData.name}`,
       children,
