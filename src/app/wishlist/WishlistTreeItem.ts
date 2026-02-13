@@ -10,8 +10,8 @@ import { TreeItemFactory } from '../treeview/treeItemFactory';
 
 const WISHLIST_KEY = '/wishlist';
 
-export class Wishlist {
-  static async createWishlistTreeItems(username: string): Promise<TreeItem> {
+export class WishlistTreeItem {
+  static async create(username: string): Promise<TreeItem> {
     const wishlistItems = await loadWishlistItemsFromStorage();
     const treeItems: TreeItem[] = wishlistItems.map((item: BandcampItem) => {
       const album = Album.create(

@@ -9,7 +9,7 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { createQueryCountMap } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
 import type { QueryCountMap } from '$lib/components/bcx';
-import { Wishlist } from '../wishlist/Wishlist';
+import { WishlistTreeItem } from '../wishlist/WishlistTreeItem';
 import type { TreeItem } from './treeItem';
 import { updateChildrenCounts } from './utils';
 
@@ -80,7 +80,7 @@ export class TreeItemFactory {
       ),
     });
 
-    children.push(await Wishlist.createWishlistTreeItems(fan_data.username));
+    children.push(await WishlistTreeItem.create(fan_data.username));
     children.push({
       label: 'Following Bands',
       href: BandcampUrlFactory.generateFollowingBandsUrl(fan_data.username),
@@ -125,7 +125,7 @@ export class TreeItemFactory {
       href: BandcampUrlFactory.generateCollectionUrl(userData.username),
     });
 
-    children.push(await Wishlist.createWishlistTreeItems(userData.username));
+    children.push(await WishlistTreeItem.create(userData.username));
 
     return {
       label: `You: ${userData.name}`,
