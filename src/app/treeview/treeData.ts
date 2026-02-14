@@ -84,4 +84,22 @@ export class TreeData {
     const nextIndex = visibleIndex + 1;
     return nextIndex < visible.length ? visible[nextIndex] : null;
   }
+
+  get keywords(): string[] {
+    const keywords = new Set<string>();
+
+    function collectKeywords(items: TreeItem[]) {
+      items.forEach((item) => {
+        if (item.keywords) {
+          item.keywords.forEach((keyword) => keywords.add(keyword));
+        }
+        if (item.children) {
+          collectKeywords(item.children);
+        }
+      });
+    }
+
+    collectKeywords(this.treeItems);
+    return Array.from(keywords).sort();
+  }
 }

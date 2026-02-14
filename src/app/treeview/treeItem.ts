@@ -8,5 +8,6 @@ export interface TreeItem {
   href?: string;
   image?: string;
   query?: string;
+  keywords?: string[];
   onClick?: (element: HTMLElement) => void;
 }

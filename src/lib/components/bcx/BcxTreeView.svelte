@@ -440,8 +440,14 @@ function handleFilterKeyDown(event: KeyboardEvent) {
     placeholder="Filter items..."
     bind:value={filterQuery}
     onkeydown={handleFilterKeyDown}
+    list="bcx-tree-view-filter-datalist"
     class="px-3 py-2 rounded bg-gray-700 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
   />
+  <datalist id="bcx-tree-view-filter-datalist">
+    {#each treeData.keywords as keyword}
+      <option value="{keyword}"></option>
+    {/each}
+  </datalist>
   <div
     bind:this={treeContainer}
     class="bcx-tree-view pr-2 py-2 flex-1 overflow-y-auto"

@@ -20,6 +20,7 @@ export class TreeItemFactory {
       label: album.toString(),
       href: album.url.toString(),
       image: album.artwork.tinySizeUrl,
+      keywords: album.artist.names,
     };
   }
 
