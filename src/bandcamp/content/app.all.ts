@@ -12,6 +12,7 @@ import './app.music';
 import './app.album';
 import './app.track';
 import { BandTreeItem } from 'src/app/treeview/band/BandTreeItem';
+import { CollectionTreeItem } from 'src/app/treeview/collection/CollectionTreeItem';
 import { HistoryTreeItem } from 'src/app/treeview/history/HistoryTreeItem';
 import { TreeData } from 'src/app/treeview/TreeData';
 import { TreeItemFactory } from 'src/app/treeview/TreeItemFactory';
@@ -95,6 +96,9 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
         treeData.add(fanPageDataTreeItem);
       }
     }
+
+    // Add collection data
+    treeData.add(await CollectionTreeItem.create(userData.username || ''));
 
     // Add wishlist data
     treeData.add(await WishlistTreeItem.create(userData.username || ''));
