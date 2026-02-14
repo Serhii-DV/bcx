@@ -1,5 +1,5 @@
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
-import type { TreeItem } from './treeItem';
+import type { TreeItem } from './TreeItem';
 
 export function isNode(item: TreeItem): boolean {
   return !!item.children && item.children.length > 0;

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { TreeData } from 'src/app/treeview/treeData';
+import { TreeData } from 'src/app/treeview/TreeData';
 import BcxTreeView from './BcxTreeView.svelte';
 
 interface Props {

@@ -1,6 +1,6 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
-import type { TreeItem } from '../treeItem';
-import { TreeItemFactory } from '../treeItemFactory';
+import type { TreeItem } from '../TreeItem';
+import { TreeItemFactory } from '../TreeItemFactory';
 import { updateTreeItemsCounts, updateTreeItemsQueryFromLabel } from '../utils';
 
 export class BandTreeItem {

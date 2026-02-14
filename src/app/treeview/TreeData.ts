@@ -1,4 +1,4 @@
-import type { TreeItem } from './treeItem';
+import type { TreeItem } from './TreeItem';
 import {
   findItemByPath,
   generateTreeHierarchy,

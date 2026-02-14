@@ -10,7 +10,7 @@ import { Url } from 'src/core/url';
 import { arrayUnique } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
 import { BandTreeItem } from './band/BandTreeItem';
-import type { TreeItem } from './treeItem';
+import type { TreeItem } from './TreeItem';
 import { updateTreeItemsCounts } from './utils';
 import { WishlistTreeItem } from './wishlist/WishlistTreeItem';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { TerminalIcon } from 'lucide-svelte';
-import { TreeData } from 'src/app/treeview/treeData';
+import { TreeData } from 'src/app/treeview/TreeData';
 import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';

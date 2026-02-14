@@ -1,7 +1,7 @@
 <script lang="ts">
-import type { TreeData } from 'src/app/treeview/treeData';
-import { TreeData as TreeDataClass } from 'src/app/treeview/treeData';
-import type { TreeItem } from 'src/app/treeview/treeItem';
+import type { TreeData } from 'src/app/treeview/TreeData';
+import { TreeData as TreeDataClass } from 'src/app/treeview/TreeData';
+import type { TreeItem } from 'src/app/treeview/TreeItem';
 import {
   hasDescendantMatchingQuery,
   isNode,

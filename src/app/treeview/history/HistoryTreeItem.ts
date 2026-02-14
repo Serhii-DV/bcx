@@ -9,8 +9,8 @@ import {
 import { History } from 'src/core/history';
 import { Url } from 'src/core/url';
 import { BandTreeItem } from '../band/BandTreeItem';
-import type { TreeItem } from '../treeItem';
-import { TreeItemFactory } from '../treeItemFactory';
+import type { TreeItem } from '../TreeItem';
+import { TreeItemFactory } from '../TreeItemFactory';
 
 export class HistoryTreeItem {
   static async create(): Promise<TreeItem> {

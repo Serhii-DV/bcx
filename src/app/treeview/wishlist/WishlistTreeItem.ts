@@ -5,8 +5,8 @@ import {
 } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { storage } from 'src/core/shared';
-import type { TreeItem } from '../treeItem';
-import { TreeItemFactory } from '../treeItemFactory';
+import type { TreeItem } from '../TreeItem';
+import { TreeItemFactory } from '../TreeItemFactory';
 
 const WISHLIST_KEY = '/wishlist';
 
