@@ -15,7 +15,6 @@ import { BandTreeItem } from 'src/app/treeview/band/BandTreeItem';
 import { HistoryTreeItem } from 'src/app/treeview/history/HistoryTreeItem';
 import { TreeData } from 'src/app/treeview/TreeData';
 import { TreeItemFactory } from 'src/app/treeview/TreeItemFactory';
-import { updateTreeItemCounts } from 'src/app/treeview/utils';
 import { WishlistTreeItem } from 'src/app/treeview/wishlist/WishlistTreeItem';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
@@ -98,14 +97,10 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
     }
 
     // Add wishlist data
-    treeData.add(
-      updateTreeItemCounts(
-        await WishlistTreeItem.create(userData.username || ''),
-      ),
-    );
+    treeData.add(await WishlistTreeItem.create(userData.username || ''));
   }
 
-  treeData.add(updateTreeItemCounts(await HistoryTreeItem.create()));
+  treeData.add(await HistoryTreeItem.create());
 
   return treeData;
 }

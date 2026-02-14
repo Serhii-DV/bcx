@@ -406,7 +406,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
                 <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
                 {/if}
                 <span>{item.label}</span>
-                <span class="text-sm text-gray-400 ml-2">({getVisibleChildrenCount(item, debouncedFilterQuery)})</span>
+                <span class="item-count text-sm text-gray-400">({getVisibleChildrenCount(item, debouncedFilterQuery)})</span>
               </summary>
               {@render treeItems(item.children)}
             </details>
@@ -508,6 +508,10 @@ function handleFilterKeyDown(event: KeyboardEvent) {
 
 .bcx-tree-view details > summary > .bcx-tree-item-img {
     margin-right: 0.5rem;
+}
+
+.bcx-tree-view .item-count {
+    margin-left: 0.2rem;
 }
 
 </style>

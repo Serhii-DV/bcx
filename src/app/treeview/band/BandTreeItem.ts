@@ -1,15 +1,14 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
-import { updateTreeItemsCounts, updateTreeItemsQueryFromLabel } from '../utils';
 
 export class BandTreeItem {
   static create(band: Band, withChildren: boolean = true): TreeItem {
     const children: TreeItem[] = [];
 
     if (withChildren) {
-      const albumTreeItems = updateTreeItemsQueryFromLabel(
-        TreeItemFactory.fromAlbumsByArtistNames(band.metadata.albums),
+      const albumTreeItems = TreeItemFactory.fromAlbumsByArtistNames(
+        band.metadata.albums,
       );
       children.push({
         label: 'Artist/Releases',
@@ -26,7 +25,7 @@ export class BandTreeItem {
       image: band.artwork.tinySizeUrl,
       open: withChildren,
       href: !withChildren ? band.url.toString() : undefined,
-      children: updateTreeItemsCounts(children),
+      children: children,
     };
   }
 }
