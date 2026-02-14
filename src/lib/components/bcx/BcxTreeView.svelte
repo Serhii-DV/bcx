@@ -25,8 +25,10 @@ let filterInput: HTMLInputElement;
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let filterQuery = $state('');
+let debouncedFilterQuery = $state('');
 let effectiveTreeData: TreeData = $state(treeData);
 let storeUnsubscribe: (() => void) | null = null;
+let filterDebounceTimer: number | null = null;
 
 // Expose method to parent component
 export function focusFirstItem() {
@@ -50,41 +52,75 @@ function itemOrDescendantMatches(item: TreeItem, query: string): boolean {
   return false;
 }
 
-// Create a filtered copy of tree data
+// Create a deep filtered copy of tree data (independent from original)
 function createFilteredTreeData(items: TreeItem[], query: string): TreeItem[] {
   return items
     .filter((item) => itemOrDescendantMatches(item, query))
     .map((item) => {
-      const itemCopy = { ...item };
-      if (item.children && item.children.length > 0) {
-        itemCopy.children = createFilteredTreeData(item.children, query);
-        // Preserve the original open state instead of auto-expanding
-        itemCopy.open = item.open;
-      }
+      // Create a deep copy to avoid mutating original tree
+      const itemCopy: TreeItem = {
+        ...item,
+        children: item.children
+          ? createFilteredTreeData(item.children, query)
+          : undefined,
+      };
       return itemCopy;
     });
 }
 
 // Get visible children count based on filter
 function getVisibleChildrenCount(item: TreeItem, query: string): number {
+  if (!item.children || item.children.length === 0) return 0;
   if (!query.trim()) {
-    return item.children?.length ?? 0;
+    return item.children.length;
   }
-  if (!item.children) return 0;
   return item.children.filter((child) => itemOrDescendantMatches(child, query))
     .length;
 }
 
-// Reactive values - Update effective tree data based on filter
+// Reactive values - Debounce filter input
 $effect(() => {
-  if (filterQuery.trim()) {
+  const currentQuery = filterQuery; // Capture current value synchronously
+
+  // Clear existing timer
+  if (filterDebounceTimer !== null) {
+    clearTimeout(filterDebounceTimer);
+  }
+
+  // If filter is empty, update immediately
+  if (!currentQuery.trim()) {
+    debouncedFilterQuery = '';
+    filterDebounceTimer = null;
+  } else {
+    // Set new timer for debounced update
+    filterDebounceTimer = window.setTimeout(() => {
+      debouncedFilterQuery = currentQuery;
+      filterDebounceTimer = null;
+    }, 300); // 300ms debounce delay
+  }
+});
+
+// Reactive values - Update effective tree data based on debounced filter
+$effect(() => {
+  if (debouncedFilterQuery.trim()) {
     // Create filtered tree data
-    const filteredItems = createFilteredTreeData(treeData.items, filterQuery);
-    const filteredTreeData = new TreeDataClass(filteredItems);
-    effectiveTreeData = filteredTreeData;
+    const filteredItems = createFilteredTreeData(
+      treeData.items,
+      debouncedFilterQuery,
+    );
+    // Only create new TreeData if we have items, otherwise use original
+    if (filteredItems.length > 0) {
+      const filteredTreeData = new TreeDataClass(filteredItems);
+      effectiveTreeData = filteredTreeData;
+    } else {
+      // If no matches, still use original to keep tree structure
+      effectiveTreeData = treeData;
+    }
   } else {
     // Use original tree data
     effectiveTreeData = treeData;
+    // Reset focus when clearing filter
+    focusedPath = null;
   }
 });
 
@@ -137,6 +173,9 @@ onMount(() => {
 onDestroy(() => {
   if (storeUnsubscribe) {
     storeUnsubscribe();
+  }
+  if (filterDebounceTimer !== null) {
+    clearTimeout(filterDebounceTimer);
   }
 });
 
@@ -338,8 +377,8 @@ function handleFilterKeyDown(event: KeyboardEvent) {
 }
 </script>
 
-{#snippet treeItems(items: TreeItem[])}
-  {#if items.length > 0}
+{#snippet treeItems(items: TreeItem[] | undefined)}
+  {#if items && items.length > 0}
     <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
       {#each items as item}
         <li>
@@ -367,7 +406,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
                 <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
                 {/if}
                 <span>{item.label}</span>
-                <span class="text-sm text-gray-400 ml-2">({getVisibleChildrenCount(item, filterQuery)})</span>
+                <span class="text-sm text-gray-400 ml-2">({getVisibleChildrenCount(item, debouncedFilterQuery)})</span>
               </summary>
               {@render treeItems(item.children)}
             </details>
@@ -411,12 +450,14 @@ function handleFilterKeyDown(event: KeyboardEvent) {
     onkeydown={handleKeyDown}
     onfocus={() => {
       // Set initial focus to first item if none is focused
-      if (!focusedPath) {
+      if (!focusedPath && effectiveTreeData.items) {
         focusTreeItem(effectiveTreeData.visibleFirst);
       }
     }}
   >
-    {@render treeItems(effectiveTreeData.items)}
+    {#if effectiveTreeData.items}
+      {@render treeItems(effectiveTreeData.items)}
+    {/if}
   </div>
 </div>
 
