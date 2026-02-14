@@ -87,12 +87,12 @@ $effect(() => {
     clearTimeout(filterDebounceTimer);
   }
 
-  // If filter is empty, update immediately
+  // If filter is empty, update immediately without debounce
   if (!currentQuery.trim()) {
     debouncedFilterQuery = '';
     filterDebounceTimer = null;
   } else {
-    // Set new timer for debounced update
+    // Set new timer for debounced update (only for non-empty queries)
     filterDebounceTimer = window.setTimeout(() => {
       debouncedFilterQuery = currentQuery;
       filterDebounceTimer = null;
@@ -108,13 +108,13 @@ $effect(() => {
       treeData.items,
       debouncedFilterQuery,
     );
-    // Only create new TreeData if we have items, otherwise use original
+    // Only update tree if we have matching items
     if (filteredItems.length > 0) {
       const filteredTreeData = new TreeDataClass(filteredItems);
       effectiveTreeData = filteredTreeData;
     } else {
-      // If no matches, still use original to keep tree structure
-      effectiveTreeData = treeData;
+      // No matches - create empty tree data
+      effectiveTreeData = new TreeDataClass([]);
     }
   } else {
     // Use original tree data
@@ -455,7 +455,11 @@ function handleFilterKeyDown(event: KeyboardEvent) {
       }
     }}
   >
-    {#if effectiveTreeData.items}
+    {#if debouncedFilterQuery.trim() && effectiveTreeData.items && effectiveTreeData.items.length === 0}
+      <div class="text-gray-400 text-sm text-center py-4">
+        No items match your filter
+      </div>
+    {:else if effectiveTreeData.items}
       {@render treeItems(effectiveTreeData.items)}
     {/if}
   </div>
