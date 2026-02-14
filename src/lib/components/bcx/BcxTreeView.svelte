@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/treeData';
+import { TreeData as TreeDataClass } from 'src/app/treeview/treeData';
 import type { TreeItem } from 'src/app/treeview/treeItem';
 import {
   hasDescendantMatchingQuery,
@@ -10,7 +11,6 @@ import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl } from 'src/core/shared';
 import { Url } from 'src/core/url';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
-import { element } from 'src/utils/dom';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 
@@ -23,19 +23,76 @@ let { treeData, onItemClick = () => {} }: Props = $props();
 let treeContainer: HTMLDivElement;
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
+let filterQuery = $state('');
+let effectiveTreeData: TreeData = $state(treeData);
 let storeUnsubscribe: (() => void) | null = null;
 
 // Expose method to parent component
 export function focusFirstItem() {
-  focusTreeItem(treeData.visibleFirst);
+  focusTreeItem(effectiveTreeData.visibleFirst);
 }
 
-// Reactive values
+// Check if an item matches the filter query (case-insensitive)
+function itemMatchesFilter(item: TreeItem, query: string): boolean {
+  if (!query.trim()) return true;
+  return item.label.toLowerCase().includes(query.toLowerCase());
+}
+
+// Check if an item or any of its descendants match the filter
+function itemOrDescendantMatches(item: TreeItem, query: string): boolean {
+  if (itemMatchesFilter(item, query)) {
+    return true;
+  }
+  if (item.children && item.children.length > 0) {
+    return item.children.some((child) => itemOrDescendantMatches(child, query));
+  }
+  return false;
+}
+
+// Create a filtered copy of tree data
+function createFilteredTreeData(items: TreeItem[], query: string): TreeItem[] {
+  return items
+    .filter((item) => itemOrDescendantMatches(item, query))
+    .map((item) => {
+      const itemCopy = { ...item };
+      if (item.children && item.children.length > 0) {
+        itemCopy.children = createFilteredTreeData(item.children, query);
+        // Preserve the original open state instead of auto-expanding
+        itemCopy.open = item.open;
+      }
+      return itemCopy;
+    });
+}
+
+// Get visible children count based on filter
+function getVisibleChildrenCount(item: TreeItem, query: string): number {
+  if (!query.trim()) {
+    return item.children?.length ?? 0;
+  }
+  if (!item.children) return 0;
+  return item.children.filter((child) => itemOrDescendantMatches(child, query))
+    .length;
+}
+
+// Reactive values - Update effective tree data based on filter
+$effect(() => {
+  if (filterQuery.trim()) {
+    // Create filtered tree data
+    const filteredItems = createFilteredTreeData(treeData.items, filterQuery);
+    const filteredTreeData = new TreeDataClass(filteredItems);
+    effectiveTreeData = filteredTreeData;
+  } else {
+    // Use original tree data
+    effectiveTreeData = treeData;
+  }
+});
+
+// Reactive values - searchQuery effect
 $effect(() => {
   if (searchQuery && searchQuery.trim() !== '') {
     console.log('[searchQuery]', '[BcxTreeView]', 'effect', searchQuery);
     // Expand all nodes that contain matching items
-    treeData.items.forEach((item) => {
+    effectiveTreeData.items.forEach((item) => {
       if (!isNode(item)) {
         return;
       }
@@ -58,7 +115,7 @@ $effect(() => {
   } else {
     // Optional: Collapse all nodes when search is cleared
     // Uncomment if you want this behavior:
-    // treeData.items.forEach((item) => {
+    // effectiveTreeData.items.forEach((item) => {
     //   if (isNode(item) && item.open) {
     //     collapseNode(item);
     //   }
@@ -132,21 +189,21 @@ function handleKeyDown(event: KeyboardEvent) {
 
   event.preventDefault();
 
-  const currentIndex = treeData.visibleIndex(focusedPath ?? '');
+  const currentIndex = effectiveTreeData.visibleIndex(focusedPath ?? '');
   const pageSize = 20; // Number of items to jump for PageUp/PageDown
 
   switch (event.key) {
     case 'ArrowDown':
-      focusTreeItem(treeData.visibleNext(currentIndex));
+      focusTreeItem(effectiveTreeData.visibleNext(currentIndex));
       break;
 
     case 'ArrowUp':
-      focusTreeItem(treeData.visiblePrev(currentIndex));
+      focusTreeItem(effectiveTreeData.visiblePrev(currentIndex));
       break;
 
     case 'ArrowRight':
       if (currentIndex >= 0) {
-        const currentItem = treeData.findVisible(currentIndex);
+        const currentItem = effectiveTreeData.findVisible(currentIndex);
 
         if (!currentItem) {
           break;
@@ -156,14 +213,14 @@ function handleKeyDown(event: KeyboardEvent) {
           expandNode(currentItem);
         } else {
           // Move to first child
-          focusTreeItem(treeData.findFirstChildByPath(focusedPath));
+          focusTreeItem(effectiveTreeData.findFirstChildByPath(focusedPath));
         }
       }
       break;
 
     case 'ArrowLeft':
       if (currentIndex >= 0) {
-        const currentItem = treeData.findVisible(currentIndex);
+        const currentItem = effectiveTreeData.findVisible(currentIndex);
 
         if (!currentItem) {
           break;
@@ -173,31 +230,31 @@ function handleKeyDown(event: KeyboardEvent) {
           collapseNode(currentItem);
         } else {
           // Move to parent
-          focusTreeItem(treeData.findParentByPath(currentItem.path));
+          focusTreeItem(effectiveTreeData.findParentByPath(currentItem.path));
         }
       }
       break;
 
     case 'Enter':
     case ' ':
-      handleItemClick(treeData.findVisible(currentIndex), event);
+      handleItemClick(effectiveTreeData.findVisible(currentIndex), event);
       break;
 
     case 'Home':
-      focusTreeItem(treeData.visibleFirst);
+      focusTreeItem(effectiveTreeData.visibleFirst);
       break;
 
     case 'End':
-      focusTreeItem(treeData.visibleLast);
+      focusTreeItem(effectiveTreeData.visibleLast);
       break;
 
     case 'PageDown': {
-      focusTreeItem(treeData.visibleNext(currentIndex, pageSize));
+      focusTreeItem(effectiveTreeData.visibleNext(currentIndex, pageSize));
       break;
     }
 
     case 'PageUp': {
-      focusTreeItem(treeData.visiblePrev(currentIndex, pageSize));
+      focusTreeItem(effectiveTreeData.visiblePrev(currentIndex, pageSize));
       break;
     }
   }
@@ -297,6 +354,7 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
                 <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
                 {/if}
                 <span>{item.label}</span>
+                <span class="text-sm text-gray-400 ml-2">({getVisibleChildrenCount(item, filterQuery)})</span>
               </summary>
               {@render treeItems(item.children)}
             </details>
@@ -322,20 +380,29 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
   {/if}
 {/snippet}
 
-<div
-  bind:this={treeContainer}
-  class="bcx-tree-view pr-2 py-2"
-  role="tree"
-  tabindex="0"
-  onkeydown={handleKeyDown}
-  onfocus={() => {
-    // Set initial focus to first item if none is focused
-    if (!focusedPath) {
-      focusTreeItem(treeData.visibleFirst);
-    }
-  }}
->
-  {@render treeItems(treeData.items)}
+<div class="flex flex-col h-full gap-2">
+  <input
+    id="bcx-tree-view-filter"
+    type="text"
+    placeholder="Filter items..."
+    bind:value={filterQuery}
+    class="px-3 py-2 rounded bg-gray-700 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+  />
+  <div
+    bind:this={treeContainer}
+    class="bcx-tree-view pr-2 py-2 flex-1 overflow-y-auto"
+    role="tree"
+    tabindex="0"
+    onkeydown={handleKeyDown}
+    onfocus={() => {
+      // Set initial focus to first item if none is focused
+      if (!focusedPath) {
+        focusTreeItem(effectiveTreeData.visibleFirst);
+      }
+    }}
+  >
+    {@render treeItems(effectiveTreeData.items)}
+  </div>
 </div>
 
 <style>
