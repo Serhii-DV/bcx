@@ -21,6 +21,7 @@ interface Props {
 
 let { treeData, onItemClick = () => {} }: Props = $props();
 let treeContainer: HTMLDivElement;
+let filterInput: HTMLInputElement;
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let filterQuery = $state('');
@@ -198,6 +199,11 @@ function handleKeyDown(event: KeyboardEvent) {
       break;
 
     case 'ArrowUp':
+      // If on first item, focus back to filter input
+      if (currentIndex <= 0) {
+        filterInput?.focus();
+        break;
+      }
       focusTreeItem(effectiveTreeData.visiblePrev(currentIndex));
       break;
 
@@ -323,6 +329,13 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
     }
   });
 }
+
+function handleFilterKeyDown(event: KeyboardEvent) {
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    focusTreeItem(effectiveTreeData.visibleFirst);
+  }
+}
 </script>
 
 {#snippet treeItems(items: TreeItem[])}
@@ -382,10 +395,12 @@ function updateTreeImages(detailsElement: HTMLDetailsElement) {
 
 <div class="flex flex-col h-full gap-2">
   <input
+    bind:this={filterInput}
     id="bcx-tree-view-filter"
     type="text"
     placeholder="Filter items..."
     bind:value={filterQuery}
+    onkeydown={handleFilterKeyDown}
     class="px-3 py-2 rounded bg-gray-700 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
   />
   <div
