@@ -1,10 +1,7 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
 import { Band } from 'src/bandcamp/domain/band/band';
-import type {
-  BandcampPageData,
-  UserData,
-} from 'src/bandcamp/domain/pageData/pageData';
+import type { BandcampPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { Url } from 'src/core/url';
 import { arrayUnique } from 'src/utils/array';
@@ -95,37 +92,6 @@ export class TreeItemFactory {
     return {
       label: `Fan: ${fan_data.name} (${fan_data.location})`,
       children: updateTreeItemsCounts(children),
-    };
-  }
-
-  static async createPersonalMenu(userData: UserData): Promise<TreeItem> {
-    if (!userData.username) {
-      return {
-        label: 'You: (not logged in)',
-        children: [
-          {
-            label: 'Login',
-            href: BandcampUrlFactory.generateLoginUrl(),
-          },
-        ],
-      };
-    }
-
-    const children: TreeItem[] = [];
-
-    children.push({
-      label: 'Feed',
-      href: BandcampUrlFactory.generateFeedUrl(userData.username),
-    });
-
-    children.push({
-      label: 'Collection',
-      href: BandcampUrlFactory.generateCollectionUrl(userData.username),
-    });
-
-    return {
-      label: `You: ${userData.name}`,
-      children,
     };
   }
 }

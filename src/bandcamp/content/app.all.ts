@@ -90,8 +90,6 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
   const userData = bandcampPageData.userData;
 
   if (bandcampPageData) {
-    treeData.add(await TreeItemFactory.createPersonalMenu(userData));
-
     if (userData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
       const fanPageDataTreeItem =
         await TreeItemFactory.fromBandcampFanPageData(bandcampPageData);
