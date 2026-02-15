@@ -1,3 +1,4 @@
+import { ExternalLink, RefreshCcw } from 'lucide-svelte';
 import { Album } from 'src/bandcamp/domain/album/album';
 import {
   type BandcampItem,
@@ -6,6 +7,7 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
+import type { TreeItemButton } from '../TreeItemButton';
 import { TreeItemFactory } from '../TreeItemFactory';
 
 const COLLECTION_KEY = '/collection';
@@ -23,32 +25,48 @@ export class CollectionTreeItem {
         item.band_id,
       ),
     );
-    const treeItems: TreeItem[] =
+    const children: TreeItem[] =
       TreeItemFactory.fromAlbumsByArtistNames(albums);
 
-    treeItems.unshift({
-      label: 'Refresh',
-      onClick: async (element: HTMLElement) => {
-        if (element.dataset.loading === 'true') {
-          return;
-        }
-
-        element.textContent = 'Loading...';
-        element.dataset.loading = 'true';
-
-        const collectionItems = await loadCollectionItems();
-
-        element.textContent = 'Loaded ' + collectionItems.length + ' items';
-        element.dataset.loading = 'false';
-      },
-    });
+    const buttons: TreeItemButton[] = [
+      createCollectionOpenTreeItemButton(username),
+      createCollectionRefreshTreeItemButton(),
+    ];
 
     return {
       label: `Collection`,
-      href: BandcampUrlFactory.generateCollectionUrl(username),
-      children: treeItems,
+      children,
+      buttons,
     };
   }
+}
+
+function createCollectionOpenTreeItemButton(username: string): TreeItemButton {
+  return {
+    title: 'Open Collection',
+    icon: ExternalLink,
+    href: BandcampUrlFactory.generateCollectionUrl(username),
+  };
+}
+
+function createCollectionRefreshTreeItemButton(): TreeItemButton {
+  return {
+    title: 'Refresh Collection',
+    icon: RefreshCcw,
+    onClick: async (element: HTMLElement) => {
+      if (element.dataset.loading === 'true') {
+        return;
+      }
+
+      element.textContent = 'Loading...';
+      element.dataset.loading = 'true';
+
+      const collectionItems = await loadCollectionItems();
+
+      element.textContent = 'Loaded ' + collectionItems.length + ' items';
+      element.dataset.loading = 'false';
+    },
+  };
 }
 
 async function loadCollectionItemsFromStorage(): Promise<BandcampItem[]> {
