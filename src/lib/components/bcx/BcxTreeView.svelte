@@ -231,6 +231,14 @@ function handleItemClick(
 function handleKeyDown(event: KeyboardEvent) {
   if (!treeContainer) return;
 
+  // Allow system shortcuts to pass through
+  if (event.ctrlKey || event.metaKey) {
+    // Allow CTRL+R (or CMD+R on Mac) to reload the page
+    if (event.key === 'r' || event.key === 'R') {
+      return;
+    }
+  }
+
   event.preventDefault();
 
   const currentIndex = effectiveTreeData.visibleIndex(focusedPath ?? '');
