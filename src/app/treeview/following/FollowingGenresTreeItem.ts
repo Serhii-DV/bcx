@@ -12,9 +12,10 @@ const FOLLOWING_GENRES_KEY = '/following-genres';
 
 export class FollowingGenresTreeItem {
   static async create(username: string): Promise<TreeItem> {
-    const followingGenres = await loadFollowingGenresFromStorage();
+    const followingGenres: GenreItem[] = await loadFollowingGenresFromStorage();
     const children: TreeItem[] = followingGenres.map((item) => ({
       label: item.name,
+      href: item.tag_page_url,
     }));
 
     const buttons: TreeItemButton[] = [

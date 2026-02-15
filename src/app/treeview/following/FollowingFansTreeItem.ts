@@ -1,4 +1,5 @@
 import { ExternalLink, RefreshCcw } from 'lucide-svelte';
+import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
 import { PageCollection } from 'src/bandcamp/domain/page/PageCollection';
 import type { FollowingFanItem } from 'src/bandcamp/domain/types/CollectionPageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
@@ -12,10 +13,12 @@ const FOLLOWING_FANS_KEY = '/following-fans';
 
 export class FollowingFansTreeItem {
   static async create(username: string): Promise<TreeItem> {
-    const followingFans = await loadFollowingFansFromStorage();
+    const followingFans: FollowingFanItem[] =
+      await loadFollowingFansFromStorage();
     const children: TreeItem[] = followingFans.map((item) => ({
       label: item.name,
-      href: item.fan_url ?? undefined,
+      image: Artwork.createForBand(item.image_id as number).smallSizeUrl,
+      href: item.trackpipe_url,
     }));
 
     const buttons: TreeItemButton[] = [
