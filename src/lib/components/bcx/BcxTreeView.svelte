@@ -464,6 +464,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
               tabindex={focusedPath === item.path ? 0 : -1}
               onclick={(e) => handleItemClick(item, e)}
               href="{item.href || '#'}"
+              title="{item.href || ''}"
             >
               {#if item.image}
               <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
