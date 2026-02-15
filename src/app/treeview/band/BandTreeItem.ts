@@ -1,6 +1,7 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
+import { updateTreeItemsQueryFromLabel } from '../utils';
 
 export class BandTreeItem {
   static create(band: Band, withChildren: boolean = true): TreeItem {
@@ -13,7 +14,7 @@ export class BandTreeItem {
       children.push({
         label: 'Artist/Releases',
         open: false,
-        children: albumTreeItems,
+        children: updateTreeItemsQueryFromLabel(albumTreeItems),
       });
 
       children.push(createBandYearsTreeItem(band));
@@ -32,15 +33,13 @@ export class BandTreeItem {
 
 function createBandYearsTreeItem(band: Band): TreeItem {
   const children: TreeItem[] = band.metadata.years.map((year) => {
-    const query = year.toString();
     const children: TreeItem[] = band.metadata
       .albumsByYear(year)
       .map(TreeItemFactory.fromAlbum);
 
     return {
-      label: query,
-      query,
-      children,
+      label: year.toString(),
+      children: updateTreeItemsQueryFromLabel(children),
     };
   });
 
@@ -53,15 +52,12 @@ function createBandYearsTreeItem(band: Band): TreeItem {
 
 function createBandKeywordsTreeItem(band: Band): TreeItem {
   const children: TreeItem[] = band.metadata.keywords.map((keyword) => {
-    return {
-      label: keyword,
-      query: keyword,
-    };
+    return { label: keyword };
   });
 
   return {
     label: 'Keywords',
     open: false,
-    children,
+    children: updateTreeItemsQueryFromLabel(children),
   };
 }
