@@ -24,6 +24,22 @@ export type BandcampItem = {
   isWishlisted?: boolean;
 };
 
+export type FollowingBandItem = {
+  band_id: number;
+  image_id: number | null;
+  art_id: number;
+  url_hints: {
+    subdomain: string;
+    custom_domain: string | null;
+  };
+  name: string;
+  is_following: boolean;
+  is_subscribed: boolean | null;
+  location: string | null;
+  date_followed: string;
+  token: string;
+};
+
 type ItemsResponse = {
   error?: boolean;
   error_message?: string;
@@ -36,6 +52,14 @@ type SummaryResponse = {
   error?: boolean;
   error_message?: string;
   collection_summary?: CollectionSummary;
+};
+
+type FollowingBandsResponse = {
+  error?: boolean;
+  error_message?: string;
+  followeers: FollowingBandItem[]; // Note: API has typo "followeers"
+  more_available: boolean;
+  last_token?: string;
 };
 
 export type LoadOptions = {
@@ -107,6 +131,12 @@ export class PageCollection {
     'https://bandcamp.com/api/fancollection/1/collection_items';
   static readonly WISHLIST_ITEMS_URL =
     'https://bandcamp.com/api/fancollection/1/wishlist_items';
+  static readonly FOLLOWING_BANDS_ITEMS_URL =
+    'https://bandcamp.com/api/fancollection/1/following_bands';
+  static readonly FOLLOWING_FANS_ITEMS_URL =
+    'https://bandcamp.com/api/fancollection/1/following_fans_items';
+  static readonly FOLLOWING_GENRES_ITEMS_URL =
+    'https://bandcamp.com/api/fancollection/1/following_genres_items';
 
   private readonly doc: Document;
   private readonly transport: BandcampTransport;
@@ -245,6 +275,81 @@ export class PageCollection {
 
     return this.loadAllFromEndpoint({
       endpointUrl: PageCollection.COLLECTION_ITEMS_URL,
+      lastToken,
+      options,
+    });
+  }
+
+  async loadFollowingBandsItems(
+    options?: LoadOptions,
+  ): Promise<FollowingBandItem[]> {
+    const lastToken = this.getPageData().following_bands_data?.last_token;
+    if (!lastToken)
+      throw new Error(
+        'This page does not contain following_bands_data.last_token.',
+      );
+
+    const pageSize = options?.pageSize ?? 40;
+    const pageData = this.getPageData();
+    const fanId = pageData.fan_data.fan_id;
+
+    let olderThanToken = PageCollection.makeNowToken(lastToken);
+    const all: FollowingBandItem[] = [];
+
+    while (true) {
+      if (options?.signal?.aborted)
+        throw new DOMException('Aborted', 'AbortError');
+
+      const parsed =
+        await this.transport.postJsonString<FollowingBandsResponse>(
+          PageCollection.FOLLOWING_BANDS_ITEMS_URL,
+          { fan_id: fanId, older_than_token: olderThanToken, count: pageSize },
+          options?.signal,
+        );
+
+      if (parsed.error)
+        throw new Error(
+          parsed.error_message ||
+            'Bandcamp API error while loading following bands.',
+        );
+
+      all.push(...parsed.followeers);
+
+      if (!parsed.more_available) break;
+
+      const lastItem = parsed.followeers[parsed.followeers.length - 1];
+      if (!lastItem?.token) break;
+      olderThanToken = lastItem.token;
+    }
+
+    return all;
+  }
+
+  async loadFollowingFansItems(options?: LoadOptions): Promise<BandcampItem[]> {
+    const lastToken = this.getPageData().following_fans_data?.last_token;
+    if (!lastToken)
+      throw new Error(
+        'This page does not contain following_fans_data.last_token.',
+      );
+
+    return this.loadAllFromEndpoint({
+      endpointUrl: PageCollection.FOLLOWING_FANS_ITEMS_URL,
+      lastToken,
+      options,
+    });
+  }
+
+  async loadFollowingGenresItems(
+    options?: LoadOptions,
+  ): Promise<BandcampItem[]> {
+    const lastToken = this.getPageData().following_genres_data?.last_token;
+    if (!lastToken)
+      throw new Error(
+        'This page does not contain following_genres_data.last_token.',
+      );
+
+    return this.loadAllFromEndpoint({
+      endpointUrl: PageCollection.FOLLOWING_GENRES_ITEMS_URL,
       lastToken,
       options,
     });
