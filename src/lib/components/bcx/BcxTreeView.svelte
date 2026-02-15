@@ -459,7 +459,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
                 <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
                 {/if}
                 <span>{item.label}</span>
-                {#if item.href}
+                {#if item.href && !item.query}
                 <ExternalLink size={16} class="ml-1 flex-shrink-0" />
                 {/if}
                 <span class="item-count text-sm text-gray-400">({getVisibleChildrenCount(item, debouncedFilterQuery)})</span>
@@ -482,7 +482,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
               <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
               {/if}
               <span class="ml-2 text-wrap">{item.label}</span>
-              {#if item.href}
+              {#if item.href && !item.query}
               <ExternalLink size={16} class="ml-1 flex-shrink-0" />
               {/if}
               {@render treeItemButtons(item.buttons)}
