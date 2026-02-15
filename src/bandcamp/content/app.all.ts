@@ -14,6 +14,8 @@ import './app.track';
 import { BandTreeItem } from 'src/app/treeview/band/BandTreeItem';
 import { CollectionTreeItem } from 'src/app/treeview/collection/CollectionTreeItem';
 import { FollowingBandsTreeItem } from 'src/app/treeview/following/FollowingBandsTreeItem';
+import { FollowingFansTreeItem } from 'src/app/treeview/following/FollowingFansTreeItem';
+import { FollowingGenresTreeItem } from 'src/app/treeview/following/FollowingGenresTreeItem';
 import { HistoryTreeItem } from 'src/app/treeview/history/HistoryTreeItem';
 import { TreeData } from 'src/app/treeview/TreeData';
 import { TreeItemFactory } from 'src/app/treeview/TreeItemFactory';
@@ -99,6 +101,8 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
     }
 
     treeData.add(await FollowingBandsTreeItem.create(userData.username || ''));
+    treeData.add(await FollowingFansTreeItem.create(userData.username || ''));
+    treeData.add(await FollowingGenresTreeItem.create(userData.username || ''));
     treeData.add(await CollectionTreeItem.create(userData.username || ''));
     treeData.add(await WishlistTreeItem.create(userData.username || ''));
   }

@@ -1,6 +1,10 @@
 // PageCollection.ts (content-script friendly)
 
-import type { CollectionPageData } from '../types/CollectionPageData';
+import type {
+  CollectionPageData,
+  FollowingFanItem,
+  GenreItem,
+} from '../types/CollectionPageData';
 
 export type CollectionSummary = {
   tralbum_lookup: Record<string, { purchased?: boolean }>;
@@ -325,33 +329,23 @@ export class PageCollection {
     return all;
   }
 
-  async loadFollowingFansItems(options?: LoadOptions): Promise<BandcampItem[]> {
-    const lastToken = this.getPageData().following_fans_data?.last_token;
-    if (!lastToken)
-      throw new Error(
-        'This page does not contain following_fans_data.last_token.',
-      );
+  async loadFollowingFansItems(): Promise<FollowingFanItem[]> {
+    const pageData = this.getPageData();
+    const fanIds = pageData.following_fans_data?.sequence ?? [];
+    const cache = pageData.item_cache.following_fans ?? {};
 
-    return this.loadAllFromEndpoint({
-      endpointUrl: PageCollection.FOLLOWING_FANS_ITEMS_URL,
-      lastToken,
-      options,
-    });
+    return fanIds
+      .map((id) => cache[id])
+      .filter((item): item is FollowingFanItem => Boolean(item));
   }
 
-  async loadFollowingGenresItems(
-    options?: LoadOptions,
-  ): Promise<BandcampItem[]> {
-    const lastToken = this.getPageData().following_genres_data?.last_token;
-    if (!lastToken)
-      throw new Error(
-        'This page does not contain following_genres_data.last_token.',
-      );
+  async loadFollowingGenresItems(): Promise<GenreItem[]> {
+    const pageData = this.getPageData();
+    const genreIds = pageData.following_genres_data?.sequence ?? [];
+    const cache = pageData.item_cache.following_genres ?? {};
 
-    return this.loadAllFromEndpoint({
-      endpointUrl: PageCollection.FOLLOWING_GENRES_ITEMS_URL,
-      lastToken,
-      options,
-    });
+    return genreIds
+      .map((id) => cache[id])
+      .filter((item): item is GenreItem => Boolean(item));
   }
 }
