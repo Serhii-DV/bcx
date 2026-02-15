@@ -1,3 +1,4 @@
+import { ExternalLink, RefreshCcw } from 'lucide-svelte';
 import { Album } from 'src/bandcamp/domain/album/album';
 import {
   type BandcampItem,
@@ -6,6 +7,7 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
+import type { TreeItemButton } from '../TreeItemButton';
 import { TreeItemFactory } from '../TreeItemFactory';
 
 const WISHLIST_KEY = '/wishlist';
@@ -23,32 +25,48 @@ export class WishlistTreeItem {
         item.band_id,
       ),
     );
-    const treeItems: TreeItem[] =
+    const children: TreeItem[] =
       TreeItemFactory.fromAlbumsByArtistNames(albums);
 
-    treeItems.unshift({
-      label: 'Refresh',
-      onClick: async (element: HTMLElement) => {
-        if (element.dataset.loading === 'true') {
-          return;
-        }
-
-        element.textContent = 'Loading...';
-        element.dataset.loading = 'true';
-
-        const wishlistItems = await loadWishlistItems();
-
-        element.textContent = 'Loaded ' + wishlistItems.length + ' items';
-        element.dataset.loading = 'false';
-      },
-    });
+    const buttons: TreeItemButton[] = [
+      createWishlistOpenTreeItemButton(username),
+      createWishlistRefreshTreeItemButton(),
+    ];
 
     return {
       label: `Wishlist`,
-      href: BandcampUrlFactory.generateWishlistUrl(username),
-      children: treeItems,
+      children,
+      buttons,
     };
   }
+}
+
+function createWishlistOpenTreeItemButton(username: string): TreeItemButton {
+  return {
+    title: 'Open Wishlist',
+    icon: ExternalLink,
+    href: BandcampUrlFactory.generateWishlistUrl(username),
+  };
+}
+
+function createWishlistRefreshTreeItemButton(): TreeItemButton {
+  return {
+    title: 'Refresh',
+    icon: RefreshCcw,
+    onClick: async (element: HTMLElement) => {
+      if (element.dataset.loading === 'true') {
+        return;
+      }
+
+      element.textContent = 'Loading...';
+      element.dataset.loading = 'true';
+
+      const wishlistItems = await loadWishlistItems();
+
+      element.textContent = 'Loaded ' + wishlistItems.length + ' items';
+      element.dataset.loading = 'false';
+    },
+  };
 }
 
 async function loadWishlistItemsFromStorage(): Promise<BandcampItem[]> {

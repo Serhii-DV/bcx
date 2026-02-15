@@ -2,6 +2,7 @@
 import type { TreeData } from 'src/app/treeview/TreeData';
 import { TreeData as TreeDataClass } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
+import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import {
   hasDescendantMatchingQuery,
   isNode,
@@ -377,6 +378,46 @@ function handleFilterKeyDown(event: KeyboardEvent) {
 }
 </script>
 
+{#snippet treeItemButtons(buttons: TreeItemButton[] | undefined)}
+  {#if buttons && buttons.length > 0}
+    <div class="ml-auto flex gap-1 flex-shrink-0" role="presentation">
+      {#each buttons as button}
+        {@const Icon = button.icon}
+        {#if button.href}
+          <a
+            href={button.href}
+            title={button.title}
+            class="inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+            onclick={(e) => {
+              e.stopPropagation();
+              if (button.onClick) {
+                e.preventDefault();
+                button.onClick(e.currentTarget as HTMLElement);
+              }
+            }}
+          >
+            <Icon size={16} />
+          </a>
+        {:else}
+          <button
+            type="button"
+            title={button.title}
+            class="cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+            onclick={(e) => {
+              e.stopPropagation();
+              if (button.onClick) {
+                button.onClick(e.currentTarget as HTMLElement);
+              }
+            }}
+          >
+            <Icon size={16} />
+          </button>
+        {/if}
+      {/each}
+    </div>
+  {/if}
+{/snippet}
+
 {#snippet treeItems(items: TreeItem[] | undefined)}
   {#if items && items.length > 0}
     <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
@@ -407,12 +448,13 @@ function handleFilterKeyDown(event: KeyboardEvent) {
                 {/if}
                 <span>{item.label}</span>
                 <span class="item-count text-sm text-gray-400">({getVisibleChildrenCount(item, debouncedFilterQuery)})</span>
+                {@render treeItemButtons(item.buttons)}
               </summary>
               {@render treeItems(item.children)}
             </details>
           {:else}
             <a
-              class="block w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+              class="flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
@@ -424,6 +466,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
               <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
               {/if}
               <span class="ml-2 text-wrap">{item.label}</span>
+              {@render treeItemButtons(item.buttons)}
             </a>
           {/if}
         </li>

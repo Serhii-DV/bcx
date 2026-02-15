@@ -1,3 +1,5 @@
+import type { TreeItemButton } from './TreeItemButton';
+
 export interface TreeItem {
   id?: string;
   label: string;
@@ -9,5 +11,6 @@ export interface TreeItem {
   image?: string;
   query?: string;
   keywords?: string[];
+  buttons?: TreeItemButton[];
   onClick?: (element: HTMLElement) => void;
 }
