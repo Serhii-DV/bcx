@@ -1,4 +1,5 @@
 <script lang="ts">
+import { ExternalLink } from 'lucide-svelte';
 import type { TreeData } from 'src/app/treeview/TreeData';
 import { TreeData as TreeDataClass } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
@@ -449,7 +450,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
               }}
             >
               <summary
-                class="cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+                class="tree-item cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleItemClick(item, e)}
@@ -458,6 +459,9 @@ function handleFilterKeyDown(event: KeyboardEvent) {
                 <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
                 {/if}
                 <span>{item.label}</span>
+                {#if item.href}
+                <ExternalLink size={16} class="ml-1 flex-shrink-0" />
+                {/if}
                 <span class="item-count text-sm text-gray-400">({getVisibleChildrenCount(item, debouncedFilterQuery)})</span>
                 {@render treeItemButtons(item.buttons)}
               </summary>
@@ -465,7 +469,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
             </details>
           {:else}
             <a
-              class="flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+              class="tree-item flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
@@ -473,11 +477,14 @@ function handleFilterKeyDown(event: KeyboardEvent) {
               onclick={(e) => handleItemClick(item, e)}
               href="{item.href || '#'}"
               title="{item.href || ''}"
-            >
+              >
               {#if item.image}
               <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
               {/if}
               <span class="ml-2 text-wrap">{item.label}</span>
+              {#if item.href}
+              <ExternalLink size={16} class="ml-1 flex-shrink-0" />
+              {/if}
               {@render treeItemButtons(item.buttons)}
             </a>
           {/if}
@@ -565,8 +572,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
     margin-right: 0.5rem;
 }
 
-.bcx-tree-view .item-count {
+.bcx-tree-view .tree-item .item-count {
     margin-left: 0.2rem;
 }
-
 </style>
