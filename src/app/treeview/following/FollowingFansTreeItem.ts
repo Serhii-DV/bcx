@@ -1,9 +1,11 @@
 import { ExternalLink, RefreshCcw } from 'lucide-svelte';
 import { PageCollection } from 'src/bandcamp/domain/page/PageCollection';
 import type { FollowingFanItem } from 'src/bandcamp/domain/types/CollectionPageData';
-import { storage } from 'src/core/shared';
+import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
+import { currentPageUrl, storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
+import { createLoadHandler } from '../utils';
 
 const FOLLOWING_FANS_KEY = '/following-fans';
 
@@ -17,8 +19,11 @@ export class FollowingFansTreeItem {
 
     const buttons: TreeItemButton[] = [
       createFollowingFansOpenTreeItemButton(username),
-      createFollowingFansRefreshTreeItemButton(),
     ];
+
+    if (isBandcampFanUrl(currentPageUrl, username)) {
+      buttons.unshift(createFollowingFansRefreshTreeItemButton());
+    }
 
     return {
       label: `Following Fans`,
@@ -42,19 +47,7 @@ function createFollowingFansRefreshTreeItemButton(): TreeItemButton {
   return {
     title: 'Refresh Following Fans',
     icon: RefreshCcw,
-    onClick: async (element: HTMLElement) => {
-      if (element.dataset.loading === 'true') {
-        return;
-      }
-
-      element.textContent = 'Loading...';
-      element.dataset.loading = 'true';
-
-      const followingFans = await loadFollowingFans();
-
-      element.textContent = 'Loaded ' + followingFans.length + ' fans';
-      element.dataset.loading = 'false';
-    },
+    onClick: createLoadHandler(loadFollowingFans),
   };
 }
 

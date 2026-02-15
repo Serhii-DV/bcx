@@ -1,9 +1,11 @@
 import { ExternalLink, RefreshCcw } from 'lucide-svelte';
 import { PageCollection } from 'src/bandcamp/domain/page/PageCollection';
 import type { GenreItem } from 'src/bandcamp/domain/types/CollectionPageData';
-import { storage } from 'src/core/shared';
+import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
+import { currentPageUrl, storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
+import { createLoadHandler } from '../utils';
 
 const FOLLOWING_GENRES_KEY = '/following-genres';
 
@@ -16,8 +18,11 @@ export class FollowingGenresTreeItem {
 
     const buttons: TreeItemButton[] = [
       createFollowingGenresOpenTreeItemButton(username),
-      createFollowingGenresRefreshTreeItemButton(),
     ];
+
+    if (isBandcampFanUrl(currentPageUrl, username)) {
+      buttons.unshift(createFollowingGenresRefreshTreeItemButton());
+    }
 
     return {
       label: `Following Genres`,
@@ -41,19 +46,7 @@ function createFollowingGenresRefreshTreeItemButton(): TreeItemButton {
   return {
     title: 'Refresh Following Genres',
     icon: RefreshCcw,
-    onClick: async (element: HTMLElement) => {
-      if (element.dataset.loading === 'true') {
-        return;
-      }
-
-      element.textContent = 'Loading...';
-      element.dataset.loading = 'true';
-
-      const followingGenres = await loadFollowingGenres();
-
-      element.textContent = 'Loaded ' + followingGenres.length + ' genres';
-      element.dataset.loading = 'false';
-    },
+    onClick: createLoadHandler(loadFollowingGenres),
   };
 }
 

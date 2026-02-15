@@ -5,10 +5,12 @@ import {
   PageCollection,
 } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
-import { storage } from 'src/core/shared';
+import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
+import { currentPageUrl, storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 import { TreeItemFactory } from '../TreeItemFactory';
+import { createLoadHandler } from '../utils';
 
 const COLLECTION_KEY = '/collection';
 
@@ -30,8 +32,11 @@ export class CollectionTreeItem {
 
     const buttons: TreeItemButton[] = [
       createCollectionOpenTreeItemButton(username),
-      createCollectionRefreshTreeItemButton(),
     ];
+
+    if (isBandcampFanUrl(currentPageUrl, username)) {
+      buttons.unshift(createCollectionRefreshTreeItemButton());
+    }
 
     return {
       label: `Collection`,
@@ -53,19 +58,7 @@ function createCollectionRefreshTreeItemButton(): TreeItemButton {
   return {
     title: 'Refresh Collection',
     icon: RefreshCcw,
-    onClick: async (element: HTMLElement) => {
-      if (element.dataset.loading === 'true') {
-        return;
-      }
-
-      element.textContent = 'Loading...';
-      element.dataset.loading = 'true';
-
-      const collectionItems = await loadCollectionItems();
-
-      element.textContent = 'Loaded ' + collectionItems.length + ' items';
-      element.dataset.loading = 'false';
-    },
+    onClick: createLoadHandler(loadCollectionItems),
   };
 }
 

@@ -115,3 +115,31 @@ export function updateTreeItemsQueryFromLabel(
   });
   return treeItems;
 }
+
+/**
+ * Generates an onClick handler that manages loading state, prevents
+ * concurrent clicks, and updates the text with the loaded array length.
+ * * @param fetchData - The async function that fetches an array of data.
+ */
+export function createLoadHandler<T>(fetchData: () => Promise<T[]>) {
+  return async (element: HTMLElement) => {
+    if (element.dataset.loading === 'true') {
+      return;
+    }
+
+    element.textContent = 'Loading...';
+    element.dataset.loading = 'true';
+
+    try {
+      const data = await fetchData();
+
+      // Hardcoded string format using the array's length
+      element.textContent = `Loaded ${data.length} items`;
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      element.textContent = 'Error loading';
+    } finally {
+      element.dataset.loading = 'false';
+    }
+  };
+}

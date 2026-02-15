@@ -5,10 +5,12 @@ import {
   PageCollection,
 } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
-import { storage } from 'src/core/shared';
+import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
+import { currentPageUrl, storage } from 'src/core/shared';
 import { BandTreeItem } from '../band/BandTreeItem';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
+import { createLoadHandler } from '../utils';
 
 const FOLLOWING_BANDS_KEY = '/following-bands';
 
@@ -29,8 +31,11 @@ export class FollowingBandsTreeItem {
 
     const buttons: TreeItemButton[] = [
       createFollowingBandsOpenTreeItemButton(username),
-      createFollowingBandsRefreshTreeItemButton(),
     ];
+
+    if (isBandcampFanUrl(currentPageUrl, username)) {
+      buttons.unshift(createFollowingBandsRefreshTreeItemButton());
+    }
 
     return {
       label: `Following Bands`,
@@ -54,19 +59,7 @@ function createFollowingBandsRefreshTreeItemButton(): TreeItemButton {
   return {
     title: 'Refresh Following Bands',
     icon: RefreshCcw,
-    onClick: async (element: HTMLElement) => {
-      if (element.dataset.loading === 'true') {
-        return;
-      }
-
-      element.textContent = 'Loading...';
-      element.dataset.loading = 'true';
-
-      const followingBands = await loadFollowingBands();
-
-      element.textContent = 'Loaded ' + followingBands.length + ' bands';
-      element.dataset.loading = 'false';
-    },
+    onClick: createLoadHandler(loadFollowingBands),
   };
 }
 

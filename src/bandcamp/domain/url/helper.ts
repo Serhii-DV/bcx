@@ -35,9 +35,9 @@ export function isBandcampDiscoverUrl(url: Url): boolean {
   return path.startsWith('/discover');
 }
 
-export function isBandcampCollectionUrl(url: Url): boolean {
+export function isBandcampFanUrl(url: Url, username: string): boolean {
   const path = url.pathname;
-  return path.startsWith('/collection');
+  return path.startsWith(`/${username}`);
 }
 
 export function isBandcampWishlistUrl(url: Url): boolean {
