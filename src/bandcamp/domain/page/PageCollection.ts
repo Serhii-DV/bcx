@@ -1,10 +1,6 @@
 // PageCollection.ts (content-script friendly)
 
-export type PageData = {
-  fan_data: { fan_id: number };
-  collection_data?: { last_token: string };
-  wishlist_data?: { last_token: string };
-};
+import type { CollectionPageData } from '../types/CollectionPageData';
 
 export type CollectionSummary = {
   tralbum_lookup: Record<string, { purchased?: boolean }>;
@@ -115,7 +111,7 @@ export class PageCollection {
   private readonly doc: Document;
   private readonly transport: BandcampTransport;
 
-  private pageData?: PageData;
+  private pageData?: CollectionPageData;
   private summary?: CollectionSummary | null;
 
   constructor(args?: { doc?: Document; transport?: BandcampTransport }) {
@@ -124,7 +120,7 @@ export class PageCollection {
   }
 
   /** Parse #pagedata[data-blob] once */
-  getPageData(): PageData {
+  getPageData(): CollectionPageData {
     if (this.pageData) return this.pageData;
 
     const el = this.doc.querySelector<HTMLElement>('#pagedata');
@@ -133,7 +129,7 @@ export class PageCollection {
     const blob = el.getAttribute('data-blob');
     if (!blob) throw new Error('Bandcamp #pagedata[data-blob] missing.');
 
-    this.pageData = JSON.parse(blob) as PageData;
+    this.pageData = JSON.parse(blob) as CollectionPageData;
     return this.pageData;
   }
 
