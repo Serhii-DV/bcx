@@ -209,7 +209,10 @@ function handleItemClick(
     if (handleDefaultClick) {
       // Handle default navigation for non-music pages (e.g., open in new tab)
       // For keyboard events, manually navigate since we can't rely on default browser behavior
-      if (event instanceof KeyboardEvent && item.href) {
+      if (
+        (event instanceof KeyboardEvent || event instanceof MouseEvent) &&
+        item.href
+      ) {
         window.open(item.href, '_self');
       }
       return;
