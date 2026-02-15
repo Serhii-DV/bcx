@@ -1,6 +1,7 @@
 import { ExternalLink, RefreshCcw } from 'lucide-svelte';
 import { PageCollection } from 'src/bandcamp/domain/page/PageCollection';
 import type { FollowingFanItem } from 'src/bandcamp/domain/types/CollectionPageData';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
@@ -39,7 +40,7 @@ function createFollowingFansOpenTreeItemButton(
   return {
     title: 'Open Following Fans',
     icon: ExternalLink,
-    href: `https://bandcamp.com/${username}`,
+    href: BandcampUrlFactory.generateFollowingFansUrl(username),
   };
 }
 

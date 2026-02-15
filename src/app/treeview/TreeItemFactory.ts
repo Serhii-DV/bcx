@@ -71,7 +71,7 @@ export class TreeItemFactory {
     const children: TreeItem[] = [];
     children.push({
       label: 'Collection',
-      href: BandcampUrlFactory.generateCollectionUrl(fan_data.username),
+      href: BandcampUrlFactory.generateFanUrl(fan_data.username),
       children: createAlbumsTreeItemsFromItemsCache(
         pageData.data.item_cache.collection,
       ),

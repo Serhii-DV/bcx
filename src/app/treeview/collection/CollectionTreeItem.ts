@@ -50,7 +50,7 @@ function createCollectionOpenTreeItemButton(username: string): TreeItemButton {
   return {
     title: 'Open Collection',
     icon: ExternalLink,
-    href: BandcampUrlFactory.generateCollectionUrl(username),
+    href: BandcampUrlFactory.generateFanUrl(username),
   };
 }
 

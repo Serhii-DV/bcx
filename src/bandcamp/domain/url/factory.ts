@@ -42,7 +42,7 @@ export class BandcampUrlFactory {
     return url.withoutSearchAndHash;
   }
 
-  static generateCollectionUrl(username: string): string {
+  static generateFanUrl(username: string): string {
     return `https://bandcamp.com/${username}`;
   }
 
@@ -60,6 +60,10 @@ export class BandcampUrlFactory {
 
   static generateFollowingBandsUrl(username: string): string {
     return `https://bandcamp.com/${username}/following/artists_and_labels`;
+  }
+
+  static generateFollowingFansUrl(username: string): string {
+    return `https://bandcamp.com/${username}/following/fans`;
   }
 
   static generateFollowingGenresUrl(username: string): string {

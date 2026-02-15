@@ -1,6 +1,7 @@
 import { ExternalLink, RefreshCcw } from 'lucide-svelte';
 import { PageCollection } from 'src/bandcamp/domain/page/PageCollection';
 import type { GenreItem } from 'src/bandcamp/domain/types/CollectionPageData';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
@@ -38,7 +39,7 @@ function createFollowingGenresOpenTreeItemButton(
   return {
     title: 'Open Following Genres',
     icon: ExternalLink,
-    href: `https://bandcamp.com/${username}`,
+    href: BandcampUrlFactory.generateFollowingGenresUrl(username),
   };
 }
 
