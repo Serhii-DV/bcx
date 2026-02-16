@@ -11,6 +11,7 @@ import { BandcampStorage } from '../domain/storage';
 import './app.music';
 import './app.album';
 import './app.track';
+import { createAlbumTreeItem } from 'src/app/treeview/album/AlbumTreeItem';
 import { BandTreeItem } from 'src/app/treeview/band/BandTreeItem';
 import { CollectionTreeItem } from 'src/app/treeview/collection/CollectionTreeItem';
 import { FollowingBandsTreeItem } from 'src/app/treeview/following/FollowingBandsTreeItem';
@@ -20,6 +21,7 @@ import { HistoryTreeItem } from 'src/app/treeview/history/HistoryTreeItem';
 import { TreeData } from 'src/app/treeview/TreeData';
 import { TreeItemFactory } from 'src/app/treeview/TreeItemFactory';
 import { WishlistTreeItem } from 'src/app/treeview/wishlist/WishlistTreeItem';
+import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { bandcampPageData } from '../domain/shared';
@@ -54,6 +56,7 @@ onDOMReady(async () => {
     );
 
     let band: Band | null = null;
+    let album: Album | null = null;
 
     if (isBandcampMusicUrl(currentPageUrl)) {
       const pageMusic = await PageMusic.init();
@@ -62,9 +65,10 @@ onDOMReady(async () => {
       const pageAlbum = await PageAlbum.init();
       const bands = await BandcampStorage.getBands([pageAlbum.album.bandId]);
       band = bands[0];
+      album = pageAlbum.album;
     }
 
-    const treeData = await createTreeData(band);
+    const treeData = await createTreeData(band, album);
 
     mount(App, {
       target: shadowRoot,
@@ -78,8 +82,16 @@ onDOMReady(async () => {
   }
 });
 
-async function createTreeData(band: Band | null): Promise<TreeData> {
+async function createTreeData(
+  band: Band | null,
+  album: Album | null,
+): Promise<TreeData> {
   const treeData = new TreeData();
+
+  if (album) {
+    const albumTreeItem = createAlbumTreeItem(album);
+    treeData.add(albumTreeItem);
+  }
 
   if (band) {
     const bandReleasesTreeItem = BandTreeItem.create(band);

@@ -25,6 +25,10 @@ export class Track implements Storable, Compressable {
     return this.albumId !== undefined;
   }
 
+  toString(): string {
+    return `${this.artist} - ${this.title} ${this.time?.toReadableString() ?? ''}`;
+  }
+
   get compressor(): TrackDataCompressor {
     return trackDataCompressor;
   }
