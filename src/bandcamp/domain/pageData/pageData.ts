@@ -1,6 +1,7 @@
 import type { FanData } from 'src/app/types/FanData';
 import { currentPageUrl } from 'src/core/shared';
 import type { Url } from 'src/core/url';
+import { getJsonFromElementDataAttr } from 'src/utils/utils';
 import {
   isBandcampAlbumUrl,
   isBandcampDiscoverUrl,
@@ -20,24 +21,10 @@ export class BandcampPageData {
     }
 
     if (isBandcampDiscoverUrl(currentPageUrl)) {
-      return this.loadFromElement('#DiscoverApp');
+      this.data = getJsonFromElementDataAttr('#DiscoverApp', 'blob');
+    } else {
+      this.data = getJsonFromElementDataAttr('#pagedata', 'blob');
     }
-
-    return this.loadFromElement('#pagedata');
-  }
-
-  private loadFromElement(selector: string): this {
-    const el = document.querySelector<HTMLElement>(selector);
-    if (!el)
-      throw new Error(`Bandcamp element not found for selector: ${selector}`);
-
-    const blob = el.dataset.blob;
-    if (!blob)
-      throw new Error(
-        `Bandcamp element missing [data-blob] for selector: ${selector}`,
-      );
-
-    this.data = JSON.parse(blob);
 
     return this;
   }
