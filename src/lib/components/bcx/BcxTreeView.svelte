@@ -5,7 +5,6 @@ import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import {
   getVisibleChildrenCount,
-  hasDescendantMatchingQuery,
   isNode,
   isNodeExpanded,
 } from 'src/app/treeview/utils';
@@ -66,42 +65,6 @@ $effect(() => {
   if (!debouncedFilterQuery.trim()) {
     // Reset focus when clearing filter
     focusedPath = null;
-  }
-});
-
-// Reactive values - searchQuery effect
-$effect(() => {
-  if (searchQuery && searchQuery.trim() !== '') {
-    console.log('[searchQuery]', '[BcxTreeView]', 'effect', searchQuery);
-    // Expand all nodes that contain matching items
-    effectiveTreeData.items.forEach((item) => {
-      if (!isNode(item)) {
-        return;
-      }
-      const hasMatchingDescendant = hasDescendantMatchingQuery(
-        item,
-        searchQuery,
-      );
-      console.log(
-        '[searchQuery]',
-        '[BcxTreeView]',
-        'effect',
-        'hasMatchingDescendant',
-        item,
-        hasMatchingDescendant,
-      );
-      if (hasMatchingDescendant && !item.open) {
-        expandNode(item);
-      }
-    });
-  } else {
-    // Optional: Collapse all nodes when search is cleared
-    // Uncomment if you want this behavior:
-    // effectiveTreeData.items.forEach((item) => {
-    //   if (isNode(item) && item.open) {
-    //     collapseNode(item);
-    //   }
-    // });
   }
 });
 
