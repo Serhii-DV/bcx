@@ -1,5 +1,6 @@
 // PageCollection.ts (content-script friendly)
 
+import { bandcampPageData } from '../shared';
 import type {
   CollectionPageData,
   FollowingFanItem,
@@ -156,14 +157,7 @@ export class PageCollection {
   /** Parse #pagedata[data-blob] once */
   getPageData(): CollectionPageData {
     if (this.pageData) return this.pageData;
-
-    const el = this.doc.querySelector<HTMLElement>('#pagedata');
-    if (!el) throw new Error('Bandcamp #pagedata element not found.');
-
-    const blob = el.getAttribute('data-blob');
-    if (!blob) throw new Error('Bandcamp #pagedata[data-blob] missing.');
-
-    this.pageData = JSON.parse(blob) as CollectionPageData;
+    this.pageData = bandcampPageData.data as CollectionPageData;
     return this.pageData;
   }
 
