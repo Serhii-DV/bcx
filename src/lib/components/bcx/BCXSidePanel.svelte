@@ -79,7 +79,7 @@ $effect(() => {
   }
 
   :global(#bcx-side-panel) {
-    background-color: rgb(31 41 55 / 56%);
+    background-color: rgb(31 41 55 / 85%);
     width: 400px;
   }
 
