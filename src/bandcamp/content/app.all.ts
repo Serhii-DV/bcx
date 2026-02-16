@@ -86,7 +86,7 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
     treeData.add(bandReleasesTreeItem);
   }
 
-  const fanData = bandcampPageData.load().fanData;
+  const fanData = bandcampPageData.fanData;
 
   if (bandcampPageData) {
     if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {

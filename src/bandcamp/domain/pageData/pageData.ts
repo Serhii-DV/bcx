@@ -2,6 +2,8 @@ import type { FanData } from 'src/app/types/FanData';
 import { currentPageUrl } from 'src/core/shared';
 import type { Url } from 'src/core/url';
 import { getJsonFromElementDataAttr } from 'src/utils/utils';
+import type { CollectionPageData } from '../types/CollectionPageData';
+import type { MusicPageData } from '../types/MusicPageData';
 import {
   isBandcampAlbumUrl,
   isBandcampDiscoverUrl,
@@ -11,25 +13,35 @@ import {
 } from '../url/helper';
 
 export class BandcampPageData {
-  public data: any = null;
+  private pageData: MusicPageData | CollectionPageData | any = null;
 
   constructor() {}
 
-  load(): this {
-    if (this.data !== null) {
+  get data(): MusicPageData | CollectionPageData | any {
+    return this.load().pageData;
+  }
+
+  private load(): this {
+    if (this.pageData !== null) {
       return this;
     }
 
     if (isBandcampDiscoverUrl(currentPageUrl)) {
-      this.data = getJsonFromElementDataAttr('#DiscoverApp', 'blob');
+      this.pageData = getJsonFromElementDataAttr('#DiscoverApp', 'blob');
     } else {
-      this.data = getJsonFromElementDataAttr('#pagedata', 'blob');
+      this.pageData = getJsonFromElementDataAttr(
+        '#pagedata',
+        'blob',
+      ) as MusicPageData;
     }
+
+    console.log('[BandcampPageData] Page Data Loaded:', this.pageData);
 
     return this;
   }
 
   get fanData(): FanData {
+    this.load();
     return detectFanDataFromPageData(this, currentPageUrl);
   }
 }
