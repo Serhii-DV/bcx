@@ -52,6 +52,17 @@ export class TreeItemFactory {
     return children;
   }
 
+  static fromKeywords(keywords: string[], label: string = 'Tags'): TreeItem {
+    const children: TreeItem[] = keywords.map((keyword) => ({
+      label: keyword,
+    }));
+
+    return {
+      label,
+      children,
+    };
+  }
+
   static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
     return {
       label: item.title || item.url || 'No Title',

@@ -18,7 +18,16 @@ export class BandTreeItem {
       });
 
       children.push(createBandYearsTreeItem(band));
-      children.push(createBandKeywordsTreeItem(band));
+
+      const keywordsTreeItem = TreeItemFactory.fromKeywords(
+        band.metadata?.keywords || [],
+      );
+      keywordsTreeItem.open = false;
+      keywordsTreeItem.children = updateTreeItemsQueryFromLabel(
+        keywordsTreeItem.children || [],
+      );
+
+      children.push(keywordsTreeItem);
     }
 
     return {
@@ -26,7 +35,7 @@ export class BandTreeItem {
       image: band.artwork.tinySizeUrl,
       open: withChildren,
       href: !withChildren ? band.url.toString() : undefined,
-      children: children,
+      children,
     };
   }
 }
@@ -47,17 +56,5 @@ function createBandYearsTreeItem(band: Band): TreeItem {
     label: 'Years',
     open: false,
     children,
-  };
-}
-
-function createBandKeywordsTreeItem(band: Band): TreeItem {
-  const children: TreeItem[] = band.metadata.keywords.map((keyword) => {
-    return { label: keyword };
-  });
-
-  return {
-    label: 'Keywords',
-    open: false,
-    children: updateTreeItemsQueryFromLabel(children),
   };
 }
