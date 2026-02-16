@@ -10,34 +10,40 @@ import {
 } from '../url/helper';
 
 export class BandcampPageData {
-  constructor(public data: any = null) {
-    console.log('[BandcampPageData]', this.data);
+  public data: any = null;
+
+  constructor() {}
+
+  load(): this {
+    if (this.data !== null) {
+      return this;
+    }
+
+    if (isBandcampDiscoverUrl(currentPageUrl)) {
+      return this.loadFromElement('#DiscoverApp');
+    }
+
+    return this.loadFromElement('#pagedata');
+  }
+
+  private loadFromElement(selector: string): this {
+    const el = document.querySelector<HTMLElement>(selector);
+    if (!el)
+      throw new Error(`Bandcamp element not found for selector: ${selector}`);
+
+    const blob = el.dataset.blob;
+    if (!blob)
+      throw new Error(
+        `Bandcamp element missing [data-blob] for selector: ${selector}`,
+      );
+
+    this.data = JSON.parse(blob);
+
+    return this;
   }
 
   get fanData(): FanData {
     return detectFanDataFromPageData(this, currentPageUrl);
-  }
-
-  static fromPageDataDomElement(): BandcampPageData {
-    const jsonString =
-      document.getElementById('pagedata')?.dataset.blob ?? '{}';
-    const data = JSON.parse(jsonString);
-    return new BandcampPageData(data);
-  }
-
-  static fromDiscoverAppDomElement(): BandcampPageData {
-    const jsonString =
-      document.getElementById('DiscoverApp')?.dataset.blob ?? '{}';
-    const data = JSON.parse(jsonString);
-    return new BandcampPageData(data);
-  }
-
-  static load(): BandcampPageData {
-    if (isBandcampDiscoverUrl(currentPageUrl)) {
-      return BandcampPageData.fromDiscoverAppDomElement();
-    }
-
-    return BandcampPageData.fromPageDataDomElement();
   }
 }
 

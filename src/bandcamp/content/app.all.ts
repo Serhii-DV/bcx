@@ -22,7 +22,7 @@ import { TreeItemFactory } from 'src/app/treeview/TreeItemFactory';
 import { WishlistTreeItem } from 'src/app/treeview/wishlist/WishlistTreeItem';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
-import { BandcampPageData } from '../domain/pageData/pageData';
+import { bandcampPageData } from '../domain/shared';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -86,8 +86,7 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
     treeData.add(bandReleasesTreeItem);
   }
 
-  const bandcampPageData = BandcampPageData.load();
-  const fanData = bandcampPageData.fanData;
+  const fanData = bandcampPageData.load().fanData;
 
   if (bandcampPageData) {
     if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
