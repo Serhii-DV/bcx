@@ -31,7 +31,7 @@ export function createBandTreeItemWithChildren(band: Band): TreeItem {
 }
 
 function createBandYearsTreeItem(band: Band): TreeItem {
-  const children: TreeItem[] = band.metadata.years.map((year) => {
+  const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
     const children: TreeItem[] = band.metadata
       .albumsByYear(year)
       .map(TreeItemFactory.fromAlbum);
