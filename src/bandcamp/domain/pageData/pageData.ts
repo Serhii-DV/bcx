@@ -1,3 +1,4 @@
+import type { FanData } from 'src/app/types/FanData';
 import { currentPageUrl } from 'src/core/shared';
 import type { Url } from 'src/core/url';
 import {
@@ -7,12 +8,6 @@ import {
   isBandcampMusicUrl,
   isBandcampTrackUrl,
 } from '../url/helper';
-
-export interface UserData {
-  username?: string;
-  name?: string;
-  fan_id?: number;
-}
 
 export class BandcampPageData {
   constructor(public data: any = null) {
@@ -34,8 +29,8 @@ export class BandcampPageData {
     return this.data?.title ?? null;
   }
 
-  get userData(): UserData {
-    return detectUserDataFromPageData(this, currentPageUrl);
+  get fanData(): FanData {
+    return detectFanDataFromPageData(this, currentPageUrl);
   }
 
   static fromPageDataDomElement(): BandcampPageData {
@@ -61,14 +56,14 @@ export class BandcampPageData {
   }
 }
 
-function detectUserDataFromPageData(
+function detectFanDataFromPageData(
   pageData: BandcampPageData,
   currentPageUrl: Url,
-): UserData {
+): FanData {
   const data = pageData.data;
-  let username: string | undefined = undefined;
-  let name: string | undefined = undefined;
-  let fan_id: number | undefined = undefined;
+  let username: string;
+  let name: string;
+  let fan_id: number;
 
   if (isBandcampDiscoverUrl(currentPageUrl)) {
     // We are on the discover page
@@ -93,11 +88,13 @@ function detectUserDataFromPageData(
     // We are on the personal user page
     username = data.current_fan?.username;
     name = username;
+    fan_id = data.current_fan?.fan_id;
   } else {
     // We are on a regular page
     username = data.fan_data?.username;
     name = data.fan_name;
+    fan_id = data.fan_data?.fan_id;
   }
 
-  return { username, name };
+  return { username, name, fan_id };
 }

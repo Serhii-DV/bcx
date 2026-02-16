@@ -87,10 +87,10 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
   }
 
   const bandcampPageData = BandcampPageData.load();
-  const userData = bandcampPageData.userData;
+  const fanData = bandcampPageData.fanData;
 
   if (bandcampPageData) {
-    if (userData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
+    if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
       const fanPageDataTreeItem =
         await TreeItemFactory.fromBandcampFanPageData(bandcampPageData);
       if (fanPageDataTreeItem) {
@@ -98,11 +98,11 @@ async function createTreeData(band: Band | null): Promise<TreeData> {
       }
     }
 
-    treeData.add(await FollowingBandsTreeItem.create(userData.username || ''));
-    treeData.add(await FollowingFansTreeItem.create(userData.username || ''));
-    treeData.add(await FollowingGenresTreeItem.create(userData.username || ''));
-    treeData.add(await CollectionTreeItem.create(userData.username || ''));
-    treeData.add(await WishlistTreeItem.create(userData.username || ''));
+    treeData.add(await FollowingBandsTreeItem.create(fanData.username || ''));
+    treeData.add(await FollowingFansTreeItem.create(fanData.username || ''));
+    treeData.add(await FollowingGenresTreeItem.create(fanData.username || ''));
+    treeData.add(await CollectionTreeItem.create(fanData.username || ''));
+    treeData.add(await WishlistTreeItem.create(fanData.username || ''));
   }
 
   treeData.add(await HistoryTreeItem.create());
