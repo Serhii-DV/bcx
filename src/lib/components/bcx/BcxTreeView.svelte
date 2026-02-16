@@ -94,7 +94,7 @@ function handleItemClick(
   if (!item) return;
 
   if (item.onClick) {
-    item.onClick(elementByPath(item.path) as HTMLElement);
+    item.onClick(event?.currentTarget as HTMLElement);
     return;
   }
 
