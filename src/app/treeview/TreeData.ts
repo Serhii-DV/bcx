@@ -1,5 +1,6 @@
 import type { TreeItem } from './TreeItem';
 import {
+  createFilteredTreeData,
   findItemByPath,
   generateTreeHierarchy,
   getParentPath,
@@ -83,6 +84,15 @@ export class TreeData {
       : -1;
     const nextIndex = visibleIndex + 1;
     return nextIndex < visible.length ? visible[nextIndex] : null;
+  }
+
+  filter(query: string): TreeData {
+    if (query.trim() === '') {
+      return this;
+    }
+
+    const filteredItems = createFilteredTreeData(this.treeItems, query);
+    return new TreeData(filteredItems);
   }
 
   get keywords(): string[] {

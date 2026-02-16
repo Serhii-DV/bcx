@@ -1,10 +1,10 @@
 <script lang="ts">
 import { ExternalLink } from 'lucide-svelte';
 import type { TreeData } from 'src/app/treeview/TreeData';
-import { TreeData as TreeDataClass } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import {
+  getVisibleChildrenCount,
   hasDescendantMatchingQuery,
   isNode,
   isNodeExpanded,
@@ -37,49 +37,6 @@ export function focusFirstItem() {
   focusTreeItem(effectiveTreeData.visibleFirst);
 }
 
-// Check if an item matches the filter query (case-insensitive)
-function itemMatchesFilter(item: TreeItem, query: string): boolean {
-  if (!query.trim()) return true;
-  return item.label.toLowerCase().includes(query.toLowerCase());
-}
-
-// Check if an item or any of its descendants match the filter
-function itemOrDescendantMatches(item: TreeItem, query: string): boolean {
-  if (itemMatchesFilter(item, query)) {
-    return true;
-  }
-  if (item.children && item.children.length > 0) {
-    return item.children.some((child) => itemOrDescendantMatches(child, query));
-  }
-  return false;
-}
-
-// Create a deep filtered copy of tree data (independent from original)
-function createFilteredTreeData(items: TreeItem[], query: string): TreeItem[] {
-  return items
-    .filter((item) => itemOrDescendantMatches(item, query))
-    .map((item) => {
-      // Create a deep copy to avoid mutating original tree
-      const itemCopy: TreeItem = {
-        ...item,
-        children: item.children
-          ? createFilteredTreeData(item.children, query)
-          : undefined,
-      };
-      return itemCopy;
-    });
-}
-
-// Get visible children count based on filter
-function getVisibleChildrenCount(item: TreeItem, query: string): number {
-  if (!item.children || item.children.length === 0) return 0;
-  if (!query.trim()) {
-    return item.children.length;
-  }
-  return item.children.filter((child) => itemOrDescendantMatches(child, query))
-    .length;
-}
-
 // Reactive values - Debounce filter input
 $effect(() => {
   const currentQuery = filterQuery; // Capture current value synchronously
@@ -104,23 +61,9 @@ $effect(() => {
 
 // Reactive values - Update effective tree data based on debounced filter
 $effect(() => {
-  if (debouncedFilterQuery.trim()) {
-    // Create filtered tree data
-    const filteredItems = createFilteredTreeData(
-      treeData.items,
-      debouncedFilterQuery,
-    );
-    // Only update tree if we have matching items
-    if (filteredItems.length > 0) {
-      const filteredTreeData = new TreeDataClass(filteredItems);
-      effectiveTreeData = filteredTreeData;
-    } else {
-      // No matches - create empty tree data
-      effectiveTreeData = new TreeDataClass([]);
-    }
-  } else {
-    // Use original tree data
-    effectiveTreeData = treeData;
+  effectiveTreeData = treeData.filter(debouncedFilterQuery);
+
+  if (!debouncedFilterQuery.trim()) {
     // Reset focus when clearing filter
     focusedPath = null;
   }

@@ -55,6 +55,16 @@ export function getVisibleItems(
   return result;
 }
 
+// Get visible children count based on filter
+export function getVisibleChildrenCount(item: TreeItem, query: string): number {
+  if (!item.children || item.children.length === 0) return 0;
+  if (!query.trim()) {
+    return item.children.length;
+  }
+  return item.children.filter((child) => itemOrDescendantMatches(child, query))
+    .length;
+}
+
 export function findItemByPath(
   items: TreeItem[],
   path: string,
@@ -114,6 +124,42 @@ export function updateTreeItemsQueryFromLabel(
     }
   });
   return treeItems;
+}
+
+// Check if an item matches the filter query (case-insensitive)
+function itemMatchesFilter(item: TreeItem, query: string): boolean {
+  if (!query.trim()) return true;
+  return item.label.toLowerCase().includes(query.toLowerCase());
+}
+
+// Check if an item or any of its descendants match the filter
+function itemOrDescendantMatches(item: TreeItem, query: string): boolean {
+  if (itemMatchesFilter(item, query)) {
+    return true;
+  }
+  if (item.children && item.children.length > 0) {
+    return item.children.some((child) => itemOrDescendantMatches(child, query));
+  }
+  return false;
+}
+
+// Create a deep filtered copy of tree data (independent from original)
+export function createFilteredTreeData(
+  items: TreeItem[],
+  query: string,
+): TreeItem[] {
+  return items
+    .filter((item) => itemOrDescendantMatches(item, query))
+    .map((item) => {
+      // Create a deep copy to avoid mutating original tree
+      const itemCopy: TreeItem = {
+        ...item,
+        children: item.children
+          ? createFilteredTreeData(item.children, query)
+          : undefined,
+      };
+      return itemCopy;
+    });
 }
 
 /**
