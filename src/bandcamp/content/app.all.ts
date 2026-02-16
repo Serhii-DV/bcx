@@ -12,7 +12,7 @@ import './app.music';
 import './app.album';
 import './app.track';
 import { createAlbumTreeItem } from 'src/app/treeview/album/AlbumTreeItem';
-import { BandTreeItem } from 'src/app/treeview/band/BandTreeItem';
+import { createBandTreeItemWithChildren } from 'src/app/treeview/band/BandTreeItem';
 import { CollectionTreeItem } from 'src/app/treeview/collection/CollectionTreeItem';
 import { FollowingBandsTreeItem } from 'src/app/treeview/following/FollowingBandsTreeItem';
 import { FollowingFansTreeItem } from 'src/app/treeview/following/FollowingFansTreeItem';
@@ -94,7 +94,7 @@ async function createTreeData(
   }
 
   if (band) {
-    const bandReleasesTreeItem = BandTreeItem.create(band);
+    const bandReleasesTreeItem = createBandTreeItemWithChildren(band);
     treeData.add(bandReleasesTreeItem);
   }
 

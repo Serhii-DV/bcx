@@ -1,43 +1,33 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
-import { updateTreeItemsQueryFromLabel } from '../utils';
+import {
+  setTreeItemQueryFromLabel,
+  setTreeItemsQueryFromLabel,
+} from '../utils';
 
-export class BandTreeItem {
-  static create(band: Band, withChildren: boolean = true): TreeItem {
-    const children: TreeItem[] = [];
+export function createBandTreeItemWithChildren(band: Band): TreeItem {
+  const treeItem = TreeItemFactory.fromBand(band);
+  const children: TreeItem[] = [];
 
-    if (withChildren) {
-      const albumTreeItems = TreeItemFactory.fromAlbumsByArtistNames(
-        band.metadata.albums,
-      );
-      children.push({
-        label: 'Artist/Releases',
-        open: false,
-        children: updateTreeItemsQueryFromLabel(albumTreeItems),
-      });
+  const albumsTreeItem = TreeItemFactory.fromAlbumsByArtistNames(
+    band.metadata.albums,
+  );
+  albumsTreeItem.children?.forEach(setTreeItemQueryFromLabel);
+  children.push(albumsTreeItem);
 
-      children.push(createBandYearsTreeItem(band));
+  children.push(createBandYearsTreeItem(band));
 
-      const keywordsTreeItem = TreeItemFactory.fromKeywords(
-        band.metadata?.keywords || [],
-      );
-      keywordsTreeItem.open = false;
-      keywordsTreeItem.children = updateTreeItemsQueryFromLabel(
-        keywordsTreeItem.children || [],
-      );
+  const keywordsTreeItem = TreeItemFactory.fromKeywords(
+    band.metadata?.keywords || [],
+  );
+  keywordsTreeItem.children?.forEach(setTreeItemQueryFromLabel);
+  children.push(keywordsTreeItem);
 
-      children.push(keywordsTreeItem);
-    }
+  treeItem.href = undefined;
+  treeItem.children = children;
 
-    return {
-      label: band.name,
-      image: band.artwork.tinySizeUrl,
-      open: withChildren,
-      href: !withChildren ? band.url.toString() : undefined,
-      children,
-    };
-  }
+  return treeItem;
 }
 
 function createBandYearsTreeItem(band: Band): TreeItem {
@@ -48,7 +38,7 @@ function createBandYearsTreeItem(band: Band): TreeItem {
 
     return {
       label: year.toString(),
-      children: updateTreeItemsQueryFromLabel(children),
+      children: setTreeItemsQueryFromLabel(children),
     };
   });
 

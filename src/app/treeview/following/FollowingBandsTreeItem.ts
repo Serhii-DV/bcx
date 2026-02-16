@@ -7,9 +7,9 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
-import { BandTreeItem } from '../band/BandTreeItem';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
+import { TreeItemFactory } from '../TreeItemFactory';
 import { createLoadHandler } from '../utils';
 
 const FOLLOWING_BANDS_KEY = '/following-bands';
@@ -26,7 +26,7 @@ export class FollowingBandsTreeItem {
         ),
         item.image_id as number,
       );
-      return BandTreeItem.create(band, false);
+      return TreeItemFactory.fromBand(band);
     });
 
     const buttons: TreeItemButton[] = [

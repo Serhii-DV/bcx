@@ -114,15 +114,16 @@ export function updateTreeItemsCounts(treeItems: TreeItem[]): TreeItem[] {
   return treeItems;
 }
 
-export function updateTreeItemsQueryFromLabel(
-  treeItems: TreeItem[],
-): TreeItem[] {
-  treeItems.forEach((item) => {
-    item.query = item.label;
-    if (item.children) {
-      updateTreeItemsQueryFromLabel(item.children);
-    }
-  });
+export function setTreeItemQueryFromLabel(treeItem: TreeItem): TreeItem {
+  treeItem.query = treeItem.label;
+  if (treeItem.children) {
+    setTreeItemsQueryFromLabel(treeItem.children);
+  }
+  return treeItem;
+}
+
+export function setTreeItemsQueryFromLabel(treeItems: TreeItem[]): TreeItem[] {
+  treeItems.forEach(setTreeItemQueryFromLabel);
   return treeItems;
 }
 

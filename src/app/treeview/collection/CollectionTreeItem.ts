@@ -28,7 +28,7 @@ export class CollectionTreeItem {
       ),
     );
     const children: TreeItem[] =
-      TreeItemFactory.fromAlbumsByArtistNames(albums);
+      TreeItemFactory.createTreeItemsAlbumsByArtistNames(albums);
 
     const buttons: TreeItemButton[] = [
       createCollectionOpenTreeItemButton(username),

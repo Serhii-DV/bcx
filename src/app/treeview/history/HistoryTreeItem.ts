@@ -8,7 +8,6 @@ import {
 } from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
 import { Url } from 'src/core/url';
-import { BandTreeItem } from '../band/BandTreeItem';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
 
@@ -48,7 +47,7 @@ export class HistoryTreeItem {
       bandsAndAlbums.forEach((entity) => {
         const treeItem =
           entity instanceof Band
-            ? BandTreeItem.create(entity, false)
+            ? TreeItemFactory.fromBand(entity)
             : TreeItemFactory.fromAlbum(entity);
 
         uuidTreeItemsMap.set(entity.url.uuid!, treeItem);

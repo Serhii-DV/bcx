@@ -28,7 +28,7 @@ export class WishlistTreeItem {
       ),
     );
     const children: TreeItem[] =
-      TreeItemFactory.fromAlbumsByArtistNames(albums);
+      TreeItemFactory.createTreeItemsAlbumsByArtistNames(albums);
 
     const buttons: TreeItemButton[] = [
       createWishlistOpenTreeItemButton(username),
