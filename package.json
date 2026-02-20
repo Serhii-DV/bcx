@@ -30,6 +30,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",
     "@changesets/cli": "^2.29.5",
+    "@esbuild/linux-x64": "^0.27.3",
     "@internationalized/date": "^3.8.2",
     "@rsbuild/core": "^1.4.11",
     "@rsbuild/plugin-svelte": "^1.0.10",
@@ -55,13 +56,11 @@
     "typescript": "^5.8.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ],
     "ignoredBuiltDependencies": [
       "@tailwindcss/oxide",
       "core-js",
-      "svelte-preprocess"
+      "svelte-preprocess",
+      "esbuild"
     ]
   }
 }
