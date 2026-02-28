@@ -1,16 +1,18 @@
-import { removeInvisibleChars, trim } from 'src/utils/string';
+import { capitalizeWords, removeInvisibleChars, trim } from 'src/utils/string';
 import { ArtistMemoryCache } from './cache';
 
 export class Artist {
   public readonly joins: string[];
+  public readonly names: string[];
 
   private _stringCache?: string;
   private static cache = new ArtistMemoryCache();
 
   constructor(
-    public readonly names: string[],
+    names: string[],
     joins: string[] = [],
   ) {
+    this.names = names.map((name) => name.trim()).map(capitalizeWords);
     // Trim whitespace from joins
     this.joins = joins.map((join) => join.trim());
   }

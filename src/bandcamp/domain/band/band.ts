@@ -1,6 +1,6 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { Url } from 'src/core/url';
-import { removeInvisibleChars, trim } from 'src/utils/string';
+import { capitalizeWords, removeInvisibleChars, trim } from 'src/utils/string';
 import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { bandDataCompressor } from '../shared';
@@ -17,6 +17,7 @@ export class Band implements Storable, Compressable {
     public artwork: Artwork,
     public metadata: BandMetadata,
   ) {
+    this.name = capitalizeWords(trim(removeInvisibleChars(name), ' -\n'));
     this.url = BandcampUrlFactory.createBandUrl(url);
   }
 
@@ -28,12 +29,11 @@ export class Band implements Storable, Compressable {
     metadata?: BandMetadata,
   ): Band {
     const bandId = typeof id === 'string' ? parseInt(id, 10) : id;
-    const bandName = trim(removeInvisibleChars(name), ' -\n');
     const bandUrl = Url.create(url);
     const bandArtwork = Artwork.createForBand(artworkId);
     const bandMetadata = metadata || new BandMetadata(new Date(), '', [], []);
 
-    return new Band(bandId, bandName, bandUrl, bandArtwork, bandMetadata);
+    return new Band(bandId, name, bandUrl, bandArtwork, bandMetadata);
   }
 
   get hasReleases(): boolean {
