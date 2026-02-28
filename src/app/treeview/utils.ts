@@ -145,7 +145,7 @@ function itemOrDescendantMatches(item: TreeItem, query: string): boolean {
 }
 
 // Create a deep filtered copy of tree data (independent from original)
-export function createFilteredTreeData(
+export function createFilteredTreeItems(
   items: TreeItem[],
   query: string,
 ): TreeItem[] {
@@ -156,7 +156,7 @@ export function createFilteredTreeData(
       const itemCopy: TreeItem = {
         ...item,
         children: item.children
-          ? createFilteredTreeData(item.children, query)
+          ? createFilteredTreeItems(item.children, query)
           : undefined,
       };
       return itemCopy;

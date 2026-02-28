@@ -1,6 +1,6 @@
 import type { TreeItem } from './TreeItem';
 import {
-  createFilteredTreeData,
+  createFilteredTreeItems,
   findItemByPath,
   generateTreeHierarchy,
   getParentPath,
@@ -91,7 +91,7 @@ export class TreeData {
       return this;
     }
 
-    const filteredItems = createFilteredTreeData(this.treeItems, query);
+    const filteredItems = createFilteredTreeItems(this.treeItems, query);
     return new TreeData(filteredItems);
   }
 
