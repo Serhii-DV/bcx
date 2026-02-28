@@ -4,6 +4,7 @@ import {
   removeInvisibleChars,
   splitString,
   trim,
+  capitalizeWords,
 } from './string';
 
 describe('trim', () => {
@@ -54,6 +55,56 @@ describe('trim', () => {
   });
 });
 
+describe('capitalizeWords', () => {
+  it('should convert all uppercase to title case', () => {
+    expect(capitalizeWords('HELLO WORLD')).toBe('Hello World');
+  });
+
+  it('should convert all lowercase to title case', () => {
+    expect(capitalizeWords('hello world')).toBe('Hello World');
+  });
+
+  it('should handle mixed case', () => {
+    expect(capitalizeWords('hElLo WoRLd')).toBe('Hello World');
+  });
+
+  it('should handle single word', () => {
+    expect(capitalizeWords('test')).toBe('Test');
+  });
+
+  it('should handle empty string', () => {
+    expect(capitalizeWords('')).toBe('');
+  });
+
+  it('should handle multiple spaces', () => {
+    expect(capitalizeWords('  hello   world  ')).toBe('  Hello   World  ');
+  });
+
+  it('should handle accented characters', () => {
+    expect(capitalizeWords('Ördo')).toBe('Ördo');
+    expect(capitalizeWords("raison d'être")).toBe("Raison D'Être");
+  });
+
+  it('should handle cyrillic characters', () => {
+    expect(capitalizeWords('привет мир')).toBe('Привет Мир');
+    expect(capitalizeWords('ПРИВЕТ МИР')).toBe('Привет Мир');
+    expect(capitalizeWords('дОбРыЙ дЕнЬ')).toBe('Добрый День');
+  });
+
+  it('should handle apostrophes and punctuation', () => {
+    expect(capitalizeWords("l'amour toujours")).toBe("L'Amour Toujours");
+    expect(capitalizeWords("RAISON D'ÊTRE")).toBe("Raison D'Être");
+  });
+
+  it('should handle hyphenated words', () => {
+    expect(capitalizeWords('self-made man')).toBe('Self-Made Man');
+  });
+
+  it('should handle numbers and symbols', () => {
+    expect(capitalizeWords('42 is the answer')).toBe('42 Is The Answer');
+    expect(capitalizeWords('hello-world!')).toBe('Hello-World!');
+  });
+});
 describe('removeInvisibleChars', () => {
   it('should remove zero-width space character (U+200B)', () => {
     expect(removeInvisibleChars('Hello\u200BWorld')).toBe('HelloWorld');

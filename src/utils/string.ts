@@ -81,3 +81,28 @@ export function containsOneOf(
   }
   return false;
 }
+
+/**
+ * Converts a string to title case where the first letter of each word is uppercase
+ * and all other letters are lowercase. Supports Latin and Cyrillic characters.
+ *
+ * @param input - The string to convert to title case.
+ * @returns A new string with the first letter of each word capitalized and other letters lowercase.
+ *
+ * @example
+ * // Returns "Hello World"
+ * toTitleCase("HELLO WORLD");
+ *
+ * @example
+ * // Returns "Привет Мир"
+ * toTitleCase("привет мир");
+ */
+export function capitalizeWords(input: string): string {
+  // Split by word boundaries, preserving spaces and punctuation
+  return input.replace(/([\p{L}]+)/gu, (word) => {
+    // If the word is all uppercase or mixed, convert first letter to uppercase, rest to lowercase
+    if (word.length === 0) return word;
+    const [first, ...rest] = word;
+    return first.toLocaleUpperCase() + rest.join('').toLocaleLowerCase();
+  });
+}
