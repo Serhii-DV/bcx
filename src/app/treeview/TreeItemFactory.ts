@@ -8,7 +8,7 @@ import { arrayUnique } from 'src/utils/array';
 import { hasOwnProperty } from 'src/utils/utils';
 import type { TreeItem } from './TreeItem';
 import { updateTreeItemsCounts } from './utils';
-import { WishlistTreeItem } from './wishlist/WishlistTreeItem';
+import { WishlistTreeItem } from './items/WishlistTreeItem';
 
 export class TreeItemFactory {
   static fromBand(band: Band): TreeItem {
