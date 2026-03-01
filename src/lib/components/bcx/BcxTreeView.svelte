@@ -11,7 +11,6 @@ import {
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl } from 'src/core/shared';
 import { Url } from 'src/core/url';
-import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 
@@ -275,19 +274,6 @@ function expandNode(item: TreeItem) {
   }
 }
 
-function updateTreeImages(detailsElement: HTMLDetailsElement) {
-  const images = detailsElement.querySelectorAll(
-    ':scope > ol > li > a > img.bcx-tree-item-img, ' +
-      ':scope > summary > img.bcx-tree-item-img',
-  ) as NodeListOf<HTMLImageElement>;
-  images.forEach((img) => {
-    const dataSrc = img.getAttribute('data-src');
-    if (dataSrc && img.src !== dataSrc) {
-      img.src = dataSrc;
-    }
-  });
-}
-
 function handleFilterKeyDown(event: KeyboardEvent) {
   if (event.key === 'ArrowDown') {
     event.preventDefault();
@@ -349,10 +335,6 @@ function handleFilterKeyDown(event: KeyboardEvent) {
               data-path="{item.path}"
               ontoggle={(e) => {
                 item.open = e.currentTarget.open;
-                // Update images when details is opened
-                if (e.currentTarget.open) {
-                  updateTreeImages(e.currentTarget);
-                }
               }}
             >
               <summary
@@ -362,7 +344,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
                 onclick={(e) => handleItemClick(item, e)}
               >
                 {#if item.image}
-                <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
+                <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
                 {/if}
                 <span>{item.label}</span>
                 {#if item.href && !item.query}
@@ -385,7 +367,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
               title="{item.href || ''}"
               >
               {#if item.image}
-              <img src="{getExtensionUrl('assets/0.gif')}" data-src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" />
+              <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
               {/if}
               <span class="ml-2 text-wrap">{item.label}</span>
               {#if item.href && !item.query}
