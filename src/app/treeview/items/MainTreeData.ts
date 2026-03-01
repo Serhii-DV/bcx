@@ -4,13 +4,13 @@ import { TreeData } from "../TreeData";
 import { createAlbumTreeItem } from "./AlbumTreeItem";
 import { createBandTreeItemWithChildren } from "./BandTreeItem";
 import { bandcampPageData } from "src/bandcamp/domain/shared";
-import { TreeItemFactory } from "../TreeItemFactory";
 import { FollowingBandsTreeItem } from "./FollowingBandsTreeItem";
 import { FollowingFansTreeItem } from "./FollowingFansTreeItem";
 import { FollowingGenresTreeItem } from "./FollowingGenresTreeItem";
 import { CollectionTreeItem } from "./CollectionTreeItem";
 import { WishlistTreeItem } from "./WishlistTreeItem";
 import { HistoryTreeItem } from "./HistoryTreeItem";
+import { FanPageDataTreeItem } from "./FanPageDataTreeItem";
 
 export class MainTreeData {
   static async create(
@@ -33,8 +33,7 @@ export class MainTreeData {
 
     if (bandcampPageData) {
       if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
-        const fanPageDataTreeItem =
-          await TreeItemFactory.fromBandcampFanPageData(bandcampPageData);
+        const fanPageDataTreeItem = await FanPageDataTreeItem.create(bandcampPageData);
         if (fanPageDataTreeItem) {
           treeData.add(fanPageDataTreeItem);
         }
