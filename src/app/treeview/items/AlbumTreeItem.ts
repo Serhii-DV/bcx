@@ -3,23 +3,26 @@ import type { Track } from 'src/bandcamp/domain/track/track';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
 
-export function createAlbumTreeItem(album: Album): TreeItem {
-  const children: TreeItem[] = [];
+export class AlbumTreeItem {
+  static create(album: Album): TreeItem {
+    const children: TreeItem[] = [];
 
-  children.push({
-    label: `Released: ${album.metadata?.publishedDate}`,
-  });
-  children.push(createTracksTreeItem(album.tracks));
-  children.push(TreeItemFactory.fromKeywords(album.metadata?.keywords || []));
+    children.push({
+      label: `Released: ${album.metadata?.publishedDate}`,
+    });
+    children.push(createTracksTreeItem(album.tracks));
+    children.push(TreeItemFactory.fromKeywords(album.metadata?.keywords || []));
 
-  const treeItem = TreeItemFactory.fromAlbum(album);
-  treeItem.href = undefined;
-  treeItem.children = children;
+    const treeItem = TreeItemFactory.fromAlbum(album);
+    treeItem.href = undefined;
+    treeItem.children = children;
 
-  return treeItem;
+    return treeItem;
+  }
 }
 
-export function createTracksTreeItem(
+
+function createTracksTreeItem(
   tracks: Track[],
   label: string = 'Tracks',
 ): TreeItem {

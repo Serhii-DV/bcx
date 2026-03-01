@@ -1,8 +1,8 @@
 import type { Album } from "src/bandcamp/domain/album/album";
 import type { Band } from "src/bandcamp/domain/band/band";
 import { TreeData } from "../TreeData";
-import { createAlbumTreeItem } from "./AlbumTreeItem";
-import { createBandTreeItemWithChildren } from "./BandTreeItem";
+import { AlbumTreeItem } from "./AlbumTreeItem";
+import { BandTreeItem } from "./BandTreeItem";
 import { bandcampPageData } from "src/bandcamp/domain/shared";
 import { FollowingBandsTreeItem } from "./FollowingBandsTreeItem";
 import { FollowingFansTreeItem } from "./FollowingFansTreeItem";
@@ -20,18 +20,16 @@ export class MainTreeData {
     const treeData = new TreeData();
 
     if (album) {
-      const albumTreeItem = createAlbumTreeItem(album);
-      treeData.add(albumTreeItem);
+      treeData.add(AlbumTreeItem.create(album));
     }
 
     if (band) {
-      const bandReleasesTreeItem = createBandTreeItemWithChildren(band);
-      treeData.add(bandReleasesTreeItem);
+      treeData.add(BandTreeItem.create(band));
     }
 
-    const fanData = bandcampPageData.fanData;
-
     if (bandcampPageData) {
+      const fanData = bandcampPageData.fanData;
+
       if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
         const fanPageDataTreeItem = await FanPageDataTreeItem.create(bandcampPageData);
         if (fanPageDataTreeItem) {

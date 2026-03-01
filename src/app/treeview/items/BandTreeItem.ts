@@ -6,28 +6,30 @@ import {
   setTreeItemsQueryFromLabel,
 } from '../utils';
 
-export function createBandTreeItemWithChildren(band: Band): TreeItem {
-  const treeItem = TreeItemFactory.fromBand(band);
-  const children: TreeItem[] = [];
+export class BandTreeItem {
+  static create(band: Band): TreeItem {
+    const treeItem = TreeItemFactory.fromBand(band);
+    const children: TreeItem[] = [];
 
-  const albumsTreeItem = TreeItemFactory.fromAlbumsByArtistNames(
-    band.metadata.albums,
-  );
-  albumsTreeItem.children?.forEach(setTreeItemQueryFromLabel);
-  children.push(albumsTreeItem);
+    const albumsTreeItem = TreeItemFactory.fromAlbumsByArtistNames(
+      band.metadata.albums,
+    );
+    albumsTreeItem.children?.forEach(setTreeItemQueryFromLabel);
+    children.push(albumsTreeItem);
 
-  children.push(createBandYearsTreeItem(band));
+    children.push(createBandYearsTreeItem(band));
 
-  const keywordsTreeItem = TreeItemFactory.fromKeywords(
-    band.metadata?.keywords || [],
-  );
-  keywordsTreeItem.children?.forEach(setTreeItemQueryFromLabel);
-  children.push(keywordsTreeItem);
+    const keywordsTreeItem = TreeItemFactory.fromKeywords(
+      band.metadata?.keywords || [],
+    );
+    keywordsTreeItem.children?.forEach(setTreeItemQueryFromLabel);
+    children.push(keywordsTreeItem);
 
-  treeItem.href = undefined;
-  treeItem.children = children;
+    treeItem.href = undefined;
+    treeItem.children = children;
 
-  return treeItem;
+    return treeItem;
+  }
 }
 
 function createBandYearsTreeItem(band: Band): TreeItem {
