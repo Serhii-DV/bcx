@@ -11,25 +11,15 @@ import { BandcampStorage } from '../domain/storage';
 import './app.music';
 import './app.album';
 import './app.track';
-import { createAlbumTreeItem } from 'src/app/treeview/items/AlbumTreeItem';
-import { createBandTreeItemWithChildren } from 'src/app/treeview/items/BandTreeItem';
-import { CollectionTreeItem } from 'src/app/treeview/items/CollectionTreeItem';
-import { FollowingBandsTreeItem } from 'src/app/treeview/items/FollowingBandsTreeItem';
-import { FollowingFansTreeItem } from 'src/app/treeview/items/FollowingFansTreeItem';
-import { FollowingGenresTreeItem } from 'src/app/treeview/items/FollowingGenresTreeItem';
-import { HistoryTreeItem } from 'src/app/treeview/items/HistoryTreeItem';
-import { TreeData } from 'src/app/treeview/TreeData';
-import { TreeItemFactory } from 'src/app/treeview/TreeItemFactory';
-import { WishlistTreeItem } from 'src/app/treeview/items/WishlistTreeItem';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
-import { bandcampPageData } from '../domain/shared';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
   isBandcampUrl,
 } from '../domain/url/helper';
+import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
 
 onDOMReady(async () => {
   if (!isBandcampUrl(currentPageUrl)) {
@@ -68,7 +58,7 @@ onDOMReady(async () => {
       album = pageAlbum.album;
     }
 
-    const treeData = await createTreeData(band, album);
+    const treeData = await MainTreeData.create(band, album);
 
     mount(App, {
       target: shadowRoot,
@@ -81,42 +71,3 @@ onDOMReady(async () => {
     console.error('[app.all]', 'Failed to setup content script:', error);
   }
 });
-
-async function createTreeData(
-  band: Band | null,
-  album: Album | null,
-): Promise<TreeData> {
-  const treeData = new TreeData();
-
-  if (album) {
-    const albumTreeItem = createAlbumTreeItem(album);
-    treeData.add(albumTreeItem);
-  }
-
-  if (band) {
-    const bandReleasesTreeItem = createBandTreeItemWithChildren(band);
-    treeData.add(bandReleasesTreeItem);
-  }
-
-  const fanData = bandcampPageData.fanData;
-
-  if (bandcampPageData) {
-    if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
-      const fanPageDataTreeItem =
-        await TreeItemFactory.fromBandcampFanPageData(bandcampPageData);
-      if (fanPageDataTreeItem) {
-        treeData.add(fanPageDataTreeItem);
-      }
-    }
-
-    treeData.add(await FollowingBandsTreeItem.create(fanData.username || ''));
-    treeData.add(await FollowingFansTreeItem.create(fanData.username || ''));
-    treeData.add(await FollowingGenresTreeItem.create(fanData.username || ''));
-    treeData.add(await CollectionTreeItem.create(fanData.username || ''));
-    treeData.add(await WishlistTreeItem.create(fanData.username || ''));
-  }
-
-  treeData.add(await HistoryTreeItem.create());
-
-  return treeData;
-}
