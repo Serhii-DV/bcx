@@ -24,3 +24,7 @@ export function getJsonFromElementDataAttr(
 
   return JSON.parse(attrValue);
 }
+
+export function isEqual(a: any, b: any): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}

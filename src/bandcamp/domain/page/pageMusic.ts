@@ -442,12 +442,13 @@ export class PageMusic {
    * Extracts artwork ID from DOM element
    */
   private extractArtworkIdFromElement(gridItem: HTMLElement): number | null {
-    const artworkImg = element('img', gridItem);
-    if (!artworkImg) {
+    const img = element('img', gridItem);
+    if (!img) {
       return null;
     }
 
-    const src = artworkImg.getAttribute('data-original');
+    const src = img.classList.contains('lazy') ? img.dataset['original'] : img.getAttribute('src');
+
     if (!src) {
       return null;
     }

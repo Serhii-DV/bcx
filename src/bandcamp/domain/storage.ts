@@ -10,6 +10,7 @@ import { bandDataCompressor } from './shared';
 import { StorageKey } from './storageKey';
 import { TrackFactory } from './track/factory';
 import type { Track } from './track/track';
+import { isEqual } from 'src/utils/utils';
 
 export class BandcampStorage {
   static async saveBand(band: Band): Promise<void> {
@@ -318,7 +319,20 @@ export class BandcampStorage {
     );
 
     // Merge albums with loaded data, preferring loaded data when available
-    return albums.map((album) => loadedAlbumsMap.get(album.id) || album);
+    return albums.map((album) => {
+      const storageAlbum = loadedAlbumsMap.get(album.id);
+
+      if (storageAlbum === undefined) {
+        return album;
+      }
+
+      // If the loaded album is equal to the current one, return the current one to preserve object references
+      if (!isEqual(storageAlbum.artwork, album.artwork)) {
+        storageAlbum.artwork = album.artwork;
+      }
+
+      return storageAlbum;
+    });
   }
 
   static async getTracks(tracks: Track[]): Promise<Track[]> {
