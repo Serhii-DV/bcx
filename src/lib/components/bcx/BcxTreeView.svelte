@@ -4,7 +4,6 @@ import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import {
-  getVisibleChildrenCount,
   isNode,
   isNodeExpanded,
 } from 'src/app/treeview/utils';
@@ -26,9 +25,48 @@ let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let filterQuery = $state('');
 let debouncedFilterQuery = $state('');
-let effectiveTreeData: TreeData = $state(treeData);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
+
+// Derived values
+let effectiveTreeData: TreeData = $derived(treeData.filter(debouncedFilterQuery));
+
+let visibleData = $derived.by(() => {
+  const paths = new Set<string>();
+  const childCounts = new Map<string, number>();
+
+  // First pass: collect all visible paths from filtered tree
+  function collectPaths(items: TreeItem[] | undefined) {
+    if (!items) return;
+    for (const item of items) {
+      if (item.path) paths.add(item.path);
+      if (item.children) collectPaths(item.children);
+    }
+  }
+  collectPaths(effectiveTreeData.items);
+
+  // Second pass: count visible children for each parent in original tree
+  function countVisibleChildren(items: TreeItem[] | undefined) {
+    if (!items) return;
+    for (const item of items) {
+      if (item.children && item.children.length > 0) {
+        const visibleCount = item.children.filter(child =>
+          paths.has(child.path || '')
+        ).length;
+        if (item.path) {
+          childCounts.set(item.path, visibleCount);
+        }
+        countVisibleChildren(item.children);
+      }
+    }
+  }
+  countVisibleChildren(treeData.items);
+
+  return { paths, childCounts };
+});
+
+let visiblePaths = $derived(visibleData.paths);
+let visibleChildCounts = $derived(visibleData.childCounts);
 
 // Expose method to parent component
 export function focusFirstItem() {
@@ -57,12 +95,9 @@ $effect(() => {
   }
 });
 
-// Reactive values - Update effective tree data based on debounced filter
+// Reactive values - Reset focus when clearing filter
 $effect(() => {
-  effectiveTreeData = treeData.filter(debouncedFilterQuery);
-
   if (!debouncedFilterQuery.trim()) {
-    // Reset focus when clearing filter
     focusedPath = null;
   }
 });
@@ -280,6 +315,18 @@ function handleFilterKeyDown(event: KeyboardEvent) {
     focusTreeItem(effectiveTreeData.visibleFirst);
   }
 }
+
+function isItemVisible(item: TreeItem): boolean {
+  if (!debouncedFilterQuery.trim()) return true;
+  return visiblePaths.has(item.path || '');
+}
+
+function getItemVisibleChildCount(item: TreeItem): number {
+  if (!debouncedFilterQuery.trim()) {
+    return item.children?.length || 0;
+  }
+  return visibleChildCounts.get(item.path || '') || 0;
+}
 </script>
 
 {#snippet treeItemButtons(buttons: TreeItemButton[] | undefined)}
@@ -326,7 +373,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
   {#if items && items.length > 0}
     <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
       {#each items as item}
-        <li>
+        <li class:hidden={!isItemVisible(item)}>
           {#if item.children && item.children.length > 0}
             <details
               open={item.open}
@@ -350,7 +397,7 @@ function handleFilterKeyDown(event: KeyboardEvent) {
                 {#if item.href && !item.query}
                 <ExternalLink size={16} class="ml-1 flex-shrink-0" />
                 {/if}
-                <span class="item-count text-sm text-gray-400">({getVisibleChildrenCount(item, debouncedFilterQuery)})</span>
+                <span class="item-count text-sm text-gray-400">({getItemVisibleChildCount(item)})</span>
                 {@render treeItemButtons(item.buttons)}
               </summary>
               {@render treeItems(item.children)}
@@ -423,12 +470,12 @@ function handleFilterKeyDown(event: KeyboardEvent) {
       }
     }}
   >
-    {#if debouncedFilterQuery.trim() && effectiveTreeData.items && effectiveTreeData.items.length === 0}
+    {#if debouncedFilterQuery.trim() && visiblePaths.size === 0}
       <div class="text-gray-400 text-sm text-center py-4">
         No items match your filter
       </div>
-    {:else if effectiveTreeData.items}
-      {@render treeItems(effectiveTreeData.items)}
+    {:else if treeData.items}
+      {@render treeItems(treeData.items)}
     {/if}
   </div>
 </div>
@@ -474,5 +521,9 @@ function handleFilterKeyDown(event: KeyboardEvent) {
 
 .bcx-tree-view .tree-item .item-count {
     margin-left: 0.2rem;
+}
+
+.bcx-tree-view .hidden {
+    display: none;
 }
 </style>
