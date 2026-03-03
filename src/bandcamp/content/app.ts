@@ -1,6 +1,6 @@
 import { mount } from 'svelte';
-import App from './app.all.svelte';
-import './app.all.css';
+import App from './app.svelte';
+import './app.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCssFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
@@ -8,9 +8,9 @@ import { currentPageUrl } from 'src/core/shared';
 import { arrayPreview, console } from 'src/utils/console';
 import { PageMusic } from '../domain/page/pageMusic';
 import { BandcampStorage } from '../domain/storage';
-import './app.music';
-import './app.album';
-import './app.track';
+import './pages/app.pageMusic';
+import './pages/app.pageAlbum';
+import './pages/app.pageTrack';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
@@ -26,7 +26,7 @@ onDOMReady(async () => {
     return;
   }
 
-  console.log('[app.all]', 'Start content script setup');
+  console.log('[bandcamp.content.app]', 'Start content script setup');
 
   const container = document.createElement('div');
   container.id = 'bcx-app';
@@ -35,12 +35,12 @@ onDOMReady(async () => {
   const shadowRoot = container.attachShadow({ mode: 'open' });
 
   try {
-    await injectCssFile(getExtensionUrl('bandcamp.page.all.css'), shadowRoot);
+    await injectCssFile(getExtensionUrl('bandcamp.content.app.css'), shadowRoot);
 
     // Load bands data before mounting the app
     const bands = await BandcampStorage.getBands();
     console.log(
-      '[app.all]',
+      '[bandcamp.content.app]',
       `Loaded ${bands.length} bands from storage`,
       ...arrayPreview(bands),
     );
@@ -68,6 +68,6 @@ onDOMReady(async () => {
       },
     });
   } catch (error) {
-    console.error('[app.all]', 'Failed to setup content script:', error);
+    console.error('[bandcamp.content.app]', 'Failed to setup content script:', error);
   }
 });

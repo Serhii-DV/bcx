@@ -26,20 +26,20 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           import: './src/background.ts',
           html: false,
         },
-        'bandcamp.page.all': {
-          import: './src/bandcamp/content/app.all.ts',
+        'bandcamp.content.app': {
+          import: './src/bandcamp/content/app.ts',
           html: false,
         },
-        'bandcamp.page.music': {
-          import: './src/bandcamp/content/app.music.ts',
+        'bandcamp.content.page.music': {
+          import: './src/bandcamp/content/pages/app.pageMusic.ts',
           html: false,
         },
-        'bandcamp.page.album': {
-          import: './src/bandcamp/content/app.album.ts',
+        'bandcamp.content.page.album': {
+          import: './src/bandcamp/content/pages/app.pageAlbum.ts',
           html: false,
         },
-        'bandcamp.page.track': {
-          import: './src/bandcamp/content/app.track.ts',
+        'bandcamp.content.page.track': {
+          import: './src/bandcamp/content/pages/app.pageTrack.ts',
           html: false,
         },
       },

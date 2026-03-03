@@ -55,7 +55,7 @@ export class PageMusic {
       return pageMusic;
     }
 
-    await injectCssFile(getExtensionUrl('bandcamp.page.music.css'));
+    await injectCssFile(getExtensionUrl('bandcamp.content.page.music.css'));
     pageMusic = new PageMusic();
     await pageMusic.initReleases();
 

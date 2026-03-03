@@ -3,9 +3,9 @@ import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
-import { PageMusic } from '../domain/page/pageMusic';
-import { BandcampStorage } from '../domain/storage';
-import { isBandcampMusicUrl } from '../domain/url/helper';
+import { PageMusic } from '../../domain/page/pageMusic';
+import { BandcampStorage } from '../../domain/storage';
+import { isBandcampMusicUrl } from '../../domain/url/helper';
 
 onDOMReady(async () => {
   if (!isBandcampMusicUrl(currentPageUrl)) {

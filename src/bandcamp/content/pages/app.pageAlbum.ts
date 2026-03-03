@@ -1,9 +1,9 @@
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { onDOMReady } from 'src/utils/dom';
-import { PageAlbum } from '../domain/page/pageAlbum';
-import { BandcampStorage } from '../domain/storage';
-import { isBandcampAlbumUrl } from '../domain/url/helper';
+import { PageAlbum } from '../../domain/page/pageAlbum';
+import { BandcampStorage } from '../../domain/storage';
+import { isBandcampAlbumUrl } from '../../domain/url/helper';
 
 onDOMReady(async () => {
   if (!isBandcampAlbumUrl(currentPageUrl)) {
