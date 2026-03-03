@@ -1,4 +1,3 @@
-import { ExternalLink, RefreshCcw } from 'lucide-svelte';
 import { Album } from 'src/bandcamp/domain/album/album';
 import {
   type BandcampItem,
@@ -11,6 +10,7 @@ import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 import { TreeItemFactory } from '../TreeItemFactory';
 import { createLoadHandler } from '../utils';
+import { TreeItemButtonFactory } from '../buttons/factory';
 
 const COLLECTION_KEY = '/collection';
 
@@ -31,11 +31,11 @@ export class CollectionTreeItem {
       TreeItemFactory.createTreeItemsAlbumsByArtistNames(albums);
 
     const buttons: TreeItemButton[] = [
-      createCollectionOpenTreeItemButton(username),
+      TreeItemButtonFactory.createExternalLink('Open Collection', BandcampUrlFactory.generateFanUrl(username)),
     ];
 
     if (isBandcampFanUrl(currentPageUrl, username)) {
-      buttons.unshift(createCollectionRefreshTreeItemButton());
+      buttons.unshift(TreeItemButtonFactory.createRefreshButton('Refresh Collection', createLoadHandler(loadCollectionItems)));
     }
 
     return {
@@ -44,22 +44,6 @@ export class CollectionTreeItem {
       buttons,
     };
   }
-}
-
-function createCollectionOpenTreeItemButton(username: string): TreeItemButton {
-  return {
-    title: 'Open Collection',
-    icon: ExternalLink,
-    href: BandcampUrlFactory.generateFanUrl(username),
-  };
-}
-
-function createCollectionRefreshTreeItemButton(): TreeItemButton {
-  return {
-    title: 'Refresh Collection',
-    icon: RefreshCcw,
-    onClick: createLoadHandler(loadCollectionItems),
-  };
 }
 
 async function loadCollectionItemsFromStorage(): Promise<BandcampItem[]> {
