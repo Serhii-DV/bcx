@@ -56,8 +56,6 @@ $effect(() => {
         <div class="p-3">
           <h3 class="mb-2">Keyboard Shortcuts</h3>
           <div class="space-y-1 text-sm">
-            <div><kbd class="kbd">Ctrl+/</kbd> Open command menu</div>
-            <div><kbd class="kbd">Ctrl+M</kbd> Search music</div>
             <div><kbd class="kbd">Ctrl+D</kbd> Toggle panel</div>
           </div>
         </div>

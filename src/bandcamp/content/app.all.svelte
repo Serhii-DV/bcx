@@ -1,5 +1,4 @@
 <script lang="ts">
-import { TerminalIcon } from 'lucide-svelte';
 import { TreeData } from 'src/app/treeview/TreeData';
 import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
@@ -8,29 +7,18 @@ import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
 import BCXDrawerButton from '$lib/components/bcx/BCXDrawerButton.svelte';
-import BcxMainCommandDialog from '$lib/components/bcx/BCXMainCommandDialog.svelte';
-import BcxMusicFilterDialog from '$lib/components/bcx/BCXMusicFilterDialog.svelte';
-import type { MusicSearchData } from '$lib/components/bcx/types';
-import { musicFilterStore } from '$lib/stores/musicFilter';
-import type { Album } from '../domain/album/album';
-import type { Band } from '../domain/band/band';
 import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
 import { isBandcampMusicUrl } from '../domain/url/helper';
-import { createMusicSearchDataFromBands } from './helper';
 
 // Props interface
 interface Props {
-  bands?: Band[];
   treeData?: TreeData;
 }
 
-let { bands = [], treeData = new TreeData() }: Props = $props();
-
+let { treeData = new TreeData() }: Props = $props();
 let shadowContainer: HTMLElement | null = $state(null);
-let commandOpen = $state(false);
-let albumSearchOpen = $state(false);
-let sidePanelOpen = $state(false);
-let sidePanelStateInitialized = $state(false);
+let sidePanelOpen: boolean = $state(false);
+let sidePanelStateInitialized: boolean = $state(false);
 
 // Persist side panel state across page navigations (only after initial load)
 $effect(() => {
@@ -39,10 +27,6 @@ $effect(() => {
   }
 });
 
-// Derive music search data from bands prop
-let musicSearchData: MusicSearchData = $derived(
-  createMusicSearchDataFromBands(bands),
-);
 
 // Tour configuration
 const tourSteps = [
@@ -58,14 +42,6 @@ const tourSteps = [
     title: '📂 Side Panel',
     message:
       'This button opens the side panel where you can explore your music collection. You can also use <kbd>Ctrl+D</kbd> to toggle it.',
-    useShadowRoot: true,
-  },
-  {
-    id: 'main-button',
-    targetElement: '#bcx-trigger-button',
-    title: '⚡ Quick Actions',
-    message:
-      'Click here or press <kbd>Ctrl+/</kbd> to open the command palette for quick access to all BCX features.',
     useShadowRoot: true,
   },
   {
@@ -101,15 +77,6 @@ $effect(() => {
 });
 
 function handleKeydown(e: KeyboardEvent) {
-  onCtrlKey('/', e, () => {
-    commandOpen = !commandOpen;
-  });
-
-  // Ctrl+M
-  onCtrlKey('m', e, () => {
-    albumSearchOpen = !albumSearchOpen;
-  });
-
   // Ctrl+D for drawer
   onCtrlKey('d', e, () => {
     sidePanelOpen = !sidePanelOpen;
@@ -117,8 +84,8 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 onMount(() => {
-  const bcxElement = document.querySelector('#bcx-app');
-  if (bcxElement?.shadowRoot) {
+  const bcxApp = document.querySelector('#bcx-app');
+  if (bcxApp?.shadowRoot) {
     const portalContainer = document.createElement('div');
     portalContainer.id = 'bcx-portal-container';
     portalContainer.setAttribute('data-bcx-portal', 'true');
@@ -133,7 +100,7 @@ onMount(() => {
     portalContainer.classList.add('dark');
     portalContainer.style.cssText += 'color-theme: dark;';
 
-    bcxElement.shadowRoot.appendChild(portalContainer);
+    bcxApp.shadowRoot.appendChild(portalContainer);
     shadowContainer = portalContainer;
   } else {
     console.warn('❌ BCX: Could not find #bcx-app shadow root');
@@ -148,129 +115,34 @@ onMount(() => {
     sidePanelStateInitialized = true;
   });
 });
-
-function handleBandSelect(band: Band) {
-  // Set the search query for the music filter using the store
-  const searchValue = band.name;
-  musicFilterStore.setSearchQuery(searchValue);
-
-  // Open the band URL in the current tab
-  window.location.href = band.url.toString();
-
-  // Optional: Show confirmation
-  console.log(`🔍 BCX: Filtering music grid for artist "${searchValue}"`);
-}
-
-function handleAlbumSelect(album: Album) {
-  // Open the album URL in the current tab
-  window.location.href = album.url.toString();
-}
-
-function handleSearchArtistAlbum() {
-  albumSearchOpen = true;
-}
-
-function handleProfileSelect() {
-  alert('👤 BCX: Profile feature coming soon!');
-}
-
-function handleSettingsSelect() {
-  alert('⚙️ BCX: Settings feature coming soon!');
-}
 </script>
 
 <svelte:document onkeydown={handleKeydown} />
 
 {#if shadowContainer}
-  <button
-    id="bcx-trigger-button"
-    class="bcx-trigger-button"
-    title="BCX - Bandcamp Extension Menu.
-Use Ctrl+/ to toggle"
-    onclick={() => commandOpen = true}
-  >
-    <TerminalIcon /> BCX
-  </button>
-
   <BCXDrawerButton
     sidePanelOpen={sidePanelOpen}
     onToggle={() => sidePanelOpen = !sidePanelOpen}
   />
+
+  <!-- Side Panel -->
+  <BCXSidePanel
+    treeData={treeData}
+    open={sidePanelOpen}
+    animate={sidePanelStateInitialized}
+  />
+
+  <!-- Tour (only on music pages) -->
+  {#if isBandcampMusicUrl(currentPageUrl)}
+    <BCXTour
+      steps={tourSteps}
+      autoStart={true}
+      onTourComplete={() => console.log('🎉 Tour completed!')}
+      onTourSkipped={() => console.log('⏭️ Tour skipped')}
+    />
+  {/if}
 {/if}
-
-{#if shadowContainer}
-<!-- Main Command Dialog -->
-<BcxMainCommandDialog
-  bind:open={commandOpen}
-  portalProps={{ to: shadowContainer }}
-  onSearchArtistAlbum={handleSearchArtistAlbum}
-  onProfileSelect={handleProfileSelect}
-  onSettingsSelect={handleSettingsSelect}
-/>
-<!-- Artist/Album Search Command Dialog -->
-<BcxMusicFilterDialog
-  bind:open={albumSearchOpen}
-  portalProps={{ to: shadowContainer }}
-  data={musicSearchData}
-  placeholder="Search for artists or albums..."
-  emptyMessage="No artists or albums found"
-  onBandSelect={handleBandSelect}
-  onAlbumSelect={handleAlbumSelect}
-/>
-
-<!-- Side Panel -->
-<BCXSidePanel
-  treeData={treeData}
-  open={sidePanelOpen}
-  animate={sidePanelStateInitialized}
-/>
-
-<!-- Tour (only on music pages) -->
-{#if isBandcampMusicUrl(currentPageUrl)}
-<BCXTour
-  steps={tourSteps}
-  autoStart={true}
-  onTourComplete={() => console.log('🎉 Tour completed!')}
-  onTourSkipped={() => console.log('⏭️ Tour skipped')}
-/>
-{/if}
-{/if}
-
 
 <style>
-  /* BCX Trigger Button Styles - Dark Theme */
-  :global(.bcx-trigger-button) {
-    background: #1f2937;
-    border: 1px solid #374151;
-    color: #f9fafb;
-    border-radius: 8px;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999999;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-
-  :global(.bcx-trigger-button:hover) {
-    background: #374151;
-    border-color: #4b5563;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  }
-
-  :global(.bcx-trigger-button:focus) {
-    background: #374151;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-  }
 
 </style>
