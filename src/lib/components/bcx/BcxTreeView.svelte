@@ -373,6 +373,12 @@ function getItemVisibleChildCount(item: TreeItem): number {
   {/if}
 {/snippet}
 
+{#snippet treeItemImage(item: TreeItem)}
+  {#if item.image}
+    <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
+  {/if}
+{/snippet}
+
 {#snippet treeItems(items: TreeItem[] | undefined)}
   {#if items && items.length > 0}
     <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
@@ -394,9 +400,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleItemClick(item, e)}
               >
-                {#if item.image}
-                <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
-                {/if}
+                {@render treeItemImage(item)}
                 <span>{item.label}</span>
                 {#if item.href && !item.query}
                 <ExternalLink size={16} class="ml-1 flex-shrink-0" />
@@ -417,9 +421,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
               href="{item.href || '#'}"
               title="{item.href || ''}"
               >
-              {#if item.image}
-              <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
-              {/if}
+              {@render treeItemImage(item)}
               <span class="ml-2 text-wrap">{item.label}</span>
               {#if item.href && !item.query}
               <ExternalLink size={16} class="ml-1 flex-shrink-0" />
