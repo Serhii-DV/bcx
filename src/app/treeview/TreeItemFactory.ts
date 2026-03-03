@@ -4,22 +4,32 @@ import { Band } from 'src/bandcamp/domain/band/band';
 import { Url } from 'src/core/url';
 import { arrayUnique } from 'src/utils/array';
 import type { TreeItem } from './TreeItem';
+import type { TreeItemButton } from './TreeItemButton';
+import { TreeItemButtonFactory } from './buttons/factory';
 
 export class TreeItemFactory {
   static fromBand(band: Band): TreeItem {
+    const href = band.url?.toString();
+    const buttons = createExternalLinkButtons(href);
+
     return {
       label: band.name,
       image: band.artwork.tinySizeUrl,
-      href: band.url?.toString(),
+      href,
+      buttons,
     };
   }
 
   static fromAlbum(album: Album): TreeItem {
+    const href = album.url?.toString();
+    const buttons = createExternalLinkButtons(href);
+
     return {
       label: album.toString(),
-      href: album.url.toString(),
       image: album.artwork.tinySizeUrl,
       keywords: album.artist.names,
+      href,
+      buttons,
     };
   }
 
@@ -93,9 +103,23 @@ export class TreeItemFactory {
   }
 
   static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {
+    const href = Url.fromHistoryItem(item)?.toString();
+    const buttons = createExternalLinkButtons(href);
+
     return {
       label: item.title || item.url || 'No Title',
-      href: Url.fromHistoryItem(item)?.toString(),
+      href,
+      buttons,
     };
   }
+}
+
+function createExternalLinkButtons(href?: string): TreeItemButton[] {
+  const buttons: TreeItemButton[] = [];
+  if (href) {
+    buttons.push(
+      TreeItemButtonFactory.createExternalLink('Open\n'+href, href),
+    );
+  }
+  return buttons;
 }

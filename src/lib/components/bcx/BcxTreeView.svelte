@@ -1,5 +1,4 @@
 <script lang="ts">
-import { ExternalLink } from 'lucide-svelte';
 import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
@@ -402,9 +401,6 @@ function getItemVisibleChildCount(item: TreeItem): number {
               >
                 {@render treeItemImage(item)}
                 <span>{item.label}</span>
-                {#if item.href && !item.query}
-                <ExternalLink size={16} class="ml-1 flex-shrink-0" />
-                {/if}
                 <span class="item-count text-sm text-gray-400">({getItemVisibleChildCount(item)})</span>
                 {@render treeItemButtons(item.buttons)}
               </summary>
@@ -422,10 +418,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
               title="{item.href || ''}"
               >
               {@render treeItemImage(item)}
-              <span class="ml-2 text-wrap">{item.label}</span>
-              {#if item.href && !item.query}
-              <ExternalLink size={16} class="ml-1 flex-shrink-0" />
-              {/if}
+              <span class="ml-2">{item.label}</span>
               {@render treeItemButtons(item.buttons)}
             </a>
           {/if}
