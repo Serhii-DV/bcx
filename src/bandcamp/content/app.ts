@@ -5,7 +5,7 @@ import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCssFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
-import { arrayPreview, console } from 'src/utils/console';
+import { console } from 'src/utils/console';
 import { PageMusic } from '../domain/page/pageMusic';
 import { BandcampStorage } from '../domain/storage';
 import './pages/app.pageMusic';
@@ -37,14 +37,6 @@ onDOMReady(async () => {
   try {
     await injectCssFile(getExtensionUrl('bandcamp.content.app.css'), shadowRoot);
 
-    // Load bands data before mounting the app
-    const bands = await BandcampStorage.getBands();
-    console.log(
-      '[bandcamp.content.app]',
-      `Loaded ${bands.length} bands from storage`,
-      ...arrayPreview(bands),
-    );
-
     let band: Band | null = null;
     let album: Album | null = null;
 
@@ -63,7 +55,6 @@ onDOMReady(async () => {
     mount(App, {
       target: shadowRoot,
       props: {
-        bands,
         treeData,
       },
     });
