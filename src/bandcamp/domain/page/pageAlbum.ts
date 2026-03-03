@@ -28,7 +28,7 @@ export class PageAlbum {
 
     console.log('[PageAlbum]', 'Initializing PageAlbum');
 
-    await injectCssFile(getExtensionUrl('bandcamp.page.album.css'));
+    await injectCssFile(getExtensionUrl('bandcamp.content.page.album.css'));
 
     const schema = getMusicAlbumSchema();
     console.log('[PageAlbum]', '[Schema]', schema);
