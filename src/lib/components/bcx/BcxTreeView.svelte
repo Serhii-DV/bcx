@@ -329,41 +329,45 @@ function getItemVisibleChildCount(item: TreeItem): number {
 }
 </script>
 
+{#snippet treeItemButton(button: TreeItemButton)}
+  {@const Icon = button.icon}
+  {#if button.href}
+    <a
+      href={button.href}
+      title={button.title}
+      class="inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+      onclick={(e) => {
+        e.stopPropagation();
+        if (button.onClick) {
+          e.preventDefault();
+          button.onClick(e.currentTarget as HTMLElement);
+        }
+      }}
+    >
+      <Icon size={16} />
+    </a>
+  {:else}
+    <button
+      type="button"
+      title={button.title}
+      class="cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+      onclick={(e) => {
+        e.stopPropagation();
+        if (button.onClick) {
+          button.onClick(e.currentTarget as HTMLElement);
+        }
+      }}
+    >
+      <Icon size={16} />
+    </button>
+  {/if}
+{/snippet}
+
 {#snippet treeItemButtons(buttons: TreeItemButton[] | undefined)}
   {#if buttons && buttons.length > 0}
     <div class="ml-auto flex gap-1 flex-shrink-0" role="presentation">
       {#each buttons as button}
-        {@const Icon = button.icon}
-        {#if button.href}
-          <a
-            href={button.href}
-            title={button.title}
-            class="inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-            onclick={(e) => {
-              e.stopPropagation();
-              if (button.onClick) {
-                e.preventDefault();
-                button.onClick(e.currentTarget as HTMLElement);
-              }
-            }}
-          >
-            <Icon size={16} />
-          </a>
-        {:else}
-          <button
-            type="button"
-            title={button.title}
-            class="cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-            onclick={(e) => {
-              e.stopPropagation();
-              if (button.onClick) {
-                button.onClick(e.currentTarget as HTMLElement);
-              }
-            }}
-          >
-            <Icon size={16} />
-          </button>
-        {/if}
+        {@render treeItemButton(button)}
       {/each}
     </div>
   {/if}
