@@ -21,6 +21,10 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
     ],
     source: {
       entry: {
+        bcx: {
+          import: './src/app/bcx/bcx.ts',
+          html: false,
+        },
         popup: './src/popup/main.ts',
         background: {
           import: './src/background.ts',

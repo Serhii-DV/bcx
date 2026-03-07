@@ -2,7 +2,7 @@ import { mount } from 'svelte';
 import App from './app.svelte';
 import './app.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
-import { injectCssFile, onDOMReady } from 'src/utils/dom';
+import { injectCssFile, injectJSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
@@ -20,6 +20,7 @@ import {
   isBandcampUrl,
 } from '../domain/url/helper';
 import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
+import { BCXEventListener } from 'src/app/bcx/eventListener';
 
 onDOMReady(async () => {
   if (!isBandcampUrl(currentPageUrl)) {
@@ -61,4 +62,9 @@ onDOMReady(async () => {
   } catch (error) {
     console.error('[bandcamp.content.app]', 'Failed to setup content script:', error);
   }
+});
+
+injectJSFile(getExtensionUrl('bcx.js'), () => {
+  console.log('[bcx.js]', 'Injected BCX dev tools script JS file');
+  window.addEventListener('message', BCXEventListener);
 });

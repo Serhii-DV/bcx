@@ -18,6 +18,7 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "bcx.js",
         "bandcamp.content.app.css",
         "bandcamp.content.page.music.css",
         "bandcamp.content.page.album.css",

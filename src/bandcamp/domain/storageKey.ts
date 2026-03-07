@@ -20,6 +20,10 @@ export class StorageKey {
     return `${TRACK_KEY_PREFIX}${trackId}`;
   }
 
+  static trackKeys(trackIds: number[]): string[] {
+    return trackIds.map(id => StorageKey.trackKey(id));
+  }
+
   static bandsKey(): string {
     return BANDS_KEY;
   }
