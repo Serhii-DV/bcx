@@ -12,6 +12,7 @@ import { TrackTime } from './time';
 export class Track implements Storable, Compressable {
   constructor(
     public id: number,
+    public position: number,
     public artist: Artist,
     public title: string,
     public artwork: Artwork,
@@ -26,7 +27,11 @@ export class Track implements Storable, Compressable {
   }
 
   toString(): string {
-    return `${this.artist} - ${this.title} ${this.time?.toReadableString() ?? ''}`;
+    return `${this.artist} - ${this.title}`;
+  }
+
+  toAlbumTrackString(): string {
+    return `${this.position}. ${this.toString()} ${this.time?.toReadableString() ?? ''}`;
   }
 
   get compressor(): TrackDataCompressor {
@@ -51,6 +56,7 @@ export class Track implements Storable, Compressable {
   toRawData(): RawTrackData {
     return {
       id: this.id,
+      position: this.position,
       artist: this.artist.toString(),
       title: this.title,
       artworkId: this.artwork.id,

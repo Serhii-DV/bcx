@@ -27,7 +27,7 @@ function createTracksTreeItem(
   label: string = 'Tracks',
 ): TreeItem {
   const children: TreeItem[] = tracks.map((track) => ({
-    label: track.toString(),
+    label: track.toAlbumTrackString(),
     href: track.url?.toString(),
   }));
 

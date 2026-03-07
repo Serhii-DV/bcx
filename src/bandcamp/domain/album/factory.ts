@@ -75,7 +75,7 @@ export class AlbumFactory {
       digitalRelease?.offers.priceCurrency || 'USD',
     );
 
-    const tracks = TrackFactory.createTracksFromSchema(schema);
+    const tracks = TrackFactory.createTracksFromMusicAlbumSchema(schema);
 
     const metadata = Metadata.create(
       price,

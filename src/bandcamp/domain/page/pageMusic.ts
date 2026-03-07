@@ -339,6 +339,7 @@ export class PageMusic {
         case 'track':
           return TrackFactory.create(
             itemId.id,
+            1, // position is not available in DOM, set it to 1 for now
             artist,
             title,
             artworkId,

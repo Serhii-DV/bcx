@@ -19,6 +19,7 @@ import { Track } from './track';
 export class TrackFactory {
   static create(
     id: string | number,
+    position: string | number,
     artist: string | Artist,
     title: string,
     artwork: string | number | Artwork,
@@ -29,6 +30,8 @@ export class TrackFactory {
   ): Track {
     const trackId =
       typeof id === 'string' ? parseInt(id.replace('track-', ''), 10) : id;
+    const trackPosition =
+      typeof position === 'string' ? parseInt(position, 10) : position;
     const trackUrl = url ? Url.create(url) : undefined;
     const trackTime =
       typeof time === 'string' ? TrackTime.fromString(time) : time;
@@ -45,6 +48,7 @@ export class TrackFactory {
 
     return new Track(
       trackId,
+      trackPosition,
       trackArtist,
       title,
       trackArtwork,
@@ -93,6 +97,7 @@ export class TrackFactory {
 
     return TrackFactory.create(
       trackId,
+      0, // position is not available in schema, set it to 0 for now
       artist,
       title,
       artId,
@@ -106,7 +111,7 @@ export class TrackFactory {
   /**
    * Extract track information from schema
    */
-  static createTracksFromSchema(schema: MusicAlbumSchema): Track[] {
+  static createTracksFromMusicAlbumSchema(schema: MusicAlbumSchema): Track[] {
     const tracks: Track[] = [];
     const albumArtId = schema.albumRelease[0]?.additionalProperty.find(
       (prop: PropertyValue) => prop.name === 'art_id',
@@ -119,6 +124,7 @@ export class TrackFactory {
       const trackId = trackItem.item.additionalProperty.find(
         (prop: PropertyValue) => prop.name === 'track_id',
       )?.value as number;
+      const position = trackItem.position;
       const url = trackItem.item.mainEntityOfPage;
       const { artist, title } = ArtistFactory.fromTrackTitle(
         trackItem.item.name,
@@ -133,6 +139,7 @@ export class TrackFactory {
 
       const track = TrackFactory.create(
         trackId,
+        position,
         artist,
         title,
         artId,
@@ -151,6 +158,7 @@ export class TrackFactory {
   static fromRawData(rawData: RawTrackData): Track {
     return TrackFactory.create(
       rawData.id,
+      rawData.position,
       rawData.artist,
       rawData.title,
       rawData.artworkId,
