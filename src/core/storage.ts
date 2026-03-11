@@ -36,16 +36,21 @@ export class Storage {
       const logLabel = `[Storage.get(keys: ${keys.length})]`;
       console.time(logLabel);
 
-      this.storage.get(keys, (items) => {
-        if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
-        }
+      if (keys.length) {
+        this.storage.get(keys, (items) => {
+          if (chrome.runtime.lastError) {
+            return reject(chrome.runtime.lastError);
+          }
 
-        console.log(logLabel, ...arrayPreview(keys), items);
+          console.log(logLabel, ...arrayPreview(keys), items);
+          console.timeEnd(logLabel);
+
+          resolve(items);
+        });
+      } else {
         console.timeEnd(logLabel);
-
-        resolve(items);
-      });
+        resolve([]);
+      }
     });
   }
 
