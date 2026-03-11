@@ -7,7 +7,6 @@ import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { BandcampStorage } from '../domain/storage';
-import './pages/app.pageAlbum';
 import './pages/app.pageTrack';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
@@ -47,6 +46,7 @@ onDOMReady(async () => {
       band = pageMusic.band;
     } else if (isBandcampAlbumUrl(currentPageUrl)) {
       const pageAlbum = await PageAlbum.init();
+      await BandcampStorage.saveAlbum(pageAlbum.album);
       const bands = await BandcampStorage.getBands([pageAlbum.album.bandId]);
       band = bands[0];
       album = pageAlbum.album;
