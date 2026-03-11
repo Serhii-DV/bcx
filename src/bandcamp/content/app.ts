@@ -6,9 +6,7 @@ import { injectCssFile, injectJSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { PageMusic } from '../domain/page/pageMusic';
 import { BandcampStorage } from '../domain/storage';
-import './pages/app.pageMusic';
 import './pages/app.pageAlbum';
 import './pages/app.pageTrack';
 import type { Album } from '../domain/album/album';
@@ -21,6 +19,8 @@ import {
 } from '../domain/url/helper';
 import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
 import { BCXEventListener } from 'src/app/bcx/eventListener';
+import { initAppPageMusic } from './pages/app.pageMusic';
+import { PageMusic } from '../domain/page/pageMusic';
 
 onDOMReady(async () => {
   if (!isBandcampUrl(currentPageUrl)) {
@@ -43,6 +43,7 @@ onDOMReady(async () => {
 
     if (isBandcampMusicUrl(currentPageUrl)) {
       const pageMusic = await PageMusic.init();
+      await initAppPageMusic(pageMusic);
       band = pageMusic.band;
     } else if (isBandcampAlbumUrl(currentPageUrl)) {
       const pageAlbum = await PageAlbum.init();

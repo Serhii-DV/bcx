@@ -1,47 +1,36 @@
-import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { onDOMReady } from 'src/utils/dom';
 import { mount } from 'svelte';
 import { BCXMusicFilter } from '$lib/components/bcx';
-import { PageMusic } from '../../domain/page/pageMusic';
+import type { PageMusic } from '../../domain/page/pageMusic';
 import { BandcampStorage } from '../../domain/storage';
-import { isBandcampMusicUrl } from '../../domain/url/helper';
 
-onDOMReady(async () => {
-  if (!isBandcampMusicUrl(currentPageUrl)) {
-    return;
+export async function initAppPageMusic(pageMusic: PageMusic): Promise<void> {
+  console.log('[app.pageMusic]', 'Start content script setup');
+
+  const band = pageMusic.band;
+  const musicGrid = pageMusic.musicGridElement;
+
+  if (!musicGrid || !band.hasReleases) {
+    throw new Error("[PageMusic] Cannot detect releases");
   }
 
-  console.log('[app.music]', 'Start content script setup');
+  const filterContainer = document.createElement('div');
+  filterContainer.id = 'bcx-music-filter';
 
-  try {
-    const musicPage = await PageMusic.init();
-    const band = musicPage.band;
-    const musicGrid = musicPage.musicGridElement;
-
-    if (!musicGrid || !band.hasReleases) {
-      return;
-    }
-    const filterContainer = document.createElement('div');
-    filterContainer.id = 'bcx-music-filter';
-
-    // Insert the container before the music grid
-    if (musicGrid.parentNode) {
-      musicGrid.parentNode.insertBefore(filterContainer, musicGrid);
-    }
-
-    mount(BCXMusicFilter, {
-      target: filterContainer,
-      props: {
-        band,
-        queryCountMap: musicPage.queryCountMap,
-        musicGrid,
-        musicGridItems: musicPage.musicGridItemElements,
-      },
-    });
-
-    await BandcampStorage.saveBand(band);
-  } catch (error) {
-    console.error('[app.music]', 'Failed to setup content script:', error);
+  // Insert the container before the music grid
+  if (musicGrid.parentNode) {
+    musicGrid.parentNode.insertBefore(filterContainer, musicGrid);
   }
-});
+
+  mount(BCXMusicFilter, {
+    target: filterContainer,
+    props: {
+      band,
+      queryCountMap: pageMusic.queryCountMap,
+      musicGrid,
+      musicGridItems: pageMusic.musicGridItemElements,
+    },
+  });
+
+  await BandcampStorage.saveBand(band);
+}

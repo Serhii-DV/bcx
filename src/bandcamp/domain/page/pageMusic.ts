@@ -51,6 +51,8 @@ export class PageMusic {
   }
 
   static async init(): Promise<PageMusic> {
+    console.log('[PageMusic]', 'init()');
+
     if (pageMusic instanceof PageMusic) {
       return pageMusic;
     }
