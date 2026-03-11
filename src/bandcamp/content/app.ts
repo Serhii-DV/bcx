@@ -34,13 +34,12 @@ onDOMReady(async () => {
   document.body.appendChild(container);
 
   const shadowRoot = container.attachShadow({ mode: 'open' });
+  injectCssFile(getExtensionUrl('bandcamp.content.app.css'), shadowRoot);
+
+  let band: Band | null = null;
+  let album: Album | null = null;
 
   try {
-    await injectCssFile(getExtensionUrl('bandcamp.content.app.css'), shadowRoot);
-
-    let band: Band | null = null;
-    let album: Album | null = null;
-
     if (isBandcampMusicUrl(currentPageUrl)) {
       const pageMusic = await PageMusic.init();
       await initAppPageMusic(pageMusic);
