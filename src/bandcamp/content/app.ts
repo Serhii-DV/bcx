@@ -7,19 +7,20 @@ import 'src/utils/console';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { BandcampStorage } from '../domain/storage';
-import './pages/app.pageTrack';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
+  isBandcampTrackUrl,
   isBandcampUrl,
 } from '../domain/url/helper';
 import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
 import { BCXEventListener } from 'src/app/bcx/eventListener';
 import { initAppPageMusic } from './pages/app.pageMusic';
 import { PageMusic } from '../domain/page/pageMusic';
+import { PageTrack } from '../domain/page/pageTrack';
 
 onDOMReady(async () => {
   if (!isBandcampUrl(currentPageUrl)) {
@@ -50,6 +51,9 @@ onDOMReady(async () => {
       const bands = await BandcampStorage.getBands([pageAlbum.album.bandId]);
       band = bands[0];
       album = pageAlbum.album;
+    } else if (isBandcampTrackUrl(currentPageUrl)) {
+      const trackPage = new PageTrack();
+      BandcampStorage.saveTrack(trackPage.track);
     }
 
     const treeData = await MainTreeData.create(band, album);
