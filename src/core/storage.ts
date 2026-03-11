@@ -33,12 +33,17 @@ export class Storage {
 
   async get(keys: string[]): Promise<StorageDataMap> {
     return new Promise((resolve, reject) => {
+      const logLabel = `[Storage.get(keys: ${keys.length})]`;
+      console.time(logLabel);
+
       this.storage.get(keys, (items) => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage.get]', ...arrayPreview(keys));
+        console.log(logLabel, ...arrayPreview(keys), items);
+        console.timeEnd(logLabel);
+
         resolve(items);
       });
     });
@@ -46,6 +51,9 @@ export class Storage {
 
   async getByKey<T = any>(key: string): Promise<T | undefined> {
     return new Promise((resolve, reject) => {
+      const logLabel = `[Storage.getByKey(${key})]`;
+      console.time(logLabel);
+
       this.storage.get([key], (items) => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
@@ -53,11 +61,8 @@ export class Storage {
 
         const data = items[key] as T | undefined;
 
-        if (Array.isArray(data)) {
-          console.log('[Storage.getByKey]', key, ...arrayPreview(data));
-        } else {
-          console.log('[Storage.getByKey]', key, data);
-        }
+        console.log(logLabel, ...arrayPreview(Array.isArray(data) ? data : [data]));
+        console.timeEnd(logLabel);
 
         resolve(data);
       });
@@ -66,12 +71,17 @@ export class Storage {
 
   async getAll(): Promise<StorageDataMap> {
     return new Promise<StorageDataMap>((resolve, reject) => {
+      const logLabel = `[Storage.getAll]`;
+      console.time(logLabel);
+
       this.storage.get(null, (items) => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage.getAll]', ...arrayPreview(Object.keys(items)));
+        console.log(logLabel, ...arrayPreview(Object.keys(items)));
+        console.timeEnd(logLabel);
+
         resolve(items);
       });
     });
@@ -95,12 +105,18 @@ export class Storage {
     }
 
     return new Promise((resolve, reject) => {
+      const logLabel = `[Storage.set(${Object.keys(storableData).length})]`;
+      console.time(logLabel);
+
       this.storage.set(storableData, () => {
+
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage.set]', storableData);
+        console.log(logLabel, storableData);
+        console.timeEnd(logLabel);
+
         resolve();
       });
     });
@@ -112,12 +128,16 @@ export class Storage {
 
   async remove(key: string | string[]): Promise<void> {
     return new Promise((resolve, reject) => {
+      const logLabel = `[Storage.remove(${Array.isArray(key) ? key.length : key})]`;
+      console.time(logLabel);
+
       this.storage.remove(key, () => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log('[Storage.remove]', ...arrayPreview(key as string[]));
+        console.log(logLabel, ...arrayPreview(Array.isArray(key) ? key : [key]));
+        console.timeEnd(logLabel);
         resolve();
       });
     });
@@ -125,6 +145,9 @@ export class Storage {
 
   async count(): Promise<number> {
     return new Promise((resolve, reject) => {
+      const logLabel = `[Storage.count]`;
+      console.time(logLabel);
+
       this.getAll().then((items) => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
@@ -132,6 +155,8 @@ export class Storage {
 
         const count = Object.keys(items).length;
         console.log('[Storage.count]', count);
+        console.timeEnd(logLabel);
+
         resolve(count);
       });
     });
