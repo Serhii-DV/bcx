@@ -6,6 +6,7 @@ import { arrayUnique } from 'src/utils/array';
 import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 import { TreeItemButtonFactory } from './buttons/factory';
+import { setTreeItemsQueryFromLabel } from './utils';
 
 export class TreeItemFactory {
   static fromBand(band: Band): TreeItem {
@@ -45,12 +46,9 @@ export class TreeItemFactory {
     };
   }
 
-  static fromAlbumsByArtistNames(
-    albums: Album[],
-    label: string = 'Artist/Releases',
-  ): TreeItem {
+  static createTreeItemsFromAlbumsByArtistReleases(albums: Album[]): TreeItem[] {
     const artistNames = getArtistNamesFromAlbums(albums);
-    const children = arrayUnique(artistNames)
+    return arrayUnique(artistNames)
       .sort()
       .map((artist) => {
         const artistChildren: TreeItem[] = albums
@@ -63,6 +61,32 @@ export class TreeItemFactory {
           children: artistChildren,
         } as TreeItem;
       });
+  }
+
+  static createAlbumsTreeItem(
+    albums: Album[],
+    label: string = 'Artist/Releases',
+  ): TreeItem {
+    const children = this.createTreeItemsFromAlbumsByArtistReleases(albums);
+
+    return {
+      label,
+      open: false,
+      children,
+    };
+  }
+
+  static createBandYearsTreeItem(band: Band, label: string = 'Years'): TreeItem {
+    const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
+      const children: TreeItem[] = band.metadata
+        .albumsByYear(year)
+        .map(TreeItemFactory.fromAlbum);
+
+      return {
+        label: year.toString(),
+        children: setTreeItemsQueryFromLabel(children),
+      };
+    });
 
     return {
       label,
