@@ -14,10 +14,9 @@ import { musicFilterStore } from '$lib/stores/musicFilter';
 
 interface Props {
   treeData: TreeData;
-  onItemClick?: (item: TreeItem, event?: MouseEvent | KeyboardEvent) => void;
 }
 
-let { treeData, onItemClick = () => {} }: Props = $props();
+let { treeData }: Props = $props();
 let treeContainer: HTMLDivElement;
 let filterInput: HTMLInputElement;
 let focusedPath: string | null = $state(null);
@@ -161,10 +160,6 @@ function handleItemClick(
 
   if (item.query) {
     musicFilterStore.setSearchQuery(item.query);
-  }
-
-  if (onItemClick) {
-    onItemClick(item, event);
   }
 }
 
