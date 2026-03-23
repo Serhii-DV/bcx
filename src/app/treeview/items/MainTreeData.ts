@@ -5,7 +5,6 @@ import { AlbumTreeItem } from "./AlbumTreeItem";
 import { BandTreeItem } from "./BandTreeItem";
 import { bandcampPageData } from "src/bandcamp/domain/shared";
 import { FollowingBandsTreeItem } from "./FollowingBandsTreeItem";
-import { FollowingFansTreeItem } from "./FollowingFansTreeItem";
 import { FollowingGenresTreeItem } from "./FollowingGenresTreeItem";
 import { CollectionTreeItem } from "./CollectionTreeItem";
 import { WishlistTreeItem } from "./WishlistTreeItem";
@@ -38,7 +37,6 @@ export class MainTreeData {
       }
 
       treeData.add(await FollowingBandsTreeItem.create(fanData.username || ''));
-      treeData.add(await FollowingFansTreeItem.create(fanData.username || ''));
       treeData.add(await FollowingGenresTreeItem.create(fanData.username || ''));
       treeData.add(await CollectionTreeItem.create(fanData.username || ''));
       treeData.add(await WishlistTreeItem.create(fanData.username || ''));
