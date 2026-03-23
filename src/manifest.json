@@ -21,7 +21,6 @@
         "bcx.js",
         "bandcamp.content.app.css",
         "bandcamp.content.page.music.css",
-        "bandcamp.content.page.album.css",
         "assets/0.gif"
       ],
       "matches": ["https://*.bandcamp.com/*"]
