@@ -31,7 +31,7 @@ export class Track implements Storable, Compressable {
   }
 
   toAlbumTrackString(): string {
-    return `${this.position}. ${this.toString()} ${this.time?.toReadableString() ?? ''}`;
+    return `${this.position}. ${this.toString()} ${this.time ? '(' + this.time.toReadableString() + ')' : ''}`;
   }
 
   get compressor(): TrackDataCompressor {

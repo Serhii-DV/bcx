@@ -7,6 +7,8 @@ import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 import { TreeItemButtonFactory } from './buttons/factory';
 import { setTreeItemsQueryFromLabel } from './utils';
+import type { Track } from 'src/bandcamp/domain/track/track';
+import type { Artist } from 'src/bandcamp/domain/artist/artist';
 
 export class TreeItemFactory {
   static fromBand(band: Band): TreeItem {
@@ -44,6 +46,48 @@ export class TreeItemFactory {
     return {
       label,
     };
+  }
+
+  static fromArtist(artist: Artist): TreeItem[] {
+    return artist.names.map((name) => {
+      return {
+        label: name
+      }
+    });
+  }
+
+  static fromTrack(track: Track): TreeItem {
+    const children: TreeItem[] = [];
+
+    children.push({
+      label: 'Artists',
+      children: TreeItemFactory.fromArtist(track.artist)
+    });
+    children.push({
+      label: 'Title',
+      children: [{
+        label: track.title
+      }]
+    });
+
+    if (track.time) {
+      children.push({
+        label: 'Time',
+        children: [{
+          label: track.time.toReadableString()
+        }]
+      });
+    }
+
+    return {
+      label: track.toAlbumTrackString(),
+      href: track.url?.toString(),
+      children
+    }
+  }
+
+  static fromTracks(tracks: Track[]): TreeItem[] {
+    return tracks.map(TreeItemFactory.fromTrack);
   }
 
   static createTreeItemsFromAlbumsByArtistReleases(albums: Album[]): TreeItem[] {
