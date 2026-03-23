@@ -19,7 +19,11 @@ export class Artist {
 
   toString(): string {
     if (this._stringCache === undefined) {
-      this._stringCache = this.toArray().join(' ');
+      if (this.names.length > 2) {
+        this._stringCache = 'Various Artists';
+      } else {
+        this._stringCache = this.toArray().join(' ');
+      }
     }
     return this._stringCache;
   }

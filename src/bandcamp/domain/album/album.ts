@@ -24,7 +24,7 @@ export class Album implements Storable, Compressable {
 
   static create(
     url: string,
-    artist: string,
+    artist: string | Artist,
     title: string,
     id: string | number,
     artworkId: string | number,
@@ -33,7 +33,7 @@ export class Album implements Storable, Compressable {
     metadata?: Metadata,
   ): Album {
     const albumUrl = Url.create(url);
-    const albumArtist = Artist.create(artist);
+    const albumArtist = artist instanceof Artist ? artist : Artist.create(artist);
     const albumTitle = removeInvisibleChars(title);
     const albumId =
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id;

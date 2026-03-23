@@ -11,6 +11,8 @@ import { albumDataCompressor } from '../shared';
 import { TrackFactory } from '../track/factory';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
+import { getUniqueArtistNamesFromTracks } from '../track/helper';
+import { Artist } from '../artist/artist';
 export class AlbumFactory {
   static fromRawData(rawData: RawAlbumData): Album {
     return Album.create(
@@ -49,8 +51,10 @@ export class AlbumFactory {
     );
 
     const url = schema.mainEntityOfPage;
-    const artist = schema.byArtist.name;
     const title = schema.name;
+    const tracks = TrackFactory.createTracksFromMusicAlbumSchema(schema);
+    const artistsFromTracks = getUniqueArtistNamesFromTracks(tracks);
+    const artist = artistsFromTracks.length > 1 ? new Artist(artistsFromTracks) : Artist.create(schema.byArtist.name);
 
     const albumId =
       (digitalRelease?.additionalProperty.find(
@@ -74,8 +78,6 @@ export class AlbumFactory {
       (digitalRelease?.offers.price as number) || 0,
       digitalRelease?.offers.priceCurrency || 'USD',
     );
-
-    const tracks = TrackFactory.createTracksFromMusicAlbumSchema(schema);
 
     const metadata = Metadata.create(
       price,
