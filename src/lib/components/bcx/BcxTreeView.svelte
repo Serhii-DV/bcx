@@ -103,7 +103,7 @@ $effect(() => {
 onMount(() => {
   // Subscribe to store updates
   storeUnsubscribe = musicFilterStore.subscribe((state) => {
-    console.log('[setSearchQuery]', 'BcxTreeView subscribe', state);
+    console.log('[BcxTreeView]', '[setSearchQuery]', 'Subscribe', state);
     if (state.searchQuery !== searchQuery) {
       searchQuery = state.searchQuery || '';
     }
@@ -124,6 +124,8 @@ function handleItemClick(
   event?: MouseEvent | KeyboardEvent,
 ) {
   if (!item) return;
+
+  console.log('[BcxTreeView]', '[handleItemClick]', item, event);
 
   if (item.onClick) {
     item.onClick(event?.currentTarget as HTMLElement);
