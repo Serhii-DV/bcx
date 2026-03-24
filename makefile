@@ -34,3 +34,7 @@ dev: ## Start development server
 .PHONY: test
 test: ## Run tests
 	$(PNPM_BIN) test
+
+.PHONY: changeset
+changeset: ## Add a new changeset
+	$(PNPM_BIN) changeset
