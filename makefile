@@ -35,6 +35,10 @@ dev: ## Start development server
 test: ## Run tests
 	$(PNPM_BIN) test
 
+.PHONY: format
+format: ## Format the code
+	$(PNPM_BIN) format
+
 .PHONY: changeset
 changeset: ## Add a new changeset
 	$(PNPM_BIN) changeset
