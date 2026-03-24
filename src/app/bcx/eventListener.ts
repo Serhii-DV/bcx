@@ -1,4 +1,5 @@
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { BandIndexData } from 'src/bandcamp/domain/storage/bandIndexData';
 import { StorageKey } from 'src/bandcamp/domain/storageKey';
 import { storage } from 'src/core/shared';
 
@@ -43,5 +44,20 @@ export async function BCXEventListener(event: MessageEvent<any>) {
       },
       '*',
     );
+  } else if (event.data.action === 'indexBands') {
+    indexBands();
   }
+}
+
+async function indexBands() {
+  const bandIndexData = await BandIndexData.refresh();
+
+  window.postMessage(
+    {
+      source: 'BCX',
+      action: 'indexBandsResponse',
+      response: Object.keys(bandIndexData).length + ' bands indexed',
+    },
+    '*',
+  );
 }

@@ -8,10 +8,10 @@ import { Band } from './band/band';
 import { type CompressedBandData } from './band/compressor';
 import { BandFactory } from './band/factory';
 import { bandDataCompressor } from './shared';
+import { BandIndexData } from './storage/bandIndexData';
 import { StorageKey } from './storageKey';
 import { TrackFactory } from './track/factory';
 import type { Track } from './track/track';
-import { BandIndexData } from './storage/bandIndexData';
 
 export class BandcampStorage {
   static async saveBand(band: Band): Promise<void> {
@@ -358,5 +358,16 @@ export class BandcampStorage {
 
     // Merge tracks with loaded data, preferring loaded data when available
     return tracks.map((track) => loadedTracksMap.get(track.id) || track);
+  }
+
+  static async getAllCompressedBandData(): Promise<CompressedBandData[]> {
+    const keys = await storage.getKeys();
+    const bandKeys = keys.filter((key) => StorageKey.isBandKey(key));
+    const compressedBandDataMap = await storage.get(bandKeys);
+
+    return Object.values(compressedBandDataMap).filter(
+      (data): data is CompressedBandData =>
+        typeof data === 'object' && data !== null,
+    );
   }
 }

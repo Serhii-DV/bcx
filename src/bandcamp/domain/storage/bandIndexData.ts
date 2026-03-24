@@ -1,5 +1,6 @@
-import { storage } from "src/core/shared";
-import { StorageKey } from "../storageKey";
+import { storage } from 'src/core/shared';
+import { BandcampStorage } from '../storage';
+import { StorageKey } from '../storageKey';
 
 type BandMapType = Record<string, number>;
 
@@ -26,5 +27,17 @@ export class BandIndexData {
   static async getBandsIds(): Promise<number[]> {
     const bandMap = await this.load();
     return Object.values(bandMap);
+  }
+
+  static async refresh(): Promise<BandMapType> {
+    const bandMap: BandMapType = {};
+    const compressedBandsData =
+      await BandcampStorage.getAllCompressedBandData();
+
+    for (const compressedBandData of compressedBandsData) {
+      bandMap[compressedBandData.n] = compressedBandData.i;
+    }
+
+    return await this.save(bandMap);
   }
 }

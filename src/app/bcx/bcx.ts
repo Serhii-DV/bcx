@@ -26,6 +26,16 @@ const BCX = {
         '*',
       );
     },
+
+    async indexBands() {
+      window.postMessage(
+        {
+          source: 'BCX',
+          action: 'indexBands',
+        },
+        '*',
+      );
+    },
   },
 };
 
@@ -35,6 +45,7 @@ console.log('[BCX]', 'BCX script loaded, version:', BCX.getVersion());
 const logableActionsWithResponse = [
   'clearAlbumDataResponse',
   'getStorageSizeResponse',
+  'indexBandsResponse',
 ];
 
 window.addEventListener('message', function (event) {

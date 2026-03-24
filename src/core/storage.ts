@@ -77,6 +77,24 @@ export class Storage {
     });
   }
 
+  async getKeys(): Promise<string[]> {
+    return new Promise<string[]>((resolve, reject) => {
+      const logLabel = `[Storage.getKeys]`;
+      console.time(logLabel);
+
+      this.storage.getKeys().then((keys) => {
+        if (chrome.runtime.lastError) {
+          return reject(chrome.runtime.lastError);
+        }
+
+        console.log(logLabel, ...arrayPreview(keys));
+        console.timeEnd(logLabel);
+
+        resolve(keys);
+      });
+    });
+  }
+
   async getAll(): Promise<StorageDataMap> {
     return new Promise<StorageDataMap>((resolve, reject) => {
       const logLabel = `[Storage.getAll]`;
