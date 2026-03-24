@@ -91,18 +91,18 @@ export class TreeItemFactory {
   }
 
   static createTreeItemsFromAlbumsByArtistReleases(albums: Album[]): TreeItem[] {
-    const artistNames = getArtistNamesFromAlbums(albums);
-    return arrayUnique(artistNames)
+    const artists = getArtistNamesFromAlbums(albums);
+    return arrayUnique(artists)
       .sort()
       .map((artist) => {
-        const artistChildren: TreeItem[] = albums
-          .filter((album) => album.artist.names.includes(artist))
+        const children: TreeItem[] = albums
+          .filter((album) => album.containsArtistName(artist))
           .map(TreeItemFactory.fromAlbum);
 
         return {
           label: artist,
           open: false,
-          children: artistChildren,
+          children,
         } as TreeItem;
       });
   }

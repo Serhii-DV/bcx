@@ -9,6 +9,8 @@ import { albumDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
 import type { Track } from '../track/track';
 import { AlbumDataCompressor, type RawAlbumData } from './compressor';
+import { getUniqueArtistNamesFromTracks } from '../track/helper';
+import { containsArtistName } from '../artist/helper';
 
 export class Album implements Storable, Compressable {
   constructor(
@@ -52,6 +54,17 @@ export class Album implements Storable, Compressable {
       tracks,
       metadata,
     );
+  }
+
+  containsArtistName(name: string): boolean {
+    const hasArtistName = containsArtistName(this.artist.names, name);
+
+    if (!hasArtistName) {
+      const trackArtistNames = getUniqueArtistNamesFromTracks(this.tracks);
+      return containsArtistName(trackArtistNames, name);
+    }
+
+    return hasArtistName;
   }
 
   get compressor(): AlbumDataCompressor {
