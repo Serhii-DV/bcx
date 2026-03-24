@@ -11,7 +11,7 @@ export async function initAppPageMusic(pageMusic: PageMusic): Promise<void> {
   const musicGrid = pageMusic.musicGridElement;
 
   if (!musicGrid || !band.hasReleases) {
-    throw new Error("[PageMusic] Cannot detect releases");
+    throw new Error('[PageMusic] Cannot detect releases');
   }
 
   const filterContainer = document.createElement('div');

@@ -6,11 +6,11 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
+import { TreeItemButtonFactory } from '../buttons/factory';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 import { TreeItemFactory } from '../TreeItemFactory';
 import { createLoadHandler } from '../utils';
-import { TreeItemButtonFactory } from '../buttons/factory';
 
 const COLLECTION_KEY = '/collection';
 
@@ -31,11 +31,19 @@ export class CollectionTreeItem {
       TreeItemFactory.createTreeItemsAlbumsByArtistNames(albums);
 
     const buttons: TreeItemButton[] = [
-      TreeItemButtonFactory.createExternalLink('Open Collection', BandcampUrlFactory.generateFanUrl(username)),
+      TreeItemButtonFactory.createExternalLink(
+        'Open Collection',
+        BandcampUrlFactory.generateFanUrl(username),
+      ),
     ];
 
     if (isBandcampFanUrl(currentPageUrl, username)) {
-      buttons.unshift(TreeItemButtonFactory.createRefreshButton('Refresh Collection', createLoadHandler(loadCollectionItems)));
+      buttons.unshift(
+        TreeItemButtonFactory.createRefreshButton(
+          'Refresh Collection',
+          createLoadHandler(loadCollectionItems),
+        ),
+      );
     }
 
     return {

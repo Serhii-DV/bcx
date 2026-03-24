@@ -6,7 +6,10 @@ import { setTreeItemsQueryFromLabel } from '../utils';
 export class BandTreeItem {
   static create(band: Band): TreeItem {
     const treeItem = TreeItemFactory.fromBand(band);
-    const children: TreeItem[] = TreeItemFactory.createTreeItemsFromAlbumsByArtistReleases(band.metadata.albums);
+    const children: TreeItem[] =
+      TreeItemFactory.createTreeItemsFromAlbumsByArtistReleases(
+        band.metadata.albums,
+      );
 
     treeItem.href = undefined;
     treeItem.children = setTreeItemsQueryFromLabel(children);

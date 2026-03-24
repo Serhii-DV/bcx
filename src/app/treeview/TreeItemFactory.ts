@@ -1,14 +1,14 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
+import type { Artist } from 'src/bandcamp/domain/artist/artist';
 import { Band } from 'src/bandcamp/domain/band/band';
+import type { Track } from 'src/bandcamp/domain/track/track';
 import { Url } from 'src/core/url';
 import { arrayUnique } from 'src/utils/array';
+import { TreeItemButtonFactory } from './buttons/factory';
 import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
-import { TreeItemButtonFactory } from './buttons/factory';
 import { setTreeItemsQueryFromLabel } from './utils';
-import type { Track } from 'src/bandcamp/domain/track/track';
-import type { Artist } from 'src/bandcamp/domain/artist/artist';
 
 export class TreeItemFactory {
   static fromBand(band: Band): TreeItem {
@@ -51,8 +51,8 @@ export class TreeItemFactory {
   static fromArtist(artist: Artist): TreeItem[] {
     return artist.names.map((name) => {
       return {
-        label: name
-      }
+        label: name,
+      };
     });
   }
 
@@ -60,14 +60,16 @@ export class TreeItemFactory {
     return {
       label: track.toAlbumTrackString(),
       href: track.url?.toString(),
-    }
+    };
   }
 
   static fromTracks(tracks: Track[]): TreeItem[] {
     return tracks.map(TreeItemFactory.fromTrack);
   }
 
-  static createTreeItemsFromAlbumsByArtistReleases(albums: Album[]): TreeItem[] {
+  static createTreeItemsFromAlbumsByArtistReleases(
+    albums: Album[],
+  ): TreeItem[] {
     const artists = getArtistNamesFromAlbums(albums);
     return arrayUnique(artists)
       .sort()
@@ -97,7 +99,10 @@ export class TreeItemFactory {
     };
   }
 
-  static createBandYearsTreeItem(band: Band, label: string = 'Years'): TreeItem {
+  static createBandYearsTreeItem(
+    band: Band,
+    label: string = 'Years',
+  ): TreeItem {
     const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
       const children: TreeItem[] = band.metadata
         .albumsByYear(year)
@@ -163,7 +168,7 @@ function createExternalLinkButtons(href?: string): TreeItemButton[] {
   const buttons: TreeItemButton[] = [];
   if (href) {
     buttons.push(
-      TreeItemButtonFactory.createExternalLink('Open\n'+href, href),
+      TreeItemButtonFactory.createExternalLink('Open\n' + href, href),
     );
   }
   return buttons;

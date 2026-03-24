@@ -1,10 +1,10 @@
 import { describe, expect, it } from '@rstest/core';
 import {
+  capitalizeWords,
   containsOneOf,
   removeInvisibleChars,
   splitString,
   trim,
-  capitalizeWords,
 } from './string';
 
 describe('trim', () => {

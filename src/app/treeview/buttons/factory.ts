@@ -1,5 +1,5 @@
-import { ExternalLink, RefreshCcw } from "lucide-svelte";
-import type { TreeItemButton } from "../TreeItemButton";
+import { ExternalLink, RefreshCcw } from 'lucide-svelte';
+import type { TreeItemButton } from '../TreeItemButton';
 
 export class TreeItemButtonFactory {
   static createExternalLink(title: string, href: string): TreeItemButton {
@@ -10,7 +10,10 @@ export class TreeItemButtonFactory {
     };
   }
 
-  static createRefreshButton(title: string, onClick: (element: HTMLElement) => void): TreeItemButton {
+  static createRefreshButton(
+    title: string,
+    onClick: (element: HTMLElement) => void,
+  ): TreeItemButton {
     return {
       title,
       icon: RefreshCcw,

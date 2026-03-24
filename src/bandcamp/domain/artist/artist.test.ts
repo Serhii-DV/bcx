@@ -70,7 +70,13 @@ describe('ReleaseArtist', () => {
       expect(artist.joins).toEqual(['Vs']);
     });
 
-    const VARIOUS_ALIASES = ['V/A', 'VVAA', 'Various', 'Various Artist', 'Various Artists'];
+    const VARIOUS_ALIASES = [
+      'V/A',
+      'VVAA',
+      'Various',
+      'Various Artist',
+      'Various Artists',
+    ];
 
     VARIOUS_ALIASES.forEach((alias) => {
       it(`should treat "${alias}" as "Various Artists"`, () => {

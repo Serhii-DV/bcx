@@ -2,10 +2,7 @@
 import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
-import {
-  isNode,
-  isNodeExpanded,
-} from 'src/app/treeview/utils';
+import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl } from 'src/core/shared';
 import { Url } from 'src/core/url';
@@ -27,7 +24,9 @@ let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
 
 // Derived values
-let effectiveTreeData: TreeData = $derived(treeData.filter(debouncedFilterQuery));
+let effectiveTreeData: TreeData = $derived(
+  treeData.filter(debouncedFilterQuery),
+);
 
 let visibleData = $derived.by(() => {
   const paths = new Set<string>();
@@ -48,8 +47,8 @@ let visibleData = $derived.by(() => {
     if (!items) return;
     for (const item of items) {
       if (item.children && item.children.length > 0) {
-        const visibleCount = item.children.filter(child =>
-          paths.has(child.path || '')
+        const visibleCount = item.children.filter((child) =>
+          paths.has(child.path || ''),
         ).length;
         if (item.path) {
           childCounts.set(item.path, visibleCount);

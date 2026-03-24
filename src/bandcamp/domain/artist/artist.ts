@@ -2,7 +2,13 @@ import { capitalizeWords, removeInvisibleChars, trim } from 'src/utils/string';
 import { ArtistMemoryCache } from './cache';
 
 const VARIOUS_ARTISTS = 'Various Artists';
-const VARIOUS_ARTISTS_ALIASES = ['V/A', 'VVAA', 'Various', 'Various Artist', 'Various Artists'];
+const VARIOUS_ARTISTS_ALIASES = [
+  'V/A',
+  'VVAA',
+  'Various',
+  'Various Artist',
+  'Various Artists',
+];
 
 export function isVariousArtists(name: string): boolean {
   return VARIOUS_ARTISTS_ALIASES.some(
@@ -17,17 +23,17 @@ export class Artist {
   private _stringCache?: string;
   private static cache = new ArtistMemoryCache();
 
-  constructor(
-    names: string[],
-    joins: string[] = [],
-  ) {
+  constructor(names: string[], joins: string[] = []) {
     this.names = names.map((name) => name.trim()).map(capitalizeWords);
     // Trim whitespace from joins
     this.joins = joins.map((join) => join.trim());
   }
 
   get isVariousArtists(): boolean {
-    return this.names.length > 2 || (this.names.length === 1 && isVariousArtists(this.names[0]));
+    return (
+      this.names.length > 2 ||
+      (this.names.length === 1 && isVariousArtists(this.names[0]))
+    );
   }
 
   toString(): string {

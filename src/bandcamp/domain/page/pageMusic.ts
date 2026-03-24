@@ -450,7 +450,9 @@ export class PageMusic {
       return null;
     }
 
-    const src = img.classList.contains('lazy') ? img.dataset['original'] : img.getAttribute('src');
+    const src = img.classList.contains('lazy')
+      ? img.dataset['original']
+      : img.getAttribute('src');
 
     if (!src) {
       return null;

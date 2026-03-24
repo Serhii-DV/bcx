@@ -2,15 +2,15 @@ import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { Url } from 'src/core/url';
 import { removeInvisibleChars } from 'src/utils/string';
 import { Artist, isVariousArtists } from '../artist/artist';
+import { containsArtistName } from '../artist/helper';
 import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
 import { albumDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
+import { getUniqueArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
 import { AlbumDataCompressor, type RawAlbumData } from './compressor';
-import { getUniqueArtistNamesFromTracks } from '../track/helper';
-import { containsArtistName } from '../artist/helper';
 
 export class Album implements Storable, Compressable {
   constructor(
@@ -35,7 +35,8 @@ export class Album implements Storable, Compressable {
     metadata?: Metadata,
   ): Album {
     const albumUrl = Url.create(url);
-    const albumArtist = artist instanceof Artist ? artist : Artist.create(artist);
+    const albumArtist =
+      artist instanceof Artist ? artist : Artist.create(artist);
     const albumTitle = removeInvisibleChars(title);
     const albumId =
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id;

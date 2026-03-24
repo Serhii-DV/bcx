@@ -21,7 +21,7 @@ export class StorageKey {
   }
 
   static trackKeys(trackIds: number[]): string[] {
-    return trackIds.map(id => StorageKey.trackKey(id));
+    return trackIds.map((id) => StorageKey.trackKey(id));
   }
 
   static bandsKey(): string {

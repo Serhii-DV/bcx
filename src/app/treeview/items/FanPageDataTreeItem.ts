@@ -1,12 +1,12 @@
-import type { BandcampPageData } from "src/bandcamp/domain/pageData/pageData";
-import type { TreeItem } from "../TreeItem";
-import { BandcampUrlFactory } from "src/bandcamp/domain/url/factory";
-import { WishlistTreeItem } from "./WishlistTreeItem";
-import { hasOwnProperty } from "src/utils/utils";
-import { Album } from "src/bandcamp/domain/album/album";
-import { TreeItemFactory } from "../TreeItemFactory";
-import { Band } from "src/bandcamp/domain/band/band";
-import { updateTreeItemsCounts } from "../utils";
+import { Album } from 'src/bandcamp/domain/album/album';
+import { Band } from 'src/bandcamp/domain/band/band';
+import type { BandcampPageData } from 'src/bandcamp/domain/pageData/pageData';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
+import { hasOwnProperty } from 'src/utils/utils';
+import type { TreeItem } from '../TreeItem';
+import { TreeItemFactory } from '../TreeItemFactory';
+import { updateTreeItemsCounts } from '../utils';
+import { WishlistTreeItem } from './WishlistTreeItem';
 
 export class FanPageDataTreeItem {
   static async create(pageData: BandcampPageData): Promise<TreeItem | null> {

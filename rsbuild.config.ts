@@ -37,7 +37,7 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
         'bandcamp.content.page.music': {
           import: './src/bandcamp/content/pages/app.pageMusic.ts',
           html: false,
-        }
+        },
       },
     },
     resolve: {

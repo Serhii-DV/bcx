@@ -27,7 +27,6 @@ $effect(() => {
   }
 });
 
-
 // Tour configuration
 const tourSteps = [
   {

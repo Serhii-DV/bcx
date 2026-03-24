@@ -11,11 +11,11 @@ export class AlbumTreeItem {
     });
     children.push({
       label: 'Artists',
-      children: TreeItemFactory.fromArtist(album.artist)
+      children: TreeItemFactory.fromArtist(album.artist),
     });
     children.push({
       label: 'Tracks',
-      children: TreeItemFactory.fromTracks(album.tracks)
+      children: TreeItemFactory.fromTracks(album.tracks),
     });
     children.push(TreeItemFactory.fromKeywords(album.metadata?.keywords || []));
 

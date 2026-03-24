@@ -4,23 +4,23 @@ import './app.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCssFile, injectJSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
+import { BCXEventListener } from 'src/app/bcx/eventListener';
+import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { BandcampStorage } from '../domain/storage';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
+import { PageMusic } from '../domain/page/pageMusic';
+import { PageTrack } from '../domain/page/pageTrack';
+import { BandcampStorage } from '../domain/storage';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
   isBandcampTrackUrl,
   isBandcampUrl,
 } from '../domain/url/helper';
-import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
-import { BCXEventListener } from 'src/app/bcx/eventListener';
 import { initAppPageMusic } from './pages/app.pageMusic';
-import { PageMusic } from '../domain/page/pageMusic';
-import { PageTrack } from '../domain/page/pageTrack';
 
 onDOMReady(async () => {
   if (!isBandcampUrl(currentPageUrl)) {
@@ -64,7 +64,11 @@ onDOMReady(async () => {
       },
     });
   } catch (error) {
-    console.error('[bandcamp.content.app]', 'Failed to setup content script:', error);
+    console.error(
+      '[bandcamp.content.app]',
+      'Failed to setup content script:',
+      error,
+    );
   }
 });
 

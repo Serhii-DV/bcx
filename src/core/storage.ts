@@ -66,7 +66,10 @@ export class Storage {
 
         const data = items[key] as T | undefined;
 
-        console.log(logLabel, ...arrayPreview(Array.isArray(data) ? data : [data]));
+        console.log(
+          logLabel,
+          ...arrayPreview(Array.isArray(data) ? data : [data]),
+        );
         console.timeEnd(logLabel);
 
         resolve(data);
@@ -114,7 +117,6 @@ export class Storage {
       console.time(logLabel);
 
       this.storage.set(storableData, () => {
-
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
@@ -141,7 +143,10 @@ export class Storage {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log(logLabel, ...arrayPreview(Array.isArray(key) ? key : [key]));
+        console.log(
+          logLabel,
+          ...arrayPreview(Array.isArray(key) ? key : [key]),
+        );
         console.timeEnd(logLabel);
         resolve();
       });

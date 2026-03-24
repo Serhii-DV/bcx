@@ -12,8 +12,10 @@ export const console = {
   debug: globalThis.console.debug.bind(globalThis.console, PREFIX),
   warn: globalThis.console.warn.bind(globalThis.console, PREFIX),
   info: globalThis.console.info.bind(globalThis.console, PREFIX),
-  time: (label?: string) => globalThis.console.time.bind(globalThis.console, PREFIX + ' ' + label)(),
-  timeEnd: (label?: string) => globalThis.console.timeEnd.bind(globalThis.console, PREFIX + ' ' + label)(),
+  time: (label?: string) =>
+    globalThis.console.time.bind(globalThis.console, PREFIX + ' ' + label)(),
+  timeEnd: (label?: string) =>
+    globalThis.console.timeEnd.bind(globalThis.console, PREFIX + ' ' + label)(),
 };
 
 export function arrayPreview<T>(arr: T[], limit = 5): [string, T[]] {
