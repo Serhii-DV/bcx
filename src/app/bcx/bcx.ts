@@ -11,14 +11,23 @@ const BCX = {
         albumId: albumId
       }, '*');
     },
+
+    async getSize() {
+      window.postMessage({
+        source: 'BCX',
+        action: 'getStorageSize'
+      }, '*');
+    }
   }
 };
 
 console.log('[BCX]', 'BCX script loaded, version:', BCX.getVersion());
 (window as any).BCX = BCX;
 
+const logableActionsWithResponse = ['clearAlbumDataResponse', 'getStorageSizeResponse'];
+
 window.addEventListener('message', function(event) {
-  if (event.data && event.data.source === 'BCX' && event.data.action === 'clearAlbumDataResponse') {
-    console.log('[BCX][window.addEventListener]', event.data);
+  if (event.data && event.data.source === 'BCX' && logableActionsWithResponse.includes(event.data.action)) {
+    console.log('[BCX][window.addEventListener][response]', event.data.response);
   }
 });

@@ -2,7 +2,7 @@ import { BandcampStorage } from "src/bandcamp/domain/storage";
 import { StorageKey } from "src/bandcamp/domain/storageKey";
 import { storage } from "src/core/shared";
 
-export function BCXEventListener(event: MessageEvent<any>) {
+export async function BCXEventListener(event: MessageEvent<any>) {
   if (event.source !== window || !event.data || event.data.source !== 'BCX') return;
 
   if (event.data.action === 'clearAlbumData') {
@@ -20,5 +20,20 @@ export function BCXEventListener(event: MessageEvent<any>) {
       });
 
     });
+  } else if (event.data.action === 'getStorageSize') {
+    const count = await storage.count();
+    const size = await storage.getSize();
+
+    window.postMessage({
+      source: 'BCX',
+      action: 'getStorageSizeResponse',
+      response: {
+        count,
+        size,
+        sizeInBytes: size + ' bytes',
+        sizeInKB: (size / 1024).toFixed(2) + ' KB',
+        sizeInMB: (size / (1024 * 1024)).toFixed(2) + ' MB',
+      }
+    }, '*');
   }
 }
