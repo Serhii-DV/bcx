@@ -1,6 +1,15 @@
 import { capitalizeWords, removeInvisibleChars, trim } from 'src/utils/string';
 import { ArtistMemoryCache } from './cache';
 
+const VARIOUS_ARTISTS = 'Various Artists';
+const VARIOUS_ARTISTS_ALIASES = ['V/A', 'VVAA', 'Various', 'Various Artist', 'Various Artists'];
+
+export function isVariousArtists(name: string): boolean {
+  return VARIOUS_ARTISTS_ALIASES.some(
+    (alias) => alias.toLowerCase() === name.toLowerCase(),
+  );
+}
+
 export class Artist {
   public readonly joins: string[];
   public readonly names: string[];
@@ -20,7 +29,7 @@ export class Artist {
   toString(): string {
     if (this._stringCache === undefined) {
       if (this.names.length > 2) {
-        this._stringCache = 'Various Artists';
+        this._stringCache = VARIOUS_ARTISTS;
       } else {
         this._stringCache = this.toArray().join(' ');
       }
@@ -53,10 +62,19 @@ export class Artist {
     return artist;
   }
 
+  static createVariousArtists(): Artist {
+    return new Artist([VARIOUS_ARTISTS]);
+  }
+
   private static parse(input: string): Artist {
     // Handle special cases
-    if (input === '' || input === 'V/A') {
+    if (input === '') {
       return new Artist([input]);
+    }
+
+    // Handle special case for "Various Artists"
+    if (isVariousArtists(input)) {
+      return Artist.createVariousArtists();
     }
 
     // Define delimiters to split on
