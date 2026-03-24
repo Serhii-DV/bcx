@@ -57,32 +57,9 @@ export class TreeItemFactory {
   }
 
   static fromTrack(track: Track): TreeItem {
-    const children: TreeItem[] = [];
-
-    children.push({
-      label: 'Artists',
-      children: TreeItemFactory.fromArtist(track.artist)
-    });
-    children.push({
-      label: 'Title',
-      children: [{
-        label: track.title
-      }]
-    });
-
-    if (track.time) {
-      children.push({
-        label: 'Time',
-        children: [{
-          label: track.time.toReadableString()
-        }]
-      });
-    }
-
     return {
       label: track.toAlbumTrackString(),
       href: track.url?.toString(),
-      children
     }
   }
 
