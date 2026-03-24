@@ -26,6 +26,10 @@ export class Artist {
     this.joins = joins.map((join) => join.trim());
   }
 
+  get isVariousArtists(): boolean {
+    return this.names.length > 2 || (this.names.length === 1 && isVariousArtists(this.names[0]));
+  }
+
   toString(): string {
     if (this._stringCache === undefined) {
       if (this.names.length > 2) {

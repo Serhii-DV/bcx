@@ -9,6 +9,10 @@ export function getArtistNamesFromAlbums(albums: Album[]): string[] {
 
   albums.forEach((album: Album) => {
     artistNames.push(...album.artist.names);
+
+    if (album.artist.isVariousArtists) {
+      artistNames.push(album.artist.toString());
+    }
   });
 
   artistNames.push(

@@ -1,7 +1,7 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { Url } from 'src/core/url';
 import { removeInvisibleChars } from 'src/utils/string';
-import { Artist } from '../artist/artist';
+import { Artist, isVariousArtists } from '../artist/artist';
 import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
@@ -57,6 +57,10 @@ export class Album implements Storable, Compressable {
   }
 
   containsArtistName(name: string): boolean {
+    if (isVariousArtists(name) && this.artist.isVariousArtists) {
+      return true;
+    }
+
     const hasArtistName = containsArtistName(this.artist.names, name);
 
     if (!hasArtistName) {
