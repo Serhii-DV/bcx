@@ -1,6 +1,5 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
-import type { Artist } from 'src/bandcamp/domain/artist/artist';
 import { Band } from 'src/bandcamp/domain/band/band';
 import type { Track } from 'src/bandcamp/domain/track/track';
 import { Url } from 'src/core/url';
@@ -46,14 +45,6 @@ export class TreeItemFactory {
     return {
       label,
     };
-  }
-
-  static fromArtist(artist: Artist): TreeItem[] {
-    return artist.names.map((name) => {
-      return {
-        label: name,
-      };
-    });
   }
 
   static fromTrack(track: Track): TreeItem {

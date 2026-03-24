@@ -19,7 +19,7 @@ export class MainTreeData {
     const treeData = new TreeData();
 
     if (album) {
-      treeData.add(AlbumTreeItem.create(album));
+      treeData.add(await AlbumTreeItem.create(album));
     }
 
     if (band) {

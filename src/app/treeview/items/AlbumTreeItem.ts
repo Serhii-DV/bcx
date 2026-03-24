@@ -1,9 +1,10 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
+import { ArtistTreeItem } from './ArtistTreeItem';
 
 export class AlbumTreeItem {
-  static create(album: Album): TreeItem {
+  static async create(album: Album): Promise<TreeItem> {
     const children: TreeItem[] = [];
 
     children.push({
@@ -11,7 +12,7 @@ export class AlbumTreeItem {
     });
     children.push({
       label: 'Artists',
-      children: TreeItemFactory.fromArtist(album.artist),
+      children: await ArtistTreeItem.createTreeItems(album.artist),
     });
     children.push({
       label: 'Tracks',
