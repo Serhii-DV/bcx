@@ -1,5 +1,4 @@
 import type { StorageObject } from 'src/core/storage';
-import { Artist } from '../artist/artist';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import type {
@@ -10,7 +9,6 @@ import type {
 import { Price } from '../price';
 import { albumDataCompressor } from '../shared';
 import { TrackFactory } from '../track/factory';
-import { getUniqueArtistNamesFromTracks } from '../track/helper';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
 import { ArtistFactory } from '../artist/factory';
@@ -54,12 +52,7 @@ export class AlbumFactory {
     const url = schema.mainEntityOfPage;
     const title = schema.name;
     const tracks = TrackFactory.createTracksFromMusicAlbumSchema(schema);
-    const artistsFromTracks = getUniqueArtistNamesFromTracks(tracks);
-    const artist =
-      artistsFromTracks.length > 1
-        ? new Artist(artistsFromTracks)
-        : ArtistFactory.create(schema.byArtist.name);
-
+    const artist = ArtistFactory.create(schema.byArtist.name);
     const albumId =
       (digitalRelease?.additionalProperty.find(
         (prop: PropertyValue) => prop.name === 'item_id',

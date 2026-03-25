@@ -1,7 +1,6 @@
 import { Album } from 'src/bandcamp/domain/album/album';
-import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { console } from 'src/utils/console';
-import { element, elementHtml, injectCssFile } from 'src/utils/dom';
+import { element, elementHtml } from 'src/utils/dom';
 import { AlbumFactory } from '../album/factory';
 import { BandcampStorage } from '../storage';
 import { createReleaseYearElement } from './helper';
@@ -17,7 +16,7 @@ export class PageAlbum {
   /**
    * @throws Error if schema is not found or invalid
    */
-  private constructor(public album: Album) {
+  private constructor(public readonly album: Album) {
     elementHtml()?.classList.add('bcx-page-album');
   }
 
