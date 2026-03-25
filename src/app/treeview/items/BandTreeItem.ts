@@ -1,7 +1,7 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
-import { setTreeItemsQueryFromLabel } from '../utils';
+import { setTreeItemQueryFromLabel } from '../utils';
 import { AlbumTreeItem } from './AlbumTreeItem';
 
 export class BandTreeItem {
@@ -9,15 +9,24 @@ export class BandTreeItem {
     const treeItem = TreeItemFactory.fromBand(band);
     const children: TreeItem[] = [];
 
+    const artistsTreeItems =
+      AlbumTreeItem.createTreeItemsFromAlbumsByArtistReleases(
+        band.metadata.albums,
+      );
     children.push({
       label: 'Artists',
-      children: AlbumTreeItem.createTreeItemsFromAlbumsByArtistReleases(
-        band.metadata.albums,
+      children: artistsTreeItems.map(setTreeItemQueryFromLabel),
+    });
+
+    children.push({
+      label: 'Releases',
+      children: AlbumTreeItem.createReleasesTreeItems(band.metadata.albums).map(
+        setTreeItemQueryFromLabel,
       ),
     });
 
     treeItem.href = undefined;
-    treeItem.children = setTreeItemsQueryFromLabel(children);
+    treeItem.children = children;
 
     return treeItem;
   }
@@ -29,11 +38,12 @@ export class BandTreeItem {
     const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
       const children: TreeItem[] = band.metadata
         .albumsByYear(year)
-        .map(TreeItemFactory.fromAlbum);
+        .map(TreeItemFactory.fromAlbum)
+        .map(setTreeItemQueryFromLabel);
 
       return {
         label: year.toString(),
-        children: setTreeItemsQueryFromLabel(children),
+        children,
       };
     });
 

@@ -48,6 +48,10 @@ export class AlbumTreeItem {
       });
   }
 
+  static createReleasesTreeItems(albums: Album[]): TreeItem[] {
+    return albums.map(TreeItemFactory.fromAlbum);
+  }
+
   static createTreeItemsAlbumsByArtistNames(albums: Album[]): TreeItem[] {
     const artistNames = getArtistNamesFromAlbums(albums);
     const children = arrayUnique(artistNames)

@@ -117,14 +117,9 @@ export function updateTreeItemsCounts(treeItems: TreeItem[]): TreeItem[] {
 export function setTreeItemQueryFromLabel(treeItem: TreeItem): TreeItem {
   treeItem.query = treeItem.label;
   if (treeItem.children) {
-    setTreeItemsQueryFromLabel(treeItem.children);
+    treeItem.children.map(setTreeItemQueryFromLabel);
   }
   return treeItem;
-}
-
-export function setTreeItemsQueryFromLabel(treeItems: TreeItem[]): TreeItem[] {
-  treeItems.forEach(setTreeItemQueryFromLabel);
-  return treeItems;
 }
 
 // Check if an item matches the filter query (case-insensitive)
