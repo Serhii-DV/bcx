@@ -11,6 +11,7 @@ import { StorageKey } from '../storageKey';
 import { getUniqueArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
 import { AlbumDataCompressor, type RawAlbumData } from './compressor';
+import { ArtistFactory } from '../artist/factory';
 
 export class Album implements Storable, Compressable {
   constructor(
@@ -36,7 +37,7 @@ export class Album implements Storable, Compressable {
   ): Album {
     const albumUrl = Url.create(url);
     const albumArtist =
-      artist instanceof Artist ? artist : Artist.create(artist);
+      artist instanceof Artist ? artist : ArtistFactory.create(artist);
     const albumTitle = removeInvisibleChars(title);
     const albumId =
       typeof id === 'string' ? parseInt(id.replace('album-', '')) : id;

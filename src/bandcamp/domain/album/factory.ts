@@ -13,6 +13,7 @@ import { TrackFactory } from '../track/factory';
 import { getUniqueArtistNamesFromTracks } from '../track/helper';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
+import { ArtistFactory } from '../artist/factory';
 export class AlbumFactory {
   static fromRawData(rawData: RawAlbumData): Album {
     return Album.create(
@@ -57,7 +58,7 @@ export class AlbumFactory {
     const artist =
       artistsFromTracks.length > 1
         ? new Artist(artistsFromTracks)
-        : Artist.create(schema.byArtist.name);
+        : ArtistFactory.create(schema.byArtist.name);
 
     const albumId =
       (digitalRelease?.additionalProperty.find(

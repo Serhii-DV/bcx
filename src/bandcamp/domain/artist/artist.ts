@@ -1,13 +1,12 @@
-import { capitalizeWords, removeInvisibleChars, trim } from 'src/utils/string';
-import { ArtistMemoryCache } from './cache';
+import { capitalizeWords } from 'src/utils/string';
 
 const VARIOUS_ARTISTS = 'Various Artists';
 const VARIOUS_ARTISTS_ALIASES = [
+  VARIOUS_ARTISTS,
   'V/A',
   'VVAA',
   'Various',
   'Various Artist',
-  'Various Artists',
 ];
 
 export function isVariousArtists(name: string): boolean {
@@ -20,9 +19,6 @@ export class Artist {
   public readonly joins: string[];
   public readonly names: string[];
 
-  private _stringCache?: string;
-  private static cache = new ArtistMemoryCache();
-
   constructor(names: string[], joins: string[] = []) {
     this.names = names.map((name) => name.trim()).map(capitalizeWords);
     // Trim whitespace from joins
@@ -30,21 +26,11 @@ export class Artist {
   }
 
   get isVariousArtists(): boolean {
-    return (
-      this.names.length > 2 ||
-      (this.names.length === 1 && isVariousArtists(this.names[0]))
-    );
+    return this.names.length === 1 && isVariousArtists(this.names[0]);
   }
 
   toString(): string {
-    if (this._stringCache === undefined) {
-      if (this.names.length > 2) {
-        this._stringCache = VARIOUS_ARTISTS;
-      } else {
-        this._stringCache = this.toArray().join(' ');
-      }
-    }
-    return this._stringCache;
+    return this.toArray().join(' ');
   }
 
   toArray(): string[] {
@@ -55,28 +41,11 @@ export class Artist {
         result.push(this.joins[i]);
       }
     }
+
     return result;
   }
 
-  static create(input: string): Artist {
-    const processedInput = trim(removeInvisibleChars(input), ' -\n');
-    const cached = this.cache.get(processedInput);
-
-    if (cached) {
-      return cached;
-    }
-
-    const artist = this.parse(processedInput);
-    this.cache.set(processedInput, artist);
-
-    return artist;
-  }
-
-  static createVariousArtists(): Artist {
-    return new Artist([VARIOUS_ARTISTS]);
-  }
-
-  private static parse(input: string): Artist {
+  static parse(input: string): Artist {
     // Handle special cases
     if (input === '') {
       return new Artist([input]);
@@ -84,7 +53,7 @@ export class Artist {
 
     // Handle special case for "Various Artists"
     if (isVariousArtists(input)) {
-      return Artist.createVariousArtists();
+      return new Artist([VARIOUS_ARTISTS]);
     }
 
     // Define delimiters to split on

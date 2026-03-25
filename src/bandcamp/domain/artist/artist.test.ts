@@ -51,21 +51,21 @@ describe('ReleaseArtist', () => {
     });
   });
 
-  describe('create', () => {
+  describe('parse', () => {
     it('should split a string correctly into names and joins', () => {
-      const artist = Artist.create('Band1 & Band2 | Band3');
+      const artist = Artist.parse('Band1 & Band2 | Band3');
       expect(artist.names).toEqual(['Band1', 'Band2', 'Band3']);
       expect(artist.joins).toEqual(['&', '|']);
     });
 
     it('should handle different delimiters', () => {
-      const artist = Artist.create('A / B + C • D');
+      const artist = Artist.parse('A / B + C • D');
       expect(artist.names).toEqual(['A', 'B', 'C', 'D']);
       expect(artist.joins).toEqual(['/', '+', '•']);
     });
 
     it('should handle spaces around delimiters properly', () => {
-      const artist = Artist.create('Artist 1 Vs Artist 2');
+      const artist = Artist.parse('Artist 1 Vs Artist 2');
       expect(artist.names).toEqual(['Artist 1', 'Artist 2']);
       expect(artist.joins).toEqual(['Vs']);
     });
@@ -80,7 +80,7 @@ describe('ReleaseArtist', () => {
 
     VARIOUS_ALIASES.forEach((alias) => {
       it(`should treat "${alias}" as "Various Artists"`, () => {
-        const artist = Artist.create(alias);
+        const artist = Artist.parse(alias);
         expect(artist.names).toEqual(['Various Artists']);
         expect(artist.joins).toEqual([]);
       });
@@ -103,7 +103,7 @@ describe('ReleaseArtist', () => {
 
     delimiters.forEach((delimiter) => {
       it(`should handle "${delimiter}" separated artist names`, () => {
-        const artist = Artist.create(`Artist 1${delimiter} Artist 2`);
+        const artist = Artist.parse(`Artist 1${delimiter} Artist 2`);
         expect(artist.names).toEqual(['Artist 1', 'Artist 2']);
         expect(artist.joins).toEqual([delimiter]);
       });
