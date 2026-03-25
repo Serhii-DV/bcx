@@ -7,8 +7,7 @@ import type { QueryCountMap } from '$lib/components/bcx';
 import { Album } from '../album/album';
 import { Artwork } from '../artwork/artwork';
 import { Band } from '../band/band';
-import type { RawBandData } from '../band/compressor';
-import { BandFactory } from '../band/factory';
+import { BandMetadata } from '../band/metadata';
 import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { getArtistNamesFromTracks } from '../track/helper';
@@ -483,19 +482,12 @@ export class PageMusic {
     const linkElement = element('link[rel="image_src"]') as HTMLLinkElement;
     const artwork = Artwork.fromUrl(linkElement!.href || '');
 
-    const rawData: RawBandData = {
-      id: bandData.id,
-      name: bandData.name,
-      url: bandData.url,
-      artworkId: artwork ? artwork.id : 0,
-      metadata: {
-        created: bandData.create_date,
-        currency: bandData.currency,
-        albumIds: [],
-        trackIds: [],
-      },
-    };
-
-    return BandFactory.fromRawData(rawData);
+    return Band.create(
+      bandData.id,
+      bandData.name,
+      bandData.url,
+      artwork ? artwork.id : 0,
+      BandMetadata.create(bandData.create_date, bandData.currency),
+    );
   }
 }
