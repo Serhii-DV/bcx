@@ -1,4 +1,6 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
+import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
+import { arrayUnique } from 'src/utils/array';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
 import { ArtistTreeItem } from './ArtistTreeItem';
@@ -25,5 +27,43 @@ export class AlbumTreeItem {
     treeItem.children = children;
 
     return treeItem;
+  }
+
+  static createTreeItemsFromAlbumsByArtistReleases(
+    albums: Album[],
+  ): TreeItem[] {
+    const artists = getArtistNamesFromAlbums(albums);
+    return arrayUnique(artists)
+      .sort()
+      .map((artist) => {
+        const children: TreeItem[] = albums
+          .filter((album) => album.containsArtistName(artist))
+          .map(TreeItemFactory.fromAlbum);
+
+        return {
+          label: artist,
+          open: false,
+          children,
+        } as TreeItem;
+      });
+  }
+
+  static createTreeItemsAlbumsByArtistNames(albums: Album[]): TreeItem[] {
+    const artistNames = getArtistNamesFromAlbums(albums);
+    const children = arrayUnique(artistNames)
+      .sort()
+      .map((artist) => {
+        const artistChildren: TreeItem[] = albums
+          .filter((album) => album.artist.names.includes(artist))
+          .map(TreeItemFactory.fromAlbum);
+
+        return {
+          label: artist,
+          open: false,
+          children: artistChildren,
+        } as TreeItem;
+      });
+
+    return children;
   }
 }

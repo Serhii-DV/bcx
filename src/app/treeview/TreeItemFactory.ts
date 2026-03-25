@@ -1,9 +1,7 @@
 import { Album } from 'src/bandcamp/domain/album/album';
-import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
 import { Band } from 'src/bandcamp/domain/band/band';
 import type { Track } from 'src/bandcamp/domain/track/track';
 import { Url } from 'src/core/url';
-import { arrayUnique } from 'src/utils/array';
 import { TreeItemButtonFactory } from './buttons/factory';
 import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
@@ -58,38 +56,6 @@ export class TreeItemFactory {
     return tracks.map(TreeItemFactory.fromTrack);
   }
 
-  static createTreeItemsFromAlbumsByArtistReleases(
-    albums: Album[],
-  ): TreeItem[] {
-    const artists = getArtistNamesFromAlbums(albums);
-    return arrayUnique(artists)
-      .sort()
-      .map((artist) => {
-        const children: TreeItem[] = albums
-          .filter((album) => album.containsArtistName(artist))
-          .map(TreeItemFactory.fromAlbum);
-
-        return {
-          label: artist,
-          open: false,
-          children,
-        } as TreeItem;
-      });
-  }
-
-  static createAlbumsTreeItem(
-    albums: Album[],
-    label: string = 'Artist/Releases',
-  ): TreeItem {
-    const children = this.createTreeItemsFromAlbumsByArtistReleases(albums);
-
-    return {
-      label,
-      open: false,
-      children,
-    };
-  }
-
   static createBandYearsTreeItem(
     band: Band,
     label: string = 'Years',
@@ -110,25 +76,6 @@ export class TreeItemFactory {
       open: false,
       children,
     };
-  }
-
-  static createTreeItemsAlbumsByArtistNames(albums: Album[]): TreeItem[] {
-    const artistNames = getArtistNamesFromAlbums(albums);
-    const children = arrayUnique(artistNames)
-      .sort()
-      .map((artist) => {
-        const artistChildren: TreeItem[] = albums
-          .filter((album) => album.artist.names.includes(artist))
-          .map(TreeItemFactory.fromAlbum);
-
-        return {
-          label: artist,
-          open: false,
-          children: artistChildren,
-        } as TreeItem;
-      });
-
-    return children;
   }
 
   static fromKeywords(keywords: string[], label: string = 'Tags'): TreeItem {

@@ -9,8 +9,8 @@ import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
-import { TreeItemFactory } from '../TreeItemFactory';
 import { createLoadHandler } from '../utils';
+import { AlbumTreeItem } from './AlbumTreeItem';
 
 const WISHLIST_KEY = '/wishlist';
 
@@ -28,7 +28,7 @@ export class WishlistTreeItem {
       ),
     );
     const children: TreeItem[] =
-      TreeItemFactory.createTreeItemsAlbumsByArtistNames(albums);
+      AlbumTreeItem.createTreeItemsAlbumsByArtistNames(albums);
 
     const buttons: TreeItemButton[] = [
       createWishlistOpenTreeItemButton(username),
