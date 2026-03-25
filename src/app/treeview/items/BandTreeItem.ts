@@ -25,6 +25,7 @@ export class BandTreeItem {
       ),
     });
 
+    treeItem.open = true;
     treeItem.href = undefined;
     treeItem.children = children;
 

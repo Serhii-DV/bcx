@@ -26,7 +26,7 @@ export class TreeItemFactory {
     return {
       label: album.toString(),
       image: album.artwork.tinySizeUrl,
-      keywords: album.artist.names,
+      keywords: album.artistNames,
       href,
       buttons,
     };

@@ -1,7 +1,9 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { Url } from 'src/core/url';
+import { arrayUnique } from 'src/utils/array';
 import { removeInvisibleChars } from 'src/utils/string';
 import { Artist, isVariousArtists } from '../artist/artist';
+import { ArtistFactory } from '../artist/factory';
 import { containsArtistName } from '../artist/helper';
 import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
@@ -11,7 +13,6 @@ import { StorageKey } from '../storageKey';
 import { getUniqueArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
 import { AlbumDataCompressor, type RawAlbumData } from './compressor';
-import { ArtistFactory } from '../artist/factory';
 
 export class Album implements Storable, Compressable {
   constructor(
@@ -58,19 +59,19 @@ export class Album implements Storable, Compressable {
     );
   }
 
+  get artistNames(): string[] {
+    return arrayUnique([
+      ...this.artist.names,
+      ...getUniqueArtistNamesFromTracks(this.tracks),
+    ]);
+  }
+
   containsArtistName(name: string): boolean {
     if (isVariousArtists(name) && this.artist.isVariousArtists) {
       return true;
     }
 
-    const hasArtistName = containsArtistName(this.artist.names, name);
-
-    if (!hasArtistName) {
-      const trackArtistNames = getUniqueArtistNamesFromTracks(this.tracks);
-      return containsArtistName(trackArtistNames, name);
-    }
-
-    return hasArtistName;
+    return containsArtistName(this.artistNames, name);
   }
 
   get compressor(): AlbumDataCompressor {
