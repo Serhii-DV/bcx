@@ -5,7 +5,6 @@ import { Url } from 'src/core/url';
 import { TreeItemButtonFactory } from './buttons/factory';
 import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
-import { setTreeItemsQueryFromLabel } from './utils';
 
 export class TreeItemFactory {
   static fromBand(band: Band): TreeItem {
@@ -54,28 +53,6 @@ export class TreeItemFactory {
 
   static fromTracks(tracks: Track[]): TreeItem[] {
     return tracks.map(TreeItemFactory.fromTrack);
-  }
-
-  static createBandYearsTreeItem(
-    band: Band,
-    label: string = 'Years',
-  ): TreeItem {
-    const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
-      const children: TreeItem[] = band.metadata
-        .albumsByYear(year)
-        .map(TreeItemFactory.fromAlbum);
-
-      return {
-        label: year.toString(),
-        children: setTreeItemsQueryFromLabel(children),
-      };
-    });
-
-    return {
-      label,
-      open: false,
-      children,
-    };
   }
 
   static fromKeywords(keywords: string[], label: string = 'Tags'): TreeItem {
