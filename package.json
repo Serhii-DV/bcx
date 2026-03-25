@@ -13,7 +13,8 @@
     "format": "biome format --write",
     "svelte-check": "svelte-check --tsconfig ./tsconfig.json",
     "setup-git-hooks": "git config core.hooksPath .githooks",
-    "test": "rstest"
+    "test": "rstest",
+    "test-dev": "rstest --watch"
   },
   "keywords": [],
   "author": "",

@@ -35,6 +35,10 @@ dev: ## Start development server
 test: ## Run tests
 	$(PNPM_BIN) test
 
+.PHONY: test-dev
+test-dev: ## Run tests in watch mode
+	$(PNPM_BIN) test-dev
+
 .PHONY: format
 format: ## Format the code
 	$(PNPM_BIN) format
