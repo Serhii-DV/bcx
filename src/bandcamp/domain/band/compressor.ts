@@ -1,6 +1,10 @@
 import type { CompressedData, RawData, RawDataCompressor } from '../compressor';
 import type { UrlCompressor } from '../url/compressor';
-import type { RawBandMetadata } from './metadataCompressor';
+import type {
+  BandMetadataCompressor,
+  CompressedBandMetadata,
+  RawBandMetadata,
+} from './metadataCompressor';
 
 export interface RawBandData extends RawData {
   id: number;
@@ -15,11 +19,14 @@ export interface CompressedBandData extends CompressedData {
   n: string; // name
   u: string; // compressed url
   a: number; // artworkId
-  m: RawBandMetadata; // metadata
+  m: CompressedBandMetadata; // metadata
 }
 
 export class BandDataCompressor implements RawDataCompressor {
-  constructor(private urlCompressor: UrlCompressor) {}
+  constructor(
+    private urlCompressor: UrlCompressor,
+    private bandMetadataCompressor: BandMetadataCompressor,
+  ) {}
 
   compress(data: RawBandData): CompressedBandData {
     return {
@@ -27,7 +34,7 @@ export class BandDataCompressor implements RawDataCompressor {
       n: data.name,
       u: this.urlCompressor.compress(data.url),
       a: data.artworkId,
-      m: data.metadata,
+      m: this.bandMetadataCompressor.compress(data.metadata),
     };
   }
 
@@ -37,7 +44,7 @@ export class BandDataCompressor implements RawDataCompressor {
       name: data.n,
       url: this.urlCompressor.decompress(data.u),
       artworkId: data.a,
-      metadata: data.m,
+      metadata: this.bandMetadataCompressor.decompress(data.m),
     };
   }
 }

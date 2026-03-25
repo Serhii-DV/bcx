@@ -12,7 +12,10 @@ export const urlCompressor = new UrlCompressor();
 export const priceDataCompressor = new PriceDataCompressor();
 export const metadataCompressor = new MetadataCompressor(priceDataCompressor);
 export const bandMetadataCompressor = new BandMetadataCompressor();
-export const bandDataCompressor = new BandDataCompressor(urlCompressor);
+export const bandDataCompressor = new BandDataCompressor(
+  urlCompressor,
+  bandMetadataCompressor,
+);
 export const albumDataCompressor = new AlbumDataCompressor(
   urlCompressor,
   metadataCompressor,
