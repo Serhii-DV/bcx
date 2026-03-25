@@ -9,11 +9,6 @@ describe('ReleaseArtist', () => {
       expect(artist.joins).toEqual(['&']);
     });
 
-    it('should trim join strings', () => {
-      const artist = new Artist(['Artist A', 'Artist B'], [' | ']);
-      expect(artist.joins).toEqual(['|']);
-    });
-
     it('should handle empty joins array', () => {
       const artist = new Artist(['Solo Artist']);
       expect(artist.names).toEqual(['Solo Artist']);
@@ -23,7 +18,7 @@ describe('ReleaseArtist', () => {
 
   describe('toString', () => {
     it('should return the correct artist string', () => {
-      const artist = new Artist(['Band One', 'Band Two'], [' & ']);
+      const artist = new Artist(['Band One', 'Band Two'], ['&']);
       expect(artist.toString()).toBe('Band One & Band Two');
     });
 
@@ -31,17 +26,11 @@ describe('ReleaseArtist', () => {
       const artist = new Artist(['Solo Musician']);
       expect(artist.toString()).toBe('Solo Musician');
     });
-
-    it('should cache the result after the first call', () => {
-      const artist = new Artist(['Artist1', 'Artist2'], [' / ']);
-      expect(artist.toString()).toBe('Artist1 / Artist2');
-      expect(artist.toString()).toBe('Artist1 / Artist2'); // Check caching behavior
-    });
   });
 
   describe('toArray', () => {
     it('should return names and joins interleaved', () => {
-      const artist = new Artist(['A', 'B', 'C'], [' & ', ' feat. ']);
+      const artist = new Artist(['A', 'B', 'C'], ['&', 'feat.']);
       expect(artist.toArray()).toEqual(['A', '&', 'B', 'feat.', 'C']);
     });
 
@@ -70,6 +59,12 @@ describe('ReleaseArtist', () => {
       expect(artist.joins).toEqual(['Vs']);
     });
 
+    it('should convert artist names to title case', () => {
+      const artist = Artist.parse('artist one & artist two');
+      expect(artist.names).toEqual(['Artist One', 'Artist Two']);
+      expect(artist.joins).toEqual(['&']);
+    });
+
     const VARIOUS_ALIASES = [
       'V/A',
       'VVAA',
@@ -83,6 +78,7 @@ describe('ReleaseArtist', () => {
         const artist = Artist.parse(alias);
         expect(artist.names).toEqual(['Various Artists']);
         expect(artist.joins).toEqual([]);
+        expect(artist.isVariousArtists).toBe(true);
       });
     });
 
