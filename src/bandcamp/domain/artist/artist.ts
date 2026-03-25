@@ -22,8 +22,14 @@ export class Artist {
     return this.names.length === 1 && isVariousArtists(this.names[0]);
   }
 
+  get asString(): string {
+    return this.toString();
+  }
+
   toString(): string {
-    return this.toArray().join(' ');
+    return this.toArray().join(' ')
+      // Replace multiple spaces around joins with a single space
+      .replace(/\s*,\s*/g, ', ');
   }
 
   toArray(): string[] {

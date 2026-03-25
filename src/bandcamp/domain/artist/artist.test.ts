@@ -17,9 +17,14 @@ describe('ReleaseArtist', () => {
   });
 
   describe('toString', () => {
-    it('should return the correct artist string', () => {
+    it('should return the correct artist string with joins', () => {
       const artist = new Artist(['Band One', 'Band Two'], ['&']);
       expect(artist.toString()).toBe('Band One & Band Two');
+    });
+
+    it('should return the correct artist string with commas', () => {
+      const artist = new Artist(['Artist A', 'Artist B', 'Artist C'], [',', ',']);
+      expect(artist.toString()).toBe('Artist A, Artist B, Artist C');
     });
 
     it('should return a single artist name if no joins exist', () => {
