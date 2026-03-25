@@ -21,7 +21,7 @@ install: ## Install dependencies
 .PHONY: setup
 setup: ## Setup development environment
 	$(MAKE) install
-	$(PNPM_BIN) setup
+	$(PNPM_BIN) setup-git-hooks
 
 .PHONY: build
 build: ## Build production assets
