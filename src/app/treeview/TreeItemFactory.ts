@@ -32,6 +32,12 @@ export class TreeItemFactory {
     };
   }
 
+  static fromArtistName(artistName: string): TreeItem {
+    return {
+      label: artistName,
+    };
+  }
+
   static fromDate(date: Date): TreeItem {
     const label = date.toLocaleDateString(undefined, {
       year: 'numeric',

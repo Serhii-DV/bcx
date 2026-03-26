@@ -1,4 +1,5 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
+import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
 import { setTreeItemQueryFromLabel } from '../utils';
@@ -38,9 +39,9 @@ export class BandTreeItem {
   }
 
   private static createReleasesTreeItem(band: Band): TreeItem {
-    const children: TreeItem[] = AlbumTreeItem.createAlbumsTreeItems(
-      band.metadata.albums,
-    ).map(setTreeItemQueryFromLabel);
+    const children: TreeItem[] = band.metadata.albums
+      .map(AlbumTreeItemFactory.createWithChildren)
+      .map(setTreeItemQueryFromLabel);
 
     return {
       label: 'Releases',
