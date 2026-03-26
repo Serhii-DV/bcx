@@ -6,36 +6,41 @@ import { AlbumTreeItem } from './AlbumTreeItem';
 
 export class BandTreeItem {
   static create(band: Band): TreeItem {
-    const treeItem = TreeItemFactory.fromBand(band);
-    const children: TreeItem[] = [];
-
     const artistsTreeItems =
       AlbumTreeItem.createTreeItemsFromAlbumsByArtistReleases(
         band.metadata.albums,
       );
-    children.push({
+    const artistTreeItem: TreeItem = {
       label: 'Artists',
       children: artistsTreeItems.map(setTreeItemQueryFromLabel),
-    });
-
-    children.push({
+    };
+    const releasesTreeItem: TreeItem = {
       label: 'Releases',
       children: AlbumTreeItem.createReleasesTreeItems(band.metadata.albums).map(
         setTreeItemQueryFromLabel,
       ),
-    });
+    };
+
+    const treeItem = TreeItemFactory.fromBand(band);
 
     treeItem.open = true;
     treeItem.href = undefined;
-    treeItem.children = children;
+    treeItem.children = [releasesTreeItem, artistTreeItem];
+
+    const yearsTreeItem = this.createBandYearsTreeItem(band);
+    if (yearsTreeItem) {
+      treeItem.children.push(yearsTreeItem);
+    }
+
+    treeItem.children.push(this.createBandInfo(band));
 
     return treeItem;
   }
 
-  static createBandYearsTreeItem(
+  private static createBandYearsTreeItem(
     band: Band,
     label: string = 'Years',
-  ): TreeItem {
+  ): TreeItem | undefined {
     const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
       const children: TreeItem[] = band.metadata
         .albumsByYear(year)
@@ -48,10 +53,28 @@ export class BandTreeItem {
       };
     });
 
+    if (children.length === 0) {
+      return undefined;
+    }
+
     return {
       label,
       open: false,
       children,
+    };
+  }
+
+  private static createBandInfo(band: Band): TreeItem {
+    return {
+      label: 'Information',
+      children: [
+        {
+          label: `Created: ${band.metadata.created.toLocaleDateString()}`,
+        },
+        {
+          label: `Currency: ${band.metadata.currency}`,
+        },
+      ],
     };
   }
 }
