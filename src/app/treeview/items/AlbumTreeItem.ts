@@ -48,7 +48,7 @@ export class AlbumTreeItem {
       });
   }
 
-  static createReleasesTreeItems(albums: Album[]): TreeItem[] {
+  static createAlbumsTreeItems(albums: Album[]): TreeItem[] {
     return albums.map(TreeItemFactory.fromAlbum);
   }
 

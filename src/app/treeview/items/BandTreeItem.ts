@@ -6,26 +6,14 @@ import { AlbumTreeItem } from './AlbumTreeItem';
 
 export class BandTreeItem {
   static create(band: Band): TreeItem {
-    const artistsTreeItems =
-      AlbumTreeItem.createTreeItemsFromAlbumsByArtistReleases(
-        band.metadata.albums,
-      );
-    const artistTreeItem: TreeItem = {
-      label: 'Artists',
-      children: artistsTreeItems.map(setTreeItemQueryFromLabel),
-    };
-    const releasesTreeItem: TreeItem = {
-      label: 'Releases',
-      children: AlbumTreeItem.createReleasesTreeItems(band.metadata.albums).map(
-        setTreeItemQueryFromLabel,
-      ),
-    };
-
     const treeItem = TreeItemFactory.fromBand(band);
 
     treeItem.open = true;
     treeItem.href = undefined;
-    treeItem.children = [releasesTreeItem, artistTreeItem];
+    treeItem.children = [
+      this.createReleasesTreeItem(band),
+      this.createArtistsTreeItem(band),
+    ];
 
     const yearsTreeItem = this.createBandYearsTreeItem(band);
     if (yearsTreeItem) {
@@ -35,6 +23,29 @@ export class BandTreeItem {
     treeItem.children.push(this.createBandInfo(band));
 
     return treeItem;
+  }
+
+  private static createArtistsTreeItem(band: Band): TreeItem {
+    const children: TreeItem[] =
+      AlbumTreeItem.createTreeItemsFromAlbumsByArtistReleases(
+        band.metadata.albums,
+      ).map(setTreeItemQueryFromLabel);
+
+    return {
+      label: 'Artists',
+      children,
+    };
+  }
+
+  private static createReleasesTreeItem(band: Band): TreeItem {
+    const children: TreeItem[] = AlbumTreeItem.createAlbumsTreeItems(
+      band.metadata.albums,
+    ).map(setTreeItemQueryFromLabel);
+
+    return {
+      label: 'Releases',
+      children,
+    };
   }
 
   private static createBandYearsTreeItem(
