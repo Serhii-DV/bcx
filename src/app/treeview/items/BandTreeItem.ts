@@ -11,17 +11,27 @@ export class BandTreeItem {
 
     treeItem.open = true;
     treeItem.href = undefined;
-    treeItem.children = [
-      this.createReleasesTreeItem(band),
-      this.createArtistsTreeItem(band),
-    ];
 
-    const yearsTreeItem = this.createBandYearsTreeItem(band);
-    if (yearsTreeItem) {
-      treeItem.children.push(yearsTreeItem);
+    if (band.hasReleases) {
+      treeItem.children = [
+        this.createReleasesTreeItem(band),
+        this.createArtistsTreeItem(band),
+      ];
+
+      const yearsTreeItem = this.createBandYearsTreeItem(band);
+      if (yearsTreeItem) {
+        treeItem.children.push(yearsTreeItem);
+      }
+
+      treeItem.children.push(this.createBandInfo(band));
+    } else {
+      treeItem.children = [
+        {
+          label: 'Open Bandcamp Page',
+          href: band.url.toString(),
+        },
+      ];
     }
-
-    treeItem.children.push(this.createBandInfo(band));
 
     return treeItem;
   }
