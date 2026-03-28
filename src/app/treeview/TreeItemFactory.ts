@@ -7,6 +7,16 @@ import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 
 export class TreeItemFactory {
+  static createLink(label: string, href: string): TreeItem {
+    const buttons = createExternalLinkButtons(href);
+
+    return {
+      label,
+      href,
+      buttons,
+    };
+  }
+
   static fromBand(band: Band): TreeItem {
     const href = band.url?.toString();
     const buttons = createExternalLinkButtons(href);

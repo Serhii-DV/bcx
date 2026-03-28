@@ -23,7 +23,7 @@ export class MainTreeData {
     }
 
     if (band) {
-      treeData.add(BandTreeItem.create(band));
+      treeData.add(BandTreeItem.createForMusicPage(band));
     }
 
     if (bandcampPageData) {

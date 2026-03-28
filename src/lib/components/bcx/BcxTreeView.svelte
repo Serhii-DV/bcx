@@ -3,9 +3,6 @@ import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
-import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
-import { currentPageUrl } from 'src/core/shared';
-import { Url } from 'src/core/url';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 
@@ -126,41 +123,30 @@ function handleItemClick(
 
   console.log('[BcxTreeView]', '[handleItemClick]', item, event);
 
+  focusedPath = item.path ?? null;
+
   if (item.onClick) {
     item.onClick(event?.currentTarget as HTMLElement);
     return;
   }
 
-  focusedPath = item.path ?? null;
-  let handleDefaultClick = true;
+  if (item.query) {
+    musicFilterStore.setSearchQuery(item.query);
+    return;
+  }
 
   if (item.href) {
-    const itemUrl = Url.create(item.href);
-    const handleSearchQueryClick =
-      isBandcampMusicUrl(currentPageUrl) &&
-      currentPageUrl.hasSameHostname(itemUrl);
-    handleDefaultClick = !handleSearchQueryClick;
-
     // Prevent default navigation for music items and set the search query instead
     if (event?.currentTarget instanceof HTMLAnchorElement) {
       event?.preventDefault();
     }
 
-    if (handleDefaultClick) {
-      // Handle default navigation for non-music pages (e.g., open in new tab)
-      // For keyboard events, manually navigate since we can't rely on default browser behavior
-      if (
-        (event instanceof KeyboardEvent || event instanceof MouseEvent) &&
-        item.href
-      ) {
-        window.open(item.href, '_self');
-      }
-      return;
+    // Handle default navigation for non-music pages (e.g., open in new tab)
+    // For keyboard events, manually navigate since we can't rely on default browser behavior
+    if (event instanceof KeyboardEvent || event instanceof MouseEvent) {
+      window.open(item.href, '_self');
     }
-  }
-
-  if (item.query) {
-    musicFilterStore.setSearchQuery(item.query);
+    return;
   }
 }
 

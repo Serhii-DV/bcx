@@ -6,17 +6,18 @@ import { setTreeItemQueryFromLabel } from '../utils';
 import { AlbumTreeItem } from './AlbumTreeItem';
 
 export class BandTreeItem {
-  static create(band: Band): TreeItem {
+  static createForMusicPage(band: Band): TreeItem {
     const treeItem = TreeItemFactory.fromBand(band);
 
     treeItem.open = true;
     treeItem.href = undefined;
 
     if (band.hasReleases) {
-      treeItem.children = [
-        this.createReleasesTreeItem(band),
-        this.createArtistsTreeItem(band),
-      ];
+      const releasesTreeItem = this.createReleasesTreeItem(band);
+      const artistsTreeItem = this.createArtistsTreeItem(band);
+      artistsTreeItem.children?.map(setTreeItemQueryFromLabel);
+
+      treeItem.children = [releasesTreeItem, artistsTreeItem];
 
       const yearsTreeItem = this.createBandYearsTreeItem(band);
       if (yearsTreeItem) {
@@ -26,10 +27,31 @@ export class BandTreeItem {
       treeItem.children.push(this.createBandInfo(band));
     } else {
       treeItem.children = [
-        {
-          label: 'Open Bandcamp Page',
-          href: band.url.toString(),
-        },
+        TreeItemFactory.createLink('Open Bandcamp Page', band.url.toString()),
+      ];
+    }
+
+    return treeItem;
+  }
+
+  static createForAlbumPage(band: Band): TreeItem {
+    const treeItem = TreeItemFactory.fromBand(band);
+
+    if (band.hasReleases) {
+      const releasesTreeItem = this.createReleasesTreeItem(band);
+      const artistsTreeItem = this.createArtistsTreeItem(band);
+
+      treeItem.children = [releasesTreeItem, artistsTreeItem];
+
+      const yearsTreeItem = this.createBandYearsTreeItem(band);
+      if (yearsTreeItem) {
+        treeItem.children.push(yearsTreeItem);
+      }
+
+      treeItem.children.push(this.createBandInfo(band));
+    } else {
+      treeItem.children = [
+        TreeItemFactory.createLink('Open Bandcamp Page', band.url.toString()),
       ];
     }
 
@@ -40,7 +62,7 @@ export class BandTreeItem {
     const children: TreeItem[] =
       AlbumTreeItem.createTreeItemsFromAlbumsByArtistReleases(
         band.metadata.albums,
-      ).map(setTreeItemQueryFromLabel);
+      );
 
     return {
       label: 'Artists',
@@ -49,9 +71,9 @@ export class BandTreeItem {
   }
 
   private static createReleasesTreeItem(band: Band): TreeItem {
-    const children: TreeItem[] = band.metadata.albums
-      .map(AlbumTreeItemFactory.createWithChildren)
-      .map(setTreeItemQueryFromLabel);
+    const children: TreeItem[] = band.metadata.albums.map(
+      AlbumTreeItemFactory.createWithChildren,
+    );
 
     return {
       label: 'Releases',
