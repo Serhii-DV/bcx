@@ -1,61 +1,62 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
+import { TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
 import { setTreeItemQueryFromLabel } from '../utils';
 import { AlbumTreeItem } from './AlbumTreeItem';
 
 export class BandTreeItem {
   static createForMusicPage(band: Band): TreeItem {
-    const treeItem = TreeItemFactory.fromBand(band);
-
-    treeItem.open = true;
-    treeItem.href = undefined;
+    const treeItemBuilder = new TreeItemBuilder(TreeItemFactory.fromBand(band));
+    treeItemBuilder.withOpen(true).withoutHref();
 
     if (band.hasReleases) {
       const releasesTreeItem = this.createReleasesTreeItem(band);
       const artistsTreeItem = this.createArtistsTreeItem(band);
       artistsTreeItem.children?.map(setTreeItemQueryFromLabel);
 
-      treeItem.children = [releasesTreeItem, artistsTreeItem];
+      const children = [releasesTreeItem, artistsTreeItem];
 
       const yearsTreeItem = this.createBandYearsTreeItem(band);
       if (yearsTreeItem) {
-        treeItem.children.push(yearsTreeItem);
+        children.push(yearsTreeItem);
       }
 
-      treeItem.children.push(this.createBandInfo(band));
+      children.push(this.createBandInfo(band));
+
+      treeItemBuilder.withChildren(children);
     } else {
-      treeItem.children = [
+      treeItemBuilder.withChildren([
         TreeItemFactory.createLink('Open Bandcamp Page', band.url.toString()),
-      ];
+      ]);
     }
 
-    return treeItem;
+    return treeItemBuilder.build();
   }
 
   static createForAlbumPage(band: Band): TreeItem {
-    const treeItem = TreeItemFactory.fromBand(band);
+    const treeItemBuilder = new TreeItemBuilder(TreeItemFactory.fromBand(band));
 
     if (band.hasReleases) {
       const releasesTreeItem = this.createReleasesTreeItem(band);
       const artistsTreeItem = this.createArtistsTreeItem(band);
 
-      treeItem.children = [releasesTreeItem, artistsTreeItem];
+      const children = [releasesTreeItem, artistsTreeItem];
 
       const yearsTreeItem = this.createBandYearsTreeItem(band);
       if (yearsTreeItem) {
-        treeItem.children.push(yearsTreeItem);
+        children.push(yearsTreeItem);
       }
 
-      treeItem.children.push(this.createBandInfo(band));
+      treeItemBuilder.withChildren(children);
     } else {
-      treeItem.children = [
+      treeItemBuilder.withChildren([
         TreeItemFactory.createLink('Open Bandcamp Page', band.url.toString()),
-      ];
+      ]);
     }
 
-    return treeItem;
+    return treeItemBuilder.build();
   }
 
   private static createArtistsTreeItem(band: Band): TreeItem {

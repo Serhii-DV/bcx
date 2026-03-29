@@ -2,7 +2,7 @@ import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 
 export class TreeItemBuilder {
-  private item: Partial<TreeItem> = {};
+  private item: TreeItem = {};
 
   constructor(existingItem?: TreeItem) {
     if (existingItem) {
@@ -22,6 +22,14 @@ export class TreeItemBuilder {
 
   withChildren(children: TreeItem[]): this {
     this.item.children = children;
+    return this;
+  }
+
+  addChild(child: TreeItem): this {
+    if (!this.item.children) {
+      this.item.children = [];
+    }
+    this.item.children.push(child);
     return this;
   }
 
@@ -72,6 +80,11 @@ export class TreeItemBuilder {
 
   withOnClick(onClick: (element: HTMLElement) => void): this {
     this.item.onClick = onClick;
+    return this;
+  }
+
+  apply(updater: (item: TreeItem) => void): this {
+    updater(this.item);
     return this;
   }
 
