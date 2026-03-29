@@ -20,12 +20,17 @@ export class TreeItemBuilder {
     return this;
   }
 
-  withChildren(children: TreeItem[]): this {
-    this.item.children = children;
+  withChildren(children?: Array<TreeItem | undefined>): this {
+    this.item.children = children?.filter(
+      (child): child is TreeItem => child !== undefined,
+    );
     return this;
   }
 
-  addChild(child: TreeItem): this {
+  addChild(child?: TreeItem): this {
+    if (!child) {
+      return this;
+    }
     if (!this.item.children) {
       this.item.children = [];
     }

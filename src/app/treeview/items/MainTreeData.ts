@@ -1,6 +1,7 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { bandcampPageData } from 'src/bandcamp/domain/shared';
+import type { Url } from 'src/core/url';
 import { TreeData } from '../TreeData';
 import { AlbumTreeItem } from './AlbumTreeItem';
 import { BandTreeItem } from './BandTreeItem';
@@ -13,6 +14,7 @@ import { WishlistTreeItem } from './WishlistTreeItem';
 
 export class MainTreeData {
   static async create(
+    url: Url,
     band: Band | null,
     album: Album | null,
   ): Promise<TreeData> {
@@ -23,7 +25,7 @@ export class MainTreeData {
     }
 
     if (band) {
-      treeData.add(BandTreeItem.createForMusicPage(band));
+      treeData.add(BandTreeItem.create(band, url));
     }
 
     if (bandcampPageData) {

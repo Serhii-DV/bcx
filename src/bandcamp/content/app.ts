@@ -55,7 +55,7 @@ onDOMReady(async () => {
       BandcampStorage.saveTrack(trackPage.track);
     }
 
-    const treeData = await MainTreeData.create(band, album);
+    const treeData = await MainTreeData.create(currentPageUrl, band, album);
 
     mount(App, {
       target: shadowRoot,
