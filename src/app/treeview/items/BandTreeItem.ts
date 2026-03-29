@@ -72,13 +72,11 @@ export class BandTreeItem {
   }
 
   private static createReleasesTreeItem(band: Band): TreeItem {
-    const children: TreeItem[] = band.metadata.albums.map(
-      AlbumTreeItemFactory.createWithChildren,
-    );
-
     return {
       label: 'Releases',
-      children,
+      children: band.metadata.albums.map(
+        AlbumTreeItemFactory.createWithActionItems,
+      ),
     };
   }
 
