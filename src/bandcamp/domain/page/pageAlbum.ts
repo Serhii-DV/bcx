@@ -2,13 +2,11 @@ import { Album } from 'src/bandcamp/domain/album/album';
 import { console } from 'src/utils/console';
 import { element, elementHtml } from 'src/utils/dom';
 import { AlbumFactory } from '../album/factory';
+import type { Band } from '../band/band';
+import { BandFactory } from '../band/factory';
 import { BandcampStorage } from '../storage';
 import { createReleaseYearElement } from './helper';
-import {
-  type AlbumRelease,
-  getMusicAlbumSchema,
-  type MusicAlbumSchema,
-} from './schema';
+import { getMusicAlbumSchema } from './schema';
 
 let pageAlbum: PageAlbum | null = null;
 
@@ -16,7 +14,10 @@ export class PageAlbum {
   /**
    * @throws Error if schema is not found or invalid
    */
-  private constructor(public readonly album: Album) {
+  private constructor(
+    public readonly album: Album,
+    public readonly band: Band,
+  ) {
     elementHtml()?.classList.add('bcx-page-album');
   }
 
@@ -31,12 +32,17 @@ export class PageAlbum {
     console.log('[PageAlbum]', '[Schema]', schema);
 
     const album = AlbumFactory.createFromSchema(schema!);
-    pageAlbum = new PageAlbum(album);
+    const bands = await BandcampStorage.getBands([album.bandId]);
+    const band = bands[0] ?? BandFactory.fromMusicAlbumSchema(schema!);
+
+    pageAlbum = new PageAlbum(album, band);
     await pageAlbum.loadTracksFromStorage();
+    pageAlbum.appendAlbumYear();
 
     console.log('[PageAlbum]', '[Album]', pageAlbum.album);
+    console.log('[PageAlbum]', '[Band]', pageAlbum.band);
 
-    pageAlbum.appendAlbumYear();
+    await BandcampStorage.saveAlbum(album);
 
     return pageAlbum;
   }
@@ -58,38 +64,5 @@ export class PageAlbum {
     );
 
     trackTitleElement.insertAdjacentElement('afterend', releaseYearElement);
-  }
-
-  /**
-   * Extract pricing information from schema
-   */
-  static getPricingFromSchema(schema: MusicAlbumSchema) {
-    return schema.albumRelease.map((release: AlbumRelease) => ({
-      format: release.musicReleaseFormat,
-      name: release.name,
-      price: release.offers.price,
-      currency: release.offers.priceCurrency,
-      availability: release.offers.availability,
-      description: release.description,
-      images: release.image,
-    }));
-  }
-
-  /**
-   * Extract publisher/label information from schema
-   */
-  static getPublisherFromSchema(schema: MusicAlbumSchema) {
-    return {
-      name: schema.publisher.name,
-      url: schema.publisher['@id'],
-      description: schema.publisher.description,
-      genre: schema.publisher.genre,
-      location: schema.publisher.foundingLocation.name,
-      image: schema.publisher.image,
-      socialLinks: schema.publisher.mainEntityOfPage.map((page) => ({
-        name: page.name,
-        url: page.url,
-      })),
-    };
   }
 }

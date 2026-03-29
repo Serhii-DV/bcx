@@ -46,9 +46,7 @@ onDOMReady(async () => {
       band = pageMusic.band;
     } else if (isBandcampAlbumUrl(currentPageUrl)) {
       const pageAlbum = await PageAlbum.init();
-      await BandcampStorage.saveAlbum(pageAlbum.album);
-      const bands = await BandcampStorage.getBands([pageAlbum.album.bandId]);
-      band = bands[0];
+      band = pageAlbum.band;
       album = pageAlbum.album;
     } else if (isBandcampTrackUrl(currentPageUrl)) {
       const trackPage = new PageTrack();
