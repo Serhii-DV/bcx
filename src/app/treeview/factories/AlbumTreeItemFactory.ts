@@ -1,6 +1,7 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
 import { arrayUnique } from 'src/utils/array';
+import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
@@ -8,7 +9,7 @@ import { setTreeItemQueryFromLabel } from '../utils';
 
 export class AlbumTreeItemFactory {
   static create(album: Album, isWithActions: boolean = false): TreeItem {
-    const builder = new TreeItemBuilder(TreeItemFactory.fromAlbum(album));
+    const builder = this.createBuilder(album);
 
     if (isWithActions) {
       if (album.artist.names.length) {
@@ -65,5 +66,32 @@ export class AlbumTreeItemFactory {
           children,
         } as TreeItem;
       });
+  }
+
+  static async createWithInformation(album: Album): Promise<TreeItem> {
+    const builder = this.createBuilder(album);
+
+    builder.withoutHref();
+    builder.addChild(
+      TreeItemFactory.text(`Released: ${album.metadata?.publishedDate}`),
+    );
+    builder.addChild(
+      TreeItemFactory.items(
+        'Artists',
+        await ArtistTreeItem.createTreeItems(album.artist),
+      ),
+    );
+    builder.addChild(
+      TreeItemFactory.items('Tracks', TreeItemFactory.fromTracks(album.tracks)),
+    );
+    builder.addChild(
+      TreeItemFactory.list('Keywords', album.metadata?.keywords || []),
+    );
+
+    return builder.build();
+  }
+
+  private static createBuilder(album: Album): TreeItemBuilder {
+    return new TreeItemBuilder(TreeItemFactory.fromAlbum(album));
   }
 }

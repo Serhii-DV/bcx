@@ -7,6 +7,24 @@ import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 
 export class TreeItemFactory {
+  static text(label: string): TreeItem {
+    return {
+      label,
+    };
+  }
+
+  static items(label: string, children: TreeItem[]): TreeItem {
+    return {
+      label,
+      open: false,
+      children,
+    };
+  }
+
+  static list(label: string, strings: string[]): TreeItem {
+    return this.items(label, strings.map(this.text));
+  }
+
   static createLink(label: string, href: string): TreeItem {
     const buttons = createExternalLinkButtons(href);
 
@@ -69,18 +87,6 @@ export class TreeItemFactory {
 
   static fromTracks(tracks: Track[]): TreeItem[] {
     return tracks.map(TreeItemFactory.fromTrack);
-  }
-
-  static fromKeywords(keywords: string[], label: string = 'Tags'): TreeItem {
-    const children: TreeItem[] = keywords.map((keyword) => ({
-      label: keyword,
-    }));
-
-    return {
-      label,
-      open: false,
-      children,
-    };
   }
 
   static fromHistoryItem(item: chrome.history.HistoryItem): TreeItem {

@@ -2,8 +2,8 @@ import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { bandcampPageData } from 'src/bandcamp/domain/shared';
 import type { Url } from 'src/core/url';
+import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TreeData } from '../TreeData';
-import { AlbumTreeItem } from './AlbumTreeItem';
 import { BandTreeItem } from './BandTreeItem';
 import { CollectionTreeItem } from './CollectionTreeItem';
 import { FanPageDataTreeItem } from './FanPageDataTreeItem';
@@ -21,7 +21,7 @@ export class MainTreeData {
     const treeData = new TreeData();
 
     if (album) {
-      treeData.add(await AlbumTreeItem.create(album));
+      treeData.add(await AlbumTreeItemFactory.createWithInformation(album));
     }
 
     if (band) {
