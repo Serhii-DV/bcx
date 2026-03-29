@@ -29,25 +29,6 @@ export class AlbumTreeItem {
     return treeItem;
   }
 
-  static createTreeItemsFromAlbumsByArtistReleases(
-    albums: Album[],
-  ): TreeItem[] {
-    const artists = getArtistNamesFromAlbums(albums);
-    return arrayUnique(artists)
-      .sort()
-      .map((artist) => {
-        const children: TreeItem[] = albums
-          .filter((album) => album.containsArtistName(artist))
-          .map(TreeItemFactory.fromAlbum);
-
-        return {
-          label: artist,
-          open: false,
-          children,
-        } as TreeItem;
-      });
-  }
-
   static createTreeItemsAlbumsByArtistNames(albums: Album[]): TreeItem[] {
     const artistNames = getArtistNamesFromAlbums(albums);
     const children = arrayUnique(artistNames)

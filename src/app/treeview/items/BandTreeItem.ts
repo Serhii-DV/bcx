@@ -3,8 +3,6 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
-import { setTreeItemQueryFromLabel } from '../utils';
-import { AlbumTreeItem } from './AlbumTreeItem';
 
 export class BandTreeItem {
   static createForMusicPage(band: Band): TreeItem {
@@ -14,8 +12,6 @@ export class BandTreeItem {
     if (band.hasReleases) {
       const releasesTreeItem = this.createReleasesTreeItem(band);
       const artistsTreeItem = this.createArtistsTreeItem(band);
-      artistsTreeItem.children?.map(setTreeItemQueryFromLabel);
-
       const children = [releasesTreeItem, artistsTreeItem];
 
       const yearsTreeItem = this.createBandYearsTreeItem(band);
@@ -60,14 +56,11 @@ export class BandTreeItem {
   }
 
   private static createArtistsTreeItem(band: Band): TreeItem {
-    const children: TreeItem[] =
-      AlbumTreeItem.createTreeItemsFromAlbumsByArtistReleases(
-        band.metadata.albums,
-      );
-
     return {
       label: 'Artists',
-      children,
+      children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(
+        band.metadata.albums,
+      ),
     };
   }
 
@@ -87,8 +80,7 @@ export class BandTreeItem {
     const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
       const children: TreeItem[] = band.metadata
         .albumsByYear(year)
-        .map(TreeItemFactory.fromAlbum)
-        .map(setTreeItemQueryFromLabel);
+        .map(AlbumTreeItemFactory.createWithActionItems);
 
       return {
         label: year.toString(),
