@@ -91,6 +91,25 @@ export class AlbumTreeItemFactory {
     return builder.build();
   }
 
+  static fromAlbumsByArtistNames(albums: Album[]): TreeItem[] {
+    const artistNames = getArtistNamesFromAlbums(albums);
+    const children = arrayUnique(artistNames)
+      .sort()
+      .map((artist) => {
+        const artistChildren: TreeItem[] = albums
+          .filter((album) => album.artist.names.includes(artist))
+          .map(TreeItemFactory.fromAlbum);
+
+        return {
+          label: artist,
+          open: false,
+          children: artistChildren,
+        } as TreeItem;
+      });
+
+    return children;
+  }
+
   private static createBuilder(album: Album): TreeItemBuilder {
     return new TreeItemBuilder(TreeItemFactory.fromAlbum(album));
   }
