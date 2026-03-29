@@ -2,6 +2,7 @@ import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { bandcampPageData } from 'src/bandcamp/domain/shared';
 import type { Url } from 'src/core/url';
+import { console } from 'src/utils/console';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TreeData } from '../TreeData';
 import { BandTreeItem } from './BandTreeItem';
@@ -18,6 +19,8 @@ export class MainTreeData {
     band: Band | null,
     album: Album | null,
   ): Promise<TreeData> {
+    console.log('[MainTreeData][create]', { url, band, album });
+
     const treeData = new TreeData();
 
     if (album) {
