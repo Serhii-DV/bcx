@@ -346,12 +346,14 @@ function getItemVisibleChildCount(item: TreeItem): number {
 
 {#snippet treeItemActions(item: TreeItem)}
   {@const visibleChildCount = getItemVisibleChildCount(item)}
-<div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
   {#if item.buttons && item.buttons.length > 0}
-    {#each item.buttons as button}
-      {@render treeItemButton(button)}
-    {/each}
+<div class="item-buttons">
+  {#each item.buttons as button}
+    {@render treeItemButton(button)}
+  {/each}
+</div>
   {/if}
+<div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
   {#if visibleChildCount > 0}
     <span class="item-count px-2 text-sm text-gray-400">{visibleChildCount}</span>
   {/if}
@@ -505,5 +507,16 @@ function getItemVisibleChildCount(item: TreeItem): number {
 
 .bcx-tree-view .hidden {
     display: none;
+}
+
+.bcx-tree-view .item-buttons {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.bcx-tree-view .tree-item:hover .item-buttons,
+.bcx-tree-view .tree-item:focus .item-buttons,
+.bcx-tree-view .tree-item.focused .item-buttons {
+    opacity: 1;
 }
 </style>
