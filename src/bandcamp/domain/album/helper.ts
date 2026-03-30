@@ -1,3 +1,7 @@
+import {
+  type ParsedReleaseMetadata,
+  parseReleaseMetadata,
+} from 'src/utils/releaseMetadata';
 import { getArtistNamesFromTracks } from '../track/helper';
 import type { Album } from './album';
 
@@ -20,4 +24,19 @@ export function getArtistNamesFromAlbums(albums: Album[]): string[] {
   );
 
   return artistNames;
+}
+
+/**
+ * Parse structured release metadata from album artist/title text.
+ */
+export function getReleaseMetadataFromAlbum(
+  album: Album,
+): ParsedReleaseMetadata {
+  const metadata = parseReleaseMetadata(album.title);
+
+  if (!metadata.releaseYear && album.metadata?.year) {
+    metadata.releaseYear = album.metadata.year;
+  }
+
+  return metadata;
 }

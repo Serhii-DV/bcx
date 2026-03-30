@@ -1,5 +1,8 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
-import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
+import {
+  getArtistNamesFromAlbums,
+  getReleaseMetadataFromAlbum,
+} from 'src/bandcamp/domain/album/helper';
 import { arrayUnique } from 'src/utils/array';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
@@ -71,6 +74,36 @@ export class AlbumTreeItemFactory {
     builder.addChild(
       TreeItemFactory.text(`Released: ${album.metadata?.publishedDate}`),
     );
+
+    const releaseMetadata = getReleaseMetadataFromAlbum(album);
+
+    if (releaseMetadata.catalogNumber) {
+      builder.addChild(
+        TreeItemFactory.text(`Catalog: ${releaseMetadata.catalogNumber}`),
+      );
+    }
+
+    if (releaseMetadata.releaseType) {
+      builder.addChild(
+        TreeItemFactory.text(`Type: ${releaseMetadata.releaseType}`),
+      );
+    }
+
+    if (
+      releaseMetadata.releaseYear &&
+      releaseMetadata.releaseYear !== album.metadata?.year
+    ) {
+      builder.addChild(
+        TreeItemFactory.text(`Year: ${releaseMetadata.releaseYear}`),
+      );
+    }
+
+    if (releaseMetadata.artistNames?.length) {
+      builder.addChild(
+        TreeItemFactory.list('Parsed artists', releaseMetadata.artistNames),
+      );
+    }
+
     builder.addChild(
       TreeItemFactory.items(
         'Artists',
