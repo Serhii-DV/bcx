@@ -10,7 +10,6 @@ import { Band } from '../band/band';
 import { BandMetadata } from '../band/metadata';
 import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
-import { getArtistNamesFromTracks } from '../track/helper';
 import { Track } from '../track/track';
 import { createMetadataElement, createQueryCountBadgeElement } from './helper';
 
@@ -29,15 +28,13 @@ type Release = Album | Track;
 let pageMusic: PageMusic | null = null;
 
 export class PageMusic {
-  public band: Band;
   public musicGridElement: HTMLElement | null = null;
   public musicGridItemElements: HTMLElement[];
   public queryCountMap: QueryCountMap = new Map();
 
-  private constructor() {
+  private constructor(public readonly band: Band) {
     elementHtml()?.classList.add('bcx-page-music');
 
-    this.band = this.createBand();
     this.musicGridElement = element('#music-grid');
     if (!this.musicGridElement) {
       console.log('[PageMusic]', 'No #music-grid found on this page');
@@ -57,7 +54,9 @@ export class PageMusic {
     }
 
     await injectCssFile(getExtensionUrl('bandcamp.content.page.music.css'));
-    pageMusic = new PageMusic();
+
+    const band = this.createBand();
+    pageMusic = new PageMusic(band);
     await pageMusic.initReleases();
 
     console.log('[PageMusic]', '[band]', pageMusic.band);
@@ -148,13 +147,8 @@ export class PageMusic {
       metadataElement.appendChild(badge);
     }
 
-    // We need to collect artist names from both album and tracks as "cloned" data
-    const artistNames = [...(album.artist?.names || [])];
-
-    // For albums, also include artists from tracks
-    artistNames.push(...getArtistNamesFromTracks(album.tracks));
-
-    arrayUnique(artistNames)
+    // Output artist names
+    arrayUnique(album.artistNames)
       .sort()
       .map((artistName) => this.createArtistNameBadgeElement(artistName))
       .forEach((badge) => {
@@ -470,7 +464,7 @@ export class PageMusic {
     return bandId ? parseInt(bandId, 10) : null;
   }
 
-  private createBand(): Band {
+  private static createBand(): Band {
     const bandData = JSON.parse(
       element('[data-band]')?.dataset?.band || 'null',
     );
