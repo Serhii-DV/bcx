@@ -38,6 +38,11 @@ export class TreeItemBuilder {
     return this;
   }
 
+  addChildren(children: Array<TreeItem | undefined>): this {
+    children.forEach((child) => this.addChild(child));
+    return this;
+  }
+
   withOpen(open: boolean): this {
     this.item.open = open;
     return this;

@@ -12,19 +12,20 @@ export class AlbumTreeItemFactory {
     return this.createBuilder(album).build();
   }
 
-  static createWithActions(album: Album): TreeItem {
+  static createWithKeywords(album: Album): TreeItem {
     const builder = this.createBuilder(album);
+    const artistNames = album.artistNames.sort();
 
-    if (album.artist.names.length) {
-      builder.withChildren(
-        album.artist.names.map(TreeItemFactory.fromArtistName),
-      );
+    if (artistNames.length) {
+      builder.addChildren(artistNames.map(TreeItemFactory.fromArtistName));
     }
 
     if (album.metadata) {
-      builder.addChild({
-        label: String(album.metadata.year),
-      });
+      builder.addChild(TreeItemFactory.text(String(album.metadata.year)));
+
+      builder.addChildren(
+        (album.metadata.keywords || []).map(TreeItemFactory.text),
+      );
     }
 
     builder
@@ -40,16 +41,16 @@ export class AlbumTreeItemFactory {
 
   static fromAlbums(
     albums: Album[],
-    isWithActions: boolean = false,
+    includeKeywords: boolean = false,
   ): TreeItem[] {
     return albums.map((album) =>
-      isWithActions ? this.createWithActions(album) : this.create(album),
+      includeKeywords ? this.createWithKeywords(album) : this.create(album),
     );
   }
 
   static fromAlbumsByArtistReleases(
     albums: Album[],
-    isWithActions: boolean = false,
+    includeKeywords: boolean = false,
   ): TreeItem[] {
     const artists = getArtistNamesFromAlbums(albums);
     return arrayUnique(artists)
@@ -57,7 +58,7 @@ export class AlbumTreeItemFactory {
       .map((artist) => {
         const artistChildren: TreeItem[] = this.fromAlbums(
           albums.filter((album) => album.containsArtistName(artist)),
-          isWithActions,
+          includeKeywords,
         );
         return TreeItemFactory.items(artist, artistChildren);
       });

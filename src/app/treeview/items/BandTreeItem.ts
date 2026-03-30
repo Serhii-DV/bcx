@@ -8,15 +8,15 @@ import { TreeItemFactory } from '../TreeItemFactory';
 
 export class BandTreeItem {
   static create(band: Band, url: Url): TreeItem {
-    const isAlbumsWithActions = isBandcampMusicUrl(url);
+    const showAlbumsWithKeywords = isBandcampMusicUrl(url);
     const treeItemBuilder = new TreeItemBuilder(TreeItemFactory.fromBand(band));
-    treeItemBuilder.withOpen(isAlbumsWithActions).withoutHref();
+    treeItemBuilder.withOpen(showAlbumsWithKeywords).withoutHref();
 
     if (band.hasReleases) {
       treeItemBuilder.withChildren([
-        this.createReleasesTreeItem(band, isAlbumsWithActions),
-        this.createArtistsTreeItem(band, isAlbumsWithActions),
-        this.createBandYearsTreeItem(band, isAlbumsWithActions),
+        this.createReleasesTreeItem(band, showAlbumsWithKeywords),
+        this.createArtistsTreeItem(band, showAlbumsWithKeywords),
+        this.createBandYearsTreeItem(band, showAlbumsWithKeywords),
         this.createBandInfo(band),
       ]);
     } else {
@@ -30,33 +30,33 @@ export class BandTreeItem {
 
   private static createArtistsTreeItem(
     band: Band,
-    isAlbumsWithActions: boolean,
+    showAlbumsWithKeywords: boolean,
   ): TreeItem {
     return {
       label: 'Artists',
       children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(
         band.metadata.albums,
-        isAlbumsWithActions,
+        showAlbumsWithKeywords,
       ),
     };
   }
 
   private static createReleasesTreeItem(
     band: Band,
-    isAlbumsWithActions: boolean,
+    showAlbumsWithKeywords: boolean,
   ): TreeItem {
     return {
       label: 'Releases',
       children: AlbumTreeItemFactory.fromAlbums(
         band.metadata.albums,
-        isAlbumsWithActions,
+        showAlbumsWithKeywords,
       ),
     };
   }
 
   private static createBandYearsTreeItem(
     band: Band,
-    isAlbumsWithActions: boolean,
+    showAlbumsWithKeywords: boolean,
     label: string = 'Years',
   ): TreeItem | undefined {
     const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
@@ -64,7 +64,7 @@ export class BandTreeItem {
         label: String(year),
         children: AlbumTreeItemFactory.fromAlbums(
           band.metadata.albumsByYear(year),
-          isAlbumsWithActions,
+          showAlbumsWithKeywords,
         ),
       };
     });
