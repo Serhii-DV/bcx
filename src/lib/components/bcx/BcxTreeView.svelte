@@ -418,8 +418,8 @@ function getItemVisibleChildCount(item: TreeItem): number {
               data-path="{item.path}"
               tabindex={focusedPath === item.path ? 0 : -1}
               onclick={(e) => handleItemClick(item, e)}
-              href="{item.href || '#'}"
-              title="{item.href || ''}"
+              href={item.href}
+              title={item.href}
               >
               {@render treeItem(item)}
             </a>
