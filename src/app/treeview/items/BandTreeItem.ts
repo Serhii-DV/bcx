@@ -14,10 +14,10 @@ export class BandTreeItem {
 
     if (band.hasReleases) {
       treeItemBuilder.withChildren([
-        this.createReleasesTreeItem(band, showAlbumsWithKeywords),
         this.createArtistsTreeItem(band, showAlbumsWithKeywords),
+        this.createReleasesTreeItem(band, showAlbumsWithKeywords),
         this.createBandYearsTreeItem(band, showAlbumsWithKeywords),
-        this.createBandInfo(band),
+        this.createBandAbout(band),
       ]);
     } else {
       treeItemBuilder.addChild(
@@ -80,16 +80,14 @@ export class BandTreeItem {
     };
   }
 
-  private static createBandInfo(band: Band): TreeItem {
+  private static createBandAbout(band: Band): TreeItem {
     return {
-      label: 'Information',
+      label: 'About',
       children: [
-        {
-          label: `Created: ${band.metadata.created.toLocaleDateString()}`,
-        },
-        {
-          label: `Currency: ${band.metadata.currency}`,
-        },
+        TreeItemFactory.text(
+          `Created: ${band.metadata.created.toLocaleDateString()}`,
+        ),
+        TreeItemFactory.text(`Currency: ${band.metadata.currency}`),
       ],
     };
   }
