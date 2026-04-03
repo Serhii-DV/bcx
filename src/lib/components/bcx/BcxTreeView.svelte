@@ -344,6 +344,17 @@ function getItemVisibleChildCount(item: TreeItem): number {
   {/if}
 {/snippet}
 
+{#snippet treeItem(item: TreeItem)}
+  {@const hasChildren = item.children && item.children.length > 0}
+  {@render treeItemImage(item)}
+  {#if hasChildren}
+  <span>{item.label}</span>
+  {:else}
+  <span class="ml-2">{item.label}</span>
+  {/if}
+  {@render treeItemActions(item)}
+{/snippet}
+
 {#snippet treeItemActions(item: TreeItem)}
   {@const visibleChildCount = getItemVisibleChildCount(item)}
   {#if item.buttons && item.buttons.length > 0}
@@ -387,9 +398,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleItemClick(item, e)}
               >
-                {@render treeItemImage(item)}
-                <span>{item.label}</span>
-                {@render treeItemActions(item)}
+                {@render treeItem(item)}
               </summary>
               {@render treeItems(item.children)}
             </details>
@@ -404,9 +413,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
               href="{item.href || '#'}"
               title="{item.href || ''}"
               >
-              {@render treeItemImage(item)}
-              <span class="ml-2">{item.label}</span>
-              {@render treeItemActions(item)}
+              {@render treeItem(item)}
             </a>
           {/if}
         </li>
