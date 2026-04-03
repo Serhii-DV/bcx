@@ -1,4 +1,4 @@
-import { ExternalLink, RefreshCcw } from 'lucide-svelte';
+import { ExternalLink, RefreshCcw } from '@lucide/svelte';
 import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
 import { PageCollection } from 'src/bandcamp/domain/page/PageCollection';
 import type { FollowingFanItem } from 'src/bandcamp/domain/types/CollectionPageData';

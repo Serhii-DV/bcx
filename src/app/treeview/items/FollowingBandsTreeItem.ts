@@ -1,4 +1,4 @@
-import { ExternalLink, RefreshCcw } from 'lucide-svelte';
+import { ExternalLink, RefreshCcw } from '@lucide/svelte';
 import { Band } from 'src/bandcamp/domain/band/band';
 import {
   type FollowingBandItem,

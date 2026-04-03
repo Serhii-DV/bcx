@@ -1,5 +1,5 @@
 <script lang="ts">
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-svelte';
+import { PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
 import { onMount } from 'svelte';
 
 interface Props {

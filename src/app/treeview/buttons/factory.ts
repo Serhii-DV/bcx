@@ -1,4 +1,4 @@
-import { ExternalLink, RefreshCcw } from 'lucide-svelte';
+import { ExternalLink, RefreshCcw } from '@lucide/svelte';
 import type { TreeItemButton } from '../TreeItemButton';
 
 export class TreeItemButtonFactory {
