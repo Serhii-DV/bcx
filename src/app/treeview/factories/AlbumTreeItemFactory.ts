@@ -36,7 +36,7 @@ export class AlbumTreeItemFactory {
       .apply(setTreeItemQueryFromLabel)
       // Only this children is used as the link
       .addChild(
-        TreeItemFactory.createLink('Open Release Page', album.url.toString()),
+        TreeItemFactory.link('Open Release Page', album.url.toString()),
       );
 
     return builder.build();

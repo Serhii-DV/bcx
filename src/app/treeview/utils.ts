@@ -1,3 +1,4 @@
+import { Funnel } from '@lucide/svelte';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import type { TreeItem } from './TreeItem';
 
@@ -98,7 +99,7 @@ export function hasDescendantMatchingQuery(
 
 export function updateTreeItemCounts(treeItem: TreeItem): TreeItem {
   treeItem.label = createQueryCountString(
-    treeItem.label,
+    treeItem.label ?? '',
     treeItem.children?.length || 0,
   );
 
@@ -116,6 +117,8 @@ export function updateTreeItemsCounts(treeItems: TreeItem[]): TreeItem[] {
 
 export function setTreeItemQueryFromLabel(treeItem: TreeItem): TreeItem {
   treeItem.query = treeItem.label;
+  treeItem.icon = Funnel;
+  treeItem.buttons = undefined; // Remove buttons when using label as query
   if (treeItem.children) {
     treeItem.children.map(setTreeItemQueryFromLabel);
   }
@@ -125,7 +128,7 @@ export function setTreeItemQueryFromLabel(treeItem: TreeItem): TreeItem {
 // Check if an item matches the filter query (case-insensitive)
 function itemMatchesFilter(item: TreeItem, query: string): boolean {
   if (!query.trim()) return true;
-  return item.label.toLowerCase().includes(query.toLowerCase());
+  return item.label?.toLowerCase().includes(query.toLowerCase()) ?? false;
 }
 
 // Check if an item or any of its descendants match the filter

@@ -316,7 +316,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
     <a
       href={button.href}
       title={button.title}
-      class="inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+      class="item-button inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
       onclick={(e) => {
         e.stopPropagation();
         if (button.onClick) {
@@ -325,13 +325,13 @@ function getItemVisibleChildCount(item: TreeItem): number {
         }
       }}
     >
-      <Icon size={16} />
+      <Icon size="16" />
     </a>
   {:else}
     <button
       type="button"
       title={button.title}
-      class="cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
+      class="item-button cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
       onclick={(e) => {
         e.stopPropagation();
         if (button.onClick) {
@@ -339,24 +339,12 @@ function getItemVisibleChildCount(item: TreeItem): number {
         }
       }}
     >
-      <Icon size={16} />
+      <Icon size="16" />
     </button>
   {/if}
 {/snippet}
 
-{#snippet treeItem(item: TreeItem)}
-  {@const hasChildren = item.children && item.children.length > 0}
-  {@render treeItemImage(item)}
-  {#if hasChildren}
-  <span>{item.label}</span>
-  {:else}
-  <span class="ml-2">{item.label}</span>
-  {/if}
-  {@render treeItemActions(item)}
-{/snippet}
-
-{#snippet treeItemActions(item: TreeItem)}
-  {@const visibleChildCount = getItemVisibleChildCount(item)}
+{#snippet treeItemButtons(item: TreeItem)}
   {#if item.buttons && item.buttons.length > 0}
 <div class="item-buttons">
   {#each item.buttons as button}
@@ -364,9 +352,29 @@ function getItemVisibleChildCount(item: TreeItem): number {
   {/each}
 </div>
   {/if}
+{/snippet}
+
+{#snippet treeItemIcon(item: TreeItem)}
+  {@const Icon = item.icon}
+  {#if Icon}
+  <span class="item-icon text-gray-300"><Icon size="16" /></span>
+  {/if}
+{/snippet}
+
+{#snippet treeItem(item: TreeItem)}
+  {@const hasChildren = item.children && item.children.length > 0}
+  {@render treeItemImage(item)}
+  <span class="item-label" class:ml-2={!hasChildren}>{item.label}</span>
+  {@render treeItemActions(item)}
+{/snippet}
+
+{#snippet treeItemActions(item: TreeItem)}
+  {@const visibleChildCount = getItemVisibleChildCount(item)}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
+  {@render treeItemIcon(item)}
+  {@render treeItemButtons(item)}
   {#if visibleChildCount > 0}
-    <span class="item-count px-2 text-sm text-gray-400">{visibleChildCount}</span>
+    <span class="item-count text-sm text-gray-400">{visibleChildCount}</span>
   {/if}
 </div>
 {/snippet}
@@ -516,11 +524,23 @@ function getItemVisibleChildCount(item: TreeItem): number {
     display: none;
 }
 
-.bcx-tree-view .item-buttons {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
+.bcx-tree-view .item-actions {
+  padding-right: 5px;
 }
 
+.bcx-tree-view .item-icon {
+  margin-left: 5px;
+}
+
+.bcx-tree-view .item-icon,
+.bcx-tree-view .item-buttons {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.bcx-tree-view .tree-item:hover .item-icon,
+.bcx-tree-view .tree-item:focus .item-icon,
+.bcx-tree-view .tree-item.focused .item-icon,
 .bcx-tree-view .tree-item:hover .item-buttons,
 .bcx-tree-view .tree-item:focus .item-buttons,
 .bcx-tree-view .tree-item.focused .item-buttons {

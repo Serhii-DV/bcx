@@ -21,7 +21,7 @@ export class BandTreeItem {
       ]);
     } else {
       treeItemBuilder.addChild(
-        TreeItemFactory.createLink('Open Band/Label Page', band.url.toString()),
+        TreeItemFactory.link('Open Band/Label Page', band.url.toString()),
       );
     }
 
