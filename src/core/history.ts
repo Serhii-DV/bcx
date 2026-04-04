@@ -1,3 +1,5 @@
+/// <reference types="chrome" />
+
 import { arrayPreview, console } from '../utils/console';
 import { type Message, MessageType } from './message';
 
