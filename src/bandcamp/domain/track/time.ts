@@ -48,7 +48,11 @@ export class TrackTime {
     );
   }
 
-  static fromDuration(duration: string): TrackTime {
+  static fromDuration(duration: string): TrackTime | undefined {
+    if (!duration) {
+      return undefined;
+    }
+
     const regexHours = /(\d+)H/;
     const regexMinutes = /(\d+)M/;
     const regexSeconds = /(\d+)S/;

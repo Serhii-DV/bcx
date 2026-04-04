@@ -72,9 +72,7 @@ export class TrackFactory {
       schema.name,
       mainArtist,
     );
-    const time = schema.duration
-      ? TrackTime.fromDuration(schema.duration)
-      : undefined;
+    const time = TrackTime.fromDuration(schema.duration);
     // albumId is not available in schema, try to get it from pagedata
     const albumId = bandcampPageData.data?.album_id || undefined;
     const artId =
@@ -137,9 +135,7 @@ export class TrackFactory {
           ? trackItem.item.byArtist.name
           : schema.byArtist.name,
       );
-      const time = trackItem.item.duration
-        ? TrackTime.fromDuration(trackItem.item.duration)
-        : undefined;
+      const time = TrackTime.fromDuration(trackItem.item.duration);
       const artId = albumArtId;
 
       const track = TrackFactory.create(
