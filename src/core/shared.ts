@@ -1,10 +1,12 @@
 import { Storage } from './storage';
 import { Url } from './url';
 
+const debug = true;
+
 /**
  * Shared storage instance for use across content scripts
  */
-export const storage = new Storage();
+export const storage = new Storage(chrome.storage.local, debug);
 
 /**
  * Shared current URL instance for use across content scripts

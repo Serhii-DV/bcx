@@ -1,3 +1,4 @@
+import { arrayUnique } from 'src/utils/array';
 import { arrayPreview, console } from 'src/utils/console';
 
 export interface StorageObject {
@@ -25,56 +26,50 @@ export interface Storable extends StorableObject {
 export type StorageDataMap = StorableData;
 
 export class Storage {
-  private storage: chrome.storage.StorageArea;
+  constructor(
+    private storage: chrome.storage.StorageArea,
+    private debug = false,
+  ) {}
 
-  constructor(storage: chrome.storage.StorageArea = chrome.storage.local) {
-    this.storage = storage;
-  }
+  async get<T extends StorageDataMap = StorageDataMap>(
+    keys: readonly string[],
+  ): Promise<Partial<T>> {
+    if (keys.length === 0) {
+      return {};
+    }
 
-  async get(keys: string[]): Promise<StorageDataMap> {
-    return new Promise((resolve, reject) => {
-      const logLabel = `[Storage.get(keys: ${keys.length})]`;
+    const uniqueKeys = arrayUnique(keys as string[]);
+    const logLabel = `[Storage.get(keys: ${uniqueKeys.length})]`;
+
+    if (this.debug) {
       console.time(logLabel);
+    }
 
-      if (keys.length) {
-        this.storage.get(keys, (items) => {
-          if (chrome.runtime.lastError) {
-            return reject(chrome.runtime.lastError);
-          }
+    try {
+      const items = await this.storage.get(uniqueKeys);
 
-          console.log(logLabel, ...arrayPreview(keys), items);
-          console.timeEnd(logLabel);
-
-          resolve(items);
-        });
-      } else {
+      if (this.debug) {
         console.timeEnd(logLabel);
-        resolve([]);
+        console.log(logLabel, ...arrayPreview(uniqueKeys as string[]), items);
       }
-    });
+
+      return items as Partial<T>;
+    } catch (error) {
+      if (this.debug) {
+        console.timeEnd(logLabel);
+      }
+
+      throw error;
+    }
   }
 
-  async getByKey<T = any>(key: string): Promise<T | undefined> {
-    return new Promise((resolve, reject) => {
-      const logLabel = `[Storage.getByKey(${key})]`;
-      console.time(logLabel);
-
-      this.storage.get([key], (items) => {
-        if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
-        }
-
-        const data = items[key] as T | undefined;
-
-        console.log(
-          logLabel,
-          ...arrayPreview(Array.isArray(data) ? data : [data]),
-        );
-        console.timeEnd(logLabel);
-
-        resolve(data);
-      });
-    });
+  async getByKey<T = unknown>(key: string): Promise<T | undefined> {
+    const t0 = performance.now();
+    const items = await this.storage.get(key);
+    const t1 = performance.now();
+    const data = items[key] as T | undefined;
+    console.log(`[Storage.getByKey(${key})]:`, t1 - t0, 'ms');
+    return data;
   }
 
   async getKeys(): Promise<string[]> {
