@@ -36,7 +36,6 @@ export class PageAlbum {
     const band = bands[0] ?? BandFactory.fromMusicAlbumSchema(schema!);
 
     pageAlbum = new PageAlbum(album, band);
-    await pageAlbum.loadTracksFromStorage();
     pageAlbum.appendAlbumYear();
 
     console.log('[PageAlbum]', '[Album]', pageAlbum.album);
@@ -45,10 +44,6 @@ export class PageAlbum {
     await BandcampStorage.saveAlbum(album);
 
     return pageAlbum;
-  }
-
-  private async loadTracksFromStorage(): Promise<void> {
-    this.album.tracks = await BandcampStorage.getTracks(this.album.tracks);
   }
 
   private appendAlbumYear(): void {
