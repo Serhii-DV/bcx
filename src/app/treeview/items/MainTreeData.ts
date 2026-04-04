@@ -19,7 +19,9 @@ export class MainTreeData {
     band: Band | null,
     album: Album | null,
   ): Promise<TreeData> {
-    console.log('[MainTreeData][create]', { url, band, album });
+    const logLabel = `[MainTreeData.create]`;
+    console.log(logLabel, { url, band, album });
+    console.time(logLabel);
 
     const treeData = new TreeData();
 
@@ -51,6 +53,7 @@ export class MainTreeData {
     }
 
     treeData.add(await HistoryTreeItem.create());
+    console.timeEnd(logLabel);
 
     return treeData;
   }
