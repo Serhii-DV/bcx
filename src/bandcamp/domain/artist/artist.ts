@@ -16,7 +16,10 @@ export function isVariousArtists(name: string): boolean {
 }
 
 export class Artist {
-  constructor(public readonly names: string[], public readonly joins: string[] = []) {}
+  constructor(
+    public readonly names: string[],
+    public readonly joins: string[] = [],
+  ) {}
 
   get isVariousArtists(): boolean {
     return this.names.length === 1 && isVariousArtists(this.names[0]);
@@ -27,9 +30,12 @@ export class Artist {
   }
 
   toString(): string {
-    return this.toArray().join(' ')
-      // Replace multiple spaces around joins with a single space
-      .replace(/\s*,\s*/g, ', ');
+    return (
+      this.toArray()
+        .join(' ')
+        // Replace multiple spaces around joins with a single space
+        .replace(/\s*,\s*/g, ', ')
+    );
   }
 
   toArray(): string[] {
@@ -88,9 +94,7 @@ export class Artist {
 
       if (i % 2 === 0) {
         // Even indices are artist names
-        names.push(
-          capitalizeWords(part)
-        );
+        names.push(capitalizeWords(part));
       } else {
         // Odd indices are delimiters/joins
         joins.push(part);

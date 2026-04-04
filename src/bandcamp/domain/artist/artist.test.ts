@@ -23,7 +23,10 @@ describe('ReleaseArtist', () => {
     });
 
     it('should return the correct artist string with commas', () => {
-      const artist = new Artist(['Artist A', 'Artist B', 'Artist C'], [',', ',']);
+      const artist = new Artist(
+        ['Artist A', 'Artist B', 'Artist C'],
+        [',', ','],
+      );
       expect(artist.toString()).toBe('Artist A, Artist B, Artist C');
     });
 

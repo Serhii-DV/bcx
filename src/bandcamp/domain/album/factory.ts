@@ -1,4 +1,5 @@
 import type { StorageObject } from 'src/core/storage';
+import { ArtistFactory } from '../artist/factory';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import type {
@@ -11,7 +12,6 @@ import { albumDataCompressor } from '../shared';
 import { TrackFactory } from '../track/factory';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
-import { ArtistFactory } from '../artist/factory';
 export class AlbumFactory {
   static fromRawData(rawData: RawAlbumData): Album {
     return Album.create(
