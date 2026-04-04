@@ -23,7 +23,7 @@ export class TreeItemFactory {
   }
 
   static list(label: string, strings: string[]): TreeItem {
-    return this.items(label, strings.map(this.text));
+    return TreeItemFactory.items(label, strings.map(TreeItemFactory.text));
   }
 
   static link(label: string, href: string, icon: any = ExternalLink): TreeItem {
@@ -35,25 +35,30 @@ export class TreeItemFactory {
   }
 
   static linkOrText(label: string, href?: string): TreeItem {
-    return href ? this.link(label, href) : this.text(label);
+    return href
+      ? TreeItemFactory.link(label, href)
+      : TreeItemFactory.text(label);
   }
 
   static fromBand(band: Band): TreeItem {
     const href = band.url?.toString();
-    const item = this.link(band.name, href || '');
+    const item = TreeItemFactory.link(band.name, href || '');
     item.image = band.artwork.tinySizeUrl;
     return item;
   }
 
   static fromAlbum(album: Album): TreeItem {
-    const item = this.linkOrText(album.toString(), album.url?.toString());
+    const item = TreeItemFactory.linkOrText(
+      album.toString(),
+      album.url?.toString(),
+    );
     item.image = album.artwork.tinySizeUrl;
     item.keywords = album.artistNames;
     return item;
   }
 
   static fromArtistName(artistName: string): TreeItem {
-    return this.text(artistName);
+    return TreeItemFactory.text(artistName);
   }
 
   static fromDate(date: Date): TreeItem {
@@ -63,7 +68,7 @@ export class TreeItemFactory {
       day: 'numeric',
     });
 
-    return this.text(label);
+    return TreeItemFactory.text(label);
   }
 
   static fromTrack(track: Track): TreeItem {
