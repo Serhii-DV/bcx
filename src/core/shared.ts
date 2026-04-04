@@ -7,6 +7,7 @@ const debug = true;
  * Shared storage instance for use across content scripts
  */
 export const storage = new Storage(chrome.storage.local, debug);
+export const sessionStorage = new Storage(chrome.storage.session, debug);
 
 /**
  * Shared current URL instance for use across content scripts

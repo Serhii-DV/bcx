@@ -1,6 +1,6 @@
 <script lang="ts">
 import { TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
-import { storage } from 'src/core/shared';
+import { sessionStorage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { onMount } from 'svelte';
 
@@ -37,7 +37,8 @@ onMount(async () => {
   if (!autoStart) return;
 
   try {
-    const hasCompleted = await storage.getByKey<boolean>(TOUR_COMPLETE_KEY);
+    const hasCompleted =
+      await sessionStorage.getByKey<boolean>(TOUR_COMPLETE_KEY);
     if (!hasCompleted && steps.length > 0) {
       setTimeout(() => {
         startTour();
@@ -246,7 +247,7 @@ async function completeTour() {
   cleanupHighlight();
 
   try {
-    await storage.set({ [TOUR_COMPLETE_KEY]: true });
+    await sessionStorage.set({ [TOUR_COMPLETE_KEY]: true });
     isActive = false;
     isCompleted = true;
     currentStepIndex = -1;
@@ -265,7 +266,7 @@ function skipTour() {
 }
 
 function resetTour() {
-  storage.set({ [TOUR_COMPLETE_KEY]: false });
+  sessionStorage.set({ [TOUR_COMPLETE_KEY]: false });
   isCompleted = false;
 }
 

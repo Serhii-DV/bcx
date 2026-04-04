@@ -6,6 +6,11 @@ console.log('Running background script');
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed!');
+  chrome.storage.session
+    .setAccessLevel({
+      accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS',
+    })
+    .catch(console.error);
 });
 
 // Handle messages from content scripts

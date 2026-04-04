@@ -1,6 +1,6 @@
 <script lang="ts">
 import { TreeData } from 'src/app/treeview/TreeData';
-import { currentPageUrl, storage } from 'src/core/shared';
+import { currentPageUrl, sessionStorage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
@@ -8,6 +8,11 @@ import { onMount } from 'svelte';
 import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
 import BCXDrawerButton from '$lib/components/bcx/BCXDrawerButton.svelte';
 import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
+import {
+  getSidePanelOpen,
+  initUiState,
+  setSidePanelOpen,
+} from '../domain/ui/uiState';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 
 // Props interface
@@ -23,7 +28,7 @@ let sidePanelStateInitialized: boolean = $state(false);
 // Persist side panel state across page navigations (only after initial load)
 $effect(() => {
   if (sidePanelStateInitialized) {
-    storage.set({ [SIDE_PANEL_OPEN_KEY]: sidePanelOpen });
+    sessionStorage.set({ [SIDE_PANEL_OPEN_KEY]: sidePanelOpen });
   }
 });
 
@@ -106,14 +111,25 @@ onMount(() => {
   }
 
   // Restore side panel state from storage
-  storage.getByKey<boolean>(SIDE_PANEL_OPEN_KEY).then((result) => {
-    if (result !== undefined) {
-      sidePanelOpen = result;
+  void (async () => {
+    await initUiState();
+
+    const saved = getSidePanelOpen();
+    if (saved !== undefined) {
+      sidePanelOpen = saved;
     }
-    // Mark as initialized after restoring state
+
     sidePanelStateInitialized = true;
-  });
+  })();
 });
+
+async function updateSidePanelOpen(value: boolean) {
+  sidePanelOpen = value; // update UI immediately
+
+  if (!sidePanelStateInitialized) return;
+
+  await setSidePanelOpen(value); // persist through uiState.ts
+}
 </script>
 
 <svelte:document onkeydown={handleKeydown} />
@@ -121,7 +137,7 @@ onMount(() => {
 {#if shadowContainer}
   <BCXDrawerButton
     sidePanelOpen={sidePanelOpen}
-    onToggle={() => sidePanelOpen = !sidePanelOpen}
+    onToggle={() => void updateSidePanelOpen(!sidePanelOpen)}
   />
 
   <!-- Side Panel -->
