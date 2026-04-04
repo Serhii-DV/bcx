@@ -1,7 +1,13 @@
 import type { QueryCountMap } from '$lib/components/bcx';
 
-export function arrayUnique(arr: string[] | string[][]): string[] {
-  return [...new Set(arr.flat())];
+export function arrayUnique(arr: string[]): string[] {
+  if (arr.length === 0) {
+    return [];
+  }
+  if (arr.length === 1) {
+    return arr;
+  }
+  return [...new Set(arr)];
 }
 
 export function arrayNumberUnique(arr: number[]): number[] {
