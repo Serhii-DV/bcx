@@ -5,10 +5,10 @@ import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork/artwork';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
-import type {
-  MusicAlbumSchema,
-  MusicRecordingSchema,
-  PropertyValue,
+import {
+  getPropertyValueByName,
+  type MusicAlbumSchema,
+  type MusicRecordingSchema,
 } from '../page/schema';
 import { Price } from '../price';
 import { bandcampPageData, trackDataCompressor } from '../shared';
@@ -61,8 +61,10 @@ export class TrackFactory {
 
   static fromSchema(schema: MusicRecordingSchema): Track {
     const trackId =
-      (schema.additionalProperty?.find((prop) => prop.name === 'track_id')
-        ?.value as number) || 0;
+      (getPropertyValueByName(
+        schema.additionalProperty,
+        'track_id',
+      ) as number) || 0;
 
     const url = schema.mainEntityOfPage;
     const mainArtist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
@@ -76,8 +78,8 @@ export class TrackFactory {
     // albumId is not available in schema, try to get it from pagedata
     const albumId = bandcampPageData.data?.album_id || undefined;
     const artId =
-      (schema.additionalProperty?.find((prop) => prop.name === 'art_id')
-        ?.value as number) || 0;
+      (getPropertyValueByName(schema.additionalProperty, 'art_id') as number) ||
+      0;
 
     const digitalRelease = schema?.inAlbum?.albumRelease?.filter(
       (release) => release.musicReleaseFormat === 'Digital',
@@ -113,17 +115,20 @@ export class TrackFactory {
    */
   static createTracksFromMusicAlbumSchema(schema: MusicAlbumSchema): Track[] {
     const tracks: Track[] = [];
-    const albumArtId = schema.albumRelease[0]?.additionalProperty.find(
-      (prop: PropertyValue) => prop.name === 'art_id',
-    )?.value as number;
-    const albumId = schema.albumRelease[0]?.additionalProperty.find(
-      (prop: PropertyValue) => prop.name === 'item_id',
-    )?.value as number;
+    const propertyValues = schema.albumRelease.find(
+      (release) => release.musicReleaseFormat === 'DigitalFormat',
+    )?.additionalProperty;
+    const albumArtId = getPropertyValueByName(
+      propertyValues,
+      'art_id',
+    ) as number;
+    const albumId = getPropertyValueByName(propertyValues, 'item_id') as number;
 
     schema.track.itemListElement.forEach((trackItem) => {
-      const trackId = trackItem.item.additionalProperty.find(
-        (prop: PropertyValue) => prop.name === 'track_id',
-      )?.value as number;
+      const trackId = getPropertyValueByName(
+        trackItem.item.additionalProperty,
+        'track_id',
+      ) as number;
       const position = trackItem.position;
       const url = trackItem.item.mainEntityOfPage;
       const { artist, title } = ArtistFactory.fromTrackTitle(

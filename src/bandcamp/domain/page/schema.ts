@@ -213,3 +213,10 @@ export function getMusicRecordingSchema(): MusicRecordingSchema {
   }
   return schema;
 }
+
+export function getPropertyValueByName(
+  properties: PropertyValue[] | undefined,
+  name: string,
+): any {
+  return properties?.find((prop) => prop.name === name)?.value;
+}
