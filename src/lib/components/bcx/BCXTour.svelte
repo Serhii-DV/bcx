@@ -1,9 +1,6 @@
 <script lang="ts">
 import { TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
-import {
-  getUiSessionBoolean,
-  setUiSessionBoolean,
-} from 'src/bandcamp/domain/ui/uiState';
+import { setUiSessionBoolean } from 'src/bandcamp/domain/ui/uiState';
 import { console } from 'src/utils/console';
 import { onMount } from 'svelte';
 
@@ -19,6 +16,7 @@ interface TourStep {
 interface Props {
   steps: TourStep[];
   autoStart?: boolean;
+  hasCompleted?: boolean;
   onTourComplete?: () => void;
   onTourSkipped?: () => void;
 }
@@ -26,6 +24,7 @@ interface Props {
 let {
   steps,
   autoStart = true,
+  hasCompleted = false,
   onTourComplete,
   onTourSkipped,
 }: Props = $props();
@@ -37,18 +36,12 @@ let highlightOverlay: HTMLElement | null = $state(null);
 let hasActiveHighlight = $state(false);
 
 onMount(async () => {
-  if (!autoStart) return;
+  isCompleted = hasCompleted;
+  if (!autoStart || isCompleted || steps.length === 0) return;
 
-  try {
-    const hasCompleted = await getUiSessionBoolean(TOUR_COMPLETE_KEY);
-    if (!hasCompleted && steps.length > 0) {
-      setTimeout(() => {
-        startTour();
-      }, 3000);
-    }
-  } catch (error) {
-    console.warn('❌ BCX: Failed to check tour status:', error);
-  }
+  setTimeout(() => {
+    startTour();
+  }, 3000);
 });
 
 function startTour() {

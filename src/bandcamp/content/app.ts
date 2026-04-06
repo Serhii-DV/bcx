@@ -14,6 +14,8 @@ import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
 import { BandcampStorage } from '../domain/storage';
+import { SIDE_PANEL_OPEN_KEY, TOUR_COMPLETE_KEY } from '../domain/storageKey';
+import { getUiSessionBoolean, initUiState } from '../domain/ui/uiState';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -54,11 +56,18 @@ onDOMReady(async () => {
     }
 
     const treeData = await MainTreeData.create(currentPageUrl, band, album);
+    await initUiState();
+    const [initialSidePanelOpen, hasCompletedTour] = await Promise.all([
+      getUiSessionBoolean(SIDE_PANEL_OPEN_KEY),
+      getUiSessionBoolean(TOUR_COMPLETE_KEY),
+    ]);
 
     mount(App, {
       target: shadowRoot,
       props: {
         treeData,
+        initialSidePanelOpen,
+        hasCompletedTour: hasCompletedTour ?? false,
       },
     });
   } catch (error) {
