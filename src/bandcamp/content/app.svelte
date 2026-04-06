@@ -1,13 +1,12 @@
 <script lang="ts">
 import { TreeData } from 'src/app/treeview/TreeData';
-import { currentPageUrl, sessionStorage } from 'src/core/shared';
+import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
 import BCXDrawerButton from '$lib/components/bcx/BCXDrawerButton.svelte';
-import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
 import {
   getSidePanelOpen,
   initUiState,
@@ -28,7 +27,9 @@ let sidePanelStateInitialized: boolean = $state(false);
 // Persist side panel state across page navigations (only after initial load)
 $effect(() => {
   if (sidePanelStateInitialized) {
-    sessionStorage.set({ [SIDE_PANEL_OPEN_KEY]: sidePanelOpen });
+    setSidePanelOpen(sidePanelOpen).catch((error) => {
+      console.warn('❌ BCX: Failed to persist side panel state:', error);
+    });
   }
 });
 
