@@ -11,8 +11,8 @@ import { FanPageDataTreeItem } from './FanPageDataTreeItem';
 import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
 import { FollowingGenresTreeItem } from './FollowingGenresTreeItem';
 import { HistoryTreeItem } from './HistoryTreeItem';
-import { WishlistTreeItem } from './WishlistTreeItem';
 import { MainTreeDataCache } from './MainTreeDataCache';
+import { WishlistTreeItem } from './WishlistTreeItem';
 
 export class MainTreeData {
   static async create(
@@ -20,14 +20,22 @@ export class MainTreeData {
     band: Band | null,
     album: Album | null,
   ): Promise<TreeData> {
+    const logLabel = `[MainTreeData.create]`;
+    console.log(logLabel, { url, band, album });
+    console.time(logLabel);
+
     const cacheKey = MainTreeDataCache.buildKey(url, band, album);
     const cachedTreeData = await MainTreeDataCache.get(cacheKey);
     if (cachedTreeData) {
+      console.timeEnd(logLabel);
       return cachedTreeData;
     }
 
     const treeData = await this.createFresh(url, band, album);
     await MainTreeDataCache.set(cacheKey, treeData);
+
+    console.timeEnd(logLabel);
+
     return treeData;
   }
 
@@ -36,7 +44,7 @@ export class MainTreeData {
     band: Band | null,
     album: Album | null,
   ): Promise<TreeData> {
-    const logLabel = `[MainTreeData.create]`;
+    const logLabel = `[MainTreeData.createFresh]`;
     console.log(logLabel, { url, band, album });
     console.time(logLabel);
 
