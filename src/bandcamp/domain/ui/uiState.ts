@@ -1,10 +1,6 @@
-import { sessionStorage } from 'src/core/shared';
+import { sessionStorage, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { SIDE_PANEL_OPEN_KEY } from '../storageKey';
 
-let initialized = false;
-let initPromise: Promise<void> | null = null;
-let sidePanelOpenCache: boolean | undefined;
 const WINDOW_SESSION_STORAGE_PREFIX = 'bcx';
 
 function windowSessionStorageKey(key: string) {
@@ -23,11 +19,16 @@ function readWindowSessionBoolean(key: string): boolean | undefined {
   if (typeof window === 'undefined') return undefined;
 
   try {
-    const rawValue = window.sessionStorage.getItem(windowSessionStorageKey(key));
+    const rawValue = window.sessionStorage.getItem(
+      windowSessionStorageKey(key),
+    );
     if (rawValue === null) return undefined;
     return rawValue === 'true';
   } catch (error) {
-    console.warn(`❌ BCX: Failed to read window sessionStorage key ${key}:`, error);
+    console.warn(
+      `❌ BCX: Failed to read window sessionStorage key ${key}:`,
+      error,
+    );
     return undefined;
   }
 }
@@ -75,39 +76,4 @@ export async function setUiSessionBoolean(
   }
 
   await writeWindowSessionBoolean(key, value);
-}
-
-export async function initUiState(): Promise<void> {
-  if (initialized) return;
-  if (initPromise) return initPromise;
-
-  initPromise = (async () => {
-    sidePanelOpenCache = await getUiSessionBoolean(SIDE_PANEL_OPEN_KEY);
-
-    if (canUseExtensionSessionStorage()) {
-      chrome.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName !== 'session') return;
-
-        const change = changes[SIDE_PANEL_OPEN_KEY];
-        if (!change) return;
-
-        sidePanelOpenCache = change.newValue as boolean | undefined;
-      });
-    }
-
-    initialized = true;
-  })();
-
-  await initPromise;
-}
-
-export function getSidePanelOpen(): boolean | undefined {
-  return sidePanelOpenCache;
-}
-
-export async function setSidePanelOpen(value: boolean): Promise<void> {
-  if (sidePanelOpenCache === value) return;
-
-  sidePanelOpenCache = value;
-  await setUiSessionBoolean(SIDE_PANEL_OPEN_KEY, value);
 }

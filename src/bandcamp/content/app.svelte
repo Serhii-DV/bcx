@@ -7,27 +7,30 @@ import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
 import BCXDrawerButton from '$lib/components/bcx/BCXDrawerButton.svelte';
-import {
-  getSidePanelOpen,
-  initUiState,
-  setSidePanelOpen,
-} from '../domain/ui/uiState';
+import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
+import { setUiSessionBoolean } from '../domain/ui/uiState';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 
 // Props interface
 interface Props {
   treeData?: TreeData;
+  initialSidePanelOpen?: boolean;
+  hasCompletedTour?: boolean;
 }
 
-let { treeData = new TreeData() }: Props = $props();
+let {
+  treeData = new TreeData(),
+  initialSidePanelOpen = false,
+  hasCompletedTour = false,
+}: Props = $props();
 let shadowContainer: HTMLElement | null = $state(null);
 let sidePanelOpen: boolean = $state(false);
-let sidePanelStateInitialized: boolean = $state(false);
+let sidePanelStateInitialized: boolean = $state(true);
 
 // Persist side panel state across page navigations (only after initial load)
 $effect(() => {
   if (sidePanelStateInitialized) {
-    setSidePanelOpen(sidePanelOpen).catch((error) => {
+    setUiSessionBoolean(SIDE_PANEL_OPEN_KEY, sidePanelOpen).catch((error) => {
       console.warn('❌ BCX: Failed to persist side panel state:', error);
     });
   }
@@ -89,6 +92,8 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 onMount(() => {
+  sidePanelOpen = initialSidePanelOpen;
+
   const bcxApp = document.querySelector('#bcx-app');
   if (bcxApp?.shadowRoot) {
     const portalContainer = document.createElement('div');
@@ -110,18 +115,6 @@ onMount(() => {
   } else {
     console.warn('❌ BCX: Could not find #bcx-app shadow root');
   }
-
-  // Restore side panel state from storage
-  void (async () => {
-    await initUiState();
-
-    const saved = getSidePanelOpen();
-    if (saved !== undefined) {
-      sidePanelOpen = saved;
-    }
-
-    sidePanelStateInitialized = true;
-  })();
 });
 
 async function updateSidePanelOpen(value: boolean) {
@@ -129,7 +122,7 @@ async function updateSidePanelOpen(value: boolean) {
 
   if (!sidePanelStateInitialized) return;
 
-  await setSidePanelOpen(value); // persist through uiState.ts
+  await setUiSessionBoolean(SIDE_PANEL_OPEN_KEY, sidePanelOpen); // persist in sessionStorage for current session
 }
 </script>
 
@@ -153,6 +146,7 @@ async function updateSidePanelOpen(value: boolean) {
     <BCXTour
       steps={tourSteps}
       autoStart={true}
+      hasCompleted={hasCompletedTour}
       onTourComplete={() => console.log('🎉 Tour completed!')}
       onTourSkipped={() => console.log('⏭️ Tour skipped')}
     />
