@@ -43,8 +43,4 @@ export class StorageKey {
   static isBandsKey(key: string): boolean {
     return key === BANDS_KEY;
   }
-
-  static onboardingTourCompletedKey(): string {
-    return TOUR_COMPLETE_KEY;
-  }
 }

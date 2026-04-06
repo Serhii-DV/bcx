@@ -6,7 +6,7 @@ import { injectCssFile, injectJSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { BCXEventListener } from 'src/app/bcx/eventListener';
 import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
-import { currentPageUrl } from 'src/core/shared';
+import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
@@ -15,7 +15,7 @@ import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
 import { BandcampStorage } from '../domain/storage';
 import { SIDE_PANEL_OPEN_KEY, TOUR_COMPLETE_KEY } from '../domain/storageKey';
-import { getUiSessionBoolean, initUiState } from '../domain/ui/uiState';
+import { getUiSessionBoolean } from '../domain/ui/uiState';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -56,10 +56,9 @@ onDOMReady(async () => {
     }
 
     const treeData = await MainTreeData.create(currentPageUrl, band, album);
-    await initUiState();
     const [initialSidePanelOpen, hasCompletedTour] = await Promise.all([
       getUiSessionBoolean(SIDE_PANEL_OPEN_KEY),
-      getUiSessionBoolean(TOUR_COMPLETE_KEY),
+      storage.getByKey<boolean>(TOUR_COMPLETE_KEY),
     ]);
 
     mount(App, {

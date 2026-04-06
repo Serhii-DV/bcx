@@ -7,7 +7,8 @@ import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
 import BCXDrawerButton from '$lib/components/bcx/BCXDrawerButton.svelte';
-import { setSidePanelOpen } from '../domain/ui/uiState';
+import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
+import { setUiSessionBoolean } from '../domain/ui/uiState';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 
 // Props interface
@@ -29,7 +30,7 @@ let sidePanelStateInitialized: boolean = $state(true);
 // Persist side panel state across page navigations (only after initial load)
 $effect(() => {
   if (sidePanelStateInitialized) {
-    setSidePanelOpen(sidePanelOpen).catch((error) => {
+    setUiSessionBoolean(SIDE_PANEL_OPEN_KEY, sidePanelOpen).catch((error) => {
       console.warn('❌ BCX: Failed to persist side panel state:', error);
     });
   }
@@ -121,7 +122,7 @@ async function updateSidePanelOpen(value: boolean) {
 
   if (!sidePanelStateInitialized) return;
 
-  await setSidePanelOpen(value); // persist through uiState.ts
+  await setUiSessionBoolean(SIDE_PANEL_OPEN_KEY, sidePanelOpen); // persist in sessionStorage for current session
 }
 </script>
 

@@ -142,6 +142,10 @@ export class Storage {
     });
   }
 
+  async setByKey(key: string, value: any): Promise<void> {
+    return this.set({ [key]: value });
+  }
+
   async clear(): Promise<void> {
     return this.storage.clear();
   }

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
-import { setUiSessionBoolean } from 'src/bandcamp/domain/ui/uiState';
+import { storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { onMount } from 'svelte';
 
@@ -242,7 +242,7 @@ async function completeTour() {
   cleanupHighlight();
 
   try {
-    await setUiSessionBoolean(TOUR_COMPLETE_KEY, true);
+    await storage.setByKey(TOUR_COMPLETE_KEY, true);
     isActive = false;
     isCompleted = true;
     currentStepIndex = -1;
@@ -261,7 +261,7 @@ function skipTour() {
 }
 
 function resetTour() {
-  setUiSessionBoolean(TOUR_COMPLETE_KEY, false).catch((error) => {
+  storage.setByKey(TOUR_COMPLETE_KEY, false).catch((error) => {
     console.warn('❌ BCX: Failed to reset tour completion state:', error);
   });
   isCompleted = false;
