@@ -12,9 +12,26 @@ import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
 import { FollowingGenresTreeItem } from './FollowingGenresTreeItem';
 import { HistoryTreeItem } from './HistoryTreeItem';
 import { WishlistTreeItem } from './WishlistTreeItem';
+import { MainTreeDataCache } from './MainTreeDataCache';
 
 export class MainTreeData {
   static async create(
+    url: Url,
+    band: Band | null,
+    album: Album | null,
+  ): Promise<TreeData> {
+    const cacheKey = MainTreeDataCache.buildKey(url, band, album);
+    const cachedTreeData = await MainTreeDataCache.get(cacheKey);
+    if (cachedTreeData) {
+      return cachedTreeData;
+    }
+
+    const treeData = await this.createFresh(url, band, album);
+    await MainTreeDataCache.set(cacheKey, treeData);
+    return treeData;
+  }
+
+  private static async createFresh(
     url: Url,
     band: Band | null,
     album: Album | null,
