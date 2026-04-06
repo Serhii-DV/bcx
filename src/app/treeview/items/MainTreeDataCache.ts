@@ -4,6 +4,7 @@ import { bandcampPageData } from 'src/bandcamp/domain/shared';
 import { sessionStorage } from 'src/core/shared';
 import type { Url } from 'src/core/url';
 import { console } from 'src/utils/console';
+import { ExternalLink, Funnel } from '@lucide/svelte';
 import { TreeData } from '../TreeData';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
@@ -28,6 +29,7 @@ interface TreeItemSnapshot {
   image?: string;
   query?: string;
   keywords?: string[];
+  iconKey?: string;
   buttons?: TreeItemButtonSnapshot[];
 }
 
@@ -146,6 +148,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
     image: item.image,
     query: item.query,
     keywords: item.keywords,
+    iconKey: getIconKey(item.icon),
     buttons: buttons.length > 0 ? buttons : undefined,
     children: item.children?.map(serializeTreeItem),
   };
@@ -168,7 +171,31 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
     image: item.image,
     query: item.query,
     keywords: item.keywords,
+    icon: getIconFromKey(item.iconKey),
     buttons,
     children: item.children?.map(deserializeTreeItem),
   };
+}
+
+function getIconKey(icon: any): string | undefined {
+  if (icon === ExternalLink) {
+    return 'external-link';
+  }
+
+  if (icon === Funnel) {
+    return 'funnel';
+  }
+
+  return undefined;
+}
+
+function getIconFromKey(iconKey?: string): any {
+  switch (iconKey) {
+    case 'external-link':
+      return ExternalLink;
+    case 'funnel':
+      return Funnel;
+    default:
+      return undefined;
+  }
 }
