@@ -18,14 +18,13 @@ Location:
 
 Caching each subtree separately improves freshness control and avoids invalidating the entire tree when only one section changes.
 
-## Cache layers
+## Cache layer
 
-`TreeItemCache` uses two layers:
+`TreeItemCache` currently uses a single storage-backed layer:
 
-1. **Memory cache** (`Map`) for fastest hits in the same runtime.
-2. **Session storage cache** (`chrome.storage.session`) for warm recovery.
+1. **Session storage cache** (`chrome.storage.session`) for warm recovery without keeping duplicate in-process cache state.
 
-Both layers store serialized `TreeItem` snapshots with:
+The cache stores serialized `TreeItem` snapshots with:
 - `createdAt`
 - `expiresAt`
 - `version`
@@ -73,10 +72,9 @@ To support storage serialization:
 
 ## Invalidation
 
-Explicit loader actions call `TreeItemCache.invalidateAll()` (via `createLoadHandler`) to clear both memory and session layers.
+Explicit loader actions call `TreeItemCache.invalidateAll()` (via `createLoadHandler`) to clear session cache entries.
 
 ## Observability
 
 Cache reads log timing and hit/miss information:
 - `TreeItemCache.get:<key>`
-- includes cache layer (`memory` or `session`) on hits

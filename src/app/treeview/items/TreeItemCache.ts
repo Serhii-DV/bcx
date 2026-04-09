@@ -35,8 +35,6 @@ interface SubtreeSnapshot {
   item: TreeItemSnapshot;
 }
 
-const memoryCache = new Map<string, SubtreeSnapshot>();
-
 export class TreeItemCache {
   static subtreeKey(...parts: Array<string | number | null | undefined>): string {
     return `${CACHE_KEY_PREFIX}/${parts
@@ -73,7 +71,6 @@ export class TreeItemCache {
     const item = deserializeTreeItem(cacheResult.snapshot.item);
     console.timeEnd(logLabel);
     console.log(logLabel, 'HIT', {
-      layer: cacheResult.layer,
       createdAt: cacheResult.snapshot.createdAt,
       expiresAt: cacheResult.snapshot.expiresAt,
     });
@@ -94,12 +91,10 @@ export class TreeItemCache {
       item: serializeTreeItem(item),
     };
 
-    memoryCache.set(key, snapshot);
     await sessionStorage.setByKey(key, snapshot);
   }
 
   static async invalidateAll(): Promise<void> {
-    memoryCache.clear();
     const keys = await sessionStorage.getKeys();
     const cacheKeys = keys.filter((key) => key.startsWith(CACHE_KEY_PREFIX));
     if (cacheKeys.length === 0) {
@@ -112,17 +107,8 @@ export class TreeItemCache {
 
   private static async getSnapshot(
     key: string,
-  ): Promise<{ snapshot: SubtreeSnapshot; layer: 'memory' | 'session' } | null> {
+  ): Promise<{ snapshot: SubtreeSnapshot } | null> {
     const now = Date.now();
-    const memorySnapshot = memoryCache.get(key);
-    if (memorySnapshot) {
-      if (this.isFresh(memorySnapshot, now)) {
-        return { snapshot: memorySnapshot, layer: 'memory' };
-      }
-
-      memoryCache.delete(key);
-    }
-
     const sessionSnapshot = await sessionStorage.getByKey<SubtreeSnapshot>(key);
     if (!sessionSnapshot) {
       return null;
@@ -133,8 +119,7 @@ export class TreeItemCache {
       return null;
     }
 
-    memoryCache.set(key, sessionSnapshot);
-    return { snapshot: sessionSnapshot, layer: 'session' };
+    return { snapshot: sessionSnapshot };
   }
 
   private static isFresh(snapshot: SubtreeSnapshot, now: number): boolean {
