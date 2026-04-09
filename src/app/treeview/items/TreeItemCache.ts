@@ -37,7 +37,7 @@ interface SubtreeSnapshot {
 
 const memoryCache = new Map<string, SubtreeSnapshot>();
 
-export class MainTreeSubtreeCache {
+export class TreeItemCache {
   static subtreeKey(...parts: Array<string | number | null | undefined>): string {
     return `${CACHE_KEY_PREFIX}/${parts
       .filter((part) => part !== undefined && part !== null && `${part}` !== '')
@@ -60,7 +60,7 @@ export class MainTreeSubtreeCache {
   }
 
   static async get(key: string): Promise<TreeItem | null> {
-    const logLabel = `[MainTreeSubtreeCache.get:${key}]`;
+    const logLabel = `[TreeItemCache.get:${key}]`;
     console.time(logLabel);
 
     const cacheResult = await this.getSnapshot(key);
@@ -107,7 +107,7 @@ export class MainTreeSubtreeCache {
     }
 
     await sessionStorage.remove(cacheKeys);
-    console.log('[MainTreeSubtreeCache.invalidateAll]', cacheKeys.length);
+    console.log('[TreeItemCache.invalidateAll]', cacheKeys.length);
   }
 
   private static async getSnapshot(

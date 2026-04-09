@@ -12,7 +12,7 @@ import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
 import { FollowingGenresTreeItem } from './FollowingGenresTreeItem';
 import { HistoryTreeItem } from './HistoryTreeItem';
 import { WishlistTreeItem } from './WishlistTreeItem';
-import { MainTreeSubtreeCache } from './MainTreeSubtreeCache';
+import { TreeItemCache } from './TreeItemCache';
 
 export class MainTreeData {
   static async create(
@@ -27,8 +27,8 @@ export class MainTreeData {
     const treeData = new TreeData();
 
     if (album) {
-      const releaseTreeItem = await MainTreeSubtreeCache.getOrCreate(
-        MainTreeSubtreeCache.subtreeKey('release', album.id, url.uuid),
+      const releaseTreeItem = await TreeItemCache.getOrCreate(
+        TreeItemCache.subtreeKey('release', album.id, url.uuid),
         () => AlbumTreeItemFactory.createWithInformation(album),
         24 * 60 * 60 * 1000,
       );
@@ -36,8 +36,8 @@ export class MainTreeData {
     }
 
     if (band) {
-      const bandTreeItem = await MainTreeSubtreeCache.getOrCreate(
-        MainTreeSubtreeCache.subtreeKey('band', band.id, url.uuid),
+      const bandTreeItem = await TreeItemCache.getOrCreate(
+        TreeItemCache.subtreeKey('band', band.id, url.uuid),
         async () => BandTreeItem.create(band, url),
         24 * 60 * 60 * 1000,
       );
@@ -57,29 +57,29 @@ export class MainTreeData {
       }
 
       treeData.add(
-        await MainTreeSubtreeCache.getOrCreate(
-          MainTreeSubtreeCache.subtreeKey('following-bands', fanKeyPart),
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey('following-bands', fanKeyPart),
           () => FollowingBandsTreeItem.create(fanData.username || ''),
           60 * 60 * 1000,
         ),
       );
       treeData.add(
-        await MainTreeSubtreeCache.getOrCreate(
-          MainTreeSubtreeCache.subtreeKey('following-genres', fanKeyPart),
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey('following-genres', fanKeyPart),
           () => FollowingGenresTreeItem.create(fanData.username || ''),
           60 * 60 * 1000,
         ),
       );
       treeData.add(
-        await MainTreeSubtreeCache.getOrCreate(
-          MainTreeSubtreeCache.subtreeKey('collection', fanKeyPart),
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey('collection', fanKeyPart),
           () => CollectionTreeItem.create(fanData.username || ''),
           30 * 60 * 1000,
         ),
       );
       treeData.add(
-        await MainTreeSubtreeCache.getOrCreate(
-          MainTreeSubtreeCache.subtreeKey('wishlist', fanKeyPart),
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey('wishlist', fanKeyPart),
           () => WishlistTreeItem.create(fanData.username || ''),
           30 * 60 * 1000,
         ),
@@ -87,8 +87,8 @@ export class MainTreeData {
     }
 
     treeData.add(
-      await MainTreeSubtreeCache.getOrCreate(
-        MainTreeSubtreeCache.subtreeKey(
+      await TreeItemCache.getOrCreate(
+        TreeItemCache.subtreeKey(
           'history',
           bandcampPageData?.fanData?.fan_id || 'anonymous',
         ),
