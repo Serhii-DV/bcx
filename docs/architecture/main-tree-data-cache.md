@@ -54,7 +54,7 @@ Where:
 
 ## TTL strategy (current)
 
-Configured in `MainTreeData.create(...)`:
+Configured in `src/app/treeview/items/MainTreeData.ts` via `CACHE_TTL` constants:
 
 - release: 24h
 - band: 24h
@@ -80,4 +80,3 @@ Explicit loader actions call `TreeItemCache.invalidateAll()` (via `createLoadHan
 Cache reads log timing and hit/miss information:
 - `TreeItemCache.get:<key>`
 - includes cache layer (`memory` or `session`) on hits
-

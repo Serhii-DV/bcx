@@ -14,6 +14,16 @@ import { HistoryTreeItem } from './HistoryTreeItem';
 import { WishlistTreeItem } from './WishlistTreeItem';
 import { TreeItemCache } from './TreeItemCache';
 
+const CACHE_TTL = {
+  RELEASE: 24 * 60 * 60 * 1000,
+  BAND: 24 * 60 * 60 * 1000,
+  FOLLOWING_BANDS: 60 * 60 * 1000,
+  FOLLOWING_GENRES: 60 * 60 * 1000,
+  COLLECTION: 30 * 60 * 1000,
+  WISHLIST: 30 * 60 * 1000,
+  HISTORY: 10 * 60 * 1000,
+} as const;
+
 export class MainTreeData {
   static async create(
     url: Url,
@@ -34,7 +44,7 @@ export class MainTreeData {
       const releaseTreeItem = await TreeItemCache.getOrCreate(
         TreeItemCache.subtreeKey('release', album.id, url.uuid),
         () => AlbumTreeItemFactory.createWithInformation(album),
-        24 * 60 * 60 * 1000,
+        CACHE_TTL.RELEASE,
       );
       treeData.add(releaseTreeItem);
     }
@@ -43,7 +53,7 @@ export class MainTreeData {
       const bandTreeItem = await TreeItemCache.getOrCreate(
         TreeItemCache.subtreeKey('band', band.id, url.uuid),
         async () => BandTreeItem.create(band, url),
-        24 * 60 * 60 * 1000,
+        CACHE_TTL.BAND,
       );
       treeData.add(bandTreeItem);
     }
@@ -64,28 +74,28 @@ export class MainTreeData {
         await TreeItemCache.getOrCreate(
           TreeItemCache.subtreeKey('following-bands', fanKeyPart),
           () => FollowingBandsTreeItem.create(fanData.username || ''),
-          60 * 60 * 1000,
+          CACHE_TTL.FOLLOWING_BANDS,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
           TreeItemCache.subtreeKey('following-genres', fanKeyPart),
           () => FollowingGenresTreeItem.create(fanData.username || ''),
-          60 * 60 * 1000,
+          CACHE_TTL.FOLLOWING_GENRES,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
           TreeItemCache.subtreeKey('collection', fanKeyPart),
           () => CollectionTreeItem.create(fanData.username || ''),
-          30 * 60 * 1000,
+          CACHE_TTL.COLLECTION,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
           TreeItemCache.subtreeKey('wishlist', fanKeyPart),
           () => WishlistTreeItem.create(fanData.username || ''),
-          30 * 60 * 1000,
+          CACHE_TTL.WISHLIST,
         ),
       );
     }
@@ -94,7 +104,7 @@ export class MainTreeData {
         await TreeItemCache.getOrCreate(
           TreeItemCache.subtreeKey('history', historyKeyPart),
           () => HistoryTreeItem.create(),
-          10 * 60 * 1000,
+          CACHE_TTL.HISTORY,
         ),
     );
     console.timeEnd(logLabel);
