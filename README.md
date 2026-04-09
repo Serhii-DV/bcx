@@ -86,4 +86,4 @@ To learn more about Rsbuild, check out the following resources:
 
 ## Architecture Notes
 
-- Main tree caching strategy: `docs/architecture/main-tree-data-cache.md`
+- Main tree subtree-caching strategy (`TreeItemCache`): `docs/architecture/main-tree-data-cache.md`
