@@ -5,7 +5,7 @@ import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 
 const CACHE_VERSION = 2;
-const CACHE_KEY_PREFIX = '/ui/main-tree-subtree-cache';
+const CACHE_KEY_PREFIX = '/tree-item-cache';
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 
 interface TreeItemButtonSnapshot {
