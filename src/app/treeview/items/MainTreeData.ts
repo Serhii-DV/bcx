@@ -35,7 +35,7 @@ export class MainTreeData {
     console.time(logLabel);
 
     const treeData = new TreeData();
-    const historyKeyPart =
+    const userKeyPart =
       bandcampPageData?.fanData?.username ||
       bandcampPageData?.fanData?.fan_id ||
       'anonymous';
@@ -60,7 +60,6 @@ export class MainTreeData {
 
     if (bandcampPageData) {
       const fanData = bandcampPageData.fanData;
-      const fanKeyPart = fanData.username || fanData.fan_id || 'anonymous';
 
       if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
         const fanPageDataTreeItem =
@@ -72,28 +71,28 @@ export class MainTreeData {
 
       treeData.add(
         await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('following-bands', fanKeyPart),
+          TreeItemCache.subtreeKey('following-bands', userKeyPart),
           () => FollowingBandsTreeItem.create(fanData.username || ''),
           CACHE_TTL.FOLLOWING_BANDS,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('following-genres', fanKeyPart),
+          TreeItemCache.subtreeKey('following-genres', userKeyPart),
           () => FollowingGenresTreeItem.create(fanData.username || ''),
           CACHE_TTL.FOLLOWING_GENRES,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('collection', fanKeyPart),
+          TreeItemCache.subtreeKey('collection', userKeyPart),
           () => CollectionTreeItem.create(fanData.username || ''),
           CACHE_TTL.COLLECTION,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('wishlist', fanKeyPart),
+          TreeItemCache.subtreeKey('wishlist', userKeyPart),
           () => WishlistTreeItem.create(fanData.username || ''),
           CACHE_TTL.WISHLIST,
         ),
@@ -101,11 +100,11 @@ export class MainTreeData {
     }
 
     treeData.add(
-        await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('history', historyKeyPart),
-          () => HistoryTreeItem.create(),
-          CACHE_TTL.HISTORY,
-        ),
+      await TreeItemCache.getOrCreate(
+        TreeItemCache.subtreeKey('history', userKeyPart),
+        () => HistoryTreeItem.create(),
+        CACHE_TTL.HISTORY,
+      ),
     );
     console.timeEnd(logLabel);
 
