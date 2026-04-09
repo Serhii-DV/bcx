@@ -25,6 +25,10 @@ export class MainTreeData {
     console.time(logLabel);
 
     const treeData = new TreeData();
+    const historyKeyPart =
+      bandcampPageData?.fanData?.username ||
+      bandcampPageData?.fanData?.fan_id ||
+      'anonymous';
 
     if (album) {
       const releaseTreeItem = await TreeItemCache.getOrCreate(
@@ -46,7 +50,7 @@ export class MainTreeData {
 
     if (bandcampPageData) {
       const fanData = bandcampPageData.fanData;
-      const fanKeyPart = fanData.fan_id || fanData.username || 'anonymous';
+      const fanKeyPart = fanData.username || fanData.fan_id || 'anonymous';
 
       if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
         const fanPageDataTreeItem =
@@ -87,14 +91,11 @@ export class MainTreeData {
     }
 
     treeData.add(
-      await TreeItemCache.getOrCreate(
-        TreeItemCache.subtreeKey(
-          'history',
-          bandcampPageData?.fanData?.fan_id || 'anonymous',
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey('history', historyKeyPart),
+          () => HistoryTreeItem.create(),
+          10 * 60 * 1000,
         ),
-        () => HistoryTreeItem.create(),
-        10 * 60 * 1000,
-      ),
     );
     console.timeEnd(logLabel);
 
