@@ -17,6 +17,9 @@ export class AlbumTreeItemFactory {
 
   static createWithKeywords(album: Album): TreeItem {
     const builder = this.createBuilder(album);
+    builder.apply((item) => {
+      item.showChildrenCount = false;
+    });
     const artistNames = album.artistNames.sort();
 
     if (artistNames.length) {

@@ -4,6 +4,7 @@ export interface TreeItem {
   id?: string;
   label?: string;
   children?: TreeItem[];
+  showChildrenCount?: boolean;
   open?: boolean;
   level?: number;
   path?: string;
