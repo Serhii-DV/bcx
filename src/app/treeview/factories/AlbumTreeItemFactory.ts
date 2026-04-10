@@ -32,7 +32,7 @@ export class AlbumTreeItemFactory {
       builder.addChild(
         TreeItemFactory.items(
           'Artists',
-          artistNames.map((artistName) => TreeItemFactory.textWithQuery(artistName)),
+          artistNames.map(TreeItemFactory.textWithQuery),
         ),
       );
     }
@@ -41,7 +41,7 @@ export class AlbumTreeItemFactory {
       builder.addChild(
         TreeItemFactory.items(
           'Tags',
-          keywords.map((keyword) => TreeItemFactory.textWithQuery(keyword)),
+          keywords.map(TreeItemFactory.textWithQuery),
         ),
       );
     }
