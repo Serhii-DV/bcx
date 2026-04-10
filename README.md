@@ -83,3 +83,7 @@ To learn more about Rsbuild, check out the following resources:
 
 - [Rsbuild documentation](https://rsbuild.rs) - explore Rsbuild features and APIs.
 - [Rsbuild GitHub repository](https://github.com/web-infra-dev/rsbuild) - your feedback and contributions are welcome!
+
+## Architecture Notes
+
+- Main tree subtree-caching strategy (`TreeItemCache`): `docs/architecture/main-tree-data-cache.md`

@@ -1,5 +1,6 @@
 import { Funnel } from '@lucide/svelte';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
+import { TreeItemCache } from './items/TreeItemCache';
 import type { TreeItem } from './TreeItem';
 
 export function isNode(item: TreeItem): boolean {
@@ -177,6 +178,7 @@ export function createLoadHandler<T>(fetchData: () => Promise<T[]>) {
 
     try {
       const data = await fetchData();
+      await TreeItemCache.invalidateAll();
 
       // Hardcoded string format using the array's length
       element.textContent = `Loaded ${data.length} items`;

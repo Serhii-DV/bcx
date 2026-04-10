@@ -12,6 +12,17 @@ import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
 import { FollowingGenresTreeItem } from './FollowingGenresTreeItem';
 import { HistoryTreeItem } from './HistoryTreeItem';
 import { WishlistTreeItem } from './WishlistTreeItem';
+import { TreeItemCache } from './TreeItemCache';
+
+const CACHE_TTL = {
+  RELEASE: 24 * 60 * 60 * 1000,
+  BAND: 24 * 60 * 60 * 1000,
+  FOLLOWING_BANDS: 60 * 60 * 1000,
+  FOLLOWING_GENRES: 60 * 60 * 1000,
+  COLLECTION: 30 * 60 * 1000,
+  WISHLIST: 30 * 60 * 1000,
+  HISTORY: 10 * 60 * 1000,
+} as const;
 
 export class MainTreeData {
   static async create(
@@ -24,13 +35,27 @@ export class MainTreeData {
     console.time(logLabel);
 
     const treeData = new TreeData();
+    const userKeyPart =
+      bandcampPageData?.fanData?.username ||
+      bandcampPageData?.fanData?.fan_id ||
+      'anonymous';
 
     if (album) {
-      treeData.add(await AlbumTreeItemFactory.createWithInformation(album));
+      const releaseTreeItem = await TreeItemCache.getOrCreate(
+        TreeItemCache.subtreeKey('release', album.id),
+        () => AlbumTreeItemFactory.createWithInformation(album),
+        CACHE_TTL.RELEASE,
+      );
+      treeData.add(releaseTreeItem);
     }
 
     if (band) {
-      treeData.add(BandTreeItem.create(band, url));
+      const bandTreeItem = await TreeItemCache.getOrCreate(
+        TreeItemCache.subtreeKey('band', band.id),
+        async () => BandTreeItem.create(band, url),
+        CACHE_TTL.BAND,
+      );
+      treeData.add(bandTreeItem);
     }
 
     if (bandcampPageData) {
@@ -44,15 +69,43 @@ export class MainTreeData {
         }
       }
 
-      treeData.add(await FollowingBandsTreeItem.create(fanData.username || ''));
       treeData.add(
-        await FollowingGenresTreeItem.create(fanData.username || ''),
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey(userKeyPart, 'following-bands'),
+          () => FollowingBandsTreeItem.create(fanData.username || ''),
+          CACHE_TTL.FOLLOWING_BANDS,
+        ),
       );
-      treeData.add(await CollectionTreeItem.create(fanData.username || ''));
-      treeData.add(await WishlistTreeItem.create(fanData.username || ''));
+      treeData.add(
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey(userKeyPart, 'following-genres'),
+          () => FollowingGenresTreeItem.create(fanData.username || ''),
+          CACHE_TTL.FOLLOWING_GENRES,
+        ),
+      );
+      treeData.add(
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey(userKeyPart, 'collection'),
+          () => CollectionTreeItem.create(fanData.username || ''),
+          CACHE_TTL.COLLECTION,
+        ),
+      );
+      treeData.add(
+        await TreeItemCache.getOrCreate(
+          TreeItemCache.subtreeKey(userKeyPart, 'wishlist'),
+          () => WishlistTreeItem.create(fanData.username || ''),
+          CACHE_TTL.WISHLIST,
+        ),
+      );
     }
 
-    treeData.add(await HistoryTreeItem.create());
+    treeData.add(
+      await TreeItemCache.getOrCreate(
+        TreeItemCache.subtreeKey(userKeyPart, 'history'),
+        () => HistoryTreeItem.create(),
+        CACHE_TTL.HISTORY,
+      ),
+    );
     console.timeEnd(logLabel);
 
     return treeData;
