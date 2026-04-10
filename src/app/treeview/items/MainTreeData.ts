@@ -42,7 +42,7 @@ export class MainTreeData {
 
     if (album) {
       const releaseTreeItem = await TreeItemCache.getOrCreate(
-        TreeItemCache.subtreeKey('release', album.id, url.uuid),
+        TreeItemCache.subtreeKey('release', album.id),
         () => AlbumTreeItemFactory.createWithInformation(album),
         CACHE_TTL.RELEASE,
       );
@@ -51,7 +51,7 @@ export class MainTreeData {
 
     if (band) {
       const bandTreeItem = await TreeItemCache.getOrCreate(
-        TreeItemCache.subtreeKey('band', band.id, url.uuid),
+        TreeItemCache.subtreeKey('band', band.id),
         async () => BandTreeItem.create(band, url),
         CACHE_TTL.BAND,
       );
