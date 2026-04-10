@@ -25,7 +25,9 @@ export class AlbumTreeItemFactory {
     builder.addChild(TreeItemFactory.textWithQuery(album.toString()));
 
     if (album.metadata?.year) {
-      builder.addChild(TreeItemFactory.text(String(album.metadata.year)));
+      builder.addChild(
+        TreeItemFactory.textWithQuery(String(album.metadata.year)),
+      );
     }
 
     if (artistNames.length) {
