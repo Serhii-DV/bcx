@@ -8,7 +8,6 @@ import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
-import { setTreeItemQueryFromLabel } from '../utils';
 
 export class AlbumTreeItemFactory {
   static create(album: Album): TreeItem {
@@ -17,27 +16,37 @@ export class AlbumTreeItemFactory {
 
   static createWithKeywords(album: Album): TreeItem {
     const builder = this.createBuilder(album);
+    builder.apply((item) => {
+      item.showChildrenCount = false;
+    });
     const artistNames = album.artistNames.sort();
+    const keywords = (album.metadata?.keywords || []).sort();
+
+    builder.addChild(TreeItemFactory.textWithQuery(album.toString()));
+
+    if (album.metadata?.year) {
+      builder.addChild(
+        TreeItemFactory.textWithQuery(String(album.metadata.year)),
+      );
+    }
 
     if (artistNames.length) {
-      builder.addChildren(artistNames.map(TreeItemFactory.fromArtistName));
-    }
-
-    if (album.metadata) {
-      builder.addChild(TreeItemFactory.text(String(album.metadata.year)));
-
-      builder.addChildren(
-        (album.metadata.keywords || []).map(TreeItemFactory.text),
+      builder.addChild(
+        TreeItemFactory.items(
+          'Artists',
+          artistNames.map(TreeItemFactory.textWithQuery),
+        ),
       );
     }
 
-    builder
-      // Use current item and childrens for filtering
-      .apply(setTreeItemQueryFromLabel)
-      // Only this children is used as the link
-      .addChild(
-        TreeItemFactory.link('Open Release Page', album.url.toString()),
+    if (keywords.length) {
+      builder.addChild(
+        TreeItemFactory.items(
+          'Tags',
+          keywords.map(TreeItemFactory.textWithQuery),
+        ),
       );
+    }
 
     return builder.build();
   }

@@ -322,6 +322,9 @@ function isItemVisible(item: TreeItem): boolean {
 }
 
 function getItemVisibleChildCount(item: TreeItem): number {
+  if (item.showChildrenCount === false) {
+    return 0;
+  }
   if (!debouncedFilterQuery.trim()) {
     return item.children?.length || 0;
   }
