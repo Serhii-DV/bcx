@@ -8,7 +8,6 @@ import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
-import { setTreeItemQueryFromLabel } from '../utils';
 
 export class AlbumTreeItemFactory {
   static create(album: Album): TreeItem {
@@ -21,26 +20,31 @@ export class AlbumTreeItemFactory {
       item.showChildrenCount = false;
     });
     const artistNames = album.artistNames.sort();
+    const keywords = (album.metadata?.keywords || []).sort();
+
+    builder.addChild(this.createFilterableTextTreeItem(album.toString()));
+
+    if (album.metadata?.year) {
+      builder.addChild(TreeItemFactory.text(String(album.metadata.year)));
+    }
 
     if (artistNames.length) {
-      builder.addChildren(artistNames.map(TreeItemFactory.fromArtistName));
-    }
-
-    if (album.metadata) {
-      builder.addChild(TreeItemFactory.text(String(album.metadata.year)));
-
-      builder.addChildren(
-        (album.metadata.keywords || []).map(TreeItemFactory.text),
+      builder.addChild(
+        TreeItemFactory.items(
+          'Artists',
+          artistNames.map(this.createFilterableTextTreeItem),
+        ),
       );
     }
 
-    builder
-      // Use current item and childrens for filtering
-      .apply(setTreeItemQueryFromLabel)
-      // Only this children is used as the link
-      .addChild(
-        TreeItemFactory.link('Open Release Page', album.url.toString()),
+    if (keywords.length) {
+      builder.addChild(
+        TreeItemFactory.items(
+          'Tags',
+          keywords.map(this.createFilterableTextTreeItem),
+        ),
       );
+    }
 
     return builder.build();
   }
@@ -125,5 +129,12 @@ export class AlbumTreeItemFactory {
 
   private static createBuilder(album: Album): TreeItemBuilder {
     return new TreeItemBuilder(TreeItemFactory.fromAlbum(album));
+  }
+
+  private static createFilterableTextTreeItem(label: string): TreeItem {
+    return {
+      label,
+      query: label,
+    };
   }
 }
