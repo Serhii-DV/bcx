@@ -71,28 +71,28 @@ export class MainTreeData {
 
       treeData.add(
         await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('following-bands', userKeyPart),
+          TreeItemCache.subtreeKey(userKeyPart, 'following-bands'),
           () => FollowingBandsTreeItem.create(fanData.username || ''),
           CACHE_TTL.FOLLOWING_BANDS,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('following-genres', userKeyPart),
+          TreeItemCache.subtreeKey(userKeyPart, 'following-genres'),
           () => FollowingGenresTreeItem.create(fanData.username || ''),
           CACHE_TTL.FOLLOWING_GENRES,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('collection', userKeyPart),
+          TreeItemCache.subtreeKey(userKeyPart, 'collection'),
           () => CollectionTreeItem.create(fanData.username || ''),
           CACHE_TTL.COLLECTION,
         ),
       );
       treeData.add(
         await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('wishlist', userKeyPart),
+          TreeItemCache.subtreeKey(userKeyPart, 'wishlist'),
           () => WishlistTreeItem.create(fanData.username || ''),
           CACHE_TTL.WISHLIST,
         ),
@@ -101,7 +101,7 @@ export class MainTreeData {
 
     treeData.add(
       await TreeItemCache.getOrCreate(
-        TreeItemCache.subtreeKey('history', userKeyPart),
+        TreeItemCache.subtreeKey(userKeyPart, 'history'),
         () => HistoryTreeItem.create(),
         CACHE_TTL.HISTORY,
       ),
