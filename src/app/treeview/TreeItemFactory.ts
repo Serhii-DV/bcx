@@ -1,4 +1,4 @@
-import { ExternalLink } from '@lucide/svelte';
+import { ExternalLink, Funnel } from '@lucide/svelte';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import type { Track } from 'src/bandcamp/domain/track/track';
@@ -18,6 +18,7 @@ export class TreeItemFactory {
     return {
       label,
       query: typeof query === 'string' ? query : label,
+      icon: Funnel,
     };
   }
 
