@@ -14,6 +14,13 @@ export class TreeItemFactory {
     };
   }
 
+  static textWithQuery(label: string): TreeItem {
+    return {
+      label,
+      query: label,
+    };
+  }
+
   static items(label: string, children: TreeItem[]): TreeItem {
     return {
       label,
