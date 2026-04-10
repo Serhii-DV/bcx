@@ -22,7 +22,7 @@ export class AlbumTreeItemFactory {
     const artistNames = album.artistNames.sort();
     const keywords = (album.metadata?.keywords || []).sort();
 
-    builder.addChild(TreeItemFactory.textWithQuery(album.toString(), album.toString()));
+    builder.addChild(TreeItemFactory.textWithQuery(album.toString()));
 
     if (album.metadata?.year) {
       builder.addChild(TreeItemFactory.text(String(album.metadata.year)));
@@ -32,9 +32,7 @@ export class AlbumTreeItemFactory {
       builder.addChild(
         TreeItemFactory.items(
           'Artists',
-          artistNames.map((artistName) =>
-            TreeItemFactory.textWithQuery(artistName, artistName),
-          ),
+          artistNames.map((artistName) => TreeItemFactory.textWithQuery(artistName)),
         ),
       );
     }
@@ -43,7 +41,7 @@ export class AlbumTreeItemFactory {
       builder.addChild(
         TreeItemFactory.items(
           'Tags',
-          keywords.map((keyword) => TreeItemFactory.textWithQuery(keyword, keyword)),
+          keywords.map((keyword) => TreeItemFactory.textWithQuery(keyword)),
         ),
       );
     }
