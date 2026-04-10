@@ -215,6 +215,25 @@ function handleKeyDown(event: KeyboardEvent) {
       break;
 
     case 'Enter':
+      if (currentIndex >= 0) {
+        const currentItem = effectiveTreeData.findVisible(currentIndex);
+
+        if (!currentItem) {
+          break;
+        }
+
+        if (isNode(currentItem) && !currentItem.href) {
+          if (isNodeExpanded(currentItem)) {
+            collapseNode(currentItem);
+          } else {
+            expandNode(currentItem);
+          }
+        } else {
+          handleItemClick(currentItem, event);
+        }
+      }
+      break;
+
     case ' ':
       handleItemClick(effectiveTreeData.findVisible(currentIndex), event);
       break;
