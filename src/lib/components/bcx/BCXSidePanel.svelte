@@ -110,9 +110,9 @@ Use Ctrl+D to toggle"
     onkeydown={handleKeyDown}
   >
     {#if open}
-      <PanelLeftOpen size="16" />
-    {:else}
       <PanelLeftClose size="16" />
+    {:else}
+      <PanelLeftOpen size="16" />
     {/if}
   </div>
 </div>
