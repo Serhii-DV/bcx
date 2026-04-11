@@ -1,6 +1,5 @@
 <script lang="ts">
 import { PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
-import { onMount } from 'svelte';
 
 interface Props {
   sidePanelOpen: boolean;
@@ -10,13 +9,6 @@ interface Props {
 let { sidePanelOpen, onToggle }: Props = $props();
 
 let drawerButton: HTMLElement | null = $state(null);
-let isNearButton = $state(false);
-let cursorY = $state(0);
-
-// Initial positioning setup
-onMount(() => {
-  // Component is ready
-});
 
 // Effect to position the drawer button relative to the side panel
 $effect(() => {
@@ -26,36 +18,10 @@ $effect(() => {
   drawerButton.style.left = `${leftOffset}px`;
 });
 
-// Effect to update button vertical position based on cursor
-$effect(() => {
-  if (!drawerButton) return;
-
-  // Position button at cursor Y position when near button area
-  // Return to middle when cursor leaves button area
-  drawerButton.style.top = isNearButton ? `${cursorY}px` : '50%';
-});
-
 function getButtonLeftPosition() {
   const sidePanelWidth = 400;
   const leftMargin = 10;
   return sidePanelOpen ? sidePanelWidth + leftMargin : leftMargin;
-}
-
-function handleMouseMove(e: MouseEvent) {
-  // Calculate the button's current left position based on side panel state
-  const buttonLeftPosition = getButtonLeftPosition();
-  const delta = 100;
-
-  // Check if cursor is within 100px of the button's current horizontal position
-  const isNearButtonHorizontally =
-    e.clientX < buttonLeftPosition + delta &&
-    e.clientX > buttonLeftPosition - delta;
-
-  // Update states
-  isNearButton = isNearButtonHorizontally;
-
-  // Update cursor Y position
-  cursorY = e.clientY;
 }
 
 function handleButtonClick() {
@@ -63,22 +29,21 @@ function handleButtonClick() {
 }
 </script>
 
-<svelte:document onmousemove={handleMouseMove} />
-
 <button
   id="bcx-drawer-button"
   bind:this={drawerButton}
   class="bcx-drawer-button"
-  class:near-edge={isNearButton}
   title="BCX - Side Panel.
 Use Ctrl+D to toggle"
   onclick={handleButtonClick}
 >
-  {#if sidePanelOpen}
-    <PanelLeftOpen size="16" />
-  {:else}
-    <PanelLeftClose size="16" />
-  {/if}
+  <span class="drawer-icon" aria-hidden="true">
+    {#if sidePanelOpen}
+      <PanelLeftOpen size="16" />
+    {:else}
+      <PanelLeftClose size="16" />
+    {/if}
+  </span>
 </button>
 
 <style>
@@ -88,40 +53,75 @@ Use Ctrl+D to toggle"
 
   /* BCX Drawer Button Styles */
   :global(.bcx-drawer-button) {
-    background: #1f2937;
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
     border: 1px solid #374151;
     color: #f9fafb;
-    border-radius: 50%;
-    padding: 0.75rem;
+    border-radius: 0 10px 10px 0;
+    padding: 0;
     cursor: pointer;
-    transition: all 0.3s ease;
-    transform: translateY(-50%);
+    transition:
+      left 260ms cubic-bezier(0.25, 0.8, 0.25, 1),
+      width 220ms ease,
+      box-shadow 220ms ease,
+      background-color 220ms ease;
     position: fixed;
+    top: 0;
+    bottom: 0;
+    height: 100vh;
+    width: 14px;
     left: var(--bcx-drawer-left-margin);
     z-index: 999999;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      inset -1px 0 0 rgba(255, 255, 255, 0.06),
+      0 0 0 rgba(59, 130, 246, 0);
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.3;
-  }
-
-  :global(.bcx-drawer-button.near-edge) {
-    opacity: 1;
+    opacity: 0.92;
   }
 
   :global(.bcx-drawer-button:hover) {
-    background: #374151;
+    background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
     border-color: #4b5563;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    width: 18px;
+    box-shadow:
+      inset -1px 0 0 rgba(255, 255, 255, 0.14),
+      0 0 0 3px rgba(59, 130, 246, 0.2);
   }
 
   :global(.bcx-drawer-button:focus) {
-    background: #374151;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   }
 
+  :global(.bcx-drawer-button:focus-visible) {
+    width: 18px;
+    box-shadow:
+      inset -1px 0 0 rgba(255, 255, 255, 0.16),
+      0 0 0 3px rgba(59, 130, 246, 0.45);
+  }
 
+  :global(.bcx-drawer-button .drawer-icon) {
+    opacity: 0.7;
+    transform: translateX(0);
+    transition:
+      opacity 180ms ease,
+      transform 200ms ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :global(.bcx-drawer-button:hover .drawer-icon),
+  :global(.bcx-drawer-button:focus-visible .drawer-icon) {
+    opacity: 1;
+    transform: translateX(1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.bcx-drawer-button),
+    :global(.bcx-drawer-button .drawer-icon) {
+      transition: none;
+    }
+  }
 </style>
