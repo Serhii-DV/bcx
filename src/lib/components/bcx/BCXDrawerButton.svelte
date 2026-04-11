@@ -24,18 +24,30 @@ function getButtonLeftPosition() {
   return sidePanelOpen ? sidePanelWidth + leftMargin : leftMargin;
 }
 
-function handleButtonClick() {
+function handleToggle() {
   onToggle();
+}
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    onToggle();
+  }
 }
 </script>
 
-<button
+<div
   id="bcx-drawer-button"
   bind:this={drawerButton}
   class="bcx-drawer-button"
+  role="button"
+  tabindex="0"
+  aria-label="Toggle BCX side panel"
+  aria-pressed={sidePanelOpen}
   title="BCX - Side Panel.
 Use Ctrl+D to toggle"
-  onclick={handleButtonClick}
+  onclick={handleToggle}
+  onkeydown={handleKeyDown}
 >
   <span class="drawer-icon" aria-hidden="true">
     {#if sidePanelOpen}
@@ -44,7 +56,7 @@ Use Ctrl+D to toggle"
       <PanelLeftClose size="16" />
     {/if}
   </span>
-</button>
+</div>
 
 <style>
   :global(:root) {
@@ -53,8 +65,11 @@ Use Ctrl+D to toggle"
 
   /* BCX Drawer Button Styles */
   :global(.bcx-drawer-button) {
-    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
-    border: 1px solid #374151;
+    background: rgb(31 41 55 / 85%);
+    border-right: 1px solid rgb(75 85 99 / 55%);
+    border-left: none;
+    border-top: none;
+    border-bottom: none;
     color: #f9fafb;
     border-radius: 0;
     padding: 0;
@@ -82,12 +97,11 @@ Use Ctrl+D to toggle"
   }
 
   :global(.bcx-drawer-button:hover) {
-    background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
-    border-color: #4b5563;
+    background: rgb(31 41 55 / 95%);
     width: 28px;
     box-shadow:
-      inset -1px 0 0 rgba(255, 255, 255, 0.14),
-      0 0 0 3px rgba(59, 130, 246, 0.2);
+      inset -1px 0 0 rgb(156 163 175 / 30%),
+      0 0 0 2px rgba(59, 130, 246, 0.18);
   }
 
   :global(.bcx-drawer-button:focus) {
