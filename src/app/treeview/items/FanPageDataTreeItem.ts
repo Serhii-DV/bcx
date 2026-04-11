@@ -3,6 +3,7 @@ import { Band } from 'src/bandcamp/domain/band/band';
 import type { BandcampPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { hasOwnProperty } from 'src/utils/utils';
+import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
 import { updateTreeItemsCounts } from '../utils';
@@ -57,7 +58,7 @@ function createAlbumsTreeItemsFromItemsCache(items: any): TreeItem[] {
         item.item_art_id,
         item.band_id,
       );
-      const treeItem = TreeItemFactory.fromAlbum(album);
+      const treeItem = AlbumTreeItemFactory.create(album);
       treeItems.push(treeItem);
     }
   }

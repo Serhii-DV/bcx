@@ -1,5 +1,4 @@
 import { ExternalLink, Funnel } from '@lucide/svelte';
-import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import type { Track } from 'src/bandcamp/domain/track/track';
 import { Url } from 'src/core/url';
@@ -52,16 +51,6 @@ export class TreeItemFactory {
     const href = band.url?.toString();
     const item = TreeItemFactory.link(band.name, href || '');
     item.image = band.artwork.tinySizeUrl;
-    return item;
-  }
-
-  static fromAlbum(album: Album): TreeItem {
-    const item = TreeItemFactory.linkOrText(
-      album.toString(),
-      album.url?.toString(),
-    );
-    item.image = album.artwork.tinySizeUrl;
-    item.keywords = album.artistNames;
     return item;
   }
 

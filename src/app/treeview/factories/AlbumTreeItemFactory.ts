@@ -11,11 +11,17 @@ import { TreeItemFactory } from '../TreeItemFactory';
 
 export class AlbumTreeItemFactory {
   static create(album: Album): TreeItem {
-    return this.createBuilder(album).build();
+    const item = TreeItemFactory.linkOrText(
+      album.toString(),
+      album.url?.toString(),
+    );
+    item.image = album.artwork.tinySizeUrl;
+    item.keywords = album.artistNames;
+    return item;
   }
 
   static createWithKeywords(album: Album): TreeItem {
-    const builder = this.createBuilder(album);
+    const builder = this.builder(album);
     builder.apply((item) => {
       item.showChildrenCount = false;
     });
@@ -77,7 +83,7 @@ export class AlbumTreeItemFactory {
   }
 
   static async createWithInformation(album: Album): Promise<TreeItem> {
-    const builder = this.createBuilder(album);
+    const builder = this.builder(album);
 
     builder.withoutHref();
     builder.addChild(
@@ -129,7 +135,7 @@ export class AlbumTreeItemFactory {
     return builder.build();
   }
 
-  private static createBuilder(album: Album): TreeItemBuilder {
-    return new TreeItemBuilder(TreeItemFactory.fromAlbum(album));
+  private static builder(album: Album): TreeItemBuilder {
+    return new TreeItemBuilder(this.create(album));
   }
 }
