@@ -93,6 +93,15 @@ export class TreeItemBuilder {
     return this;
   }
 
+  withoutIcon(): this {
+    this.item.icon = undefined;
+    return this;
+  }
+
+  withoutLink(): this {
+    return this.withoutHref().withoutIcon();
+  }
+
   apply(updater: (item: TreeItem) => void): this {
     updater(this.item);
     return this;

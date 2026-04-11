@@ -21,7 +21,7 @@ export class AlbumTreeItemFactory {
   }
 
   static createWithKeywords(album: Album): TreeItem {
-    const builder = this.builder(album);
+    const builder = this.builder(album).withoutLink();
     builder.apply((item) => {
       item.showChildrenCount = false;
     });
