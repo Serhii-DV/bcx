@@ -11,6 +11,8 @@ interface Props {
 
 let { treeData, open = false, onToggle = () => {} }: Props = $props();
 let treeViewRef: BcxTreeView;
+let drawerHandle: HTMLElement | null = $state(null);
+let handleOpacity = $state(0.35);
 
 // Focus first item when panel opens
 $effect(() => {
@@ -25,13 +27,37 @@ $effect(() => {
 function handleToggle() {
   onToggle();
 }
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    onToggle();
+  }
+}
+
+function handleMouseMove(event: MouseEvent) {
+  if (!drawerHandle) return;
+
+  const rect = drawerHandle.getBoundingClientRect();
+  const deltaX =
+    event.clientX < rect.left
+      ? rect.left - event.clientX
+      : event.clientX > rect.right
+        ? event.clientX - rect.right
+        : 0;
+  const proximity = Math.max(0, 1 - deltaX / 100);
+
+  handleOpacity = 0.35 + proximity * 0.65;
+}
 </script>
+
+<svelte:document onmousemove={handleMouseMove} />
 
 <div
   id="bcx-side-panel"
   class="bcx-side-panel-shell {open ? 'open' : ''}"
 >
-  <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white border-r transition-opacity duration-400">
+  <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white transition-opacity duration-400">
     <div class="flex h-full flex-col">
       <!-- Header -->
       <div class="border-b border-gray-200/30 dark:border-gray-700/30 p-4">
@@ -69,19 +95,26 @@ function handleToggle() {
     </div>
   </div>
 
-  <button
+  <div
     id="bcx-drawer-button"
+    bind:this={drawerHandle}
     class="bcx-drawer-handle"
+    role="button"
+    tabindex="0"
+    aria-label="Toggle BCX side panel"
+    aria-pressed={open}
+    style={`--bcx-handle-opacity: ${handleOpacity};`}
     title="BCX - Side Panel.
 Use Ctrl+D to toggle"
     onclick={handleToggle}
+    onkeydown={handleKeyDown}
   >
     {#if open}
       <PanelLeftOpen size="16" />
     {:else}
       <PanelLeftClose size="16" />
     {/if}
-  </button>
+  </div>
 </div>
 
 <style>
@@ -123,7 +156,6 @@ Use Ctrl+D to toggle"
     height: 100vh;
     width: 24px;
     border: 0;
-    border-left: 1px solid rgb(75 85 99 / 45%);
     background: rgb(31 41 55 / 85%);
     color: #f9fafb;
     cursor: pointer;
@@ -131,8 +163,10 @@ Use Ctrl+D to toggle"
     align-items: center;
     justify-content: center;
     pointer-events: auto;
+    opacity: var(--bcx-handle-opacity, 0.35);
     transition:
       width 220ms ease,
+      opacity 220ms ease,
       background-color 220ms ease,
       box-shadow 220ms ease;
   }
@@ -140,6 +174,7 @@ Use Ctrl+D to toggle"
   :global(.bcx-drawer-handle:hover),
   :global(.bcx-drawer-handle:focus-visible) {
     width: 28px;
+    opacity: 1;
     background: rgb(31 41 55 / 95%);
     box-shadow:
       inset -1px 0 0 rgb(156 163 175 / 30%),
