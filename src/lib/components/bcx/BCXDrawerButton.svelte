@@ -20,7 +20,7 @@ $effect(() => {
 
 function getButtonLeftPosition() {
   const sidePanelWidth = 400;
-  const leftMargin = 10;
+  const leftMargin = 0;
   return sidePanelOpen ? sidePanelWidth + leftMargin : leftMargin;
 }
 
@@ -48,7 +48,7 @@ Use Ctrl+D to toggle"
 
 <style>
   :global(:root) {
-    --bcx-drawer-left-margin: 10px;
+    --bcx-drawer-left-margin: 0px;
   }
 
   /* BCX Drawer Button Styles */
@@ -56,7 +56,7 @@ Use Ctrl+D to toggle"
     background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
     border: 1px solid #374151;
     color: #f9fafb;
-    border-radius: 0 10px 10px 0;
+    border-radius: 0;
     padding: 0;
     cursor: pointer;
     transition:
@@ -68,7 +68,7 @@ Use Ctrl+D to toggle"
     top: 0;
     bottom: 0;
     height: 100vh;
-    width: 14px;
+    width: 24px;
     left: var(--bcx-drawer-left-margin);
     z-index: 999999;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -84,7 +84,7 @@ Use Ctrl+D to toggle"
   :global(.bcx-drawer-button:hover) {
     background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
     border-color: #4b5563;
-    width: 18px;
+    width: 28px;
     box-shadow:
       inset -1px 0 0 rgba(255, 255, 255, 0.14),
       0 0 0 3px rgba(59, 130, 246, 0.2);
@@ -95,7 +95,7 @@ Use Ctrl+D to toggle"
   }
 
   :global(.bcx-drawer-button:focus-visible) {
-    width: 18px;
+    width: 28px;
     box-shadow:
       inset -1px 0 0 rgba(255, 255, 255, 0.16),
       0 0 0 3px rgba(59, 130, 246, 0.45);
