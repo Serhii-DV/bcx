@@ -11,8 +11,6 @@ interface Props {
 
 let { treeData, open = false, onToggle = () => {} }: Props = $props();
 let treeViewRef: BcxTreeView;
-let drawerHandle: HTMLElement | null = $state(null);
-let handleOpacity = $state(0.35);
 
 // Focus first item when panel opens
 $effect(() => {
@@ -34,24 +32,7 @@ function handleKeyDown(event: KeyboardEvent) {
     onToggle();
   }
 }
-
-function handleMouseMove(event: MouseEvent) {
-  if (!drawerHandle) return;
-
-  const rect = drawerHandle.getBoundingClientRect();
-  const deltaX =
-    event.clientX < rect.left
-      ? rect.left - event.clientX
-      : event.clientX > rect.right
-        ? event.clientX - rect.right
-        : 0;
-  const proximity = Math.max(0, 1 - deltaX / 100);
-
-  handleOpacity = 0.35 + proximity * 0.65;
-}
 </script>
-
-<svelte:document onmousemove={handleMouseMove} />
 
 <div
   id="bcx-side-panel"
@@ -97,23 +78,23 @@ function handleMouseMove(event: MouseEvent) {
 
   <div
     id="bcx-drawer-button"
-    bind:this={drawerHandle}
     class="bcx-drawer-handle"
     role="button"
     tabindex="0"
     aria-label="Toggle BCX side panel"
     aria-pressed={open}
-    style={`--bcx-handle-opacity: ${handleOpacity};`}
     title="BCX - Side Panel.
 Use Ctrl+D to toggle"
     onclick={handleToggle}
     onkeydown={handleKeyDown}
   >
-    {#if open}
-      <PanelLeftClose size="16" />
-    {:else}
-      <PanelLeftOpen size="16" />
-    {/if}
+    <span class="drawer-icon" aria-hidden="true">
+      {#if open}
+        <PanelLeftClose size="16" />
+      {:else}
+        <PanelLeftOpen size="16" />
+      {/if}
+    </span>
   </div>
 </div>
 
@@ -163,22 +144,25 @@ Use Ctrl+D to toggle"
     align-items: center;
     justify-content: center;
     pointer-events: auto;
-    opacity: var(--bcx-handle-opacity, 0.35);
-    transition:
-      width 220ms ease,
-      opacity 220ms ease,
-      background-color 220ms ease,
-      box-shadow 220ms ease;
+    background-color: transparent;
+    transition: background-color 220ms ease;
+  }
+
+  :global(.bcx-side-panel-shell.open .bcx-drawer-handle) {
+    background-color: rgb(31 41 55 / 85%);
+  }
+
+  :global(.bcx-drawer-handle .drawer-icon) {
+    color: #f9fafb;
+    opacity: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   :global(.bcx-drawer-handle:hover),
   :global(.bcx-drawer-handle:focus-visible) {
-    width: 28px;
-    opacity: 1;
     background: rgb(31 41 55 / 95%);
-    box-shadow:
-      inset -1px 0 0 rgb(156 163 175 / 30%),
-      0 0 0 2px rgba(59, 130, 246, 0.18);
     outline: none;
   }
 
