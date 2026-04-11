@@ -6,7 +6,6 @@ import { element } from 'src/utils/dom';
 import { onCtrlKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
-import BCXDrawerButton from '$lib/components/bcx/BCXDrawerButton.svelte';
 import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
 import { setUiSessionBoolean } from '../domain/ui/uiState';
 import { isBandcampMusicUrl } from '../domain/url/helper';
@@ -129,16 +128,11 @@ async function updateSidePanelOpen(value: boolean) {
 <svelte:document onkeydown={handleKeydown} />
 
 {#if shadowContainer}
-  <BCXDrawerButton
-    sidePanelOpen={sidePanelOpen}
-    onToggle={() => void updateSidePanelOpen(!sidePanelOpen)}
-  />
-
   <!-- Side Panel -->
   <BCXSidePanel
     treeData={treeData}
     open={sidePanelOpen}
-    animate={sidePanelStateInitialized}
+    onToggle={() => void updateSidePanelOpen(!sidePanelOpen)}
   />
 
   <!-- Tour (only on music pages) -->
