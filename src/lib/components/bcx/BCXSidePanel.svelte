@@ -137,7 +137,6 @@ Use Ctrl+D to toggle"
     height: 100vh;
     width: 24px;
     border: 0;
-    background: rgb(31 41 55 / 85%);
     color: #f9fafb;
     cursor: pointer;
     display: flex;
@@ -146,10 +145,6 @@ Use Ctrl+D to toggle"
     pointer-events: auto;
     background-color: transparent;
     transition: background-color 220ms ease;
-  }
-
-  :global(.bcx-side-panel-shell.open .bcx-drawer-handle) {
-    background-color: rgb(31 41 55 / 85%);
   }
 
   :global(.bcx-drawer-handle .drawer-icon) {
