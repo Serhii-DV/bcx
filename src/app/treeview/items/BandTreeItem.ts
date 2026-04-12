@@ -82,12 +82,12 @@ export class BandTreeItem {
 
   private static createBandAbout(band: Band): TreeItem {
     return {
-      label: 'About',
+      label: 'About ' + band.name,
       children: [
-        TreeItemFactory.text(
-          `Created: ${band.metadata.created.toLocaleDateString()}`,
-        ),
-        TreeItemFactory.text(`Currency: ${band.metadata.currency}`),
+        TreeItemFactory.list('Created', [
+          band.metadata.created.toLocaleDateString(),
+        ]),
+        TreeItemFactory.list('Currency', [band.metadata.currency]),
       ],
     };
   }
