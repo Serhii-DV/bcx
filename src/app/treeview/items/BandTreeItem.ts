@@ -30,33 +30,33 @@ export class BandTreeItem {
 
   private static createArtistsTreeItem(
     band: Band,
-    showAlbumsWithKeywords: boolean,
+    includeBriefInformation: boolean,
   ): TreeItem {
     return {
       label: 'Artists',
       children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(
         band.metadata.albums,
-        showAlbumsWithKeywords,
+        includeBriefInformation,
       ),
     };
   }
 
   private static createReleasesTreeItem(
     band: Band,
-    showAlbumsWithKeywords: boolean,
+    includeBriefInformation: boolean,
   ): TreeItem {
     return {
       label: 'Releases',
       children: AlbumTreeItemFactory.fromAlbums(
         band.metadata.albums,
-        showAlbumsWithKeywords,
+        includeBriefInformation,
       ),
     };
   }
 
   private static createBandYearsTreeItem(
     band: Band,
-    showAlbumsWithKeywords: boolean,
+    includeBriefInformation: boolean,
     label: string = 'Years',
   ): TreeItem | undefined {
     const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
@@ -64,7 +64,7 @@ export class BandTreeItem {
         label: String(year),
         children: AlbumTreeItemFactory.fromAlbums(
           band.metadata.albumsByYear(year),
-          showAlbumsWithKeywords,
+          includeBriefInformation,
         ),
       };
     });

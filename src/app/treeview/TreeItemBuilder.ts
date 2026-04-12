@@ -10,6 +10,10 @@ export class TreeItemBuilder {
     }
   }
 
+  static create(item: TreeItem) {
+    return new TreeItemBuilder(item);
+  }
+
   withId(id: string): this {
     this.item.id = id;
     return this;
@@ -100,6 +104,18 @@ export class TreeItemBuilder {
 
   withoutLink(): this {
     return this.withoutHref().withoutIcon();
+  }
+
+  withoutChildrenCount(): this {
+    this.item.showChildrenCount = false;
+    return this;
+  }
+
+  withoutChildrenCountAllChildren(): this {
+    this.item.children?.forEach((child) => {
+      child.showChildrenCount = false;
+    });
+    return this;
   }
 
   apply(updater: (item: TreeItem) => void): this {

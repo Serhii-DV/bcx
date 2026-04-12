@@ -20,11 +20,8 @@ export class AlbumTreeItemFactory {
     return item;
   }
 
-  static createWithKeywords(album: Album): TreeItem {
-    const builder = this.builder(album).withoutLink();
-    builder.apply((item) => {
-      item.showChildrenCount = false;
-    });
+  static createWithBriefInformation(album: Album): TreeItem {
+    const builder = this.builder(album).withoutLink().withoutChildrenCount();
     const artistNames = album.artistNames.sort();
     const keywords = (album.metadata?.keywords || []).sort();
 
@@ -54,21 +51,27 @@ export class AlbumTreeItemFactory {
       );
     }
 
+    builder.addChild(
+      TreeItemFactory.link('Open Album Page', album.url.toString()),
+    );
+
     return builder.build();
   }
 
   static fromAlbums(
     albums: Album[],
-    includeKeywords: boolean = false,
+    includeBriefInformation: boolean = false,
   ): TreeItem[] {
     return albums.map((album) =>
-      includeKeywords ? this.createWithKeywords(album) : this.create(album),
+      includeBriefInformation
+        ? this.createWithBriefInformation(album)
+        : this.create(album),
     );
   }
 
   static fromAlbumsByArtistReleases(
     albums: Album[],
-    includeKeywords: boolean = false,
+    includeBriefInformation: boolean = false,
   ): TreeItem[] {
     const artists = getArtistNamesFromAlbums(albums);
     return arrayUnique(artists)
@@ -76,7 +79,7 @@ export class AlbumTreeItemFactory {
       .map((artist) => {
         const artistChildren: TreeItem[] = this.fromAlbums(
           albums.filter((album) => album.containsArtistName(artist)),
-          includeKeywords,
+          includeBriefInformation,
         );
         return TreeItemFactory.items(artist, artistChildren);
       });
@@ -86,9 +89,23 @@ export class AlbumTreeItemFactory {
     const builder = this.builder(album);
 
     builder.withoutHref();
-    builder.addChild(
-      TreeItemFactory.text(`Released: ${album.metadata?.publishedDate}`),
-    );
+
+    if (album.metadata) {
+      builder.addChild(
+        TreeItemFactory.list('Publisher', [album.metadata.publisher]),
+      );
+      builder.addChild(
+        TreeItemBuilder.create(
+          TreeItemFactory.items('Date', [
+            TreeItemFactory.list('Published', [album.metadata.publishedDate]),
+            TreeItemFactory.list('Modified', [album.metadata.modifiedDate]),
+          ]),
+        )
+          .withoutChildrenCount()
+          .withoutChildrenCountAllChildren()
+          .build(),
+      );
+    }
 
     const releaseMetadata = getReleaseMetadataFromAlbum(album);
 
@@ -129,13 +146,13 @@ export class AlbumTreeItemFactory {
       TreeItemFactory.items('Tracks', TreeItemFactory.fromTracks(album.tracks)),
     );
     builder.addChild(
-      TreeItemFactory.list('Keywords', album.metadata?.keywords || []),
+      TreeItemFactory.list('Tags', album.metadata?.keywords || []),
     );
 
     return builder.build();
   }
 
   private static builder(album: Album): TreeItemBuilder {
-    return new TreeItemBuilder(this.create(album));
+    return TreeItemBuilder.create(this.create(album));
   }
 }
