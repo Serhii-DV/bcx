@@ -1,11 +1,10 @@
-import { ExternalLink, Funnel } from '@lucide/svelte';
 import { Band } from 'src/bandcamp/domain/band/band';
 import type { Track } from 'src/bandcamp/domain/track/track';
 import { Url } from 'src/core/url';
 import { TreeItemButtonFactory } from './buttons/factory';
 import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
-import { ICON_FUNNEL } from './utils/icon';
+import { ICON_EXTERNAL_LINK, ICON_SQUARE_ARROW_RIGHT } from './utils/icon';
 
 export class TreeItemFactory {
   static text(label: string): TreeItem {
@@ -18,7 +17,7 @@ export class TreeItemFactory {
     return {
       label,
       query: typeof query === 'string' ? query : label,
-      icon: ICON_FUNNEL,
+      icon: ICON_SQUARE_ARROW_RIGHT,
     };
   }
 
@@ -34,7 +33,11 @@ export class TreeItemFactory {
     return TreeItemFactory.items(label, strings.map(TreeItemFactory.text));
   }
 
-  static link(label: string, href: string, icon: any = ExternalLink): TreeItem {
+  static link(
+    label: string,
+    href: string,
+    icon: string = ICON_EXTERNAL_LINK,
+  ): TreeItem {
     return {
       label,
       href,

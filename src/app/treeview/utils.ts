@@ -1,7 +1,6 @@
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { TreeItemCache } from './items/TreeItemCache';
 import type { TreeItem } from './TreeItem';
-import { ICON_FUNNEL } from './utils/icon';
 
 export function isNode(item: TreeItem): boolean {
   return !!item.children && item.children.length > 0;
@@ -114,16 +113,6 @@ export function updateTreeItemCounts(treeItem: TreeItem): TreeItem {
 export function updateTreeItemsCounts(treeItems: TreeItem[]): TreeItem[] {
   treeItems.forEach(updateTreeItemCounts);
   return treeItems;
-}
-
-export function setTreeItemQueryFromLabel(treeItem: TreeItem): TreeItem {
-  treeItem.query = treeItem.label;
-  treeItem.icon = ICON_FUNNEL;
-  treeItem.buttons = undefined; // Remove buttons when using label as query
-  if (treeItem.children) {
-    treeItem.children.map(setTreeItemQueryFromLabel);
-  }
-  return treeItem;
 }
 
 // Check if an item matches the filter query (case-insensitive)
