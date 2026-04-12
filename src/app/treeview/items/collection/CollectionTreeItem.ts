@@ -29,8 +29,10 @@ export class CollectionTreeItem {
         item.band_id,
       ),
     );
-    const children: TreeItem[] =
-      AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums);
+    const children: TreeItem[] = [
+      this.createArtistsTreeItem(albums),
+      this.createReleasesTreeItem(albums),
+    ];
 
     const buttons: TreeItemButton[] = [
       TreeItemButtonFactory.createExternalLink(
@@ -52,6 +54,20 @@ export class CollectionTreeItem {
       label: `Collection`,
       children,
       buttons,
+    };
+  }
+
+  private static createArtistsTreeItem(albums: Album[]): TreeItem {
+    return {
+      label: 'Artists',
+      children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums),
+    };
+  }
+
+  private static createReleasesTreeItem(albums: Album[]): TreeItem {
+    return {
+      label: 'Releases',
+      children: AlbumTreeItemFactory.fromAlbums(albums),
     };
   }
 }
