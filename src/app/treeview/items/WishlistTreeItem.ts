@@ -27,8 +27,10 @@ export class WishlistTreeItem {
         item.band_id,
       ),
     );
-    const children: TreeItem[] =
-      AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums);
+    const children: TreeItem[] = [
+      this.createArtistsTreeItem(albums),
+      this.createReleasesTreeItem(albums),
+    ];
 
     const buttons: TreeItemButton[] = [
       createWishlistOpenTreeItemButton(username),
@@ -42,6 +44,20 @@ export class WishlistTreeItem {
       label: `Wishlist`,
       children,
       buttons,
+    };
+  }
+
+  private static createArtistsTreeItem(albums: Album[]): TreeItem {
+    return {
+      label: 'Artists',
+      children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums),
+    };
+  }
+
+  private static createReleasesTreeItem(albums: Album[]): TreeItem {
+    return {
+      label: 'Releases',
+      children: AlbumTreeItemFactory.fromAlbums(albums),
     };
   }
 }
