@@ -21,10 +21,7 @@ export class AlbumTreeItemFactory {
   }
 
   static createWithBriefInformation(album: Album): TreeItem {
-    const builder = this.builder(album).withoutLink();
-    builder.apply((item) => {
-      item.showChildrenCount = false;
-    });
+    const builder = this.builder(album).withoutLink().withoutChildrenCount();
     const artistNames = album.artistNames.sort();
     const keywords = (album.metadata?.keywords || []).sort();
 
@@ -92,9 +89,23 @@ export class AlbumTreeItemFactory {
     const builder = this.builder(album);
 
     builder.withoutHref();
-    builder.addChild(
-      TreeItemFactory.text(`Released: ${album.metadata?.publishedDate}`),
-    );
+
+    if (album.metadata) {
+      builder.addChild(
+        TreeItemFactory.list('Publisher', [album.metadata.publisher]),
+      );
+      builder.addChild(
+        TreeItemBuilder.create(
+          TreeItemFactory.items('Date', [
+            TreeItemFactory.list('Published', [album.metadata.publishedDate]),
+            TreeItemFactory.list('Modified', [album.metadata.modifiedDate]),
+          ]),
+        )
+          .withoutChildrenCount()
+          .withoutChildrenCountAllChildren()
+          .build(),
+      );
+    }
 
     const releaseMetadata = getReleaseMetadataFromAlbum(album);
 
@@ -135,13 +146,13 @@ export class AlbumTreeItemFactory {
       TreeItemFactory.items('Tracks', TreeItemFactory.fromTracks(album.tracks)),
     );
     builder.addChild(
-      TreeItemFactory.list('Keywords', album.metadata?.keywords || []),
+      TreeItemFactory.list('Tags', album.metadata?.keywords || []),
     );
 
     return builder.build();
   }
 
   private static builder(album: Album): TreeItemBuilder {
-    return new TreeItemBuilder(this.create(album));
+    return TreeItemBuilder.create(this.create(album));
   }
 }

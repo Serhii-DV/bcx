@@ -29,6 +29,10 @@ export class Metadata implements StorableObject, Compressable {
     return this.published.toISOString().split('T')[0];
   }
 
+  get modifiedDate(): string {
+    return this.modified.toISOString().split('T')[0];
+  }
+
   static create(
     price: Price,
     publisher: string,
