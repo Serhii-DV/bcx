@@ -3,6 +3,7 @@ import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
+import { makeIcon } from 'src/app/treeview/utils/icon';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 
@@ -377,7 +378,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
 {/snippet}
 
 {#snippet treeItemIcon(item: TreeItem)}
-  {@const Icon = item.icon}
+  {@const Icon = makeIcon(item.icon)}
   {#if Icon}
   <span class="item-icon text-gray-300"><Icon size="16" /></span>
   {/if}

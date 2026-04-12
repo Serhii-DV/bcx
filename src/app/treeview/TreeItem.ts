@@ -14,5 +14,5 @@ export interface TreeItem {
   keywords?: string[];
   buttons?: TreeItemButton[];
   onClick?: (element: HTMLElement) => void;
-  icon?: any; // Svelte component constructor (lucide icons, custom components, etc.)
+  icon?: string; // icon name
 }

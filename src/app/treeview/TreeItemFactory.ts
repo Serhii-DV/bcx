@@ -5,6 +5,7 @@ import { Url } from 'src/core/url';
 import { TreeItemButtonFactory } from './buttons/factory';
 import type { TreeItem } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
+import { ICON_FUNNEL } from './utils/icon';
 
 export class TreeItemFactory {
   static text(label: string): TreeItem {
@@ -17,7 +18,7 @@ export class TreeItemFactory {
     return {
       label,
       query: typeof query === 'string' ? query : label,
-      icon: Funnel,
+      icon: ICON_FUNNEL,
     };
   }
 

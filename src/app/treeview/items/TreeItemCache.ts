@@ -1,4 +1,3 @@
-import { ExternalLink, Funnel } from '@lucide/svelte';
 import { sessionStorage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import type { TreeItem } from '../TreeItem';
@@ -24,7 +23,7 @@ interface TreeItemSnapshot {
   image?: string;
   query?: string;
   keywords?: string[];
-  iconKey?: string;
+  icon?: string;
   buttons?: TreeItemButtonSnapshot[];
 }
 
@@ -36,7 +35,9 @@ interface SubtreeSnapshot {
 }
 
 export class TreeItemCache {
-  static subtreeKey(...parts: Array<string | number | null | undefined>): string {
+  static subtreeKey(
+    ...parts: Array<string | number | null | undefined>
+  ): string {
     return `${CACHE_KEY_PREFIX}/${parts
       .filter((part) => part !== undefined && part !== null && `${part}` !== '')
       .join('/')}`;
@@ -145,7 +146,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
     image: item.image,
     query: item.query,
     keywords: item.keywords,
-    iconKey: getIconKey(item.icon),
+    icon: item.icon,
     buttons: buttons.length > 0 ? buttons : undefined,
     children: item.children?.map(serializeTreeItem),
   };
@@ -168,31 +169,8 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
     image: item.image,
     query: item.query,
     keywords: item.keywords,
-    icon: getIconFromKey(item.iconKey),
+    icon: item.icon,
     buttons,
     children: item.children?.map(deserializeTreeItem),
   };
-}
-
-function getIconKey(icon: any): string | undefined {
-  if (icon === ExternalLink) {
-    return 'external-link';
-  }
-
-  if (icon === Funnel) {
-    return 'funnel';
-  }
-
-  return undefined;
-}
-
-function getIconFromKey(iconKey?: string): any {
-  switch (iconKey) {
-    case 'external-link':
-      return ExternalLink;
-    case 'funnel':
-      return Funnel;
-    default:
-      return undefined;
-  }
 }
