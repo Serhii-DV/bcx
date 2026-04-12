@@ -5,14 +5,16 @@ import {
 } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
-import { currentPageUrl, storage } from 'src/core/shared';
-import { TreeItemButtonFactory } from '../buttons/factory';
-import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
-import type { TreeItem } from '../TreeItem';
-import type { TreeItemButton } from '../TreeItemButton';
-import { createLoadHandler } from '../utils';
-
-const COLLECTION_KEY = '/collection';
+import { currentPageUrl } from 'src/core/shared';
+import { TreeItemButtonFactory } from '../../buttons/factory';
+import { AlbumTreeItemFactory } from '../../factories/AlbumTreeItemFactory';
+import type { TreeItem } from '../../TreeItem';
+import type { TreeItemButton } from '../../TreeItemButton';
+import { createLoadHandler } from '../../utils';
+import {
+  loadCollectionItemsFromStorage,
+  saveCollectionItemsToStorage,
+} from './storage';
 
 export class CollectionTreeItem {
   static async create(username: string): Promise<TreeItem> {
@@ -54,16 +56,12 @@ export class CollectionTreeItem {
   }
 }
 
-async function loadCollectionItemsFromStorage(): Promise<BandcampItem[]> {
-  return (await storage.getByKey(COLLECTION_KEY)) || [];
-}
-
 async function loadCollectionItems(): Promise<BandcampItem[]> {
   const pageCollection = new PageCollection();
   const collection = await pageCollection.loadCollectionItems({
     includeSummaryFlags: true,
   });
-  await storage.set({ [COLLECTION_KEY]: collection });
+  await saveCollectionItemsToStorage(collection);
 
   return collection;
 }

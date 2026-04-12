@@ -6,13 +6,13 @@ import { console } from 'src/utils/console';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TreeData } from '../TreeData';
 import { BandTreeItem } from './BandTreeItem';
-import { CollectionTreeItem } from './CollectionTreeItem';
+import { CollectionTreeItem } from './collection/CollectionTreeItem';
 import { FanPageDataTreeItem } from './FanPageDataTreeItem';
 import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
 import { FollowingGenresTreeItem } from './FollowingGenresTreeItem';
 import { HistoryTreeItem } from './HistoryTreeItem';
-import { WishlistTreeItem } from './WishlistTreeItem';
 import { TreeItemCache } from './TreeItemCache';
+import { WishlistTreeItem } from './WishlistTreeItem';
 
 const CACHE_TTL = {
   RELEASE: 24 * 60 * 60 * 1000,
