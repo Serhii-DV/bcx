@@ -8,6 +8,7 @@ import { BCXEventListener } from 'src/app/bcx/eventListener';
 import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
 import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
+import { markAppSetupStart, measureAppMount } from 'src/utils/performance';
 import type { Album } from '../domain/album/album';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
@@ -30,6 +31,7 @@ onDOMReady(async () => {
   }
 
   console.log('[bandcamp.content.app]', 'Start content script setup');
+  const setupStartMark = markAppSetupStart('bandcamp.content.app');
 
   const container = document.createElement('div');
   container.id = 'bcx-app';
@@ -61,14 +63,21 @@ onDOMReady(async () => {
       storage.getByKey<boolean>(TOUR_COMPLETE_KEY),
     ]);
 
-    mount(App, {
-      target: shadowRoot,
-      props: {
-        treeData,
-        initialSidePanelOpen,
-        hasCompletedTour: hasCompletedTour ?? false,
+    measureAppMount(
+      {
+        label: 'bandcamp.content.app',
+        setupStartMark,
       },
-    });
+      () =>
+        mount(App, {
+          target: shadowRoot,
+          props: {
+            treeData,
+            initialSidePanelOpen,
+            hasCompletedTour: hasCompletedTour ?? false,
+          },
+        }),
+    );
   } catch (error) {
     console.error(
       '[bandcamp.content.app]',
