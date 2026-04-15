@@ -2,9 +2,13 @@
 import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
-import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
+import {
+  hydrateTreeItemChildren,
+  isNode,
+  isNodeExpanded,
+} from 'src/app/treeview/utils';
 import { makeIcon } from 'src/app/treeview/utils/icon';
-import { onDestroy, onMount } from 'svelte';
+import { onDestroy, onMount, tick } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 
 interface Props {
@@ -18,15 +22,18 @@ let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let filterQuery = $state('');
 let debouncedFilterQuery = $state('');
+let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
 
 // Derived values
-let effectiveTreeData: TreeData = $derived(
-  treeData.filter(debouncedFilterQuery),
-);
+let effectiveTreeData: TreeData = $derived.by(() => {
+  treeVersion;
+  return treeData.filter(debouncedFilterQuery);
+});
 
 let visibleData = $derived.by(() => {
+  treeVersion;
   const paths = new Set<string>();
   const childCounts = new Map<string, number>();
 
@@ -68,7 +75,6 @@ export function focusFirstItem() {
   focusTreeItem(effectiveTreeData.visibleFirst);
 }
 
-// Reactive values - Debounce filter input
 $effect(() => {
   const currentQuery = filterQuery; // Capture current value synchronously
 
@@ -223,7 +229,7 @@ function handleKeyDown(event: KeyboardEvent) {
           break;
         }
 
-        if (isNode(currentItem) && !currentItem.href) {
+        if (isNode(currentItem)) {
           if (isNodeExpanded(currentItem)) {
             collapseNode(currentItem);
           } else {
@@ -236,7 +242,23 @@ function handleKeyDown(event: KeyboardEvent) {
       break;
 
     case ' ':
-      handleItemClick(effectiveTreeData.findVisible(currentIndex), event);
+      if (currentIndex >= 0) {
+        const currentItem = effectiveTreeData.findVisible(currentIndex);
+
+        if (!currentItem) {
+          break;
+        }
+
+        if (isNode(currentItem)) {
+          if (isNodeExpanded(currentItem)) {
+            collapseNode(currentItem);
+          } else {
+            expandNode(currentItem);
+          }
+        } else {
+          handleItemClick(currentItem, event);
+        }
+      }
       break;
 
     case 'Home':
@@ -297,9 +319,30 @@ function collapseNode(item: TreeItem) {
   }
 }
 
-function expandNode(item: TreeItem) {
+function refreshTreeRendering() {
+  treeVersion += 1;
+}
+
+async function expandNode(item: TreeItem) {
   if (!isNode(item)) {
     return;
+  }
+
+  const itemToFocus = item;
+  item.open = true;
+  let didHydrate = false;
+
+  if (item.loadChildren && !item.childrenLoaded) {
+    item.isLoadingChildren = true;
+    refreshTreeRendering();
+    await waitForLoadingStatePaint(itemToFocus);
+    await hydrateTreeItemChildren(item, true);
+    didHydrate = true;
+  }
+
+  if (didHydrate) {
+    refreshTreeRendering();
+    await tick();
   }
 
   const element = elementByPath(item.path);
@@ -308,6 +351,8 @@ function expandNode(item: TreeItem) {
     item.open = true;
     element.open = true;
   }
+
+  focusTreeItem(itemToFocus);
 }
 
 function handleFilterKeyDown(event: KeyboardEvent) {
@@ -330,6 +375,28 @@ function getItemVisibleChildCount(item: TreeItem): number {
     return item.children?.length || 0;
   }
   return visibleChildCounts.get(item.path || '') || 0;
+}
+
+function handleNodeClick(item: TreeItem, event: MouseEvent) {
+  event.preventDefault();
+  focusedPath = item.path ?? null;
+
+  if (isNodeExpanded(item)) {
+    collapseNode(item);
+    return;
+  }
+
+  expandNode(item);
+}
+
+async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
+  await tick();
+  focusTreeItem(itemToFocus);
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.setTimeout(resolve, 0);
+    });
+  });
 }
 </script>
 
@@ -385,7 +452,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
 {/snippet}
 
 {#snippet treeItem(item: TreeItem)}
-  {@const hasChildren = item.children && item.children.length > 0}
+  {@const hasChildren = isNode(item)}
   {@render treeItemImage(item)}
   <span class="item-label" class:ml-2={!hasChildren}>{item.label}</span>
   {@render treeItemActions(item)}
@@ -413,25 +480,26 @@ function getItemVisibleChildCount(item: TreeItem): number {
     <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
       {#each items as item}
         <li class:hidden={!isItemVisible(item)}>
-          {#if item.children && item.children.length > 0}
+          {#if isNode(item)}
             <details
               open={item.open}
               class="group"
               data-level="{item.level}"
               data-path="{item.path}"
-              ontoggle={(e) => {
-                item.open = e.currentTarget.open;
-              }}
             >
               <summary
                 class="tree-item cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
-                onclick={(e) => handleItemClick(item, e)}
+                onclick={(e) => handleNodeClick(item, e)}
               >
                 {@render treeItem(item)}
               </summary>
-              {@render treeItems(item.children)}
+              {#if item.isLoadingChildren}
+                <div class="pl-6 py-1 text-sm text-gray-400">Loading...</div>
+              {:else}
+                {@render treeItems(item.children)}
+              {/if}
             </details>
           {:else}
             <a
@@ -499,7 +567,9 @@ function getItemVisibleChildCount(item: TreeItem): number {
         No items match your filter
       </div>
     {:else if treeData.items}
-      {@render treeItems(treeData.items)}
+      {#key treeVersion}
+        {@render treeItems(treeData.items)}
+      {/key}
     {/if}
   </div>
 </div>

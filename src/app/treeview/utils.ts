@@ -3,7 +3,11 @@ import { TreeItemCache } from './items/TreeItemCache';
 import type { TreeItem } from './TreeItem';
 
 export function isNode(item: TreeItem): boolean {
-  return !!item.children && item.children.length > 0;
+  return (
+    !!item.hasChildren ||
+    !!item.loadChildren ||
+    (!!item.children && item.children.length > 0)
+  );
 }
 
 export function isNodeExpanded(item: TreeItem): boolean {
@@ -39,6 +43,98 @@ export function generateTreeHierarchy(
     }
 
     return enhancedItem;
+  });
+}
+
+export function createLazyTreeItem(
+  item: TreeItem,
+  loadItem: () => Promise<TreeItem | null>,
+): TreeItem {
+  return {
+    ...item,
+    children: undefined,
+    childrenLoaded: false,
+    hasChildren: true,
+    loadChildren: loadItem,
+  };
+}
+
+export async function hydrateTreeItemChildren(
+  item: TreeItem,
+  isLoadingStarted: boolean = false,
+): Promise<void> {
+  if (!item.loadChildren || item.childrenLoaded) {
+    return;
+  }
+
+  if (item.isLoadingChildren && !isLoadingStarted) {
+    return;
+  }
+
+  if (!isLoadingStarted) {
+    item.isLoadingChildren = true;
+  }
+
+  try {
+    const loadedItemOrChildren = await item.loadChildren();
+    const loadedItem = Array.isArray(loadedItemOrChildren)
+      ? ({ children: loadedItemOrChildren } satisfies TreeItem)
+      : loadedItemOrChildren;
+
+    if (!loadedItem) {
+      item.children = [];
+      item.hasChildren = false;
+      return;
+    }
+
+    const { path, level, open } = item;
+    Object.assign(item, loadedItem, {
+      path,
+      level,
+      open,
+      childrenLoaded: true,
+      isLoadingChildren: false,
+      loadChildren: undefined,
+    });
+
+    item.children = generateTreeHierarchy(
+      deferDescendants(loadedItem.children || []),
+      (item.level || 0) + 1,
+      item.path || '',
+    );
+    item.hasChildren = item.children.length > 0;
+  } catch (error) {
+    console.error(
+      '[hydrateTreeItemChildren]',
+      'Failed to load children:',
+      error,
+    );
+  } finally {
+    item.isLoadingChildren = false;
+  }
+}
+
+export function deferDescendants(items: TreeItem[]): TreeItem[] {
+  return items.map((item) => {
+    if (!item.children || item.children.length === 0) {
+      const hasLazyChildren = !!item.hasChildren || !!item.loadChildren;
+
+      return {
+        ...item,
+        childrenLoaded: !hasLazyChildren,
+        hasChildren: hasLazyChildren,
+      };
+    }
+
+    const fullItem = item;
+
+    return {
+      ...item,
+      children: undefined,
+      childrenLoaded: false,
+      hasChildren: true,
+      loadChildren: async () => fullItem,
+    };
   });
 }
 
