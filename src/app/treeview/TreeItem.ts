@@ -1,5 +1,11 @@
 import type { TreeItemButton } from './TreeItemButton';
 
+export interface TreeItemClickContext {
+  element: HTMLElement;
+  item: TreeItem;
+  parent?: TreeItem | null;
+}
+
 export interface TreeItem {
   id?: string;
   label?: string;
@@ -17,7 +23,7 @@ export interface TreeItem {
   keywords?: string[];
   includeInFilterSuggestions?: boolean;
   buttons?: TreeItemButton[];
-  onClick?: (element: HTMLElement) => void;
+  onClick?: (context: TreeItemClickContext) => void | Promise<void>;
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
   icon?: string; // icon name
 }

@@ -134,11 +134,7 @@ export class MainTreeData {
 
     items.push(
       createLazyTreeItem({ label: 'History' }, () =>
-        TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey(userKeyPart, 'history'),
-          () => HistoryTreeItem.create(),
-          CACHE_TTL.HISTORY,
-        ),
+        HistoryTreeItem.createLatestVisited(),
       ),
     );
 

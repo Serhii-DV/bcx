@@ -1,4 +1,4 @@
-import type { TreeItem } from './TreeItem';
+import type { TreeItem, TreeItemClickContext } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 
 export class TreeItemBuilder {
@@ -97,7 +97,9 @@ export class TreeItemBuilder {
     return this;
   }
 
-  withOnClick(onClick: (element: HTMLElement) => void): this {
+  withOnClick(
+    onClick: (context: TreeItemClickContext) => void | Promise<void>,
+  ): this {
     this.item.onClick = onClick;
     return this;
   }

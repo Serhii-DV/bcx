@@ -3,6 +3,7 @@ import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import {
+  generateTreeHierarchy,
   hydrateTreeItemChildren,
   isNode,
   isNodeExpanded,
@@ -127,7 +128,7 @@ onDestroy(() => {
   }
 });
 
-function handleItemClick(
+async function handleItemClick(
   item?: TreeItem | null,
   event?: MouseEvent | KeyboardEvent,
 ) {
@@ -138,7 +139,13 @@ function handleItemClick(
   focusedPath = item.path ?? null;
 
   if (item.onClick) {
-    item.onClick(event?.currentTarget as HTMLElement);
+    await item.onClick({
+      element: event?.currentTarget as HTMLElement,
+      item,
+      parent: treeData.findParentByPath(item.path),
+    });
+    treeData.treeItems = generateTreeHierarchy(treeData.items);
+    refreshTreeRendering();
     return;
   }
 
@@ -162,7 +169,7 @@ function handleItemClick(
   }
 }
 
-function handleKeyDown(event: KeyboardEvent) {
+async function handleKeyDown(event: KeyboardEvent) {
   if (!treeContainer) return;
 
   // Allow system shortcuts to pass through
@@ -241,7 +248,7 @@ function handleKeyDown(event: KeyboardEvent) {
             expandNode(currentItem);
           }
         } else {
-          handleItemClick(currentItem, event);
+          await handleItemClick(currentItem, event);
         }
       }
       break;
@@ -261,7 +268,7 @@ function handleKeyDown(event: KeyboardEvent) {
             expandNode(currentItem);
           }
         } else {
-          handleItemClick(currentItem, event);
+          await handleItemClick(currentItem, event);
         }
       }
       break;
