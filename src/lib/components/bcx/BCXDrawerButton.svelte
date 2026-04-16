@@ -62,7 +62,7 @@ Use Ctrl+D to toggle"
 
   :global(.bcx-drawer-button:hover),
   :global(.bcx-drawer-button:focus-visible) {
-    background: rgb(31 41 55 / 95%);
+    background: rgb(6 15 27 / 95%);
     outline: none;
   }
 
