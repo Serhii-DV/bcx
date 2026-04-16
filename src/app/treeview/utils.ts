@@ -1,5 +1,3 @@
-import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
-import { TreeItemCache } from './items/TreeItemCache';
 import type { TreeItem } from './TreeItem';
 
 export function isNode(item: TreeItem): boolean {
@@ -194,7 +192,7 @@ export function hasDescendantMatchingQuery(
 }
 
 export function updateTreeItemCounts(treeItem: TreeItem): TreeItem {
-  treeItem.label = createQueryCountString(
+  treeItem.label = createTreeItemCountLabel(
     treeItem.label ?? '',
     treeItem.children?.length || 0,
   );
@@ -211,10 +209,23 @@ export function updateTreeItemsCounts(treeItems: TreeItem[]): TreeItem[] {
   return treeItems;
 }
 
+function createTreeItemCountLabel(label: string, count: number): string {
+  return label + (count ? ` (${count})` : '');
+}
+
 // Check if an item matches the filter query (case-insensitive)
 function itemMatchesFilter(item: TreeItem, query: string): boolean {
   if (!query.trim()) return true;
-  return item.label?.toLowerCase().includes(query.toLowerCase()) ?? false;
+  const normalizedQuery = query.toLowerCase();
+  const searchableValues = [
+    item.label,
+    item.query,
+    ...(item.keywords || []),
+  ].filter((value): value is string => !!value);
+
+  return searchableValues.some((value) =>
+    value.toLowerCase().includes(normalizedQuery),
+  );
 }
 
 // Check if an item or any of its descendants match the filter
@@ -263,6 +274,7 @@ export function createLoadHandler<T>(fetchData: () => Promise<T[]>) {
 
     try {
       const data = await fetchData();
+      const { TreeItemCache } = await import('./items/TreeItemCache');
       await TreeItemCache.invalidateAll();
 
       // Hardcoded string format using the array's length

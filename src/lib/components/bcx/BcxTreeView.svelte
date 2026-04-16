@@ -69,6 +69,10 @@ let visibleData = $derived.by(() => {
 
 let visiblePaths = $derived(visibleData.paths);
 let visibleChildCounts = $derived(visibleData.childCounts);
+let filterSuggestions = $derived.by(() => {
+  treeVersion;
+  return treeData.filterSuggestions;
+});
 
 // Expose method to parent component
 export function focusFirstItem() {
@@ -170,12 +174,12 @@ function handleKeyDown(event: KeyboardEvent) {
 
   event.preventDefault();
 
-  const currentIndex = effectiveTreeData.visibleIndex(focusedPath ?? '');
+  const currentIndex = visibleItemIndex(focusedPath);
   const pageSize = 20; // Number of items to jump for PageUp/PageDown
 
   switch (event.key) {
     case 'ArrowDown':
-      focusTreeItem(effectiveTreeData.visibleNext(currentIndex));
+      focusTreeItem(visibleNext(currentIndex));
       break;
 
     case 'ArrowUp':
@@ -184,12 +188,12 @@ function handleKeyDown(event: KeyboardEvent) {
         filterInput?.focus();
         break;
       }
-      focusTreeItem(effectiveTreeData.visiblePrev(currentIndex));
+      focusTreeItem(visiblePrev(currentIndex));
       break;
 
     case 'ArrowRight':
       if (currentIndex >= 0) {
-        const currentItem = effectiveTreeData.findVisible(currentIndex);
+        const currentItem = findVisibleItem(currentIndex);
 
         if (!currentItem) {
           break;
@@ -199,14 +203,14 @@ function handleKeyDown(event: KeyboardEvent) {
           expandNode(currentItem);
         } else {
           // Move to first child
-          focusTreeItem(effectiveTreeData.findFirstChildByPath(focusedPath));
+          focusTreeItem(findFirstVisibleChildByPath(focusedPath));
         }
       }
       break;
 
     case 'ArrowLeft':
       if (currentIndex >= 0) {
-        const currentItem = effectiveTreeData.findVisible(currentIndex);
+        const currentItem = findVisibleItem(currentIndex);
 
         if (!currentItem) {
           break;
@@ -216,14 +220,14 @@ function handleKeyDown(event: KeyboardEvent) {
           collapseNode(currentItem);
         } else {
           // Move to parent
-          focusTreeItem(effectiveTreeData.findParentByPath(currentItem.path));
+          focusTreeItem(findVisibleParentByPath(currentItem.path));
         }
       }
       break;
 
     case 'Enter':
       if (currentIndex >= 0) {
-        const currentItem = effectiveTreeData.findVisible(currentIndex);
+        const currentItem = findVisibleItem(currentIndex);
 
         if (!currentItem) {
           break;
@@ -243,7 +247,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
     case ' ':
       if (currentIndex >= 0) {
-        const currentItem = effectiveTreeData.findVisible(currentIndex);
+        const currentItem = findVisibleItem(currentIndex);
 
         if (!currentItem) {
           break;
@@ -262,23 +266,86 @@ function handleKeyDown(event: KeyboardEvent) {
       break;
 
     case 'Home':
-      focusTreeItem(effectiveTreeData.visibleFirst);
+      focusTreeItem(getNavigableItems()[0]);
       break;
 
     case 'End':
-      focusTreeItem(effectiveTreeData.visibleLast);
+      focusTreeItem(getNavigableItems().at(-1));
       break;
 
     case 'PageDown': {
-      focusTreeItem(effectiveTreeData.visibleNext(currentIndex, pageSize));
+      focusTreeItem(visibleNext(currentIndex, pageSize));
       break;
     }
 
     case 'PageUp': {
-      focusTreeItem(effectiveTreeData.visiblePrev(currentIndex, pageSize));
+      focusTreeItem(visiblePrev(currentIndex, pageSize));
       break;
     }
   }
+}
+
+function getNavigableItems(): TreeItem[] {
+  const visibleItems = treeData.visible;
+
+  if (!debouncedFilterQuery.trim()) {
+    return visibleItems;
+  }
+
+  return visibleItems.filter((item) => visiblePaths.has(item.path || ''));
+}
+
+function visibleItemIndex(path?: string | null): number {
+  if (!path) return -1;
+  return getNavigableItems().findIndex((item) => item.path === path);
+}
+
+function findVisibleItem(index: number): TreeItem | null {
+  const visibleItems = getNavigableItems();
+  return index >= 0 && index < visibleItems.length ? visibleItems[index] : null;
+}
+
+function visibleNext(index: number, step: number = 1): TreeItem | null {
+  const visibleItems = getNavigableItems();
+
+  if (index < visibleItems.length - 1) {
+    const targetIndex =
+      step > 1 ? Math.min(index + step, visibleItems.length - 1) : index + 1;
+    return visibleItems[targetIndex];
+  }
+
+  return null;
+}
+
+function visiblePrev(index: number, step: number = 1): TreeItem | null {
+  const visibleItems = getNavigableItems();
+
+  if (index > 0) {
+    const targetIndex = step > 1 ? Math.max(index - step, 0) : index - 1;
+    return visibleItems[targetIndex];
+  }
+
+  return null;
+}
+
+function findVisibleParentByPath(path?: string | null): TreeItem | null {
+  if (!path) return null;
+  const parentPath = path.split('.').slice(0, -1).join('.');
+  if (!parentPath) return null;
+  return getNavigableItems().find((item) => item.path === parentPath) ?? null;
+}
+
+function findFirstVisibleChildByPath(path?: string | null): TreeItem | null {
+  if (!path) return null;
+
+  const currentIndex = visibleItemIndex(path);
+  if (currentIndex < 0) return null;
+
+  return (
+    getNavigableItems()
+      .slice(currentIndex + 1)
+      .find((item) => item.path?.startsWith(`${path}.`)) ?? null
+  );
 }
 
 function elementByPath(path?: string): HTMLElement | null {
@@ -358,7 +425,7 @@ async function expandNode(item: TreeItem) {
 function handleFilterKeyDown(event: KeyboardEvent) {
   if (event.key === 'ArrowDown') {
     event.preventDefault();
-    focusTreeItem(effectiveTreeData.visibleFirst);
+    focusTreeItem(getNavigableItems()[0]);
   }
 }
 
@@ -545,8 +612,8 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
     {/if}
   </div>
   <datalist id="bcx-tree-view-filter-datalist">
-    {#each treeData.keywords as keyword}
-      <option value="{keyword}"></option>
+    {#each filterSuggestions as suggestion}
+      <option value="{suggestion}"></option>
     {/each}
   </datalist>
   <div

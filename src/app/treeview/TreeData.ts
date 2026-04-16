@@ -95,21 +95,33 @@ export class TreeData {
     return new TreeData(filteredItems);
   }
 
-  get keywords(): string[] {
-    const keywords = new Set<string>();
+  get filterSuggestions(): string[] {
+    const suggestions = new Set<string>();
 
-    function collectKeywords(items: TreeItem[]) {
+    function addSuggestion(value?: string) {
+      const normalizedValue = value?.trim();
+      if (normalizedValue) {
+        suggestions.add(normalizedValue);
+      }
+    }
+
+    function collectSuggestions(items: TreeItem[]) {
       items.forEach((item) => {
-        if (item.keywords) {
-          item.keywords.forEach((keyword) => keywords.add(keyword));
-        }
+        addSuggestion(item.label);
+        addSuggestion(item.query);
+        item.keywords?.forEach(addSuggestion);
+
         if (item.children) {
-          collectKeywords(item.children);
+          collectSuggestions(item.children);
         }
       });
     }
 
-    collectKeywords(this.treeItems);
-    return Array.from(keywords).sort();
+    collectSuggestions(this.treeItems);
+    return Array.from(suggestions).sort();
+  }
+
+  get keywords(): string[] {
+    return this.filterSuggestions;
   }
 }
