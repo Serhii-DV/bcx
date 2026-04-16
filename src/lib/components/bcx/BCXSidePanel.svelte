@@ -1,7 +1,7 @@
 <script lang="ts">
-import { PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
 import { TreeData } from 'src/app/treeview/TreeData';
 import iconUrl from 'src/assets/icons/icon-48.png';
+import BCXDrawerButton from './BCXDrawerButton.svelte';
 import BcxTreeView from './BcxTreeView.svelte';
 
 interface Props {
@@ -22,17 +22,6 @@ $effect(() => {
     }, 100);
   }
 });
-
-function handleToggle() {
-  onToggle();
-}
-
-function handleKeyDown(event: KeyboardEvent) {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
-    onToggle();
-  }
-}
 </script>
 
 <div
@@ -80,26 +69,7 @@ function handleKeyDown(event: KeyboardEvent) {
     </div>
   </div>
 
-  <div
-    id="bcx-drawer-button"
-    class="bcx-drawer-handle"
-    role="button"
-    tabindex="0"
-    aria-label="Toggle BCX side panel"
-    aria-pressed={open}
-    title="BCX - Side Panel.
-Use Ctrl+D to toggle"
-    onclick={handleToggle}
-    onkeydown={handleKeyDown}
-  >
-    <span class="drawer-icon" aria-hidden="true">
-      {#if open}
-        <PanelLeftClose size="16" />
-      {:else}
-        <PanelLeftOpen size="16" />
-      {/if}
-    </span>
-  </div>
+  <BCXDrawerButton sidePanelOpen={open} {onToggle} />
 </div>
 
 <style>
@@ -134,40 +104,8 @@ Use Ctrl+D to toggle"
     pointer-events: auto;
   }
 
-  :global(.bcx-drawer-handle) {
-    position: absolute;
-    top: 0;
-    left: 400px;
-    height: 100vh;
-    width: 24px;
-    border: 0;
-    color: #f9fafb;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: auto;
-    background-color: transparent;
-    transition: background-color 220ms ease;
-  }
-
-  :global(.bcx-drawer-handle .drawer-icon) {
-    color: #f9fafb;
-    opacity: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  :global(.bcx-drawer-handle:hover),
-  :global(.bcx-drawer-handle:focus-visible) {
-    background: rgb(31 41 55 / 95%);
-    outline: none;
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    :global(.bcx-side-panel-shell),
-    :global(.bcx-drawer-handle) {
+    :global(.bcx-side-panel-shell) {
       transition: none;
     }
   }
