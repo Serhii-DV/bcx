@@ -4,6 +4,7 @@ export interface TreeItemClickContext {
   element: HTMLElement;
   item: TreeItem;
   parent?: TreeItem | null;
+  focusPath?: string;
 }
 
 export interface TreeItem {

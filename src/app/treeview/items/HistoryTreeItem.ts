@@ -133,7 +133,9 @@ export class HistoryTreeItem {
       includeInFilterSuggestions: false,
     };
 
-    loadMoreTreeItem.onClick = async ({ item, parent }) => {
+    loadMoreTreeItem.onClick = async (context) => {
+      const { item, parent } = context;
+
       if (item.isLoadingChildren) {
         return;
       }
@@ -157,8 +159,10 @@ export class HistoryTreeItem {
 
         if (loadMoreIndex >= 0) {
           children.splice(loadMoreIndex, 1, ...nextChildren);
+          context.focusPath = `${parent.path}.${loadMoreIndex}`;
         } else {
           children.push(...nextChildren);
+          context.focusPath = `${parent.path}.${children.length - nextChildren.length}`;
         }
 
         parent.children = children;

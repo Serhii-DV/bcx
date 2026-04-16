@@ -139,13 +139,21 @@ async function handleItemClick(
   focusedPath = item.path ?? null;
 
   if (item.onClick) {
-    await item.onClick({
+    const clickContext = {
       element: event?.currentTarget as HTMLElement,
       item,
       parent: treeData.findParentByPath(item.path),
-    });
+    };
+
+    await item.onClick(clickContext);
     treeData.treeItems = generateTreeHierarchy(treeData.items);
     refreshTreeRendering();
+
+    if (clickContext.focusPath) {
+      await tick();
+      focusTreeItem(treeData.findByPath(clickContext.focusPath));
+    }
+
     return;
   }
 
