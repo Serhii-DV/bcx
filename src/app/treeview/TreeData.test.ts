@@ -2,15 +2,37 @@ import { describe, expect, it } from '@rstest/core';
 import { TreeData } from './TreeData';
 
 describe('TreeData filter suggestions', () => {
-  it('collects labels, queries, and keywords from the current tree state', () => {
+  it('collects music labels, queries, and keywords from the current tree state', () => {
     const treeData = new TreeData([
       {
         label: 'Collection',
         children: [
           {
-            label: 'Album Title',
-            query: 'artist query',
-            keywords: ['ambient', 'drone'],
+            label: 'Artists',
+            children: [
+              {
+                label: 'Band Name',
+                query: 'band query',
+              },
+            ],
+          },
+          {
+            label: 'Releases',
+            children: [
+              {
+                label: 'Album Title',
+                href: 'https://example.com/album',
+                keywords: ['ambient', 'drone'],
+              },
+            ],
+          },
+          {
+            label: 'Tags',
+            children: [
+              {
+                label: 'psych',
+              },
+            ],
           },
         ],
       },
@@ -18,10 +40,11 @@ describe('TreeData filter suggestions', () => {
 
     expect(treeData.filterSuggestions).toEqual([
       'Album Title',
-      'Collection',
+      'Band Name',
       'ambient',
-      'artist query',
+      'band query',
       'drone',
+      'psych',
     ]);
   });
 
@@ -35,11 +58,47 @@ describe('TreeData filter suggestions', () => {
 
     treeData.items[0].children?.push({
       label: 'Loaded Album',
+      href: 'https://example.com/loaded-album',
       keywords: ['loaded tag'],
     });
 
     expect(treeData.filterSuggestions).toContain('Loaded Album');
     expect(treeData.filterSuggestions).toContain('loaded tag');
+  });
+
+  it('ignores structural tree labels', () => {
+    const treeData = new TreeData([
+      {
+        label: 'Collection',
+        children: [
+          {
+            label: 'Artists',
+            children: [],
+          },
+          {
+            label: 'Releases',
+            children: [],
+          },
+        ],
+      },
+      {
+        label: 'Wishlist',
+      },
+    ]);
+
+    expect(treeData.filterSuggestions).toEqual([]);
+  });
+
+  it('excludes items explicitly disabled for filter suggestions', () => {
+    const treeData = new TreeData([
+      {
+        label: 'Open Album Page',
+        href: 'https://example.com/album',
+        includeInFilterSuggestions: false,
+      },
+    ]);
+
+    expect(treeData.filterSuggestions).toEqual([]);
   });
 });
 

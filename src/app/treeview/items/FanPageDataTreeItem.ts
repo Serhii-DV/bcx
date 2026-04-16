@@ -21,6 +21,7 @@ export class FanPageDataTreeItem {
     children.push({
       label: 'Collection',
       href: BandcampUrlFactory.generateFanUrl(fan_data.username),
+      includeInFilterSuggestions: false,
       children: createAlbumsTreeItemsFromItemsCache(
         pageData.data.item_cache.collection,
       ),
@@ -30,11 +31,13 @@ export class FanPageDataTreeItem {
     children.push({
       label: 'Following Bands',
       href: BandcampUrlFactory.generateFollowingBandsUrl(fan_data.username),
+      includeInFilterSuggestions: false,
       children: createFollowingBandsTreeItems(pageData),
     });
     children.push({
       label: 'Following Genres',
       href: BandcampUrlFactory.generateFollowingGenresUrl(fan_data.username),
+      includeInFilterSuggestions: false,
       children: createFollowingGenresTreeItems(pageData),
     });
 

@@ -52,7 +52,12 @@ export class AlbumTreeItemFactory {
     }
 
     builder.addChild(
-      TreeItemFactory.link('Open Album Page', album.url.toString()),
+      TreeItemFactory.link(
+        'Open Album Page',
+        album.url.toString(),
+        undefined,
+        false,
+      ),
     );
 
     return builder.build();

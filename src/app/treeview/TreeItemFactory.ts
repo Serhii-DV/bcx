@@ -17,6 +17,7 @@ export class TreeItemFactory {
     return {
       label,
       query: typeof query === 'string' ? query : label,
+      includeInFilterSuggestions: true,
       icon: ICON_SQUARE_ARROW_RIGHT,
     };
   }
@@ -37,18 +38,23 @@ export class TreeItemFactory {
     label: string,
     href: string,
     icon: string = ICON_EXTERNAL_LINK,
+    includeInFilterSuggestions: boolean = true,
   ): TreeItem {
     return {
       label,
       href,
       icon,
+      includeInFilterSuggestions,
     };
   }
 
   static linkOrText(label: string, href?: string): TreeItem {
     return href
       ? TreeItemFactory.link(label, href)
-      : TreeItemFactory.text(label);
+      : {
+          ...TreeItemFactory.text(label),
+          includeInFilterSuggestions: true,
+        };
   }
 
   static fromBand(band: Band): TreeItem {
@@ -59,7 +65,10 @@ export class TreeItemFactory {
   }
 
   static fromArtistName(artistName: string): TreeItem {
-    return TreeItemFactory.text(artistName);
+    return {
+      ...TreeItemFactory.text(artistName),
+      includeInFilterSuggestions: true,
+    };
   }
 
   static fromDate(date: Date): TreeItem {
@@ -91,6 +100,7 @@ export class TreeItemFactory {
       label: item.title || item.url || 'No Title',
       href,
       buttons,
+      includeInFilterSuggestions: false,
     };
   }
 }

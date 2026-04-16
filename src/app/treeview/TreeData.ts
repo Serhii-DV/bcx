@@ -7,6 +7,13 @@ import {
   getVisibleItems,
 } from './utils';
 
+const FILTER_SUGGESTION_GROUP_LABELS = new Set([
+  'Artists',
+  'Releases',
+  'Tracks',
+  'Tags',
+]);
+
 export class TreeData {
   treeItems: TreeItem[];
 
@@ -105,14 +112,42 @@ export class TreeData {
       }
     }
 
-    function collectSuggestions(items: TreeItem[]) {
+    function hasMusicContext(parentLabels: string[]) {
+      return parentLabels.some((label) =>
+        FILTER_SUGGESTION_GROUP_LABELS.has(label),
+      );
+    }
+
+    function shouldAddItemLabel(item: TreeItem, parentLabels: string[]) {
+      if (item.includeInFilterSuggestions !== undefined) {
+        return item.includeInFilterSuggestions;
+      }
+
+      return !!item.href || !!item.image || hasMusicContext(parentLabels);
+    }
+
+    function collectSuggestions(
+      items: TreeItem[],
+      parentLabels: string[] = [],
+    ) {
       items.forEach((item) => {
-        addSuggestion(item.label);
-        addSuggestion(item.query);
-        item.keywords?.forEach(addSuggestion);
+        if (shouldAddItemLabel(item, parentLabels)) {
+          addSuggestion(item.label);
+        }
+
+        if (item.query && shouldAddItemLabel(item, parentLabels)) {
+          addSuggestion(item.query);
+        }
+
+        if (shouldAddItemLabel(item, parentLabels)) {
+          item.keywords?.forEach(addSuggestion);
+        }
 
         if (item.children) {
-          collectSuggestions(item.children);
+          collectSuggestions(
+            item.children,
+            item.label ? [...parentLabels, item.label] : parentLabels,
+          );
         }
       });
     }

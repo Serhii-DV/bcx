@@ -87,6 +87,11 @@ export class TreeItemBuilder {
     return this;
   }
 
+  includeInFilterSuggestions(include: boolean = true): this {
+    this.item.includeInFilterSuggestions = include;
+    return this;
+  }
+
   withButtons(buttons: TreeItemButton[]): this {
     this.item.buttons = buttons;
     return this;
