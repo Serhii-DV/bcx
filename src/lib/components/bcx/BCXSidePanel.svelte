@@ -1,6 +1,7 @@
 <script lang="ts">
 import { PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
 import { TreeData } from 'src/app/treeview/TreeData';
+import iconUrl from 'src/assets/icons/icon-48.png';
 import BcxTreeView from './BcxTreeView.svelte';
 
 interface Props {
@@ -43,7 +44,10 @@ function handleKeyDown(event: KeyboardEvent) {
       <!-- Header -->
       <div class="border-b border-gray-200/30 dark:border-gray-700/30 p-4">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold">Music Explorer</h2>
+          <div class="flex items-center gap-2">
+            <img src={iconUrl} alt="BCX" class="w-12 h-12" />
+            <h2 class="text-lg font-semibold">Music Explorer</h2>
+          </div>
         </div>
       </div>
 
