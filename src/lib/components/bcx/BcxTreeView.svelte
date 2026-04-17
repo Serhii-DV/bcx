@@ -321,6 +321,13 @@ function getItemVisibleChildCount(item: TreeItem): number {
   return getVisibleChildCount(item, debouncedFilterQuery, visibleChildCounts);
 }
 
+function withVisibleChildCount(item: TreeItem): TreeItem {
+  return {
+    ...item,
+    childrenCount: getItemVisibleChildCount(item),
+  };
+}
+
 function handleNodeClick(item: TreeItem, event: MouseEvent) {
   event.preventDefault();
   focusedPath = item.path ?? null;
@@ -352,7 +359,7 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleNodeClick(item, e)}
               >
-                <BcxTreeItem item={item} childCount={getItemVisibleChildCount(item)} />
+                <BcxTreeItem item={withVisibleChildCount(item)} />
               </summary>
               {#if item.isLoadingChildren}
                 <div class="pl-6 py-1 text-sm text-gray-400">Loading...</div>
@@ -371,7 +378,7 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
               href={item.href}
               title={item.href}
               >
-              <BcxTreeItem item={item} childCount={getItemVisibleChildCount(item)} />
+              <BcxTreeItem item={withVisibleChildCount(item)} />
             </a>
           {/if}
         </li>

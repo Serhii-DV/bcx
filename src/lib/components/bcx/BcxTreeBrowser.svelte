@@ -377,9 +377,16 @@ function getItemVisibleChildCount(item: TreeItem): number {
   return item.childrenCount ?? item.children?.length ?? 0;
 }
 
-function withBrowserActionIcon(item: TreeItem): TreeItem {
+function withBrowserChildCount(item: TreeItem): TreeItem {
   return {
     ...item,
+    childrenCount: getItemVisibleChildCount(item),
+  };
+}
+
+function withBrowserTreeItemState(item: TreeItem): TreeItem {
+  return {
+    ...withBrowserChildCount(item),
     actionIcon: ICON_CHEVRON_RIGHT,
   };
 }
@@ -450,8 +457,7 @@ function withBrowserActionIcon(item: TreeItem): TreeItem {
       }}
     >
       <BcxTreeItem
-        item={withBrowserActionIcon(item)}
-        childCount={getItemVisibleChildCount(item)}
+        item={withBrowserTreeItemState(item)}
         showActions={!item.isLoadingChildren}
       />
       {#if item.isLoadingChildren}
@@ -469,7 +475,7 @@ function withBrowserActionIcon(item: TreeItem): TreeItem {
       href={item.href}
       title={item.href}
     >
-      <BcxTreeItem item={item} childCount={getItemVisibleChildCount(item)} />
+      <BcxTreeItem item={withBrowserChildCount(item)} />
     </a>
   {/if}
 {/snippet}

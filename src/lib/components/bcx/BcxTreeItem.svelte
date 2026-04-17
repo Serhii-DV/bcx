@@ -5,11 +5,11 @@ import { makeIcon } from 'src/app/treeview/utils/icon';
 
 interface Props {
   item: TreeItem;
-  childCount?: number;
   showActions?: boolean;
 }
 
-let { item, childCount = 0, showActions = true }: Props = $props();
+let { item, showActions = true }: Props = $props();
+let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 </script>
 
 {#snippet treeItemButton(button: TreeItemButton)}
@@ -81,8 +81,8 @@ let { item, childCount = 0, showActions = true }: Props = $props();
 {#if showActions}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
   {@render treeItemButtons(item)}
-  {#if childCount > 0}
-    <span class="item-count text-gray-400">{childCount}</span>
+  {#if childrenCount > 0}
+    <span class="item-count text-gray-400">{childrenCount}</span>
   {/if}
 </div>
 {@render treeItemActionIcon(item)}
