@@ -1,11 +1,10 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
-import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
-import { makeIcon } from 'src/app/treeview/utils/icon';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
+import BcxTreeItem from './BcxTreeItem.svelte';
 import BcxTreeViewFilter from './BcxTreeViewFilter.svelte';
 import {
   activateTreeItem,
@@ -335,81 +334,6 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
 }
 </script>
 
-{#snippet treeItemButton(button: TreeItemButton)}
-  {@const Icon = button.icon}
-  {#if button.href}
-    <a
-      href={button.href}
-      title={button.title}
-      class="item-button inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-      onclick={(e) => {
-        e.stopPropagation();
-        if (button.onClick) {
-          e.preventDefault();
-          button.onClick(e.currentTarget as HTMLElement);
-        }
-      }}
-    >
-      <Icon size="16" />
-    </a>
-  {:else}
-    <button
-      type="button"
-      title={button.title}
-      class="item-button cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-      onclick={(e) => {
-        e.stopPropagation();
-        if (button.onClick) {
-          button.onClick(e.currentTarget as HTMLElement);
-        }
-      }}
-    >
-      <Icon size="16" />
-    </button>
-  {/if}
-{/snippet}
-
-{#snippet treeItemButtons(item: TreeItem)}
-  {#if item.buttons && item.buttons.length > 0}
-<div class="item-buttons">
-  {#each item.buttons as button}
-    {@render treeItemButton(button)}
-  {/each}
-</div>
-  {/if}
-{/snippet}
-
-{#snippet treeItemIcon(item: TreeItem)}
-  {@const Icon = makeIcon(item.icon)}
-  {#if Icon}
-  <span class="item-icon text-gray-300"><Icon size="16" /></span>
-  {/if}
-{/snippet}
-
-{#snippet treeItem(item: TreeItem)}
-  {@const hasChildren = isNode(item)}
-  {@render treeItemImage(item)}
-  <span class="item-label" class:ml-2={!hasChildren}>{item.label}</span>
-  {@render treeItemActions(item)}
-{/snippet}
-
-{#snippet treeItemActions(item: TreeItem)}
-  {@const visibleChildCount = getItemVisibleChildCount(item)}
-<div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
-  {@render treeItemIcon(item)}
-  {@render treeItemButtons(item)}
-  {#if visibleChildCount > 0}
-    <span class="item-count text-sm text-gray-400">{visibleChildCount}</span>
-  {/if}
-</div>
-{/snippet}
-
-{#snippet treeItemImage(item: TreeItem)}
-  {#if item.image}
-    <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
-  {/if}
-{/snippet}
-
 {#snippet treeItems(items: TreeItem[] | undefined)}
   {#if items && items.length > 0}
     <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
@@ -428,7 +352,7 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleNodeClick(item, e)}
               >
-                {@render treeItem(item)}
+                <BcxTreeItem item={item} childCount={getItemVisibleChildCount(item)} />
               </summary>
               {#if item.isLoadingChildren}
                 <div class="pl-6 py-1 text-sm text-gray-400">Loading...</div>
@@ -447,7 +371,7 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
               href={item.href}
               title={item.href}
               >
-              {@render treeItem(item)}
+              <BcxTreeItem item={item} childCount={getItemVisibleChildCount(item)} />
             </a>
           {/if}
         </li>
@@ -513,45 +437,13 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
           mask-size: cover;
 }
 
-.bcx-tree-view a, .bcx-tree-view span:not(.highlight-container) {
+.bcx-tree-view a {
     display: inline-flex;
     padding-block: .25rem;
     vertical-align: middle;
 }
 
-.bcx-tree-view .bcx-tree-item-img {
-    margin-top: 0.125rem;
-}
-
-.bcx-tree-view details > summary > .bcx-tree-item-img {
-    margin-right: 0.5rem;
-}
-
 .bcx-tree-view .hidden {
     display: none;
 }
-
-.bcx-tree-view .item-actions {
-  padding-right: 5px;
-}
-
-.bcx-tree-view .item-icon {
-  margin-left: 5px;
-}
-
-.bcx-tree-view .item-icon,
-.bcx-tree-view .item-buttons {
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-}
-
-.bcx-tree-view .tree-item:hover .item-icon,
-.bcx-tree-view .tree-item:focus .item-icon,
-.bcx-tree-view .tree-item.focused .item-icon,
-.bcx-tree-view .tree-item:hover .item-buttons,
-.bcx-tree-view .tree-item:focus .item-buttons,
-.bcx-tree-view .tree-item.focused .item-buttons {
-    opacity: 1;
-}
-
 </style>

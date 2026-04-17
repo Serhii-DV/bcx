@@ -1,16 +1,16 @@
 <script lang="ts">
+import { ChevronLeft, ChevronRight } from '@lucide/svelte';
 import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
-import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import {
   findItemByPath,
   hydrateTreeItemChildren,
   isNode,
 } from 'src/app/treeview/utils';
-import { makeIcon } from 'src/app/treeview/utils/icon';
 import { onDestroy, onMount, tick } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
+import BcxTreeItem from './BcxTreeItem.svelte';
 import {
   activateTreeItem,
   filterTreeItemsFlat,
@@ -362,79 +362,14 @@ function getItemVisibleChildCount(item: TreeItem): number {
 }
 </script>
 
-{#snippet treeItemButton(button: TreeItemButton)}
-  {@const Icon = button.icon}
-  {#if button.href}
-    <a
-      href={button.href}
-      title={button.title}
-      class="item-button inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-      onclick={(e) => {
-        e.stopPropagation();
-        if (button.onClick) {
-          e.preventDefault();
-          button.onClick(e.currentTarget as HTMLElement);
-        }
-      }}
-    >
-      <Icon size="16" />
-    </a>
-  {:else}
-    <button
-      type="button"
-      title={button.title}
-      class="item-button cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-      onclick={(e) => {
-        e.stopPropagation();
-        if (button.onClick) {
-          button.onClick(e.currentTarget as HTMLElement);
-        }
-      }}
-    >
-      <Icon size="16" />
-    </button>
-  {/if}
-{/snippet}
-
-{#snippet treeItemButtons(item: TreeItem)}
-  {#if item.buttons && item.buttons.length > 0}
-<div class="item-buttons">
-  {#each item.buttons as button}
-    {@render treeItemButton(button)}
-  {/each}
-</div>
-  {/if}
-{/snippet}
-
-{#snippet treeItemIcon(item: TreeItem)}
-  {@const Icon = makeIcon(item.icon)}
-  {#if Icon}
-  <span class="item-icon text-gray-300"><Icon size="16" /></span>
-  {/if}
-{/snippet}
-
-{#snippet treeItem(item: TreeItem)}
-  {@const hasChildren = isNode(item)}
-  {@render treeItemImage(item)}
-  <span class="item-label" class:ml-2={!hasChildren}>{item.label}</span>
-  {@render treeItemActions(item)}
-{/snippet}
-
-{#snippet treeItemActions(item: TreeItem)}
-  {@const visibleChildCount = getItemVisibleChildCount(item)}
-<div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
-  {@render treeItemIcon(item)}
-  {@render treeItemButtons(item)}
-  {#if visibleChildCount > 0}
-    <span class="item-count text-sm text-gray-400">{visibleChildCount}</span>
-  {/if}
-</div>
-{/snippet}
-
-{#snippet treeItemImage(item: TreeItem)}
-  {#if item.image}
-    <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
-  {/if}
+{#snippet browserArrow(direction: 'back' | 'forward')}
+  <span class="bcx-browser-arrow" aria-hidden="true">
+    {#if direction === 'back'}
+      <ChevronLeft size="16" />
+    {:else}
+      <ChevronRight size="16" />
+    {/if}
+  </span>
 {/snippet}
 
 {#snippet breadcrumb()}
@@ -469,7 +404,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
     tabindex={focusedPath === item.path ? 0 : -1}
     onclick={(e) => handleBrowserItemClick(item, e)}
   >
-    <span class="bcx-browser-arrow" aria-hidden="true">&lsaquo;</span>
+    {@render browserArrow('back')}
     <span class="item-label">{item.label}</span>
   </button>
 {/snippet}
@@ -493,13 +428,15 @@ function getItemVisibleChildCount(item: TreeItem): number {
         }
       }}
     >
-      {@render treeItemImage(item)}
-      <span class="item-label">{item.label}</span>
+      <BcxTreeItem
+        item={item}
+        childCount={getItemVisibleChildCount(item)}
+        showActions={!item.isLoadingChildren}
+      />
       {#if item.isLoadingChildren}
         <span class="ml-auto pr-2 text-sm text-gray-400">Loading...</span>
       {:else}
-        {@render treeItemActions(item)}
-        <span class="bcx-browser-arrow" aria-hidden="true">&rsaquo;</span>
+        {@render browserArrow('forward')}
       {/if}
     </div>
   {:else}
@@ -513,7 +450,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
       href={item.href}
       title={item.href}
     >
-      {@render treeItem(item)}
+      <BcxTreeItem item={item} childCount={getItemVisibleChildCount(item)} />
     </a>
   {/if}
 {/snippet}
@@ -566,38 +503,10 @@ function getItemVisibleChildCount(item: TreeItem): number {
 </div>
 
 <style>
-.bcx-tree-view a, .bcx-tree-view span:not(.highlight-container) {
+.bcx-tree-view a {
     display: inline-flex;
     padding-block: .25rem;
     vertical-align: middle;
-}
-
-.bcx-tree-view .bcx-tree-item-img {
-    margin-top: 0.125rem;
-    margin-right: 5px;
-}
-
-.bcx-tree-view .item-actions {
-  padding-right: 5px;
-}
-
-.bcx-tree-view .item-icon {
-  margin-left: 5px;
-}
-
-.bcx-tree-view .item-icon,
-.bcx-tree-view .item-buttons {
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-}
-
-.bcx-tree-view .tree-item:hover .item-icon,
-.bcx-tree-view .tree-item:focus .item-icon,
-.bcx-tree-view .tree-item.focused .item-icon,
-.bcx-tree-view .tree-item:hover .item-buttons,
-.bcx-tree-view .tree-item:focus .item-buttons,
-.bcx-tree-view .tree-item.focused .item-buttons {
-    opacity: 1;
 }
 
 .bcx-tree-breadcrumb {
