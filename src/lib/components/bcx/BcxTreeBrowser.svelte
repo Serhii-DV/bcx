@@ -3,6 +3,7 @@ import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem, TreeItemClickContext } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import {
+  findItemByPath,
   generateTreeHierarchy,
   hydrateTreeItemChildren,
   isNode,
@@ -17,6 +18,8 @@ interface Props {
   treeData: TreeData;
 }
 
+const DRILL_UP_PATH = '__bcx_tree_drill_up__';
+
 let { treeData }: Props = $props();
 let treeContainer: HTMLDivElement;
 let filterRef: BcxTreeViewFilter;
@@ -24,11 +27,11 @@ let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let filterQuery = $state('');
 let debouncedFilterQuery = $state('');
+let currentRootPath: string | null = $state(null);
 let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
 
-// Derived values
 let effectiveTreeData: TreeData = $derived.by(() => {
   treeVersion;
   return treeData.filter(debouncedFilterQuery);
@@ -39,7 +42,6 @@ let visibleData = $derived.by(() => {
   const paths = new Set<string>();
   const childCounts = new Map<string, number>();
 
-  // First pass: collect all visible paths from filtered tree
   function collectPaths(items: TreeItem[] | undefined) {
     if (!items) return;
     for (const item of items) {
@@ -49,7 +51,6 @@ let visibleData = $derived.by(() => {
   }
   collectPaths(effectiveTreeData.items);
 
-  // Second pass: count visible children for each parent in original tree
   function countVisibleChildren(items: TreeItem[] | undefined) {
     if (!items) return;
     for (const item of items) {
@@ -75,44 +76,58 @@ let filterSuggestions = $derived.by(() => {
   treeVersion;
   return treeData.filterSuggestions;
 });
+let isBrowsingActive = $derived(!debouncedFilterQuery.trim());
+let currentRootItem = $derived.by(() => {
+  treeVersion;
+  return currentRootPath ? findTreeItemByPath(currentRootPath) : null;
+});
+let currentLevelItems = $derived.by(() => {
+  treeVersion;
+  return currentRootItem?.children || treeData.items;
+});
+let breadcrumbItems = $derived.by(() => {
+  treeVersion;
+  return currentRootPath ? buildBreadcrumb(currentRootPath) : [];
+});
 
-// Expose method to parent component
 export function focusFirstItem() {
-  focusTreeItem(effectiveTreeData.visibleFirst);
+  focusTreeItem(getNavigableItems()[0] || effectiveTreeData.visibleFirst);
 }
 
 $effect(() => {
-  const currentQuery = filterQuery; // Capture current value synchronously
+  const currentQuery = filterQuery;
 
-  // Clear existing timer
   if (filterDebounceTimer !== null) {
     clearTimeout(filterDebounceTimer);
   }
 
-  // If filter is empty, update immediately without debounce
   if (!currentQuery.trim()) {
     debouncedFilterQuery = '';
     filterDebounceTimer = null;
   } else {
-    // Set new timer for debounced update (only for non-empty queries)
     filterDebounceTimer = window.setTimeout(() => {
       debouncedFilterQuery = currentQuery;
       filterDebounceTimer = null;
-    }, 300); // 300ms debounce delay
+    }, 300);
   }
 });
 
-// Reactive values - Reset focus when clearing filter
 $effect(() => {
   if (!debouncedFilterQuery.trim()) {
     focusedPath = null;
   }
 });
 
+$effect(() => {
+  treeVersion;
+  if (currentRootPath && !findTreeItemByPath(currentRootPath)) {
+    currentRootPath = null;
+  }
+});
+
 onMount(() => {
-  // Subscribe to store updates
   storeUnsubscribe = musicFilterStore.subscribe((state) => {
-    console.log('[BcxTreeView]', '[setSearchQuery]', 'Subscribe', state);
+    console.log('[BcxTreeBrowser]', '[setSearchQuery]', 'Subscribe', state);
     if (state.searchQuery !== searchQuery) {
       searchQuery = state.searchQuery || '';
     }
@@ -134,7 +149,7 @@ async function handleItemClick(
 ) {
   if (!item) return;
 
-  console.log('[BcxTreeView]', '[handleItemClick]', item, event);
+  console.log('[BcxTreeBrowser]', '[handleItemClick]', item, event);
 
   focusedPath = item.path ?? null;
 
@@ -142,7 +157,7 @@ async function handleItemClick(
     const clickContext: TreeItemClickContext = {
       element: event?.currentTarget as HTMLElement,
       item,
-      parent: treeData.findParentByPath(item.path),
+      parent: findParentTreeItemByPath(item.path),
     };
 
     await item.onClick(clickContext);
@@ -151,7 +166,7 @@ async function handleItemClick(
 
     if (clickContext.focusPath) {
       await tick();
-      focusTreeItem(treeData.findByPath(clickContext.focusPath));
+      focusTreeItem(findTreeItemByPath(clickContext.focusPath));
     }
 
     return;
@@ -163,13 +178,10 @@ async function handleItemClick(
   }
 
   if (item.href) {
-    // Prevent default navigation for music items and set the search query instead
     if (event?.currentTarget instanceof HTMLAnchorElement) {
       event?.preventDefault();
     }
 
-    // Handle default navigation for non-music pages (e.g., open in new tab)
-    // For keyboard events, manually navigate since we can't rely on default browser behavior
     if (event instanceof KeyboardEvent || event instanceof MouseEvent) {
       window.open(item.href, '_self');
     }
@@ -180,9 +192,7 @@ async function handleItemClick(
 async function handleKeyDown(event: KeyboardEvent) {
   if (!treeContainer) return;
 
-  // Allow system shortcuts to pass through
   if (event.ctrlKey || event.metaKey) {
-    // Allow CTRL+R (or CMD+R on Mac) to reload the page
     if (event.key === 'r' || event.key === 'R') {
       return;
     }
@@ -191,7 +201,7 @@ async function handleKeyDown(event: KeyboardEvent) {
   event.preventDefault();
 
   const currentIndex = visibleItemIndex(focusedPath);
-  const pageSize = 20; // Number of items to jump for PageUp/PageDown
+  const pageSize = 20;
 
   switch (event.key) {
     case 'ArrowDown':
@@ -199,7 +209,6 @@ async function handleKeyDown(event: KeyboardEvent) {
       break;
 
     case 'ArrowUp':
-      // If on first item, focus back to filter input
       if (currentIndex <= 0) {
         filterRef?.focus();
         break;
@@ -215,16 +224,25 @@ async function handleKeyDown(event: KeyboardEvent) {
           break;
         }
 
+        if (isBrowsingActive) {
+          await handleBrowserItemClick(currentItem, event);
+          break;
+        }
+
         if (!isNodeExpanded(currentItem)) {
           expandNode(currentItem);
         } else {
-          // Move to first child
           focusTreeItem(findFirstVisibleChildByPath(focusedPath));
         }
       }
       break;
 
     case 'ArrowLeft':
+      if (isBrowsingActive) {
+        navigateToParentLevel();
+        break;
+      }
+
       if (currentIndex >= 0) {
         const currentItem = findVisibleItem(currentIndex);
 
@@ -235,13 +253,13 @@ async function handleKeyDown(event: KeyboardEvent) {
         if (isNodeExpanded(currentItem)) {
           collapseNode(currentItem);
         } else {
-          // Move to parent
           focusTreeItem(findVisibleParentByPath(currentItem.path));
         }
       }
       break;
 
     case 'Enter':
+    case ' ':
       if (currentIndex >= 0) {
         const currentItem = findVisibleItem(currentIndex);
 
@@ -249,23 +267,8 @@ async function handleKeyDown(event: KeyboardEvent) {
           break;
         }
 
-        if (isNode(currentItem)) {
-          if (isNodeExpanded(currentItem)) {
-            collapseNode(currentItem);
-          } else {
-            expandNode(currentItem);
-          }
-        } else {
-          await handleItemClick(currentItem, event);
-        }
-      }
-      break;
-
-    case ' ':
-      if (currentIndex >= 0) {
-        const currentItem = findVisibleItem(currentIndex);
-
-        if (!currentItem) {
+        if (isBrowsingActive) {
+          await handleBrowserItemClick(currentItem, event);
           break;
         }
 
@@ -289,26 +292,24 @@ async function handleKeyDown(event: KeyboardEvent) {
       focusTreeItem(getNavigableItems().at(-1));
       break;
 
-    case 'PageDown': {
+    case 'PageDown':
       focusTreeItem(visibleNext(currentIndex, pageSize));
       break;
-    }
 
-    case 'PageUp': {
+    case 'PageUp':
       focusTreeItem(visiblePrev(currentIndex, pageSize));
       break;
-    }
   }
 }
 
 function getNavigableItems(): TreeItem[] {
-  const visibleItems = treeData.visible;
-
-  if (!debouncedFilterQuery.trim()) {
-    return visibleItems;
+  if (isBrowsingActive) {
+    return currentRootPath
+      ? [createDrillUpItem(), ...currentLevelItems]
+      : currentLevelItems;
   }
 
-  return visibleItems.filter((item) => visiblePaths.has(item.path || ''));
+  return treeData.visible.filter((item) => visiblePaths.has(item.path || ''));
 }
 
 function visibleItemIndex(path?: string | null): number {
@@ -347,8 +348,7 @@ function visiblePrev(index: number, step: number = 1): TreeItem | null {
 function findVisibleParentByPath(path?: string | null): TreeItem | null {
   if (!path) return null;
   const parentPath = path.split('.').slice(0, -1).join('.');
-  if (!parentPath) return null;
-  return getNavigableItems().find((item) => item.path === parentPath) ?? null;
+  return parentPath ? findTreeItemByPath(parentPath) : null;
 }
 
 function findFirstVisibleChildByPath(path?: string | null): TreeItem | null {
@@ -406,6 +406,65 @@ function refreshTreeRendering() {
   treeVersion += 1;
 }
 
+function findTreeItemByPath(path?: string | null): TreeItem | null {
+  if (!path) return null;
+  return findItemByPath(treeData.items, path);
+}
+
+function findParentTreeItemByPath(path?: string | null): TreeItem | null {
+  if (!path) return null;
+  const parentPath = path.split('.').slice(0, -1).join('.');
+  return parentPath ? findTreeItemByPath(parentPath) : null;
+}
+
+function buildBreadcrumb(path: string): TreeItem[] {
+  const pathParts = path.split('.');
+  const items: TreeItem[] = [];
+
+  for (let index = 0; index < pathParts.length; index += 1) {
+    const pathAtLevel = pathParts.slice(0, index + 1).join('.');
+    const item = findTreeItemByPath(pathAtLevel);
+
+    if (item) {
+      items.push(item);
+    }
+  }
+
+  return items;
+}
+
+function createDrillUpItem(): TreeItem {
+  const parentItem = findParentTreeItemByPath(currentRootPath);
+
+  return {
+    label: parentItem ? `Back to ${parentItem.label}` : 'Back to root',
+    path: DRILL_UP_PATH,
+    level: currentRootItem?.level || 0,
+  };
+}
+
+function isDrillUpItem(item: TreeItem): boolean {
+  return item.path === DRILL_UP_PATH;
+}
+
+function navigateToLevel(path: string | null) {
+  currentRootPath = path;
+  focusedPath = null;
+  refreshTreeRendering();
+  tick().then(() => {
+    focusTreeItem(getNavigableItems()[0]);
+  });
+}
+
+function navigateToParentLevel() {
+  if (!currentRootPath) {
+    return;
+  }
+
+  const parentItem = findParentTreeItemByPath(currentRootPath);
+  navigateToLevel(parentItem?.path || null);
+}
+
 async function expandNode(item: TreeItem) {
   if (!isNode(item)) {
     return;
@@ -438,6 +497,44 @@ async function expandNode(item: TreeItem) {
   focusTreeItem(itemToFocus);
 }
 
+async function enterBrowserItem(item: TreeItem) {
+  if (!isNode(item) || !item.path) {
+    await handleItemClick(item);
+    return;
+  }
+
+  const itemToEnter = item;
+  const itemPath = item.path;
+
+  if (item.loadChildren && !item.childrenLoaded) {
+    item.isLoadingChildren = true;
+    refreshTreeRendering();
+    await waitForLoadingStatePaint(itemToEnter);
+    await hydrateTreeItemChildren(item, true);
+    refreshTreeRendering();
+    await tick();
+  }
+
+  navigateToLevel(itemPath);
+}
+
+async function handleBrowserItemClick(
+  item: TreeItem,
+  event?: MouseEvent | KeyboardEvent,
+) {
+  if (isDrillUpItem(item)) {
+    navigateToParentLevel();
+    return;
+  }
+
+  if (isNode(item)) {
+    await enterBrowserItem(item);
+    return;
+  }
+
+  await handleItemClick(item, event);
+}
+
 function handleFilterArrowDown() {
   focusTreeItem(getNavigableItems()[0]);
 }
@@ -457,7 +554,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
   return visibleChildCounts.get(item.path || '') || 0;
 }
 
-function handleNodeClick(item: TreeItem, event: MouseEvent) {
+function handleFilterNodeClick(item: TreeItem, event: MouseEvent) {
   event.preventDefault();
   focusedPath = item.path ?? null;
 
@@ -555,7 +652,102 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
   {/if}
 {/snippet}
 
-{#snippet treeItems(items: TreeItem[] | undefined)}
+{#snippet breadcrumb()}
+  {#if isBrowsingActive}
+    <nav class="bcx-tree-breadcrumb" aria-label="Tree location">
+      <button
+        type="button"
+        class:current={!currentRootPath}
+        onclick={() => navigateToLevel(null)}
+      >
+        Root
+      </button>
+      {#each breadcrumbItems as item}
+        <span aria-hidden="true">/</span>
+        <button
+          type="button"
+          class:current={item.path === currentRootPath}
+          onclick={() => navigateToLevel(item.path || null)}
+        >
+          {item.label}
+        </button>
+      {/each}
+    </nav>
+  {/if}
+{/snippet}
+
+{#snippet backTreeItem(item: TreeItem)}
+  <button
+    type="button"
+    class="tree-item bcx-browser-row flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+    class:focused={focusedPath === item.path}
+    data-level="{item.level}"
+    data-path="{item.path}"
+    tabindex={focusedPath === item.path ? 0 : -1}
+    onclick={(e) => handleBrowserItemClick(item, e)}
+  >
+    <span class="bcx-browser-arrow" aria-hidden="true">&lsaquo;</span>
+    <span class="item-label">{item.label}</span>
+  </button>
+{/snippet}
+
+{#snippet browserTreeItem(item: TreeItem)}
+  {@const hasChildren = isNode(item)}
+  {#if hasChildren}
+    <div
+      role="button"
+      class="tree-item bcx-browser-row flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+      class:focused={focusedPath === item.path}
+      data-level="{item.level}"
+      data-path="{item.path}"
+      tabindex={focusedPath === item.path ? 0 : -1}
+      onclick={(e) => handleBrowserItemClick(item, e)}
+    >
+      {@render treeItemImage(item)}
+      <span class="item-label">{item.label}</span>
+      {#if item.isLoadingChildren}
+        <span class="ml-auto pr-2 text-sm text-gray-400">Loading...</span>
+      {:else}
+        {@render treeItemActions(item)}
+        <span class="bcx-browser-arrow" aria-hidden="true">&rsaquo;</span>
+      {/if}
+    </div>
+  {:else}
+    <a
+      class="tree-item flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+      class:focused={focusedPath === item.path}
+      data-level="{item.level}"
+      data-path="{item.path}"
+      tabindex={focusedPath === item.path ? 0 : -1}
+      onclick={(e) => handleItemClick(item, e)}
+      href={item.href}
+      title={item.href}
+    >
+      {@render treeItem(item)}
+    </a>
+  {/if}
+{/snippet}
+
+{#snippet browserTreeItems(items: TreeItem[] | undefined)}
+  <ol class="ml-0 mt-0 pl-0">
+    {#if currentRootPath}
+      <li>
+        {@render backTreeItem(createDrillUpItem())}
+      </li>
+    {/if}
+    {#if items && items.length > 0}
+      {#each items as item}
+        <li>
+          {@render browserTreeItem(item)}
+        </li>
+      {/each}
+    {:else}
+      <li class="text-gray-400 text-sm text-center py-4">No items here</li>
+    {/if}
+  </ol>
+{/snippet}
+
+{#snippet filteredTreeItems(items: TreeItem[] | undefined)}
   {#if items && items.length > 0}
     <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
       {#each items as item}
@@ -571,14 +763,14 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
                 class="tree-item cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
-                onclick={(e) => handleNodeClick(item, e)}
+                onclick={(e) => handleFilterNodeClick(item, e)}
               >
                 {@render treeItem(item)}
               </summary>
               {#if item.isLoadingChildren}
                 <div class="pl-6 py-1 text-sm text-gray-400">Loading...</div>
               {:else}
-                {@render treeItems(item.children)}
+                {@render filteredTreeItems(item.children)}
               {/if}
             </details>
           {:else}
@@ -608,6 +800,7 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
     suggestions={filterSuggestions}
     onArrowDown={handleFilterArrowDown}
   />
+  {@render breadcrumb()}
   <div
     bind:this={treeContainer}
     class="bcx-tree-view pr-2 py-2 flex-1 overflow-y-auto"
@@ -615,9 +808,8 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
     tabindex="0"
     onkeydown={handleKeyDown}
     onfocus={() => {
-      // Set initial focus to first item if none is focused
       if (!focusedPath && effectiveTreeData.items) {
-        focusTreeItem(effectiveTreeData.visibleFirst);
+        focusTreeItem(getNavigableItems()[0] || effectiveTreeData.visibleFirst);
       }
     }}
   >
@@ -625,9 +817,13 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
       <div class="text-gray-400 text-sm text-center py-4">
         No items match your filter
       </div>
+    {:else if isBrowsingActive}
+      {#key treeVersion}
+        {@render browserTreeItems(currentLevelItems)}
+      {/key}
     {:else if treeData.items}
       {#key treeVersion}
-        {@render treeItems(treeData.items)}
+        {@render filteredTreeItems(treeData.items)}
       {/key}
     {/if}
   </div>
@@ -699,4 +895,43 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
     opacity: 1;
 }
 
+.bcx-tree-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding-inline: 0.5rem;
+  font-size: 0.75rem;
+  color: rgb(209 213 219);
+}
+
+.bcx-tree-breadcrumb button {
+  border-radius: 4px;
+  padding: 0.125rem 0.25rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.bcx-tree-breadcrumb button:hover,
+.bcx-tree-breadcrumb button:focus {
+  background-color: rgb(255 255 255 / 10%);
+  outline: none;
+}
+
+.bcx-tree-breadcrumb button.current {
+  color: white;
+}
+
+.bcx-browser-row {
+  border-radius: 4px;
+}
+
+.bcx-browser-arrow {
+  display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
+  min-width: 1.25rem;
+  padding-inline: 0.25rem;
+  color: rgb(156 163 175);
+}
 </style>
