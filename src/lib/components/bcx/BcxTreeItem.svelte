@@ -84,7 +84,7 @@ let hasChildren = $derived(isNode(item));
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
   {@render treeItemButtons(item)}
   {#if childCount > 0}
-    <span class="item-count text-sm text-gray-400">{childCount}</span>
+    <span class="item-count text-gray-400">{childCount}</span>
   {/if}
 </div>
 {@render treeItemActionIcon(item)}
@@ -116,6 +116,10 @@ let hasChildren = $derived(isNode(item));
   display: inline-flex;
   padding-block: 0.25rem;
   vertical-align: middle;
+}
+
+.item-count {
+  font-size: 0.75rem;
 }
 
 .item-actions {
