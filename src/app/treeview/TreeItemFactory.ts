@@ -22,21 +22,16 @@ export class TreeItemFactory {
     };
   }
 
-  static items(label: string, children: TreeItem[], image?: string): TreeItem {
+  static items(label: string, children: TreeItem[]): TreeItem {
     return {
       label,
-      image,
       open: false,
       children,
     };
   }
 
-  static list(label: string, strings: string[], image?: string): TreeItem {
-    return TreeItemFactory.items(
-      label,
-      strings.map(TreeItemFactory.text),
-      image,
-    );
+  static list(label: string, strings: string[]): TreeItem {
+    return TreeItemFactory.items(label, strings.map(TreeItemFactory.text));
   }
 
   static link(

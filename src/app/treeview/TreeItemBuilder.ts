@@ -15,6 +15,18 @@ export class TreeItemBuilder {
     return new TreeItemBuilder(item);
   }
 
+  static text(label: string): TreeItemBuilder {
+    return this.create(TreeItemFactory.text(label));
+  }
+
+  static items(label: string, children: TreeItem[]): TreeItemBuilder {
+    return this.create(TreeItemFactory.items(label, children));
+  }
+
+  static list(label: string, strings: string[]): TreeItemBuilder {
+    return this.create(TreeItemFactory.list(label, strings));
+  }
+
   static link(label: string, href: string): TreeItemBuilder {
     return this.create(TreeItemFactory.link(label, href));
   }
