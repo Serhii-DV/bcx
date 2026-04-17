@@ -12,6 +12,7 @@ import {
 } from 'src/app/treeview/utils/icon';
 import { onDestroy, onMount, tick } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
+import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
 import {
@@ -392,28 +393,6 @@ function withBrowserTreeItemState(item: TreeItem): TreeItem {
 }
 </script>
 
-{#snippet breadcrumb()}
-  <nav class="bcx-tree-breadcrumb" aria-label="Tree location">
-    <button
-      type="button"
-      class:current={!currentRootPath}
-      onclick={() => navigateToLevel(null)}
-    >
-      Root
-    </button>
-    {#each breadcrumbItems as item}
-      <span aria-hidden="true">/</span>
-      <button
-        type="button"
-        class:current={item.path === currentRootPath}
-        onclick={() => navigateToLevel(item.path || null)}
-      >
-        {item.label}
-      </button>
-    {/each}
-  </nav>
-{/snippet}
-
 {#snippet backTreeItem(item: TreeItem)}
   <div
     role="button"
@@ -508,7 +487,11 @@ function withBrowserTreeItemState(item: TreeItem): TreeItem {
     suggestions={filterSuggestions}
     onArrowDown={handleFilterArrowDown}
   />
-  {@render breadcrumb()}
+  <BcxTreeBreadcrumb
+    items={breadcrumbItems}
+    currentPath={currentRootPath}
+    onNavigate={navigateToLevel}
+  />
   <div
     bind:this={treeContainer}
     class="bcx-tree-view pr-2 py-2 flex-1 overflow-y-auto"
@@ -532,33 +515,6 @@ function withBrowserTreeItemState(item: TreeItem): TreeItem {
     display: inline-flex;
     padding-block: .25rem;
     vertical-align: middle;
-}
-
-.bcx-tree-breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem;
-  padding-inline: 0.5rem;
-  font-size: 0.75rem;
-  color: rgb(209 213 219);
-}
-
-.bcx-tree-breadcrumb button {
-  border-radius: 4px;
-  padding: 0.125rem 0.25rem;
-  color: inherit;
-  cursor: pointer;
-}
-
-.bcx-tree-breadcrumb button:hover,
-.bcx-tree-breadcrumb button:focus {
-  background-color: rgb(255 255 255 / 10%);
-  outline: none;
-}
-
-.bcx-tree-breadcrumb button.current {
-  color: white;
 }
 
 .bcx-browser-row {
