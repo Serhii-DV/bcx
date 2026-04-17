@@ -67,7 +67,14 @@ let hasChildren = $derived(isNode(item));
 
 {#snippet treeItemImage(item: TreeItem)}
   {#if item.image}
-    <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
+    {@const ImageIcon = makeIcon(item.image)}
+    {#if ImageIcon}
+      <span class="bcx-tree-item-img bcx-tree-item-image-icon w-6 h-6 flex-shrink-0 text-gray-300" aria-hidden="true">
+        <ImageIcon size="24" />
+      </span>
+    {:else}
+      <img src={item.image} alt={item.label} class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
+    {/if}
   {/if}
 {/snippet}
 
@@ -87,6 +94,12 @@ let hasChildren = $derived(isNode(item));
 .bcx-tree-item-img {
   margin-top: 0.125rem;
   margin-right: 0.5rem;
+}
+
+.bcx-tree-item-image-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .item-label,

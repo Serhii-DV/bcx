@@ -19,12 +19,12 @@ export interface TreeItem {
   level?: number;
   path?: string;
   href?: string;
-  image?: string;
+  image?: string; // image URL or icon name
   query?: string;
   keywords?: string[];
   includeInFilterSuggestions?: boolean;
   buttons?: TreeItemButton[];
   onClick?: (context: TreeItemClickContext) => void | Promise<void>;
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
-  actionIcon?: string; // icon name
+  actionIcon?: string; // action icon name
 }

@@ -5,8 +5,8 @@ export const ICON_FUNNEL = 'funnel';
 export const ICON_SEARCH = 'search';
 export const ICON_SQUARE_ARROW_RIGHT = 'square-arrow-right';
 
-export function makeIcon(actionIcon?: string): any {
-  switch (actionIcon) {
+export function makeIcon(iconName?: string): any {
+  switch (iconName) {
     case ICON_EXTERNAL_LINK:
       return ExternalLink;
     case ICON_FUNNEL:
