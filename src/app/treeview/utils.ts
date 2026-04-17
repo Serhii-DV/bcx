@@ -1,5 +1,7 @@
 import type { TreeItem } from './TreeItem';
 
+export const LAZY_TREE_ITEM_CHILDREN_THRESHOLD = 500;
+
 export function isNode(item: TreeItem): boolean {
   return (
     !!item.hasChildren ||
@@ -100,6 +102,12 @@ export async function hydrateTreeItemChildren(
 }
 
 export function deferDescendants(items: TreeItem[]): TreeItem[] {
+  const descendantsCount = countTreeItemDescendants(items);
+
+  if (descendantsCount <= LAZY_TREE_ITEM_CHILDREN_THRESHOLD) {
+    return items;
+  }
+
   return items.map((item) => {
     if (!item.children || item.children.length === 0) {
       const hasLazyChildren = !!item.hasChildren || !!item.loadChildren;
@@ -121,6 +129,12 @@ export function deferDescendants(items: TreeItem[]): TreeItem[] {
       loadChildren: async () => fullItem,
     };
   });
+}
+
+function countTreeItemDescendants(items: TreeItem[]): number {
+  return items.reduce((count, item) => {
+    return count + 1 + countTreeItemDescendants(item.children || []);
+  }, 0);
 }
 
 // Flatten the tree to get all visible items for navigation
