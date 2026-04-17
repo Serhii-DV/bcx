@@ -68,7 +68,7 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   <span class="bcx-tree-item-img w-6 h-6 flex-shrink-0" aria-hidden={item.image ? undefined : 'true'}>
     {#if item.image && ImageIcon}
       <span class="bcx-tree-item-image-icon text-gray-300" aria-hidden="true">
-        <ImageIcon size="24" />
+        <ImageIcon size="16" />
       </span>
     {:else if item.image}
       <img src={item.image} alt={item.label} class="bcx-tree-item-image" loading="lazy" />
@@ -104,8 +104,8 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 }
 
 .bcx-tree-item-image {
-  width: 100%;
-  height: 100%;
+  width: 1.125rem;
+  height: 1.125rem;
   object-fit: cover;
 }
 
