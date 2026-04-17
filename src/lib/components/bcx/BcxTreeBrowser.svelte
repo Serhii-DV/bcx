@@ -1,10 +1,9 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/TreeData';
-import type { TreeItem, TreeItemClickContext } from 'src/app/treeview/TreeItem';
+import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
 import {
   findItemByPath,
-  generateTreeHierarchy,
   hydrateTreeItemChildren,
   isNode,
   isNodeExpanded,
@@ -13,6 +12,21 @@ import { makeIcon } from 'src/app/treeview/utils/icon';
 import { onDestroy, onMount, tick } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeViewFilter from './BcxTreeViewFilter.svelte';
+import {
+  activateTreeItem,
+  collapseTreeNodeElement,
+  createVisibleTreeData,
+  expandTreeNode,
+  findFirstVisibleChildByPath as findFirstVisibleChildInItemsByPath,
+  findVisibleItem as findVisibleItemByIndex,
+  focusTreeItemElement,
+  getItemVisibleChildCount as getVisibleChildCount,
+  visibleItemIndex as getVisibleItemIndex,
+  visibleNext as getVisibleNext,
+  visiblePrev as getVisiblePrev,
+  shouldIgnoreTreeKeyDown,
+  waitForLoadingStatePaint,
+} from './treeViewHelpers';
 
 interface Props {
   treeData: TreeData;
@@ -39,35 +53,7 @@ let effectiveTreeData: TreeData = $derived.by(() => {
 
 let visibleData = $derived.by(() => {
   treeVersion;
-  const paths = new Set<string>();
-  const childCounts = new Map<string, number>();
-
-  function collectPaths(items: TreeItem[] | undefined) {
-    if (!items) return;
-    for (const item of items) {
-      if (item.path) paths.add(item.path);
-      if (item.children) collectPaths(item.children);
-    }
-  }
-  collectPaths(effectiveTreeData.items);
-
-  function countVisibleChildren(items: TreeItem[] | undefined) {
-    if (!items) return;
-    for (const item of items) {
-      if (item.children && item.children.length > 0) {
-        const visibleCount = item.children.filter((child) =>
-          paths.has(child.path || ''),
-        ).length;
-        if (item.path) {
-          childCounts.set(item.path, visibleCount);
-        }
-        countVisibleChildren(item.children);
-      }
-    }
-  }
-  countVisibleChildren(treeData.items);
-
-  return { paths, childCounts };
+  return createVisibleTreeData(effectiveTreeData.items, treeData.items);
 });
 
 let visiblePaths = $derived(visibleData.paths);
@@ -149,53 +135,24 @@ async function handleItemClick(
 ) {
   if (!item) return;
 
-  console.log('[BcxTreeBrowser]', '[handleItemClick]', item, event);
-
   focusedPath = item.path ?? null;
-
-  if (item.onClick) {
-    const clickContext: TreeItemClickContext = {
-      element: event?.currentTarget as HTMLElement,
-      item,
-      parent: findParentTreeItemByPath(item.path),
-    };
-
-    await item.onClick(clickContext);
-    treeData.treeItems = generateTreeHierarchy(treeData.items);
-    refreshTreeRendering();
-
-    if (clickContext.focusPath) {
-      await tick();
-      focusTreeItem(findTreeItemByPath(clickContext.focusPath));
-    }
-
-    return;
-  }
-
-  if (item.query) {
-    musicFilterStore.setSearchQuery(item.query);
-    return;
-  }
-
-  if (item.href) {
-    if (event?.currentTarget instanceof HTMLAnchorElement) {
-      event?.preventDefault();
-    }
-
-    if (event instanceof KeyboardEvent || event instanceof MouseEvent) {
-      window.open(item.href, '_self');
-    }
-    return;
-  }
+  await activateTreeItem({
+    item,
+    event,
+    treeData,
+    focusTreeItem,
+    findItemByPath: findTreeItemByPath,
+    findParentByPath: findParentTreeItemByPath,
+    refreshTreeRendering,
+    logLabel: '[BcxTreeBrowser]',
+  });
 }
 
 async function handleKeyDown(event: KeyboardEvent) {
   if (!treeContainer) return;
 
-  if (event.ctrlKey || event.metaKey) {
-    if (event.key === 'r' || event.key === 'R') {
-      return;
-    }
+  if (shouldIgnoreTreeKeyDown(event)) {
+    return;
   }
 
   event.preventDefault();
@@ -313,36 +270,19 @@ function getNavigableItems(): TreeItem[] {
 }
 
 function visibleItemIndex(path?: string | null): number {
-  if (!path) return -1;
-  return getNavigableItems().findIndex((item) => item.path === path);
+  return getVisibleItemIndex(getNavigableItems(), path);
 }
 
 function findVisibleItem(index: number): TreeItem | null {
-  const visibleItems = getNavigableItems();
-  return index >= 0 && index < visibleItems.length ? visibleItems[index] : null;
+  return findVisibleItemByIndex(getNavigableItems(), index);
 }
 
 function visibleNext(index: number, step: number = 1): TreeItem | null {
-  const visibleItems = getNavigableItems();
-
-  if (index < visibleItems.length - 1) {
-    const targetIndex =
-      step > 1 ? Math.min(index + step, visibleItems.length - 1) : index + 1;
-    return visibleItems[targetIndex];
-  }
-
-  return null;
+  return getVisibleNext(getNavigableItems(), index, step);
 }
 
 function visiblePrev(index: number, step: number = 1): TreeItem | null {
-  const visibleItems = getNavigableItems();
-
-  if (index > 0) {
-    const targetIndex = step > 1 ? Math.max(index - step, 0) : index - 1;
-    return visibleItems[targetIndex];
-  }
-
-  return null;
+  return getVisiblePrev(getNavigableItems(), index, step);
 }
 
 function findVisibleParentByPath(path?: string | null): TreeItem | null {
@@ -352,21 +292,7 @@ function findVisibleParentByPath(path?: string | null): TreeItem | null {
 }
 
 function findFirstVisibleChildByPath(path?: string | null): TreeItem | null {
-  if (!path) return null;
-
-  const currentIndex = visibleItemIndex(path);
-  if (currentIndex < 0) return null;
-
-  return (
-    getNavigableItems()
-      .slice(currentIndex + 1)
-      .find((item) => item.path?.startsWith(`${path}.`)) ?? null
-  );
-}
-
-function elementByPath(path?: string): HTMLElement | null {
-  if (!path || !treeContainer) return null;
-  return treeContainer.querySelector(`[data-path="${path}"]`) as HTMLElement;
+  return findFirstVisibleChildInItemsByPath(getNavigableItems(), path);
 }
 
 function focusTreeItem(item?: TreeItem | null) {
@@ -374,32 +300,12 @@ function focusTreeItem(item?: TreeItem | null) {
     return;
   }
 
-  const element = elementByPath(item.path);
-
-  if (!element) {
-    return;
-  }
-
   focusedPath = item.path;
-
-  if (element instanceof HTMLDetailsElement) {
-    element.querySelector('summary')?.focus();
-  } else {
-    element.focus();
-  }
+  focusTreeItemElement(treeContainer, item);
 }
 
 function collapseNode(item: TreeItem) {
-  if (!isNode(item)) {
-    return;
-  }
-
-  const element = elementByPath(item.path);
-
-  if (element instanceof HTMLDetailsElement) {
-    item.open = false;
-    element.open = false;
-  }
+  collapseTreeNodeElement(treeContainer, item);
 }
 
 function refreshTreeRendering() {
@@ -466,35 +372,12 @@ function navigateToParentLevel() {
 }
 
 async function expandNode(item: TreeItem) {
-  if (!isNode(item)) {
-    return;
-  }
-
-  const itemToFocus = item;
-  item.open = true;
-  let didHydrate = false;
-
-  if (item.loadChildren && !item.childrenLoaded) {
-    item.isLoadingChildren = true;
-    refreshTreeRendering();
-    await waitForLoadingStatePaint(itemToFocus);
-    await hydrateTreeItemChildren(item, true);
-    didHydrate = true;
-  }
-
-  if (didHydrate) {
-    refreshTreeRendering();
-    await tick();
-  }
-
-  const element = elementByPath(item.path);
-
-  if (element instanceof HTMLDetailsElement) {
-    item.open = true;
-    element.open = true;
-  }
-
-  focusTreeItem(itemToFocus);
+  await expandTreeNode({
+    item,
+    container: treeContainer,
+    focusTreeItem,
+    refreshTreeRendering,
+  });
 }
 
 async function enterBrowserItem(item: TreeItem) {
@@ -509,7 +392,7 @@ async function enterBrowserItem(item: TreeItem) {
   if (item.loadChildren && !item.childrenLoaded) {
     item.isLoadingChildren = true;
     refreshTreeRendering();
-    await waitForLoadingStatePaint(itemToEnter);
+    await waitForLoadingStatePaint(itemToEnter, focusTreeItem);
     await hydrateTreeItemChildren(item, true);
     refreshTreeRendering();
     await tick();
@@ -545,13 +428,7 @@ function isItemVisible(item: TreeItem): boolean {
 }
 
 function getItemVisibleChildCount(item: TreeItem): number {
-  if (item.showChildrenCount === false) {
-    return 0;
-  }
-  if (!debouncedFilterQuery.trim()) {
-    return item.children?.length || 0;
-  }
-  return visibleChildCounts.get(item.path || '') || 0;
+  return getVisibleChildCount(item, debouncedFilterQuery, visibleChildCounts);
 }
 
 function handleFilterNodeClick(item: TreeItem, event: MouseEvent) {
@@ -564,16 +441,6 @@ function handleFilterNodeClick(item: TreeItem, event: MouseEvent) {
   }
 
   expandNode(item);
-}
-
-async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
-  await tick();
-  focusTreeItem(itemToFocus);
-  await new Promise<void>((resolve) => {
-    window.requestAnimationFrame(() => {
-      window.setTimeout(resolve, 0);
-    });
-  });
 }
 </script>
 
@@ -702,6 +569,13 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
       data-path="{item.path}"
       tabindex={focusedPath === item.path ? 0 : -1}
       onclick={(e) => handleBrowserItemClick(item, e)}
+      onkeydown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          handleBrowserItemClick(item, e);
+        }
+      }}
     >
       {@render treeItemImage(item)}
       <span class="item-label">{item.label}</span>
