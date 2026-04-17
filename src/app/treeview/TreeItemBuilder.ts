@@ -104,13 +104,13 @@ export class TreeItemBuilder {
     return this;
   }
 
-  withoutIcon(): this {
-    this.item.icon = undefined;
+  withoutActionIcon(): this {
+    this.item.actionIcon = undefined;
     return this;
   }
 
   withoutLink(): this {
-    return this.withoutHref().withoutIcon();
+    return this.withoutHref().withoutActionIcon();
   }
 
   withoutChildrenCount(): this {

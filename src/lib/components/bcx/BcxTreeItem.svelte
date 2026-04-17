@@ -59,7 +59,7 @@ let hasChildren = $derived(isNode(item));
 {/snippet}
 
 {#snippet treeItemIcon(item: TreeItem)}
-  {@const Icon = makeIcon(item.icon)}
+  {@const Icon = makeIcon(item.actionIcon)}
   {#if Icon}
   <span class="item-icon text-gray-300"><Icon size="16" /></span>
   {/if}
