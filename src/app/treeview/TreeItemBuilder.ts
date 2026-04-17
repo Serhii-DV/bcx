@@ -28,6 +28,7 @@ export class TreeItemBuilder {
     this.item.children = children?.filter(
       (child): child is TreeItem => child !== undefined,
     );
+    this.item.childrenCount = this.item.children?.length;
     return this;
   }
 
@@ -39,6 +40,7 @@ export class TreeItemBuilder {
       this.item.children = [];
     }
     this.item.children.push(child);
+    this.item.childrenCount = this.item.children.length;
     return this;
   }
 

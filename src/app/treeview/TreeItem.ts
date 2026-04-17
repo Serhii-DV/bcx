@@ -11,6 +11,7 @@ export interface TreeItem {
   id?: string;
   label?: string;
   children?: TreeItem[];
+  childrenCount?: number;
   hasChildren?: boolean;
   childrenLoaded?: boolean;
   isLoadingChildren?: boolean;

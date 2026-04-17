@@ -37,6 +37,7 @@ describe('deferDescendants', () => {
     const deferredItems = deferDescendants(items);
 
     expect(deferredItems[0].children).toBeUndefined();
+    expect(deferredItems[0].childrenCount).toBe(children.length);
     expect(deferredItems[0].childrenLoaded).toBe(false);
     expect(deferredItems[0].hasChildren).toBe(true);
     await expect(deferredItems[0].loadChildren?.()).resolves.toBe(items[0]);

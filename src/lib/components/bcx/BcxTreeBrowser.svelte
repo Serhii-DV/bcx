@@ -374,7 +374,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
     return 0;
   }
 
-  return item.children?.length || 0;
+  return item.childrenCount ?? item.children?.length ?? 0;
 }
 
 function withBrowserActionIcon(item: TreeItem): TreeItem {

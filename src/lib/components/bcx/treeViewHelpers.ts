@@ -281,10 +281,15 @@ export function getItemVisibleChildCount(
   if (item.showChildrenCount === false) {
     return 0;
   }
+
+  const loadedChildCount = item.children?.length;
+  const knownChildCount = item.childrenCount ?? loadedChildCount ?? 0;
+
   if (!query.trim()) {
-    return item.children?.length || 0;
+    return knownChildCount;
   }
-  return visibleChildCounts.get(item.path || '') || 0;
+
+  return visibleChildCounts.get(item.path || '') ?? knownChildCount;
 }
 
 export function treeItemMatchesQuery(item: TreeItem, query: string): boolean {

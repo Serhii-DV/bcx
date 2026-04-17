@@ -3,7 +3,7 @@ import { console } from 'src/utils/console';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 const CACHE_KEY_PREFIX = '/cache/tree-item';
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 
@@ -16,6 +16,7 @@ interface TreeItemSnapshot {
   id?: string;
   label?: string;
   children?: TreeItemSnapshot[];
+  childrenCount?: number;
   open?: boolean;
   level?: number;
   path?: string;
@@ -140,6 +141,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
   return {
     id: item.id,
     label: item.label,
+    childrenCount: item.childrenCount ?? item.children?.length,
     open: item.open,
     level: item.level,
     path: item.path,
@@ -164,6 +166,7 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
   return {
     id: item.id,
     label: item.label,
+    childrenCount: item.childrenCount ?? item.children?.length,
     open: item.open,
     level: item.level,
     path: item.path,

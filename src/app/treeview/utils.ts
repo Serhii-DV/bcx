@@ -35,6 +35,7 @@ export function generateTreeHierarchy(
     };
 
     if (item.children && item.children.length > 0) {
+      enhancedItem.childrenCount = item.childrenCount ?? item.children.length;
       enhancedItem.children = generateTreeHierarchy(
         item.children,
         level + 1,
@@ -75,10 +76,12 @@ export async function hydrateTreeItemChildren(
     }
 
     const { path, level, open } = item;
+    const childrenCount = loadedItem.children?.length || 0;
     Object.assign(item, loadedItem, {
       path,
       level,
       open,
+      childrenCount,
       childrenLoaded: true,
       isLoadingChildren: false,
       loadChildren: undefined,
@@ -114,6 +117,7 @@ export function deferDescendants(items: TreeItem[]): TreeItem[] {
 
       return {
         ...item,
+        childrenCount: item.childrenCount ?? 0,
         childrenLoaded: !hasLazyChildren,
         hasChildren: hasLazyChildren,
       };
@@ -124,6 +128,7 @@ export function deferDescendants(items: TreeItem[]): TreeItem[] {
     return {
       ...item,
       children: undefined,
+      childrenCount: item.childrenCount ?? item.children.length,
       childrenLoaded: false,
       hasChildren: true,
       loadChildren: async () => fullItem,
