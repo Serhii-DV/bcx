@@ -58,10 +58,10 @@ let hasChildren = $derived(isNode(item));
   {/if}
 {/snippet}
 
-{#snippet treeItemIcon(item: TreeItem)}
+{#snippet treeItemActionIcon(item: TreeItem)}
   {@const Icon = makeIcon(item.actionIcon)}
   {#if Icon}
-  <span class="item-icon text-gray-300"><Icon size="16" /></span>
+  <span class="item-action-icon text-gray-300"><Icon size="16" /></span>
   {/if}
 {/snippet}
 
@@ -79,15 +79,15 @@ let hasChildren = $derived(isNode(item));
 {/snippet}
 
 {@render treeItemImage(item)}
-<span class="item-label" class:ml-2={!hasChildren}>{item.label}</span>
+<span class="item-label">{item.label}</span>
 {#if showActions}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
-  {@render treeItemIcon(item)}
   {@render treeItemButtons(item)}
   {#if childCount > 0}
     <span class="item-count text-sm text-gray-400">{childCount}</span>
   {/if}
 </div>
+{@render treeItemActionIcon(item)}
 {/if}
 
 <style>
@@ -122,19 +122,15 @@ let hasChildren = $derived(isNode(item));
   padding-right: 5px;
 }
 
-.item-icon {
-  margin-left: 5px;
+.item-action-icon {
+  margin: 0 5px;
 }
 
-.item-icon,
 .item-buttons {
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
 }
 
-:global(.tree-item:hover) .item-icon,
-:global(.tree-item:focus) .item-icon,
-:global(.tree-item.focused) .item-icon,
 :global(.tree-item:hover) .item-buttons,
 :global(.tree-item:focus) .item-buttons,
 :global(.tree-item.focused) .item-buttons {

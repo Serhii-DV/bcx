@@ -1,5 +1,4 @@
 <script lang="ts">
-import { ChevronLeft, ChevronRight } from '@lucide/svelte';
 import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import {
@@ -7,6 +6,10 @@ import {
   hydrateTreeItemChildren,
   isNode,
 } from 'src/app/treeview/utils';
+import {
+  ICON_CHEVRON_RIGHT,
+  ICON_CORNER_RIGHT_UP,
+} from 'src/app/treeview/utils/icon';
 import { onDestroy, onMount, tick } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
@@ -270,13 +273,17 @@ function buildBreadcrumb(path: string): TreeItem[] {
 }
 
 function createDrillUpItem(): TreeItem {
-  const parentItem = findParentTreeItemByPath(currentRootPath);
-
   return {
-    label: parentItem ? `Back to ${parentItem.label}` : 'Back to root',
+    label: '..',
+    actionIcon: ICON_CORNER_RIGHT_UP,
     path: DRILL_UP_PATH,
     level: currentRootItem?.level || 0,
   };
+}
+
+function getDrillUpLabel(): string {
+  const parentItem = findParentTreeItemByPath(currentRootPath);
+  return parentItem ? `Back to ${parentItem.label}` : 'Back to root';
 }
 
 function isDrillUpItem(item: TreeItem): boolean {
@@ -360,17 +367,14 @@ function getItemVisibleChildCount(item: TreeItem): number {
 
   return item.children?.length || 0;
 }
-</script>
 
-{#snippet browserArrow(direction: 'back' | 'forward')}
-  <span class="bcx-browser-arrow" aria-hidden="true">
-    {#if direction === 'back'}
-      <ChevronLeft size="16" />
-    {:else}
-      <ChevronRight size="16" />
-    {/if}
-  </span>
-{/snippet}
+function withBrowserActionIcon(item: TreeItem): TreeItem {
+  return {
+    ...item,
+    actionIcon: ICON_CHEVRON_RIGHT,
+  };
+}
+</script>
 
 {#snippet breadcrumb()}
   <nav class="bcx-tree-breadcrumb" aria-label="Tree location">
@@ -395,18 +399,26 @@ function getItemVisibleChildCount(item: TreeItem): number {
 {/snippet}
 
 {#snippet backTreeItem(item: TreeItem)}
-  <button
-    type="button"
+  <div
+    role="button"
     class="tree-item bcx-browser-row flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
     class:focused={focusedPath === item.path}
     data-level="{item.level}"
     data-path="{item.path}"
     tabindex={focusedPath === item.path ? 0 : -1}
+    title={getDrillUpLabel()}
+    aria-label={getDrillUpLabel()}
     onclick={(e) => handleBrowserItemClick(item, e)}
+    onkeydown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleBrowserItemClick(item, e);
+      }
+    }}
   >
-    {@render browserArrow('back')}
-    <span class="item-label">{item.label}</span>
-  </button>
+    <BcxTreeItem item={item} />
+  </div>
 {/snippet}
 
 {#snippet browserTreeItem(item: TreeItem)}
@@ -429,14 +441,12 @@ function getItemVisibleChildCount(item: TreeItem): number {
       }}
     >
       <BcxTreeItem
-        item={item}
+        item={withBrowserActionIcon(item)}
         childCount={getItemVisibleChildCount(item)}
         showActions={!item.isLoadingChildren}
       />
       {#if item.isLoadingChildren}
         <span class="ml-auto pr-2 text-sm text-gray-400">Loading...</span>
-      {:else}
-        {@render browserArrow('forward')}
       {/if}
     </div>
   {:else}
@@ -540,12 +550,4 @@ function getItemVisibleChildCount(item: TreeItem): number {
   border-radius: 4px;
 }
 
-.bcx-browser-arrow {
-  display: inline-flex;
-  flex-shrink: 0;
-  justify-content: center;
-  min-width: 1.25rem;
-  padding-inline: 0.25rem;
-  color: rgb(156 163 175);
-}
 </style>
