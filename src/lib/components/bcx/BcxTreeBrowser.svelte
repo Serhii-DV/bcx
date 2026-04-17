@@ -574,6 +574,7 @@ function getItemVisibleChildCount(item: TreeItem): number {
 
 .bcx-tree-view .bcx-tree-item-img {
     margin-top: 0.125rem;
+    margin-right: 5px;
 }
 
 .bcx-tree-view .item-actions {

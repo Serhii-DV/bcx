@@ -44,7 +44,7 @@ $effect(() => {
       <div class="flex-1 overflow-y-auto">
         <div class="space-y-4">
 
-          <!-- Tree View Demo -->
+          <!-- Tree Browser -->
           <div class="text-md">
             <BcxTreeBrowser bind:this={treeBrowserRef} treeData={treeData} />
           </div>
