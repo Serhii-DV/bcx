@@ -11,6 +11,7 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
+import { ICON_DISC, ICON_MIC } from '../utils/icon';
 
 const WISHLIST_KEY = '/wishlist';
 
@@ -50,6 +51,7 @@ export class WishlistTreeItem {
   private static createArtistsTreeItem(albums: Album[]): TreeItem {
     return {
       label: 'Artists',
+      image: ICON_MIC,
       children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums),
     };
   }
@@ -57,6 +59,7 @@ export class WishlistTreeItem {
   private static createReleasesTreeItem(albums: Album[]): TreeItem {
     return {
       label: 'Releases',
+      image: ICON_DISC,
       children: AlbumTreeItemFactory.fromAlbums(albums),
     };
   }

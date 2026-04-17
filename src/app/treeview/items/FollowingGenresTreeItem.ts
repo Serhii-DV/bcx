@@ -5,9 +5,10 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
 import type { TreeItem } from '../TreeItem';
+import { TreeItemBuilder } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
-import { TreeItemFactory } from '../TreeItemFactory';
 import { createLoadHandler } from '../utils';
+import { ICON_TAG } from '../utils/icon';
 
 const FOLLOWING_GENRES_KEY = '/following-genres';
 
@@ -15,7 +16,9 @@ export class FollowingGenresTreeItem {
   static async create(username: string): Promise<TreeItem> {
     const followingGenres: GenreItem[] = await loadFollowingGenresFromStorage();
     const children: TreeItem[] = followingGenres.map((item) =>
-      TreeItemFactory.link(item.name, item.tag_page_url),
+      TreeItemBuilder.link(item.name, item.tag_page_url)
+        .withImage(ICON_TAG)
+        .build(),
     );
     const buttons: TreeItemButton[] = [
       createFollowingGenresOpenTreeItemButton(username),

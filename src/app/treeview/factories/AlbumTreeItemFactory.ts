@@ -8,6 +8,12 @@ import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
+import {
+  ICON_BUILDING,
+  ICON_CALENDAR_DAYS,
+  ICON_LIST_MUSIC,
+  ICON_MIC,
+} from '../utils/icon';
 
 export class AlbumTreeItemFactory {
   static create(album: Album): TreeItem {
@@ -38,6 +44,7 @@ export class AlbumTreeItemFactory {
         TreeItemFactory.items(
           'Artists',
           artistNames.map(TreeItemFactory.textWithQuery),
+          ICON_MIC,
         ),
       );
     }
@@ -97,14 +104,22 @@ export class AlbumTreeItemFactory {
 
     if (album.metadata) {
       builder.addChild(
-        TreeItemFactory.list('Publisher', [album.metadata.publisher]),
+        TreeItemFactory.list(
+          'Publisher',
+          [album.metadata.publisher],
+          ICON_BUILDING,
+        ),
       );
       builder.addChild(
         TreeItemBuilder.create(
-          TreeItemFactory.items('Date', [
-            TreeItemFactory.list('Published', [album.metadata.publishedDate]),
-            TreeItemFactory.list('Modified', [album.metadata.modifiedDate]),
-          ]),
+          TreeItemFactory.items(
+            'Date',
+            [
+              TreeItemFactory.list('Published', [album.metadata.publishedDate]),
+              TreeItemFactory.list('Modified', [album.metadata.modifiedDate]),
+            ],
+            ICON_CALENDAR_DAYS,
+          ),
         )
           .withoutChildrenCount()
           .withoutChildrenCountAllChildren()
@@ -145,10 +160,15 @@ export class AlbumTreeItemFactory {
       TreeItemFactory.items(
         'Artists',
         await ArtistTreeItem.createTreeItems(album.artist),
+        ICON_MIC,
       ),
     );
     builder.addChild(
-      TreeItemFactory.items('Tracks', TreeItemFactory.fromTracks(album.tracks)),
+      TreeItemFactory.items(
+        'Tracks',
+        TreeItemFactory.fromTracks(album.tracks),
+        ICON_LIST_MUSIC,
+      ),
     );
     builder.addChild(
       TreeItemFactory.list('Tags', album.metadata?.keywords || []),

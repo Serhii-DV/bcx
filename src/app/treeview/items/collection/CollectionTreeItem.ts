@@ -11,6 +11,7 @@ import { AlbumTreeItemFactory } from '../../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../../TreeItem';
 import type { TreeItemButton } from '../../TreeItemButton';
 import { createLoadHandler } from '../../utils';
+import { ICON_DISC, ICON_MIC } from '../../utils/icon';
 import {
   loadCollectionItemsFromStorage,
   saveCollectionItemsToStorage,
@@ -60,6 +61,7 @@ export class CollectionTreeItem {
   private static createArtistsTreeItem(albums: Album[]): TreeItem {
     return {
       label: 'Artists',
+      image: ICON_MIC,
       children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums),
     };
   }
@@ -67,6 +69,7 @@ export class CollectionTreeItem {
   private static createReleasesTreeItem(albums: Album[]): TreeItem {
     return {
       label: 'Releases',
+      image: ICON_DISC,
       children: AlbumTreeItemFactory.fromAlbums(albums),
     };
   }

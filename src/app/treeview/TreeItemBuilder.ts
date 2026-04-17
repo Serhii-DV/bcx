@@ -1,5 +1,6 @@
 import type { TreeItem, TreeItemClickContext } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
+import { TreeItemFactory } from './TreeItemFactory';
 
 export class TreeItemBuilder {
   private item: TreeItem = {};
@@ -10,8 +11,12 @@ export class TreeItemBuilder {
     }
   }
 
-  static create(item: TreeItem) {
+  static create(item: TreeItem): TreeItemBuilder {
     return new TreeItemBuilder(item);
+  }
+
+  static link(label: string, href: string): TreeItemBuilder {
+    return this.create(TreeItemFactory.link(label, href));
   }
 
   withId(id: string): this {

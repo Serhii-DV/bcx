@@ -5,6 +5,7 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
+import { ICON_CALENDAR, ICON_DISC, ICON_INFO, ICON_MIC } from '../utils/icon';
 
 export class BandTreeItem {
   static create(band: Band, url: Url): TreeItem {
@@ -39,6 +40,7 @@ export class BandTreeItem {
   ): TreeItem {
     return {
       label: 'Artists',
+      image: ICON_MIC,
       children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(
         band.metadata.albums,
         includeBriefInformation,
@@ -52,6 +54,7 @@ export class BandTreeItem {
   ): TreeItem {
     return {
       label: 'Releases',
+      image: ICON_DISC,
       children: AlbumTreeItemFactory.fromAlbums(
         band.metadata.albums,
         includeBriefInformation,
@@ -80,6 +83,7 @@ export class BandTreeItem {
 
     return {
       label,
+      image: ICON_CALENDAR,
       open: false,
       children,
     };
@@ -88,6 +92,7 @@ export class BandTreeItem {
   private static createBandAbout(band: Band): TreeItem {
     return {
       label: 'About ' + band.name,
+      image: ICON_INFO,
       children: [
         TreeItemFactory.list('Created', [
           band.metadata.created.toLocaleDateString(),
