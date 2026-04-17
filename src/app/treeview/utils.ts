@@ -44,19 +44,6 @@ export function generateTreeHierarchy(
   });
 }
 
-export function createLazyTreeItem(
-  item: TreeItem,
-  loadItem: () => Promise<TreeItem | null>,
-): TreeItem {
-  return {
-    ...item,
-    children: undefined,
-    childrenLoaded: false,
-    hasChildren: true,
-    loadChildren: loadItem,
-  };
-}
-
 export async function hydrateTreeItemChildren(
   item: TreeItem,
   isLoadingStarted: boolean = false,

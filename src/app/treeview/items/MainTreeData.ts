@@ -8,7 +8,7 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TreeData } from '../TreeData';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
-import { createLazyTreeItem, deferDescendants } from '../utils';
+import { deferDescendants } from '../utils';
 import { BandTreeItem } from './BandTreeItem';
 import { CollectionTreeItem } from './collection/CollectionTreeItem';
 import { FanPageDataTreeItem } from './FanPageDataTreeItem';
@@ -47,7 +47,7 @@ export class MainTreeData {
 
     if (album) {
       items.push(
-        createLazyTreeItem(AlbumTreeItemFactory.create(album), () =>
+        TreeItemFactory.lazy(AlbumTreeItemFactory.create(album), () =>
           TreeItemCache.getOrCreate(
             TreeItemCache.subtreeKey('release', album.id),
             () => AlbumTreeItemFactory.createWithInformation(album),
@@ -78,7 +78,10 @@ export class MainTreeData {
         items.push(bandTreeItem);
       } else {
         items.push(
-          createLazyTreeItem(TreeItemFactory.fromBand(band), loadBandTreeItem),
+          TreeItemFactory.lazy(
+            TreeItemFactory.fromBand(band),
+            loadBandTreeItem,
+          ),
         );
       }
     }
@@ -88,14 +91,14 @@ export class MainTreeData {
 
       if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
         items.push(
-          createLazyTreeItem({ label: `Fan: ${fanData.name}` }, () =>
+          TreeItemFactory.lazy({ label: `Fan: ${fanData.name}` }, () =>
             FanPageDataTreeItem.create(bandcampPageData),
           ),
         );
       }
 
       items.push(
-        createLazyTreeItem({ label: 'Following Bands' }, () =>
+        TreeItemFactory.lazy({ label: 'Following Bands' }, () =>
           TreeItemCache.getOrCreate(
             TreeItemCache.subtreeKey(userKeyPart, 'following-bands'),
             () => FollowingBandsTreeItem.create(fanData.username || ''),
@@ -104,7 +107,7 @@ export class MainTreeData {
         ),
       );
       items.push(
-        createLazyTreeItem({ label: 'Following Genres' }, () =>
+        TreeItemFactory.lazy({ label: 'Following Genres' }, () =>
           TreeItemCache.getOrCreate(
             TreeItemCache.subtreeKey(userKeyPart, 'following-genres'),
             () => FollowingGenresTreeItem.create(fanData.username || ''),
@@ -113,7 +116,7 @@ export class MainTreeData {
         ),
       );
       items.push(
-        createLazyTreeItem({ label: 'Collection' }, () =>
+        TreeItemFactory.lazy({ label: 'Collection' }, () =>
           TreeItemCache.getOrCreate(
             TreeItemCache.subtreeKey(userKeyPart, 'collection'),
             () => CollectionTreeItem.create(fanData.username || ''),
@@ -122,7 +125,7 @@ export class MainTreeData {
         ),
       );
       items.push(
-        createLazyTreeItem({ label: 'Wishlist' }, () =>
+        TreeItemFactory.lazy({ label: 'Wishlist' }, () =>
           TreeItemCache.getOrCreate(
             TreeItemCache.subtreeKey(userKeyPart, 'wishlist'),
             () => WishlistTreeItem.create(fanData.username || ''),
@@ -133,7 +136,7 @@ export class MainTreeData {
     }
 
     items.push(
-      createLazyTreeItem({ label: 'History' }, () =>
+      TreeItemFactory.lazy({ label: 'History' }, () =>
         HistoryTreeItem.createLatestVisited(),
       ),
     );

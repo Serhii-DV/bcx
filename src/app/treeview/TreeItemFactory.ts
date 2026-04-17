@@ -57,6 +57,19 @@ export class TreeItemFactory {
         };
   }
 
+  static lazy(
+    item: TreeItem,
+    loadItem: () => Promise<TreeItem | null>,
+  ): TreeItem {
+    return {
+      ...item,
+      children: undefined,
+      childrenLoaded: false,
+      hasChildren: true,
+      loadChildren: loadItem,
+    };
+  }
+
   static fromBand(band: Band): TreeItem {
     const href = band.url?.toString();
     const item = TreeItemFactory.link(band.name, href || '');
