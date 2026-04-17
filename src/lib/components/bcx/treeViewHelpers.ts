@@ -286,3 +286,65 @@ export function getItemVisibleChildCount(
   }
   return visibleChildCounts.get(item.path || '') || 0;
 }
+
+export function treeItemMatchesQuery(item: TreeItem, query: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  return getTreeItemSearchValues(item).some((value) =>
+    value.toLowerCase().includes(normalizedQuery),
+  );
+}
+
+export function filterTreeItemsFlat(
+  items: TreeItem[] | undefined,
+  query: string,
+): TreeItem[] {
+  if (!query.trim()) {
+    return items || [];
+  }
+
+  const matches: TreeItem[] = [];
+
+  function collectMatchingItems(treeItems: TreeItem[] | undefined) {
+    if (!treeItems) return;
+
+    for (const item of treeItems) {
+      if (treeItemMatchesQuery(item, query)) {
+        matches.push(item);
+      }
+
+      collectMatchingItems(item.children);
+    }
+  }
+
+  collectMatchingItems(items);
+  return matches;
+}
+
+export function getTreeItemFilterSuggestions(
+  items: TreeItem[] | undefined,
+): string[] {
+  const suggestions = new Set<string>();
+
+  function collectSuggestions(treeItems: TreeItem[] | undefined) {
+    if (!treeItems) return;
+
+    for (const item of treeItems) {
+      getTreeItemSearchValues(item).forEach((value) => suggestions.add(value));
+      collectSuggestions(item.children);
+    }
+  }
+
+  collectSuggestions(items);
+  return Array.from(suggestions).sort();
+}
+
+function getTreeItemSearchValues(item: TreeItem): string[] {
+  return [item.label, item.query, ...(item.keywords || [])].filter(
+    (value): value is string => !!value?.trim(),
+  );
+}

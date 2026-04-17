@@ -6,21 +6,17 @@ import {
   findItemByPath,
   hydrateTreeItemChildren,
   isNode,
-  isNodeExpanded,
 } from 'src/app/treeview/utils';
 import { makeIcon } from 'src/app/treeview/utils/icon';
 import { onDestroy, onMount, tick } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
-import BcxTreeViewFilter from './BcxTreeViewFilter.svelte';
+import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 import {
   activateTreeItem,
-  collapseTreeNodeElement,
-  createVisibleTreeData,
-  expandTreeNode,
-  findFirstVisibleChildByPath as findFirstVisibleChildInItemsByPath,
+  filterTreeItemsFlat,
   findVisibleItem as findVisibleItemByIndex,
   focusTreeItemElement,
-  getItemVisibleChildCount as getVisibleChildCount,
+  getTreeItemFilterSuggestions,
   visibleItemIndex as getVisibleItemIndex,
   visibleNext as getVisibleNext,
   visiblePrev as getVisiblePrev,
@@ -36,7 +32,7 @@ const DRILL_UP_PATH = '__bcx_tree_drill_up__';
 
 let { treeData }: Props = $props();
 let treeContainer: HTMLDivElement;
-let filterRef: BcxTreeViewFilter;
+let filterRef: BcxTreeBrowserFilter;
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let filterQuery = $state('');
@@ -46,23 +42,6 @@ let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
 
-let effectiveTreeData: TreeData = $derived.by(() => {
-  treeVersion;
-  return treeData.filter(debouncedFilterQuery);
-});
-
-let visibleData = $derived.by(() => {
-  treeVersion;
-  return createVisibleTreeData(effectiveTreeData.items, treeData.items);
-});
-
-let visiblePaths = $derived(visibleData.paths);
-let visibleChildCounts = $derived(visibleData.childCounts);
-let filterSuggestions = $derived.by(() => {
-  treeVersion;
-  return treeData.filterSuggestions;
-});
-let isBrowsingActive = $derived(!debouncedFilterQuery.trim());
 let currentRootItem = $derived.by(() => {
   treeVersion;
   return currentRootPath ? findTreeItemByPath(currentRootPath) : null;
@@ -75,9 +54,17 @@ let breadcrumbItems = $derived.by(() => {
   treeVersion;
   return currentRootPath ? buildBreadcrumb(currentRootPath) : [];
 });
+let browserItems = $derived.by(() => {
+  treeVersion;
+  return filterTreeItemsFlat(currentLevelItems, debouncedFilterQuery);
+});
+let filterSuggestions = $derived.by(() => {
+  treeVersion;
+  return getTreeItemFilterSuggestions(currentLevelItems);
+});
 
 export function focusFirstItem() {
-  focusTreeItem(getNavigableItems()[0] || effectiveTreeData.visibleFirst);
+  focusTreeItem(getNavigableItems()[0]);
 }
 
 $effect(() => {
@@ -181,38 +168,12 @@ async function handleKeyDown(event: KeyboardEvent) {
           break;
         }
 
-        if (isBrowsingActive) {
-          await handleBrowserItemClick(currentItem, event);
-          break;
-        }
-
-        if (!isNodeExpanded(currentItem)) {
-          expandNode(currentItem);
-        } else {
-          focusTreeItem(findFirstVisibleChildByPath(focusedPath));
-        }
+        await handleBrowserItemClick(currentItem, event);
       }
       break;
 
     case 'ArrowLeft':
-      if (isBrowsingActive) {
-        navigateToParentLevel();
-        break;
-      }
-
-      if (currentIndex >= 0) {
-        const currentItem = findVisibleItem(currentIndex);
-
-        if (!currentItem) {
-          break;
-        }
-
-        if (isNodeExpanded(currentItem)) {
-          collapseNode(currentItem);
-        } else {
-          focusTreeItem(findVisibleParentByPath(currentItem.path));
-        }
-      }
+      navigateToParentLevel();
       break;
 
     case 'Enter':
@@ -224,20 +185,7 @@ async function handleKeyDown(event: KeyboardEvent) {
           break;
         }
 
-        if (isBrowsingActive) {
-          await handleBrowserItemClick(currentItem, event);
-          break;
-        }
-
-        if (isNode(currentItem)) {
-          if (isNodeExpanded(currentItem)) {
-            collapseNode(currentItem);
-          } else {
-            expandNode(currentItem);
-          }
-        } else {
-          await handleItemClick(currentItem, event);
-        }
+        await handleBrowserItemClick(currentItem, event);
       }
       break;
 
@@ -260,13 +208,9 @@ async function handleKeyDown(event: KeyboardEvent) {
 }
 
 function getNavigableItems(): TreeItem[] {
-  if (isBrowsingActive) {
-    return currentRootPath
-      ? [createDrillUpItem(), ...currentLevelItems]
-      : currentLevelItems;
-  }
-
-  return treeData.visible.filter((item) => visiblePaths.has(item.path || ''));
+  return currentRootPath
+    ? [createDrillUpItem(), ...browserItems]
+    : browserItems;
 }
 
 function visibleItemIndex(path?: string | null): number {
@@ -285,16 +229,6 @@ function visiblePrev(index: number, step: number = 1): TreeItem | null {
   return getVisiblePrev(getNavigableItems(), index, step);
 }
 
-function findVisibleParentByPath(path?: string | null): TreeItem | null {
-  if (!path) return null;
-  const parentPath = path.split('.').slice(0, -1).join('.');
-  return parentPath ? findTreeItemByPath(parentPath) : null;
-}
-
-function findFirstVisibleChildByPath(path?: string | null): TreeItem | null {
-  return findFirstVisibleChildInItemsByPath(getNavigableItems(), path);
-}
-
 function focusTreeItem(item?: TreeItem | null) {
   if (!item || !item.path) {
     return;
@@ -302,10 +236,6 @@ function focusTreeItem(item?: TreeItem | null) {
 
   focusedPath = item.path;
   focusTreeItemElement(treeContainer, item);
-}
-
-function collapseNode(item: TreeItem) {
-  collapseTreeNodeElement(treeContainer, item);
 }
 
 function refreshTreeRendering() {
@@ -354,6 +284,7 @@ function isDrillUpItem(item: TreeItem): boolean {
 }
 
 function navigateToLevel(path: string | null) {
+  applyFilterImmediately();
   currentRootPath = path;
   focusedPath = null;
   refreshTreeRendering();
@@ -371,13 +302,13 @@ function navigateToParentLevel() {
   navigateToLevel(parentItem?.path || null);
 }
 
-async function expandNode(item: TreeItem) {
-  await expandTreeNode({
-    item,
-    container: treeContainer,
-    focusTreeItem,
-    refreshTreeRendering,
-  });
+function applyFilterImmediately() {
+  if (filterDebounceTimer !== null) {
+    clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = null;
+  }
+
+  debouncedFilterQuery = filterQuery;
 }
 
 async function enterBrowserItem(item: TreeItem) {
@@ -422,25 +353,12 @@ function handleFilterArrowDown() {
   focusTreeItem(getNavigableItems()[0]);
 }
 
-function isItemVisible(item: TreeItem): boolean {
-  if (!debouncedFilterQuery.trim()) return true;
-  return visiblePaths.has(item.path || '');
-}
-
 function getItemVisibleChildCount(item: TreeItem): number {
-  return getVisibleChildCount(item, debouncedFilterQuery, visibleChildCounts);
-}
-
-function handleFilterNodeClick(item: TreeItem, event: MouseEvent) {
-  event.preventDefault();
-  focusedPath = item.path ?? null;
-
-  if (isNodeExpanded(item)) {
-    collapseNode(item);
-    return;
+  if (item.showChildrenCount === false) {
+    return 0;
   }
 
-  expandNode(item);
+  return item.children?.length || 0;
 }
 </script>
 
@@ -520,27 +438,25 @@ function handleFilterNodeClick(item: TreeItem, event: MouseEvent) {
 {/snippet}
 
 {#snippet breadcrumb()}
-  {#if isBrowsingActive}
-    <nav class="bcx-tree-breadcrumb" aria-label="Tree location">
+  <nav class="bcx-tree-breadcrumb" aria-label="Tree location">
+    <button
+      type="button"
+      class:current={!currentRootPath}
+      onclick={() => navigateToLevel(null)}
+    >
+      Root
+    </button>
+    {#each breadcrumbItems as item}
+      <span aria-hidden="true">/</span>
       <button
         type="button"
-        class:current={!currentRootPath}
-        onclick={() => navigateToLevel(null)}
+        class:current={item.path === currentRootPath}
+        onclick={() => navigateToLevel(item.path || null)}
       >
-        Root
+        {item.label}
       </button>
-      {#each breadcrumbItems as item}
-        <span aria-hidden="true">/</span>
-        <button
-          type="button"
-          class:current={item.path === currentRootPath}
-          onclick={() => navigateToLevel(item.path || null)}
-        >
-          {item.label}
-        </button>
-      {/each}
-    </nav>
-  {/if}
+    {/each}
+  </nav>
 {/snippet}
 
 {#snippet backTreeItem(item: TreeItem)}
@@ -616,59 +532,15 @@ function handleFilterNodeClick(item: TreeItem, event: MouseEvent) {
         </li>
       {/each}
     {:else}
-      <li class="text-gray-400 text-sm text-center py-4">No items here</li>
+      <li class="text-gray-400 text-sm text-center py-4">
+        {debouncedFilterQuery.trim() ? 'No items match your filter' : 'No items here'}
+      </li>
     {/if}
   </ol>
 {/snippet}
 
-{#snippet filteredTreeItems(items: TreeItem[] | undefined)}
-  {#if items && items.length > 0}
-    <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
-      {#each items as item}
-        <li class:hidden={!isItemVisible(item)}>
-          {#if isNode(item)}
-            <details
-              open={item.open}
-              class="group"
-              data-level="{item.level}"
-              data-path="{item.path}"
-            >
-              <summary
-                class="tree-item cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
-                class:focused={focusedPath === item.path}
-                tabindex={focusedPath === item.path ? 0 : -1}
-                onclick={(e) => handleFilterNodeClick(item, e)}
-              >
-                {@render treeItem(item)}
-              </summary>
-              {#if item.isLoadingChildren}
-                <div class="pl-6 py-1 text-sm text-gray-400">Loading...</div>
-              {:else}
-                {@render filteredTreeItems(item.children)}
-              {/if}
-            </details>
-          {:else}
-            <a
-              class="tree-item flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
-              class:focused={focusedPath === item.path}
-              data-level="{item.level}"
-              data-path="{item.path}"
-              tabindex={focusedPath === item.path ? 0 : -1}
-              onclick={(e) => handleItemClick(item, e)}
-              href={item.href}
-              title={item.href}
-              >
-              {@render treeItem(item)}
-            </a>
-          {/if}
-        </li>
-      {/each}
-    </ol>
-  {/if}
-{/snippet}
-
 <div class="flex flex-col h-full gap-2">
-  <BcxTreeViewFilter
+  <BcxTreeBrowserFilter
     bind:this={filterRef}
     bind:value={filterQuery}
     suggestions={filterSuggestions}
@@ -682,52 +554,18 @@ function handleFilterNodeClick(item: TreeItem, event: MouseEvent) {
     tabindex="0"
     onkeydown={handleKeyDown}
     onfocus={() => {
-      if (!focusedPath && effectiveTreeData.items) {
-        focusTreeItem(getNavigableItems()[0] || effectiveTreeData.visibleFirst);
+      if (!focusedPath && browserItems.length > 0) {
+        focusTreeItem(getNavigableItems()[0]);
       }
     }}
   >
-    {#if debouncedFilterQuery.trim() && visiblePaths.size === 0}
-      <div class="text-gray-400 text-sm text-center py-4">
-        No items match your filter
-      </div>
-    {:else if isBrowsingActive}
-      {#key treeVersion}
-        {@render browserTreeItems(currentLevelItems)}
-      {/key}
-    {:else if treeData.items}
-      {#key treeVersion}
-        {@render filteredTreeItems(treeData.items)}
-      {/key}
-    {/if}
+    {#key treeVersion}
+      {@render browserTreeItems(browserItems)}
+    {/key}
   </div>
 </div>
 
 <style>
-:is([open]:is(.bcx-tree-view details) > summary)::before {
-  transform: rotate(90deg);
-}
-
-:is(.bcx-tree-view details) summary {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-:is(:is(.bcx-tree-view details) summary)::before {
-  display: inline-block;
-  flex-shrink: 0;
-  width: 1rem;
-  height: 1rem;
-  margin: 0.25rem;
-  content: "";
-  background-color: currentcolor;
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
-          mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
-  -webkit-mask-size: cover;
-          mask-size: cover;
-}
-
 .bcx-tree-view a, .bcx-tree-view span:not(.highlight-container) {
     display: inline-flex;
     padding-block: .25rem;
@@ -736,14 +574,6 @@ function handleFilterNodeClick(item: TreeItem, event: MouseEvent) {
 
 .bcx-tree-view .bcx-tree-item-img {
     margin-top: 0.125rem;
-}
-
-.bcx-tree-view details > summary > .bcx-tree-item-img {
-    margin-right: 0.5rem;
-}
-
-.bcx-tree-view .hidden {
-    display: none;
 }
 
 .bcx-tree-view .item-actions {
