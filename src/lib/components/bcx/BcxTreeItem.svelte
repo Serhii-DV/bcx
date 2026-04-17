@@ -1,7 +1,6 @@
 <script lang="ts">
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
-import { isNode } from 'src/app/treeview/utils';
 import { makeIcon } from 'src/app/treeview/utils/icon';
 
 interface Props {
@@ -11,7 +10,6 @@ interface Props {
 }
 
 let { item, childCount = 0, showActions = true }: Props = $props();
-let hasChildren = $derived(isNode(item));
 </script>
 
 {#snippet treeItemButton(button: TreeItemButton)}

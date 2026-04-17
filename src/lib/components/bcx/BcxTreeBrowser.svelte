@@ -224,6 +224,14 @@ function findVisibleItem(index: number): TreeItem | null {
   return findVisibleItemByIndex(getNavigableItems(), index);
 }
 
+function findNavigableItemByPath(path?: string | null): TreeItem | null {
+  if (!path) {
+    return null;
+  }
+
+  return getNavigableItems().find((item) => item.path === path) || null;
+}
+
 function visibleNext(index: number, step: number = 1): TreeItem | null {
   return getVisibleNext(getNavigableItems(), index, step);
 }
@@ -290,13 +298,13 @@ function isDrillUpItem(item: TreeItem): boolean {
   return item.path === DRILL_UP_PATH;
 }
 
-function navigateToLevel(path: string | null) {
+function navigateToLevel(path: string | null, focusPath?: string | null) {
   applyFilterImmediately();
   currentRootPath = path;
   focusedPath = null;
   refreshTreeRendering();
   tick().then(() => {
-    focusTreeItem(getNavigableItems()[0]);
+    focusTreeItem(findNavigableItemByPath(focusPath) || getNavigableItems()[0]);
   });
 }
 
@@ -305,8 +313,9 @@ function navigateToParentLevel() {
     return;
   }
 
+  const previousRootPath = currentRootPath;
   const parentItem = findParentTreeItemByPath(currentRootPath);
-  navigateToLevel(parentItem?.path || null);
+  navigateToLevel(parentItem?.path || null, previousRootPath);
 }
 
 function applyFilterImmediately() {
