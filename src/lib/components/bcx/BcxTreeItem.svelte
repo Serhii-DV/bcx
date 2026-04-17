@@ -66,16 +66,16 @@ let hasChildren = $derived(isNode(item));
 {/snippet}
 
 {#snippet treeItemImage(item: TreeItem)}
-  {#if item.image}
-    {@const ImageIcon = makeIcon(item.image)}
-    {#if ImageIcon}
-      <span class="bcx-tree-item-img bcx-tree-item-image-icon w-6 h-6 flex-shrink-0 text-gray-300" aria-hidden="true">
+  {@const ImageIcon = makeIcon(item.image)}
+  <span class="bcx-tree-item-img w-6 h-6 flex-shrink-0" aria-hidden={item.image ? undefined : 'true'}>
+    {#if item.image && ImageIcon}
+      <span class="bcx-tree-item-image-icon text-gray-300" aria-hidden="true">
         <ImageIcon size="24" />
       </span>
-    {:else}
-      <img src={item.image} alt={item.label} class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
+    {:else if item.image}
+      <img src={item.image} alt={item.label} class="bcx-tree-item-image" loading="lazy" />
     {/if}
-  {/if}
+  </span>
 {/snippet}
 
 {@render treeItemImage(item)}
@@ -92,6 +92,9 @@ let hasChildren = $derived(isNode(item));
 
 <style>
 .bcx-tree-item-img {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 0.125rem;
   margin-right: 0.5rem;
 }
@@ -100,6 +103,12 @@ let hasChildren = $derived(isNode(item));
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.bcx-tree-item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .item-label,
