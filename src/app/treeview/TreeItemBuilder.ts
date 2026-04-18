@@ -2,6 +2,8 @@ import type { TreeItem, TreeItemClickContext } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 import { TreeItemFactory } from './TreeItemFactory';
 
+type ItemOrBuilder = TreeItem | TreeItemBuilder;
+
 export class TreeItemBuilder {
   private item: TreeItem = {};
 
@@ -19,8 +21,8 @@ export class TreeItemBuilder {
     return this.create(TreeItemFactory.text(label));
   }
 
-  static items(label: string, children: TreeItem[]): TreeItemBuilder {
-    return this.create(TreeItemFactory.items(label, children));
+  static items(label: string, children: ItemOrBuilder[]): TreeItemBuilder {
+    return this.create(TreeItemFactory.items(label, buildTreeItems(children)));
   }
 
   static list(label: string, strings: string[]): TreeItemBuilder {
@@ -49,21 +51,25 @@ export class TreeItemBuilder {
     return this;
   }
 
-  addChild(child?: TreeItem): this {
+  addChild(child?: ItemOrBuilder): this {
     if (!child) {
       return this;
     }
     if (!this.item.children) {
       this.item.children = [];
     }
-    this.item.children.push(child);
+    this.item.children.push(buildTreeItem(child));
     this.item.childrenCount = this.item.children.length;
     return this;
   }
 
-  addChildren(children: Array<TreeItem | undefined>): this {
+  addChildren(children: Array<ItemOrBuilder | undefined>): this {
     children.forEach((child) => this.addChild(child));
     return this;
+  }
+
+  add(...children: Array<ItemOrBuilder | undefined>): this {
+    return this.addChildren(children);
   }
 
   withOpen(open: boolean): this {
@@ -155,4 +161,34 @@ export class TreeItemBuilder {
     }
     return this.item as TreeItem;
   }
+}
+
+export function items(
+  label: string,
+  children: ItemOrBuilder[],
+): TreeItemBuilder {
+  return TreeItemBuilder.items(label, children);
+}
+
+export function text(label: string): TreeItemBuilder {
+  return TreeItemBuilder.text(label);
+}
+
+export function link(label: string, href: string): TreeItemBuilder {
+  return TreeItemBuilder.link(label, href);
+}
+
+export function list(label: string, strings: string[]): TreeItemBuilder {
+  return TreeItemBuilder.list(label, strings);
+}
+
+function buildTreeItem(item: ItemOrBuilder): TreeItem {
+  if (item instanceof TreeItemBuilder) {
+    return item.build();
+  }
+  return item;
+}
+
+export function buildTreeItems(items: ItemOrBuilder[]): TreeItem[] {
+  return items.map(buildTreeItem);
 }

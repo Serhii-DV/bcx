@@ -6,13 +6,14 @@ import {
 import { arrayUnique } from 'src/utils/array';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
-import { TreeItemBuilder } from '../TreeItemBuilder';
+import { items, list, TreeItemBuilder, text } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
 import {
   ICON_BUILDING,
   ICON_CALENDAR_DAYS,
   ICON_LIST_MUSIC,
   ICON_MIC,
+  ICON_TAGS,
 } from '../utils/icon';
 
 export class AlbumTreeItemFactory {
@@ -31,16 +32,14 @@ export class AlbumTreeItemFactory {
     const artistNames = album.artistNames.sort();
     const keywords = (album.metadata?.keywords || []).sort();
 
-    builder.addChild(TreeItemFactory.textWithQuery(album.toString()));
+    builder.add(TreeItemFactory.textWithQuery(album.toString()));
 
     if (album.metadata?.year) {
-      builder.addChild(
-        TreeItemFactory.textWithQuery(String(album.metadata.year)),
-      );
+      builder.add(TreeItemFactory.textWithQuery(String(album.metadata.year)));
     }
 
     if (artistNames.length) {
-      builder.addChild(
+      builder.add(
         TreeItemBuilder.items(
           'Artists',
           artistNames.map(TreeItemFactory.textWithQuery),
@@ -51,7 +50,7 @@ export class AlbumTreeItemFactory {
     }
 
     if (keywords.length) {
-      builder.addChild(
+      builder.add(
         TreeItemFactory.items(
           'Tags',
           keywords.map(TreeItemFactory.textWithQuery),
@@ -59,7 +58,7 @@ export class AlbumTreeItemFactory {
       );
     }
 
-    builder.addChild(
+    builder.add(
       TreeItemFactory.link(
         'Open Album Page',
         album.url.toString(),
@@ -99,72 +98,66 @@ export class AlbumTreeItemFactory {
   }
 
   static async createWithInformation(album: Album): Promise<TreeItem> {
-    const builder = this.builder(album);
+    const builder = this.builder(album).withoutHref();
+    const releaseMetadata = getReleaseMetadataFromAlbum(album);
 
-    builder.withoutHref();
+    builder.add(
+      items(
+        `Artist: ${album.artist.toString()}`,
+        await ArtistTreeItem.createTreeItems(album.artist),
+      ).withImage(ICON_MIC),
+    );
+
+    if (releaseMetadata.artistNames?.length) {
+      builder.add(list('Parsed artists', releaseMetadata.artistNames));
+    }
 
     if (album.metadata) {
-      builder.addChild(
-        TreeItemBuilder.list('Publisher', [album.metadata.publisher])
-          .withImage(ICON_BUILDING)
-          .build(),
-      );
-      builder.addChild(
-        TreeItemBuilder.items('Date', [
-          TreeItemFactory.list('Published', [album.metadata.publishedDate]),
-          TreeItemFactory.list('Modified', [album.metadata.modifiedDate]),
-        ])
-          .withImage(ICON_CALENDAR_DAYS)
-          .withoutChildrenCount()
-          .withoutChildrenCountAllChildren()
-          .build(),
+      builder.add(
+        list(`Publisher: ${album.metadata.publisher}`, [
+          album.metadata.publisher,
+        ]).withImage(ICON_BUILDING),
       );
     }
 
-    const releaseMetadata = getReleaseMetadataFromAlbum(album);
+    const year = releaseMetadata?.releaseYear || album.metadata?.year;
+
+    if (year) {
+      builder.add(
+        items(
+          `Year: ${year}`,
+          album.metadata
+            ? [
+                text(
+                  `Published Date: ${album.metadata.publishedDate}`,
+                ).withImage(ICON_CALENDAR_DAYS),
+                text(`Modified Date: ${album.metadata.modifiedDate}`).withImage(
+                  ICON_CALENDAR_DAYS,
+                ),
+              ]
+            : [],
+        ).withImage(ICON_CALENDAR_DAYS),
+      );
+    }
 
     if (releaseMetadata.catalogNumber) {
-      builder.addChild(
+      builder.add(
         TreeItemFactory.text(`Catalog: ${releaseMetadata.catalogNumber}`),
       );
     }
 
     if (releaseMetadata.releaseType) {
-      builder.addChild(
-        TreeItemFactory.text(`Type: ${releaseMetadata.releaseType}`),
-      );
+      builder.add(text(`Type: ${releaseMetadata.releaseType}`));
     }
 
-    if (
-      releaseMetadata.releaseYear &&
-      releaseMetadata.releaseYear !== album.metadata?.year
-    ) {
-      builder.addChild(
-        TreeItemFactory.text(`Year: ${releaseMetadata.releaseYear}`),
-      );
-    }
-
-    if (releaseMetadata.artistNames?.length) {
-      builder.addChild(
-        TreeItemFactory.list('Parsed artists', releaseMetadata.artistNames),
-      );
-    }
-
-    builder.addChild(
-      TreeItemBuilder.items(
-        'Artists',
-        await ArtistTreeItem.createTreeItems(album.artist),
-      )
-        .withImage(ICON_MIC)
-        .build(),
+    builder.add(
+      items('Tracks', TreeItemFactory.fromTracks(album.tracks)).withImage(
+        ICON_LIST_MUSIC,
+      ),
     );
-    builder.addChild(
-      TreeItemBuilder.items('Tracks', TreeItemFactory.fromTracks(album.tracks))
-        .withImage(ICON_LIST_MUSIC)
-        .build(),
-    );
-    builder.addChild(
-      TreeItemFactory.list('Tags', album.metadata?.keywords || []),
+
+    builder.add(
+      list('Tags', album.metadata?.keywords || []).withImage(ICON_TAGS),
     );
 
     return builder.build();
