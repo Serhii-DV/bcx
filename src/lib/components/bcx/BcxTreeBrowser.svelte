@@ -360,6 +360,7 @@ async function enterBrowserItem(item: TreeItem) {
     item.isLoadingChildren = true;
     refreshTreeRendering();
     await waitForLoadingStatePaint(itemToEnter, focusTreeItem);
+    showItemFeedback(itemToEnter, 'Loading...', 0);
     await hydrateTreeItemChildren(item, true);
     refreshTreeRendering();
     await tick();
@@ -454,13 +455,7 @@ function withBrowserTreeItemState(item: TreeItem): TreeItem {
         }
       }}
     >
-      <BcxTreeItem
-        item={withBrowserTreeItemState(item)}
-        showActions={!item.isLoadingChildren}
-      />
-      {#if item.isLoadingChildren}
-        <span class="ml-auto pr-2 text-sm text-gray-400">Loading...</span>
-      {/if}
+      <BcxTreeItem item={withBrowserTreeItemState(item)} />
     </div>
   {:else}
     <a

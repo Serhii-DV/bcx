@@ -34,6 +34,11 @@ export interface ExpandTreeNodeOptions {
   container: HTMLElement | undefined;
   focusTreeItem: (item?: TreeItem | null) => void;
   refreshTreeRendering: () => void;
+  showItemFeedback?: (
+    item: TreeItem,
+    message: string,
+    duration?: number,
+  ) => void;
 }
 
 export function createVisibleTreeData(
@@ -242,6 +247,10 @@ export function showTreeItemActionFeedback(
   element.dataset.actionFeedback = 'true';
   feedback.textContent = message;
 
+  if (duration <= 0) {
+    return;
+  }
+
   const timer = window.setTimeout(() => {
     if (element.dataset.actionFeedback === 'true') {
       delete element.dataset.actionFeedback;
@@ -274,6 +283,7 @@ export async function expandTreeNode({
   container,
   focusTreeItem,
   refreshTreeRendering,
+  showItemFeedback,
 }: ExpandTreeNodeOptions) {
   if (!isNode(item)) {
     return;
@@ -287,6 +297,7 @@ export async function expandTreeNode({
     item.isLoadingChildren = true;
     refreshTreeRendering();
     await waitForLoadingStatePaint(itemToFocus, focusTreeItem);
+    showItemFeedback?.(itemToFocus, 'Loading...', 0);
     await hydrateTreeItemChildren(item, true);
     didHydrate = true;
   }

@@ -324,6 +324,7 @@ async function expandNode(item: TreeItem) {
     container: treeContainer,
     focusTreeItem,
     refreshTreeRendering,
+    showItemFeedback,
   });
 }
 
@@ -380,9 +381,7 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
               >
                 <BcxTreeItem item={withVisibleChildCount(item)} />
               </summary>
-              {#if item.isLoadingChildren}
-                <div class="pl-6 py-1 text-sm text-gray-400">Loading...</div>
-              {:else}
+              {#if !item.isLoadingChildren}
                 {@render treeItems(item.children)}
               {/if}
             </details>
