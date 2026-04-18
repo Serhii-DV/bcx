@@ -6,12 +6,17 @@ import {
 import { arrayUnique } from 'src/utils/array';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
-import { items, list, TreeItemBuilder, text } from '../TreeItemBuilder';
+import {
+  copyableText,
+  items,
+  list,
+  TreeItemBuilder,
+  text,
+} from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
 import {
   ICON_BUILDING,
   ICON_CALENDAR_DAYS,
-  ICON_CLIPBOARD_COPY,
   ICON_LINK,
   ICON_LIST_MUSIC,
   ICON_MIC,
@@ -162,11 +167,7 @@ export class AlbumTreeItemFactory {
       list('Tags', album.metadata?.keywords || []).withImage(ICON_TAGS),
     );
 
-    builder.add(
-      text(album.url.toString())
-        .withImage(ICON_LINK)
-        .withActionIcon(ICON_CLIPBOARD_COPY),
-    );
+    builder.add(copyableText(album.url.toString()).withImage(ICON_LINK));
 
     return builder.build();
   }

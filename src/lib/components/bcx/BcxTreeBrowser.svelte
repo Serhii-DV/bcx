@@ -25,6 +25,7 @@ import {
   visibleNext as getVisibleNext,
   visiblePrev as getVisiblePrev,
   shouldIgnoreTreeKeyDown,
+  showTreeItemActionFeedback,
   waitForLoadingStatePaint,
 } from './treeViewHelpers';
 
@@ -45,6 +46,7 @@ let currentRootPath: string | null = $state(null);
 let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
+const feedbackTimers = new Map<string, number>();
 
 let currentRootItem = $derived.by(() => {
   treeVersion;
@@ -118,6 +120,8 @@ onDestroy(() => {
   if (filterDebounceTimer !== null) {
     clearTimeout(filterDebounceTimer);
   }
+  feedbackTimers.forEach((timer) => clearTimeout(timer));
+  feedbackTimers.clear();
 });
 
 async function handleItemClick(
@@ -135,6 +139,7 @@ async function handleItemClick(
     findItemByPath: findTreeItemByPath,
     findParentByPath: findParentTreeItemByPath,
     refreshTreeRendering,
+    showItemFeedback,
     logLabel: '[BcxTreeBrowser]',
   });
 }
@@ -252,6 +257,20 @@ function focusTreeItem(item?: TreeItem | null) {
 
 function refreshTreeRendering() {
   treeVersion += 1;
+}
+
+function showItemFeedback(
+  item: TreeItem,
+  message: string,
+  duration: number = 1600,
+) {
+  showTreeItemActionFeedback(
+    treeContainer,
+    item,
+    message,
+    feedbackTimers,
+    duration,
+  );
 }
 
 function findTreeItemByPath(path?: string | null): TreeItem | null {

@@ -1,6 +1,8 @@
+import { copyToClipboard } from 'src/utils/clipboard';
 import type { TreeItem, TreeItemClickContext } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 import { TreeItemFactory } from './TreeItemFactory';
+import { ICON_CLIPBOARD_COPY } from './utils/icon';
 
 type ItemOrBuilder = TreeItem | TreeItemBuilder;
 
@@ -19,6 +21,21 @@ export class TreeItemBuilder {
 
   static text(label: string): TreeItemBuilder {
     return this.create(TreeItemFactory.text(label));
+  }
+
+  static copyableText(
+    label: string,
+    copyContent: string = label,
+  ): TreeItemBuilder {
+    return this.text(label)
+      .withActionIcon(ICON_CLIPBOARD_COPY)
+      .withOnClick(async (context) => {
+        await copyToClipboard(copyContent);
+
+        context.focusPath = context.item.path;
+        context.refreshTree = false;
+        context.showFeedback?.('Copied');
+      });
   }
 
   static items(label: string, children: ItemOrBuilder[]): TreeItemBuilder {
@@ -179,6 +196,13 @@ export function text(label: string): TreeItemBuilder {
   return TreeItemBuilder.text(label);
 }
 
+export function copyableText(
+  label: string,
+  copyContent?: string,
+): TreeItemBuilder {
+  return TreeItemBuilder.copyableText(label, copyContent);
+}
+
 export function link(label: string, href: string): TreeItemBuilder {
   return TreeItemBuilder.link(label, href);
 }
@@ -194,6 +218,6 @@ function buildTreeItem(item: ItemOrBuilder): TreeItem {
   return item;
 }
 
-export function buildTreeItems(items: ItemOrBuilder[]): TreeItem[] {
+function buildTreeItems(items: ItemOrBuilder[]): TreeItem[] {
   return items.map(buildTreeItem);
 }

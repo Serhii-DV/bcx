@@ -58,6 +58,11 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 
 {#snippet treeItemActionIcon(item: TreeItem)}
   {@const Icon = makeIcon(item.actionIcon)}
+  <span
+    class="item-action-feedback text-emerald-300"
+    aria-live="polite"
+    aria-atomic="true"
+  ></span>
   {#if Icon}
   <span class="item-action-icon text-gray-300"><Icon size="16" /></span>
   {/if}
@@ -126,6 +131,21 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 
 .item-action-icon {
   margin: 0 5px;
+}
+
+.item-action-feedback {
+  display: none;
+  margin: 0 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+:global(.tree-item[data-action-feedback="true"]) .item-action-feedback {
+  display: inline-flex;
+}
+
+:global(.tree-item[data-action-feedback="true"]) .item-action-icon {
+  display: none;
 }
 
 .item-buttons {

@@ -21,6 +21,11 @@ export interface ActivateTreeItemOptions {
   findItemByPath: (path?: string | null) => TreeItem | null;
   findParentByPath: (path?: string | null) => TreeItem | null;
   refreshTreeRendering: () => void;
+  showItemFeedback?: (
+    item: TreeItem,
+    message: string,
+    duration?: number,
+  ) => void;
   logLabel: string;
 }
 
@@ -75,6 +80,7 @@ export async function activateTreeItem({
   findItemByPath,
   findParentByPath,
   refreshTreeRendering,
+  showItemFeedback,
   logLabel,
 }: ActivateTreeItemOptions) {
   if (!item) return;
@@ -86,11 +92,16 @@ export async function activateTreeItem({
       element: event?.currentTarget as HTMLElement,
       item,
       parent: findParentByPath(item.path),
+      showFeedback: (message, duration) =>
+        showItemFeedback?.(item, message, duration),
     };
 
     await item.onClick(clickContext);
-    treeData.treeItems = generateTreeHierarchy(treeData.items);
-    refreshTreeRendering();
+
+    if (clickContext.refreshTree !== false) {
+      treeData.treeItems = generateTreeHierarchy(treeData.items);
+      refreshTreeRendering();
+    }
 
     if (clickContext.focusPath) {
       await tick();
@@ -205,6 +216,41 @@ export function focusTreeItemElement(
   } else {
     element.focus();
   }
+}
+
+export function showTreeItemActionFeedback(
+  container: HTMLElement | undefined,
+  item: TreeItem,
+  message: string,
+  timers: Map<string, number>,
+  duration: number = 1600,
+) {
+  if (!item.path) return;
+
+  const element = elementByPath(container, item.path);
+  const feedback = element?.querySelector<HTMLElement>('.item-action-feedback');
+
+  if (!element || !feedback) {
+    return;
+  }
+
+  const previousTimer = timers.get(item.path);
+  if (previousTimer) {
+    clearTimeout(previousTimer);
+  }
+
+  element.dataset.actionFeedback = 'true';
+  feedback.textContent = message;
+
+  const timer = window.setTimeout(() => {
+    if (element.dataset.actionFeedback === 'true') {
+      delete element.dataset.actionFeedback;
+      feedback.textContent = '';
+    }
+    timers.delete(item.path || '');
+  }, duration);
+
+  timers.set(item.path, timer);
 }
 
 export function collapseTreeNodeElement(

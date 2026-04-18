@@ -5,6 +5,8 @@ export interface TreeItemClickContext {
   item: TreeItem;
   parent?: TreeItem | null;
   focusPath?: string;
+  refreshTree?: boolean;
+  showFeedback?: (message: string, duration?: number) => void;
 }
 
 export interface TreeItem {
