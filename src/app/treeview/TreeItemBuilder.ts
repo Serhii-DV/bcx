@@ -23,21 +23,6 @@ export class TreeItemBuilder {
     return this.create(TreeItemFactory.text(label));
   }
 
-  static copyableText(
-    label: string,
-    copyContent: string = label,
-  ): TreeItemBuilder {
-    return this.text(label)
-      .withActionIcon(ICON_CLIPBOARD_COPY)
-      .withOnClick(async (context) => {
-        await copyToClipboard(copyContent);
-
-        context.focusPath = context.item.path;
-        context.refreshTree = false;
-        context.showFeedback?.('Copied');
-      });
-  }
-
   static items(label: string, children: ItemOrBuilder[]): TreeItemBuilder {
     return this.create(TreeItemFactory.items(label, buildTreeItems(children)));
   }
@@ -151,6 +136,18 @@ export class TreeItemBuilder {
     return this;
   }
 
+  makeCopyable(copyContent?: string): this {
+    return this.withActionIcon(ICON_CLIPBOARD_COPY).withOnClick(
+      async (context) => {
+        await copyToClipboard(copyContent ?? context.item.label ?? '');
+
+        context.focusPath = context.item.path;
+        context.refreshTree = false;
+        context.showFeedback?.('Copied');
+      },
+    );
+  }
+
   withoutActionIcon(): this {
     this.item.actionIcon = undefined;
     return this;
@@ -194,13 +191,6 @@ export function items(
 
 export function text(label: string): TreeItemBuilder {
   return TreeItemBuilder.text(label);
-}
-
-export function copyableText(
-  label: string,
-  copyContent?: string,
-): TreeItemBuilder {
-  return TreeItemBuilder.copyableText(label, copyContent);
 }
 
 export function link(label: string, href: string): TreeItemBuilder {

@@ -6,13 +6,7 @@ import {
 import { arrayUnique } from 'src/utils/array';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
-import {
-  copyableText,
-  items,
-  list,
-  TreeItemBuilder,
-  text,
-} from '../TreeItemBuilder';
+import { items, list, TreeItemBuilder, text } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
 import {
   ICON_BUILDING,
@@ -167,7 +161,7 @@ export class AlbumTreeItemFactory {
       list('Tags', album.metadata?.keywords || []).withImage(ICON_TAGS),
     );
 
-    builder.add(copyableText(album.url.toString()).withImage(ICON_LINK));
+    builder.add(text(album.url.toString()).makeCopyable().withImage(ICON_LINK));
 
     return builder.build();
   }
