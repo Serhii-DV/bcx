@@ -3,6 +3,7 @@ import {
   Calendar,
   CalendarDays,
   ChevronRight,
+  ClipboardCopy,
   CornerLeftUp,
   CornerRightUp,
   Disc,
@@ -13,6 +14,7 @@ import {
   History,
   Info,
   Library,
+  Link,
   ListMusic,
   Mic,
   Search,
@@ -41,6 +43,8 @@ export const ICON_SQUARE_ARROW_RIGHT = 'square-arrow-right';
 export const ICON_TAGS = 'tags';
 export const ICON_TAG = 'tag';
 export const ICON_HEADPHONES = 'headphones';
+export const ICON_CLIPBOARD_COPY = 'clipboard-copy';
+export const ICON_LINK = 'link';
 
 export function makeIcon(iconName?: string): any {
   switch (iconName) {
@@ -84,6 +88,10 @@ export function makeIcon(iconName?: string): any {
       return Tag;
     case ICON_HEADPHONES:
       return Headphones;
+    case ICON_CLIPBOARD_COPY:
+      return ClipboardCopy;
+    case ICON_LINK:
+      return Link;
     default:
       return undefined;
   }

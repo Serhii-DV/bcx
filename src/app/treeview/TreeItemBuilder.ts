@@ -129,6 +129,11 @@ export class TreeItemBuilder {
     return this;
   }
 
+  withActionIcon(actionIcon: string): this {
+    this.item.actionIcon = actionIcon;
+    return this;
+  }
+
   withoutActionIcon(): this {
     this.item.actionIcon = undefined;
     return this;

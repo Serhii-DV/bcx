@@ -11,6 +11,8 @@ import { TreeItemFactory } from '../TreeItemFactory';
 import {
   ICON_BUILDING,
   ICON_CALENDAR_DAYS,
+  ICON_CLIPBOARD_COPY,
+  ICON_LINK,
   ICON_LIST_MUSIC,
   ICON_MIC,
   ICON_TAGS,
@@ -158,6 +160,12 @@ export class AlbumTreeItemFactory {
 
     builder.add(
       list('Tags', album.metadata?.keywords || []).withImage(ICON_TAGS),
+    );
+
+    builder.add(
+      text(album.url.toString())
+        .withImage(ICON_LINK)
+        .withActionIcon(ICON_CLIPBOARD_COPY),
     );
 
     return builder.build();
