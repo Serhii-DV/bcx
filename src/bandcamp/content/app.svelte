@@ -86,8 +86,12 @@ $effect(() => {
 function handleKeydown(e: KeyboardEvent) {
   // Ctrl+D for drawer
   onCtrlKey('d', e, () => {
-    sidePanelOpen = !sidePanelOpen;
+    void updateSidePanelOpen(!sidePanelOpen);
   });
+
+  if (e.key === 'Escape' && sidePanelOpen) {
+    void updateSidePanelOpen(false);
+  }
 }
 
 onMount(() => {
@@ -133,6 +137,7 @@ async function updateSidePanelOpen(value: boolean) {
     treeData={treeData}
     open={sidePanelOpen}
     onToggle={() => void updateSidePanelOpen(!sidePanelOpen)}
+    onClose={() => void updateSidePanelOpen(false)}
   />
 
   <!-- Tour (only on music pages) -->

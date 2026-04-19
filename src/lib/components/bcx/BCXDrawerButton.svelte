@@ -1,5 +1,5 @@
 <script lang="ts">
-import { PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
+import { PanelLeftOpen } from '@lucide/svelte';
 
 interface Props {
   sidePanelOpen: boolean;
@@ -20,26 +20,24 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 </script>
 
-<div
-  id="bcx-drawer-button"
-  class="bcx-drawer-button"
-  role="button"
-  tabindex="0"
-  aria-label="Toggle BCX side panel"
-  aria-pressed={sidePanelOpen}
-  title="BCX - Side Panel.
+{#if !sidePanelOpen}
+  <div
+    id="bcx-drawer-button"
+    class="bcx-drawer-button"
+    role="button"
+    tabindex="0"
+    aria-label="Toggle BCX side panel"
+    aria-pressed={sidePanelOpen}
+    title="BCX - Side Panel.
 Use Ctrl+D to toggle"
-  onclick={handleToggle}
-  onkeydown={handleKeyDown}
->
-  <span class="drawer-icon" aria-hidden="true">
-    {#if sidePanelOpen}
-      <PanelLeftClose size="24" />
-    {:else}
+    onclick={handleToggle}
+    onkeydown={handleKeyDown}
+  >
+    <span class="drawer-icon" aria-hidden="true">
       <PanelLeftOpen size="24" />
-    {/if}
-  </span>
-</div>
+    </span>
+  </div>
+{/if}
 
 <style>
   /* BCX Drawer Button Styles */
@@ -63,15 +61,25 @@ Use Ctrl+D to toggle"
   :global(.bcx-drawer-button:hover),
   :global(.bcx-drawer-button:focus-visible) {
     background: rgb(6 15 27 / 95%);
+    color: #04b1fe;
     outline: none;
   }
 
   :global(.bcx-drawer-button .drawer-icon) {
-    color: #04b1fe;
-    opacity: 1;
-    display: inline-flex;
     align-items: center;
+    background: rgb(6 15 27 / 95%);
+    border-radius: 50%;
+    color: #3c7088;
     justify-content: center;
+    display: inline-flex;
+    height: 40px;
+    opacity: 1;
+    width: 40px;
+  }
+
+  :global(.bcx-drawer-button:hover .drawer-icon),
+  :global(.bcx-drawer-button:focus-visible .drawer-icon) {
+    color: #04b1fe;
   }
 
   @media (prefers-reduced-motion: reduce) {

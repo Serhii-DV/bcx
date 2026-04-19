@@ -1,4 +1,5 @@
 <script lang="ts">
+import { X } from '@lucide/svelte';
 import { TreeData } from 'src/app/treeview/TreeData';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
@@ -8,10 +9,20 @@ interface Props {
   treeData: TreeData;
   open?: boolean;
   onToggle?: () => void;
+  onClose?: () => void;
 }
 
-let { treeData, open = false, onToggle = () => {} }: Props = $props();
+let {
+  treeData,
+  open = false,
+  onToggle = () => {},
+  onClose = () => {},
+}: Props = $props();
 let treeBrowserRef: BcxTreeBrowser;
+
+function handleClose() {
+  onClose();
+}
 
 // Focus first item when panel opens
 $effect(() => {
@@ -37,6 +48,16 @@ $effect(() => {
             <img src={iconUrl} alt="BCX" class="w-12 h-12" />
             <h2 class="text-lg font-semibold">Music Explorer</h2>
           </div>
+
+          <button
+            type="button"
+            class="bcx-side-panel-close-button"
+            aria-label="Close BCX side panel"
+            title="Close side panel"
+            onclick={handleClose}
+          >
+            <X size="20" />
+          </button>
         </div>
       </div>
 
@@ -62,6 +83,7 @@ $effect(() => {
             <h3 class="mb-2">Keyboard Shortcuts</h3>
             <div class="space-y-1 text-sm">
               <div><kbd class="kbd">Ctrl+D</kbd> Toggle panel</div>
+              <div><kbd class="kbd">Esc</kbd> Close panel</div>
             </div>
           </div>
         </div>
@@ -104,8 +126,36 @@ $effect(() => {
     pointer-events: auto;
   }
 
+  :global(.bcx-side-panel-close-button) {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    color: #f9fafb;
+    cursor: pointer;
+    display: inline-flex;
+    height: 32px;
+    justify-content: center;
+    padding: 0;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
+    width: 32px;
+  }
+
+  :global(.bcx-side-panel-close-button:hover),
+  :global(.bcx-side-panel-close-button:focus-visible) {
+    background: rgb(255 255 255 / 12%);
+    color: #04b1fe;
+    outline: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     :global(.bcx-side-panel-shell) {
+      transition: none;
+    }
+
+    :global(.bcx-side-panel-close-button) {
       transition: none;
     }
   }
