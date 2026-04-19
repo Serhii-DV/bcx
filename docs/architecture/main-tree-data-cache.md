@@ -67,7 +67,7 @@ Configured in `src/app/treeview/items/MainTreeData.ts` via `CACHE_TTL` constants
 To support storage serialization:
 - runtime handlers are not persisted
 - button entries are persisted only for link-style metadata (`title`, `href`)
-- icon constructors are mapped via stable keys (currently `external-link`, `funnel`) and rehydrated on load
+- action icon constructors are mapped via stable keys (currently `external-link`, `funnel`) and rehydrated on load
 
 ## Invalidation
 

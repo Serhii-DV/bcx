@@ -18,7 +18,7 @@ export class TreeItemFactory {
       label,
       query: typeof query === 'string' ? query : label,
       includeInFilterSuggestions: true,
-      icon: ICON_SQUARE_ARROW_RIGHT,
+      actionIcon: ICON_SQUARE_ARROW_RIGHT,
     };
   }
 
@@ -37,13 +37,13 @@ export class TreeItemFactory {
   static link(
     label: string,
     href: string,
-    icon: string = ICON_EXTERNAL_LINK,
+    actionIcon: string = ICON_EXTERNAL_LINK,
     includeInFilterSuggestions: boolean = true,
   ): TreeItem {
     return {
       label,
       href,
-      icon,
+      actionIcon,
       includeInFilterSuggestions,
     };
   }
@@ -55,6 +55,19 @@ export class TreeItemFactory {
           ...TreeItemFactory.text(label),
           includeInFilterSuggestions: true,
         };
+  }
+
+  static lazy(
+    item: TreeItem,
+    loadItem: () => Promise<TreeItem | null>,
+  ): TreeItem {
+    return {
+      ...item,
+      children: undefined,
+      childrenLoaded: false,
+      hasChildren: true,
+      loadChildren: loadItem,
+    };
   }
 
   static fromBand(band: Band): TreeItem {

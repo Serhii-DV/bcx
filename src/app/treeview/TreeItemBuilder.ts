@@ -1,5 +1,10 @@
+import { copyToClipboard } from 'src/utils/clipboard';
 import type { TreeItem, TreeItemClickContext } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
+import { TreeItemFactory } from './TreeItemFactory';
+import { ICON_CLIPBOARD_COPY } from './utils/icon';
+
+type ItemOrBuilder = TreeItem | TreeItemBuilder;
 
 export class TreeItemBuilder {
   private item: TreeItem = {};
@@ -10,8 +15,24 @@ export class TreeItemBuilder {
     }
   }
 
-  static create(item: TreeItem) {
+  static create(item: TreeItem): TreeItemBuilder {
     return new TreeItemBuilder(item);
+  }
+
+  static text(label: string): TreeItemBuilder {
+    return this.create(TreeItemFactory.text(label));
+  }
+
+  static items(label: string, children: ItemOrBuilder[]): TreeItemBuilder {
+    return this.create(TreeItemFactory.items(label, buildTreeItems(children)));
+  }
+
+  static list(label: string, strings: string[]): TreeItemBuilder {
+    return this.create(TreeItemFactory.list(label, strings));
+  }
+
+  static link(label: string, href: string): TreeItemBuilder {
+    return this.create(TreeItemFactory.link(label, href));
   }
 
   withId(id: string): this {
@@ -28,23 +49,29 @@ export class TreeItemBuilder {
     this.item.children = children?.filter(
       (child): child is TreeItem => child !== undefined,
     );
+    this.item.childrenCount = this.item.children?.length;
     return this;
   }
 
-  addChild(child?: TreeItem): this {
+  addChild(child?: ItemOrBuilder): this {
     if (!child) {
       return this;
     }
     if (!this.item.children) {
       this.item.children = [];
     }
-    this.item.children.push(child);
+    this.item.children.push(buildTreeItem(child));
+    this.item.childrenCount = this.item.children.length;
     return this;
   }
 
-  addChildren(children: Array<TreeItem | undefined>): this {
+  addChildren(children: Array<ItemOrBuilder | undefined>): this {
     children.forEach((child) => this.addChild(child));
     return this;
+  }
+
+  add(...children: Array<ItemOrBuilder | undefined>): this {
+    return this.addChildren(children);
   }
 
   withOpen(open: boolean): this {
@@ -104,13 +131,30 @@ export class TreeItemBuilder {
     return this;
   }
 
-  withoutIcon(): this {
-    this.item.icon = undefined;
+  withActionIcon(actionIcon: string): this {
+    this.item.actionIcon = actionIcon;
+    return this;
+  }
+
+  makeCopyable(copyContent?: string): this {
+    return this.withActionIcon(ICON_CLIPBOARD_COPY).withOnClick(
+      async (context) => {
+        await copyToClipboard(copyContent ?? context.item.label ?? '');
+
+        context.focusPath = context.item.path;
+        context.refreshTree = false;
+        context.showFeedback?.('Copied');
+      },
+    );
+  }
+
+  withoutActionIcon(): this {
+    this.item.actionIcon = undefined;
     return this;
   }
 
   withoutLink(): this {
-    return this.withoutHref().withoutIcon();
+    return this.withoutHref().withoutActionIcon();
   }
 
   withoutChildrenCount(): this {
@@ -136,4 +180,34 @@ export class TreeItemBuilder {
     }
     return this.item as TreeItem;
   }
+}
+
+export function items(
+  label: string,
+  children: ItemOrBuilder[],
+): TreeItemBuilder {
+  return TreeItemBuilder.items(label, children);
+}
+
+export function text(label: string): TreeItemBuilder {
+  return TreeItemBuilder.text(label);
+}
+
+export function link(label: string, href: string): TreeItemBuilder {
+  return TreeItemBuilder.link(label, href);
+}
+
+export function list(label: string, strings: string[]): TreeItemBuilder {
+  return TreeItemBuilder.list(label, strings);
+}
+
+function buildTreeItem(item: ItemOrBuilder): TreeItem {
+  if (item instanceof TreeItemBuilder) {
+    return item.build();
+  }
+  return item;
+}
+
+function buildTreeItems(items: ItemOrBuilder[]): TreeItem[] {
+  return items.map(buildTreeItem);
 }

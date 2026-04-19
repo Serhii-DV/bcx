@@ -5,12 +5,15 @@ export interface TreeItemClickContext {
   item: TreeItem;
   parent?: TreeItem | null;
   focusPath?: string;
+  refreshTree?: boolean;
+  showFeedback?: (message: string, duration?: number) => void;
 }
 
 export interface TreeItem {
   id?: string;
   label?: string;
   children?: TreeItem[];
+  childrenCount?: number;
   hasChildren?: boolean;
   childrenLoaded?: boolean;
   isLoadingChildren?: boolean;
@@ -19,12 +22,12 @@ export interface TreeItem {
   level?: number;
   path?: string;
   href?: string;
-  image?: string;
+  image?: string; // image URL or icon name
   query?: string;
   keywords?: string[];
   includeInFilterSuggestions?: boolean;
   buttons?: TreeItemButton[];
   onClick?: (context: TreeItemClickContext) => void | Promise<void>;
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
-  icon?: string; // icon name
+  actionIcon?: string; // action icon name
 }

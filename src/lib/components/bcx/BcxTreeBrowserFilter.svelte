@@ -17,9 +17,9 @@ export function focus() {
 
 <BcxTreeFilterInput
   bind:this={filterInput}
-  id="bcx-tree-view-filter"
+  id="bcx-tree-browser-filter"
   bind:value
   {suggestions}
-  placeholder="Filter items..."
+  placeholder="Filter browser items..."
   {onArrowDown}
 />

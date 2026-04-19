@@ -1,5 +1,7 @@
 import type { TreeItem } from './TreeItem';
 
+export const LAZY_TREE_ITEM_CHILDREN_THRESHOLD = 500;
+
 export function isNode(item: TreeItem): boolean {
   return (
     !!item.hasChildren ||
@@ -33,6 +35,7 @@ export function generateTreeHierarchy(
     };
 
     if (item.children && item.children.length > 0) {
+      enhancedItem.childrenCount = item.childrenCount ?? item.children.length;
       enhancedItem.children = generateTreeHierarchy(
         item.children,
         level + 1,
@@ -42,19 +45,6 @@ export function generateTreeHierarchy(
 
     return enhancedItem;
   });
-}
-
-export function createLazyTreeItem(
-  item: TreeItem,
-  loadItem: () => Promise<TreeItem | null>,
-): TreeItem {
-  return {
-    ...item,
-    children: undefined,
-    childrenLoaded: false,
-    hasChildren: true,
-    loadChildren: loadItem,
-  };
 }
 
 export async function hydrateTreeItemChildren(
@@ -86,10 +76,12 @@ export async function hydrateTreeItemChildren(
     }
 
     const { path, level, open } = item;
+    const childrenCount = loadedItem.children?.length || 0;
     Object.assign(item, loadedItem, {
       path,
       level,
       open,
+      childrenCount,
       childrenLoaded: true,
       isLoadingChildren: false,
       loadChildren: undefined,
@@ -113,12 +105,19 @@ export async function hydrateTreeItemChildren(
 }
 
 export function deferDescendants(items: TreeItem[]): TreeItem[] {
+  const descendantsCount = countTreeItemDescendants(items);
+
+  if (descendantsCount <= LAZY_TREE_ITEM_CHILDREN_THRESHOLD) {
+    return items;
+  }
+
   return items.map((item) => {
     if (!item.children || item.children.length === 0) {
       const hasLazyChildren = !!item.hasChildren || !!item.loadChildren;
 
       return {
         ...item,
+        childrenCount: item.childrenCount ?? 0,
         childrenLoaded: !hasLazyChildren,
         hasChildren: hasLazyChildren,
       };
@@ -129,11 +128,18 @@ export function deferDescendants(items: TreeItem[]): TreeItem[] {
     return {
       ...item,
       children: undefined,
+      childrenCount: item.childrenCount ?? item.children.length,
       childrenLoaded: false,
       hasChildren: true,
       loadChildren: async () => fullItem,
     };
   });
+}
+
+function countTreeItemDescendants(items: TreeItem[]): number {
+  return items.reduce((count, item) => {
+    return count + 1 + countTreeItemDescendants(item.children || []);
+  }, 0);
 }
 
 // Flatten the tree to get all visible items for navigation
@@ -258,9 +264,47 @@ export function createFilteredTreeItems(
     });
 }
 
+const actionFeedbackTimers = new WeakMap<HTMLElement, number>();
+
+function showActionFeedback(
+  triggerElement: HTMLElement,
+  message: string,
+  duration: number = 1600,
+) {
+  const element = triggerElement.closest<HTMLElement>('.tree-item');
+  const feedback = element?.querySelector<HTMLElement>('.item-action-feedback');
+
+  if (!element || !feedback) {
+    triggerElement.textContent = message;
+    return;
+  }
+
+  const previousTimer = actionFeedbackTimers.get(element);
+  if (previousTimer) {
+    clearTimeout(previousTimer);
+  }
+
+  element.dataset.actionFeedback = 'true';
+  feedback.textContent = message;
+
+  if (duration <= 0) {
+    return;
+  }
+
+  const timer = window.setTimeout(() => {
+    if (element.dataset.actionFeedback === 'true') {
+      delete element.dataset.actionFeedback;
+      feedback.textContent = '';
+    }
+    actionFeedbackTimers.delete(element);
+  }, duration);
+
+  actionFeedbackTimers.set(element, timer);
+}
+
 /**
  * Generates an onClick handler that manages loading state, prevents
- * concurrent clicks, and updates the text with the loaded array length.
+ * concurrent clicks, and reports loading status in the row action area.
  * * @param fetchData - The async function that fetches an array of data.
  */
 export function createLoadHandler<T>(fetchData: () => Promise<T[]>) {
@@ -269,19 +313,18 @@ export function createLoadHandler<T>(fetchData: () => Promise<T[]>) {
       return;
     }
 
-    element.textContent = 'Loading...';
     element.dataset.loading = 'true';
+    showActionFeedback(element, 'Loading...', 0);
 
     try {
       const data = await fetchData();
       const { TreeItemCache } = await import('./items/TreeItemCache');
       await TreeItemCache.invalidateAll();
 
-      // Hardcoded string format using the array's length
-      element.textContent = `Loaded ${data.length} items`;
+      showActionFeedback(element, `Loaded ${data.length} items`);
     } catch (error) {
       console.error('Failed to load data:', error);
-      element.textContent = 'Error loading';
+      showActionFeedback(element, 'Error loading');
     } finally {
       element.dataset.loading = 'false';
     }

@@ -2,7 +2,7 @@
 import { TreeData } from 'src/app/treeview/TreeData';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
-import BcxTreeView from './BcxTreeView.svelte';
+import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 
 interface Props {
   treeData: TreeData;
@@ -11,14 +11,14 @@ interface Props {
 }
 
 let { treeData, open = false, onToggle = () => {} }: Props = $props();
-let treeViewRef: BcxTreeView;
+let treeBrowserRef: BcxTreeBrowser;
 
 // Focus first item when panel opens
 $effect(() => {
-  if (open && treeViewRef) {
+  if (open && treeBrowserRef) {
     // Use setTimeout to ensure DOM is ready
     setTimeout(() => {
-      treeViewRef.focusFirstItem();
+      treeBrowserRef.focusFirstItem();
     }, 100);
   }
 });
@@ -44,9 +44,9 @@ $effect(() => {
       <div class="flex-1 overflow-y-auto">
         <div class="space-y-4">
 
-          <!-- Tree View Demo -->
+          <!-- Tree Browser -->
           <div class="text-md">
-            <BcxTreeView bind:this={treeViewRef} treeData={treeData} />
+            <BcxTreeBrowser bind:this={treeBrowserRef} treeData={treeData} />
           </div>
 
           <!-- Extension Info -->
