@@ -107,11 +107,12 @@ $effect(() => {
   }
 
   :global(.bcx-side-panel-shell) {
+    --bcx-side-panel-width: 300px;
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 999999;
-    width: 424px;
-    transform: translateX(-400px);
+    width: calc(var(--bcx-side-panel-width) + 24px);
+    transform: translateX(calc(var(--bcx-side-panel-width) * -1));
     transition: transform 260ms cubic-bezier(0.25, 0.8, 0.25, 1);
     pointer-events: none;
   }
@@ -122,8 +123,8 @@ $effect(() => {
 
   :global(.bcx-side-panel-content) {
     background-color: rgb(31 41 55 / 85%);
-    width: 400px;
     pointer-events: auto;
+    width: var(--bcx-side-panel-width);
   }
 
   :global(.bcx-side-panel-close-button) {

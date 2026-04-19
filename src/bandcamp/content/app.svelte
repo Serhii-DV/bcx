@@ -73,8 +73,17 @@ $effect(() => {
   const pgBody = element('#pgBd');
   if (pgBody === null) return;
 
+  const shadowRoot = shadowContainer?.getRootNode();
+  const sidePanel =
+    shadowRoot instanceof ShadowRoot
+      ? shadowRoot.querySelector('#bcx-side-panel')
+      : null;
+  const sidePanelWidth = sidePanel
+    ? Number.parseFloat(
+        getComputedStyle(sidePanel).getPropertyValue('--bcx-side-panel-width'),
+      ) || 0
+    : 0;
   const curLeft = (window.innerWidth - 950) / 2;
-  const sidePanelWidth = 400;
 
   if (curLeft < sidePanelWidth) {
     pgBody.style.left = sidePanelOpen

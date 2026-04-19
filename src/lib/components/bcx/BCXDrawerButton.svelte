@@ -44,7 +44,7 @@ Use Ctrl+D to toggle"
   :global(.bcx-drawer-button) {
     position: absolute;
     top: 0;
-    left: 400px;
+    left: var(--bcx-side-panel-width);
     height: 100vh;
     width: 48px;
     border: 0;
