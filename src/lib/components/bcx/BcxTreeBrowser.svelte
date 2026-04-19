@@ -508,7 +508,7 @@ function withBrowserTreeItemState(item: TreeItem): TreeItem {
   />
   <div
     bind:this={treeContainer}
-    class="bcx-tree-view pr-2 py-2 flex-1 overflow-y-auto"
+    class="bcx-tree-view pr-2 py-2 flex-1 overflow-x-hidden overflow-y-auto"
     role="tree"
     tabindex="0"
     onkeydown={handleKeyDown}

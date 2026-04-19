@@ -121,6 +121,13 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   vertical-align: middle;
 }
 
+.item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .item-count {
   font-size: 0.75rem;
 }
@@ -157,5 +164,10 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 :global(.tree-item:focus) .item-buttons,
 :global(.tree-item.focused) .item-buttons {
   opacity: 1;
+}
+
+:global(.tree-item) {
+  max-width: 100%;
+  min-width: 0;
 }
 </style>

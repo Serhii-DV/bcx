@@ -115,8 +115,8 @@ export class AlbumTreeItemFactory {
 
     if (album.metadata) {
       builder.add(
-        list(`Publisher: ${album.metadata.publisher}`, [
-          album.metadata.publisher,
+        items(`Publisher: ${album.metadata.publisher}`, [
+          text(album.metadata.publisher).makeCopyable(),
         ]).withImage(ICON_BUILDING),
       );
     }
