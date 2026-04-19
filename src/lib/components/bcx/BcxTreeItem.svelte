@@ -109,8 +109,8 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 }
 
 .bcx-tree-item-image {
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 25px;
+  height: 25px;
   object-fit: cover;
 }
 
