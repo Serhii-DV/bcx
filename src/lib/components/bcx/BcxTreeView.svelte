@@ -1,17 +1,26 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
-import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
-import {
-  generateTreeHierarchy,
-  hydrateTreeItemChildren,
-  isNode,
-  isNodeExpanded,
-} from 'src/app/treeview/utils';
-import { makeIcon } from 'src/app/treeview/utils/icon';
-import { onDestroy, onMount, tick } from 'svelte';
+import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
+import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
+import BcxTreeItem from './BcxTreeItem.svelte';
 import BcxTreeViewFilter from './BcxTreeViewFilter.svelte';
+import {
+  activateTreeItem,
+  collapseTreeNodeElement,
+  createVisibleTreeData,
+  expandTreeNode,
+  findFirstVisibleChildByPath as findFirstVisibleChildInItemsByPath,
+  findVisibleItem as findVisibleItemByIndex,
+  focusTreeItemElement,
+  getItemVisibleChildCount as getVisibleChildCount,
+  visibleItemIndex as getVisibleItemIndex,
+  visibleNext as getVisibleNext,
+  visiblePrev as getVisiblePrev,
+  shouldIgnoreTreeKeyDown,
+  showTreeItemActionFeedback,
+} from './treeViewHelpers';
 
 interface Props {
   treeData: TreeData;
@@ -27,6 +36,7 @@ let debouncedFilterQuery = $state('');
 let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
+const feedbackTimers = new Map<string, number>();
 
 // Derived values
 let effectiveTreeData: TreeData = $derived.by(() => {
@@ -36,37 +46,7 @@ let effectiveTreeData: TreeData = $derived.by(() => {
 
 let visibleData = $derived.by(() => {
   treeVersion;
-  const paths = new Set<string>();
-  const childCounts = new Map<string, number>();
-
-  // First pass: collect all visible paths from filtered tree
-  function collectPaths(items: TreeItem[] | undefined) {
-    if (!items) return;
-    for (const item of items) {
-      if (item.path) paths.add(item.path);
-      if (item.children) collectPaths(item.children);
-    }
-  }
-  collectPaths(effectiveTreeData.items);
-
-  // Second pass: count visible children for each parent in original tree
-  function countVisibleChildren(items: TreeItem[] | undefined) {
-    if (!items) return;
-    for (const item of items) {
-      if (item.children && item.children.length > 0) {
-        const visibleCount = item.children.filter((child) =>
-          paths.has(child.path || ''),
-        ).length;
-        if (item.path) {
-          childCounts.set(item.path, visibleCount);
-        }
-        countVisibleChildren(item.children);
-      }
-    }
-  }
-  countVisibleChildren(treeData.items);
-
-  return { paths, childCounts };
+  return createVisibleTreeData(effectiveTreeData.items, treeData.items);
 });
 
 let visiblePaths = $derived(visibleData.paths);
@@ -126,6 +106,8 @@ onDestroy(() => {
   if (filterDebounceTimer !== null) {
     clearTimeout(filterDebounceTimer);
   }
+  feedbackTimers.forEach((timer) => clearTimeout(timer));
+  feedbackTimers.clear();
 });
 
 async function handleItemClick(
@@ -134,58 +116,25 @@ async function handleItemClick(
 ) {
   if (!item) return;
 
-  console.log('[BcxTreeView]', '[handleItemClick]', item, event);
-
   focusedPath = item.path ?? null;
-
-  if (item.onClick) {
-    const clickContext = {
-      element: event?.currentTarget as HTMLElement,
-      item,
-      parent: treeData.findParentByPath(item.path),
-    };
-
-    await item.onClick(clickContext);
-    treeData.treeItems = generateTreeHierarchy(treeData.items);
-    refreshTreeRendering();
-
-    if (clickContext.focusPath) {
-      await tick();
-      focusTreeItem(treeData.findByPath(clickContext.focusPath));
-    }
-
-    return;
-  }
-
-  if (item.query) {
-    musicFilterStore.setSearchQuery(item.query);
-    return;
-  }
-
-  if (item.href) {
-    // Prevent default navigation for music items and set the search query instead
-    if (event?.currentTarget instanceof HTMLAnchorElement) {
-      event?.preventDefault();
-    }
-
-    // Handle default navigation for non-music pages (e.g., open in new tab)
-    // For keyboard events, manually navigate since we can't rely on default browser behavior
-    if (event instanceof KeyboardEvent || event instanceof MouseEvent) {
-      window.open(item.href, '_self');
-    }
-    return;
-  }
+  await activateTreeItem({
+    item,
+    event,
+    treeData,
+    focusTreeItem,
+    findItemByPath: (path) => treeData.findByPath(path),
+    findParentByPath: (path) => treeData.findParentByPath(path),
+    refreshTreeRendering,
+    showItemFeedback,
+    logLabel: '[BcxTreeView]',
+  });
 }
 
 async function handleKeyDown(event: KeyboardEvent) {
   if (!treeContainer) return;
 
-  // Allow system shortcuts to pass through
-  if (event.ctrlKey || event.metaKey) {
-    // Allow CTRL+R (or CMD+R on Mac) to reload the page
-    if (event.key === 'r' || event.key === 'R') {
-      return;
-    }
+  if (shouldIgnoreTreeKeyDown(event)) {
+    return;
   }
 
   event.preventDefault();
@@ -312,36 +261,19 @@ function getNavigableItems(): TreeItem[] {
 }
 
 function visibleItemIndex(path?: string | null): number {
-  if (!path) return -1;
-  return getNavigableItems().findIndex((item) => item.path === path);
+  return getVisibleItemIndex(getNavigableItems(), path);
 }
 
 function findVisibleItem(index: number): TreeItem | null {
-  const visibleItems = getNavigableItems();
-  return index >= 0 && index < visibleItems.length ? visibleItems[index] : null;
+  return findVisibleItemByIndex(getNavigableItems(), index);
 }
 
 function visibleNext(index: number, step: number = 1): TreeItem | null {
-  const visibleItems = getNavigableItems();
-
-  if (index < visibleItems.length - 1) {
-    const targetIndex =
-      step > 1 ? Math.min(index + step, visibleItems.length - 1) : index + 1;
-    return visibleItems[targetIndex];
-  }
-
-  return null;
+  return getVisibleNext(getNavigableItems(), index, step);
 }
 
 function visiblePrev(index: number, step: number = 1): TreeItem | null {
-  const visibleItems = getNavigableItems();
-
-  if (index > 0) {
-    const targetIndex = step > 1 ? Math.max(index - step, 0) : index - 1;
-    return visibleItems[targetIndex];
-  }
-
-  return null;
+  return getVisiblePrev(getNavigableItems(), index, step);
 }
 
 function findVisibleParentByPath(path?: string | null): TreeItem | null {
@@ -352,21 +284,7 @@ function findVisibleParentByPath(path?: string | null): TreeItem | null {
 }
 
 function findFirstVisibleChildByPath(path?: string | null): TreeItem | null {
-  if (!path) return null;
-
-  const currentIndex = visibleItemIndex(path);
-  if (currentIndex < 0) return null;
-
-  return (
-    getNavigableItems()
-      .slice(currentIndex + 1)
-      .find((item) => item.path?.startsWith(`${path}.`)) ?? null
-  );
-}
-
-function elementByPath(path?: string): HTMLElement | null {
-  if (!path || !treeContainer) return null;
-  return treeContainer.querySelector(`[data-path="${path}"]`) as HTMLElement;
+  return findFirstVisibleChildInItemsByPath(getNavigableItems(), path);
 }
 
 function focusTreeItem(item?: TreeItem | null) {
@@ -374,68 +292,40 @@ function focusTreeItem(item?: TreeItem | null) {
     return;
   }
 
-  const element = elementByPath(item.path);
-
-  if (!element) {
-    return;
-  }
-
   focusedPath = item.path;
-
-  if (element instanceof HTMLDetailsElement) {
-    element.querySelector('summary')?.focus();
-  } else {
-    element.focus();
-  }
+  focusTreeItemElement(treeContainer, item);
 }
 
 function collapseNode(item: TreeItem) {
-  if (!isNode(item)) {
-    return;
-  }
-
-  const element = elementByPath(item.path);
-
-  if (element instanceof HTMLDetailsElement) {
-    item.open = false;
-    element.open = false;
-  }
+  collapseTreeNodeElement(treeContainer, item);
 }
 
 function refreshTreeRendering() {
   treeVersion += 1;
 }
 
+function showItemFeedback(
+  item: TreeItem,
+  message: string,
+  duration: number = 1600,
+) {
+  showTreeItemActionFeedback(
+    treeContainer,
+    item,
+    message,
+    feedbackTimers,
+    duration,
+  );
+}
+
 async function expandNode(item: TreeItem) {
-  if (!isNode(item)) {
-    return;
-  }
-
-  const itemToFocus = item;
-  item.open = true;
-  let didHydrate = false;
-
-  if (item.loadChildren && !item.childrenLoaded) {
-    item.isLoadingChildren = true;
-    refreshTreeRendering();
-    await waitForLoadingStatePaint(itemToFocus);
-    await hydrateTreeItemChildren(item, true);
-    didHydrate = true;
-  }
-
-  if (didHydrate) {
-    refreshTreeRendering();
-    await tick();
-  }
-
-  const element = elementByPath(item.path);
-
-  if (element instanceof HTMLDetailsElement) {
-    item.open = true;
-    element.open = true;
-  }
-
-  focusTreeItem(itemToFocus);
+  await expandTreeNode({
+    item,
+    container: treeContainer,
+    focusTreeItem,
+    refreshTreeRendering,
+    showItemFeedback,
+  });
 }
 
 function handleFilterArrowDown() {
@@ -448,13 +338,14 @@ function isItemVisible(item: TreeItem): boolean {
 }
 
 function getItemVisibleChildCount(item: TreeItem): number {
-  if (item.showChildrenCount === false) {
-    return 0;
-  }
-  if (!debouncedFilterQuery.trim()) {
-    return item.children?.length || 0;
-  }
-  return visibleChildCounts.get(item.path || '') || 0;
+  return getVisibleChildCount(item, debouncedFilterQuery, visibleChildCounts);
+}
+
+function withVisibleChildCount(item: TreeItem): TreeItem {
+  return {
+    ...item,
+    childrenCount: getItemVisibleChildCount(item),
+  };
 }
 
 function handleNodeClick(item: TreeItem, event: MouseEvent) {
@@ -468,92 +359,7 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
 
   expandNode(item);
 }
-
-async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
-  await tick();
-  focusTreeItem(itemToFocus);
-  await new Promise<void>((resolve) => {
-    window.requestAnimationFrame(() => {
-      window.setTimeout(resolve, 0);
-    });
-  });
-}
 </script>
-
-{#snippet treeItemButton(button: TreeItemButton)}
-  {@const Icon = button.icon}
-  {#if button.href}
-    <a
-      href={button.href}
-      title={button.title}
-      class="item-button inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-      onclick={(e) => {
-        e.stopPropagation();
-        if (button.onClick) {
-          e.preventDefault();
-          button.onClick(e.currentTarget as HTMLElement);
-        }
-      }}
-    >
-      <Icon size="16" />
-    </a>
-  {:else}
-    <button
-      type="button"
-      title={button.title}
-      class="item-button cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
-      onclick={(e) => {
-        e.stopPropagation();
-        if (button.onClick) {
-          button.onClick(e.currentTarget as HTMLElement);
-        }
-      }}
-    >
-      <Icon size="16" />
-    </button>
-  {/if}
-{/snippet}
-
-{#snippet treeItemButtons(item: TreeItem)}
-  {#if item.buttons && item.buttons.length > 0}
-<div class="item-buttons">
-  {#each item.buttons as button}
-    {@render treeItemButton(button)}
-  {/each}
-</div>
-  {/if}
-{/snippet}
-
-{#snippet treeItemIcon(item: TreeItem)}
-  {@const Icon = makeIcon(item.icon)}
-  {#if Icon}
-  <span class="item-icon text-gray-300"><Icon size="16" /></span>
-  {/if}
-{/snippet}
-
-{#snippet treeItem(item: TreeItem)}
-  {@const hasChildren = isNode(item)}
-  {@render treeItemImage(item)}
-  <span class="item-label" class:ml-2={!hasChildren}>{item.label}</span>
-  {@render treeItemActions(item)}
-{/snippet}
-
-{#snippet treeItemActions(item: TreeItem)}
-  {@const visibleChildCount = getItemVisibleChildCount(item)}
-<div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
-  {@render treeItemIcon(item)}
-  {@render treeItemButtons(item)}
-  {#if visibleChildCount > 0}
-    <span class="item-count text-sm text-gray-400">{visibleChildCount}</span>
-  {/if}
-</div>
-{/snippet}
-
-{#snippet treeItemImage(item: TreeItem)}
-  {#if item.image}
-    <img src="{item.image}" alt="{item.label}" class="bcx-tree-item-img w-6 h-6 flex-shrink-0" loading="lazy" />
-  {/if}
-{/snippet}
 
 {#snippet treeItems(items: TreeItem[] | undefined)}
   {#if items && items.length > 0}
@@ -573,11 +379,9 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
                 tabindex={focusedPath === item.path ? 0 : -1}
                 onclick={(e) => handleNodeClick(item, e)}
               >
-                {@render treeItem(item)}
+                <BcxTreeItem item={withVisibleChildCount(item)} />
               </summary>
-              {#if item.isLoadingChildren}
-                <div class="pl-6 py-1 text-sm text-gray-400">Loading...</div>
-              {:else}
+              {#if !item.isLoadingChildren}
                 {@render treeItems(item.children)}
               {/if}
             </details>
@@ -592,7 +396,7 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
               href={item.href}
               title={item.href}
               >
-              {@render treeItem(item)}
+              <BcxTreeItem item={withVisibleChildCount(item)} />
             </a>
           {/if}
         </li>
@@ -610,7 +414,7 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
   />
   <div
     bind:this={treeContainer}
-    class="bcx-tree-view pr-2 py-2 flex-1 overflow-y-auto"
+    class="bcx-tree-view pr-2 py-2 flex-1 overflow-x-hidden overflow-y-auto"
     role="tree"
     tabindex="0"
     onkeydown={handleKeyDown}
@@ -658,44 +462,13 @@ async function waitForLoadingStatePaint(itemToFocus: TreeItem) {
           mask-size: cover;
 }
 
-.bcx-tree-view a, .bcx-tree-view span:not(.highlight-container) {
+.bcx-tree-view a {
     display: inline-flex;
     padding-block: .25rem;
     vertical-align: middle;
 }
 
-.bcx-tree-view .bcx-tree-item-img {
-    margin-top: 0.125rem;
-}
-
-.bcx-tree-view details > summary > .bcx-tree-item-img {
-    margin-right: 0.5rem;
-}
-
 .bcx-tree-view .hidden {
     display: none;
-}
-
-.bcx-tree-view .item-actions {
-  padding-right: 5px;
-}
-
-.bcx-tree-view .item-icon {
-  margin-left: 5px;
-}
-
-.bcx-tree-view .item-icon,
-.bcx-tree-view .item-buttons {
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-}
-
-.bcx-tree-view .tree-item:hover .item-icon,
-.bcx-tree-view .tree-item:focus .item-icon,
-.bcx-tree-view .tree-item.focused .item-icon,
-.bcx-tree-view .tree-item:hover .item-buttons,
-.bcx-tree-view .tree-item:focus .item-buttons,
-.bcx-tree-view .tree-item.focused .item-buttons {
-    opacity: 1;
 }
 </style>

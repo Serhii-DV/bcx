@@ -3,7 +3,7 @@ import { console } from 'src/utils/console';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 5;
 const CACHE_KEY_PREFIX = '/cache/tree-item';
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 
@@ -16,6 +16,7 @@ interface TreeItemSnapshot {
   id?: string;
   label?: string;
   children?: TreeItemSnapshot[];
+  childrenCount?: number;
   open?: boolean;
   level?: number;
   path?: string;
@@ -24,7 +25,7 @@ interface TreeItemSnapshot {
   query?: string;
   keywords?: string[];
   includeInFilterSuggestions?: boolean;
-  icon?: string;
+  actionIcon?: string;
   buttons?: TreeItemButtonSnapshot[];
 }
 
@@ -140,6 +141,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
   return {
     id: item.id,
     label: item.label,
+    childrenCount: item.childrenCount ?? item.children?.length,
     open: item.open,
     level: item.level,
     path: item.path,
@@ -148,7 +150,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
     query: item.query,
     keywords: item.keywords,
     includeInFilterSuggestions: item.includeInFilterSuggestions,
-    icon: item.icon,
+    actionIcon: item.actionIcon,
     buttons: buttons.length > 0 ? buttons : undefined,
     children: item.children?.map(serializeTreeItem),
   };
@@ -164,6 +166,7 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
   return {
     id: item.id,
     label: item.label,
+    childrenCount: item.childrenCount ?? item.children?.length,
     open: item.open,
     level: item.level,
     path: item.path,
@@ -172,7 +175,7 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
     query: item.query,
     keywords: item.keywords,
     includeInFilterSuggestions: item.includeInFilterSuggestions,
-    icon: item.icon,
+    actionIcon: item.actionIcon,
     buttons,
     children: item.children?.map(deserializeTreeItem),
   };

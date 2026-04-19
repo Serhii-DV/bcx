@@ -9,6 +9,13 @@ import { TreeData } from '../TreeData';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemFactory } from '../TreeItemFactory';
 import { deferDescendants } from '../utils';
+import {
+  ICON_HEADPHONES,
+  ICON_HEART,
+  ICON_HISTORY,
+  ICON_LIBRARY,
+  ICON_TAGS,
+} from '../utils/icon';
 import { BandTreeItem } from './BandTreeItem';
 import { CollectionTreeItem } from './collection/CollectionTreeItem';
 import { FanPageDataTreeItem } from './FanPageDataTreeItem';
@@ -98,45 +105,74 @@ export class MainTreeData {
       }
 
       items.push(
-        TreeItemFactory.lazy({ label: 'Following Bands' }, () =>
-          TreeItemCache.getOrCreate(
-            TreeItemCache.subtreeKey(userKeyPart, 'following-bands'),
-            () => FollowingBandsTreeItem.create(fanData.username || ''),
-            CACHE_TTL.FOLLOWING_BANDS,
-          ),
+        TreeItemFactory.lazy(
+          {
+            label: 'Following Bands',
+            image: ICON_HEADPHONES,
+            childrenCount:
+              bandcampPageData.data?.following_bands_data?.item_count,
+          },
+          () =>
+            TreeItemCache.getOrCreate(
+              TreeItemCache.subtreeKey(userKeyPart, 'following-bands'),
+              () => FollowingBandsTreeItem.create(fanData.username || ''),
+              CACHE_TTL.FOLLOWING_BANDS,
+            ),
         ),
       );
       items.push(
-        TreeItemFactory.lazy({ label: 'Following Genres' }, () =>
-          TreeItemCache.getOrCreate(
-            TreeItemCache.subtreeKey(userKeyPart, 'following-genres'),
-            () => FollowingGenresTreeItem.create(fanData.username || ''),
-            CACHE_TTL.FOLLOWING_GENRES,
-          ),
+        TreeItemFactory.lazy(
+          {
+            label: 'Following Genres',
+            image: ICON_TAGS,
+            childrenCount:
+              bandcampPageData.data?.following_genres_data?.item_count,
+          },
+          () =>
+            TreeItemCache.getOrCreate(
+              TreeItemCache.subtreeKey(userKeyPart, 'following-genres'),
+              () => FollowingGenresTreeItem.create(fanData.username || ''),
+              CACHE_TTL.FOLLOWING_GENRES,
+            ),
         ),
       );
       items.push(
-        TreeItemFactory.lazy({ label: 'Collection' }, () =>
-          TreeItemCache.getOrCreate(
-            TreeItemCache.subtreeKey(userKeyPart, 'collection'),
-            () => CollectionTreeItem.create(fanData.username || ''),
-            CACHE_TTL.COLLECTION,
-          ),
+        TreeItemFactory.lazy(
+          {
+            label: 'Collection',
+            image: ICON_LIBRARY,
+            childrenCount:
+              bandcampPageData.data?.collection_data?.item_count ??
+              bandcampPageData.data?.current_fan?.collection_count ??
+              bandcampPageData.data?.collection_count,
+          },
+          () =>
+            TreeItemCache.getOrCreate(
+              TreeItemCache.subtreeKey(userKeyPart, 'collection'),
+              () => CollectionTreeItem.create(fanData.username || ''),
+              CACHE_TTL.COLLECTION,
+            ),
         ),
       );
       items.push(
-        TreeItemFactory.lazy({ label: 'Wishlist' }, () =>
-          TreeItemCache.getOrCreate(
-            TreeItemCache.subtreeKey(userKeyPart, 'wishlist'),
-            () => WishlistTreeItem.create(fanData.username || ''),
-            CACHE_TTL.WISHLIST,
-          ),
+        TreeItemFactory.lazy(
+          {
+            label: 'Wishlist',
+            image: ICON_HEART,
+            childrenCount: bandcampPageData.data?.wishlist_data?.item_count,
+          },
+          () =>
+            TreeItemCache.getOrCreate(
+              TreeItemCache.subtreeKey(userKeyPart, 'wishlist'),
+              () => WishlistTreeItem.create(fanData.username || ''),
+              CACHE_TTL.WISHLIST,
+            ),
         ),
       );
     }
 
     items.push(
-      TreeItemFactory.lazy({ label: 'History' }, () =>
+      TreeItemFactory.lazy({ label: 'History', image: ICON_HISTORY }, () =>
         HistoryTreeItem.createLatestVisited(),
       ),
     );

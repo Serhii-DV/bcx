@@ -5,6 +5,7 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import { TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
+import { ICON_CALENDAR, ICON_DISC, ICON_INFO, ICON_MIC } from '../utils/icon';
 
 export class BandTreeItem {
   static create(band: Band, url: Url): TreeItem {
@@ -37,26 +38,30 @@ export class BandTreeItem {
     band: Band,
     includeBriefInformation: boolean,
   ): TreeItem {
-    return {
-      label: 'Artists',
-      children: AlbumTreeItemFactory.fromAlbumsByArtistReleases(
+    return TreeItemBuilder.items(
+      'Artists',
+      AlbumTreeItemFactory.fromAlbumsByArtistReleases(
         band.metadata.albums,
         includeBriefInformation,
       ),
-    };
+    )
+      .withImage(ICON_MIC)
+      .build();
   }
 
   private static createReleasesTreeItem(
     band: Band,
     includeBriefInformation: boolean,
   ): TreeItem {
-    return {
-      label: 'Releases',
-      children: AlbumTreeItemFactory.fromAlbums(
+    return TreeItemBuilder.items(
+      'Releases',
+      AlbumTreeItemFactory.fromAlbums(
         band.metadata.albums,
         includeBriefInformation,
       ),
-    };
+    )
+      .withImage(ICON_DISC)
+      .build();
   }
 
   private static createBandYearsTreeItem(
@@ -78,22 +83,19 @@ export class BandTreeItem {
       return undefined;
     }
 
-    return {
-      label,
-      open: false,
-      children,
-    };
+    return TreeItemBuilder.items(label, children)
+      .withImage(ICON_CALENDAR)
+      .build();
   }
 
   private static createBandAbout(band: Band): TreeItem {
-    return {
-      label: 'About ' + band.name,
-      children: [
-        TreeItemFactory.list('Created', [
-          band.metadata.created.toLocaleDateString(),
-        ]),
-        TreeItemFactory.list('Currency', [band.metadata.currency]),
-      ],
-    };
+    return TreeItemBuilder.items('About ' + band.name, [
+      TreeItemFactory.list('Created', [
+        band.metadata.created.toLocaleDateString(),
+      ]),
+      TreeItemFactory.list('Currency', [band.metadata.currency]),
+    ])
+      .withImage(ICON_INFO)
+      .build();
   }
 }

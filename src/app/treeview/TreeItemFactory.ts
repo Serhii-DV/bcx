@@ -18,7 +18,7 @@ export class TreeItemFactory {
       label,
       query: typeof query === 'string' ? query : label,
       includeInFilterSuggestions: true,
-      icon: ICON_SQUARE_ARROW_RIGHT,
+      actionIcon: ICON_SQUARE_ARROW_RIGHT,
     };
   }
 
@@ -37,13 +37,13 @@ export class TreeItemFactory {
   static link(
     label: string,
     href: string,
-    icon: string = ICON_EXTERNAL_LINK,
+    actionIcon: string = ICON_EXTERNAL_LINK,
     includeInFilterSuggestions: boolean = true,
   ): TreeItem {
     return {
       label,
       href,
-      icon,
+      actionIcon,
       includeInFilterSuggestions,
     };
   }

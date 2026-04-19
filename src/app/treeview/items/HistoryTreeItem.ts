@@ -141,7 +141,7 @@ export class HistoryTreeItem {
       }
 
       item.isLoadingChildren = true;
-      item.label = 'Loading...';
+      context.showFeedback?.('Loading...', 0);
 
       try {
         const children = parent?.children;
@@ -173,6 +173,7 @@ export class HistoryTreeItem {
           error,
         );
         item.label = `${LOAD_MORE_LABEL} (error)`;
+        context.showFeedback?.('Error loading');
       } finally {
         item.isLoadingChildren = false;
       }
