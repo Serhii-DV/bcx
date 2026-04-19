@@ -3,35 +3,28 @@ import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import { TreeItemBuilder } from '../TreeItemBuilder';
+import { link, TreeItemBuilder } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
 import { ICON_CALENDAR, ICON_DISC, ICON_INFO, ICON_MIC } from '../utils/icon';
 
 export class BandTreeItem {
   static create(band: Band, url: Url): TreeItem {
     const showAlbumsWithKeywords = isBandcampMusicUrl(url);
-    const treeItemBuilder = new TreeItemBuilder(TreeItemFactory.fromBand(band));
-    treeItemBuilder.withOpen(showAlbumsWithKeywords).withoutHref();
+    const builder = new TreeItemBuilder(TreeItemFactory.fromBand(band));
+    builder.withOpen(showAlbumsWithKeywords).withoutHref();
 
     if (band.hasReleases) {
-      treeItemBuilder.withChildren([
+      builder.withChildren([
         this.createArtistsTreeItem(band, showAlbumsWithKeywords),
         this.createReleasesTreeItem(band, showAlbumsWithKeywords),
         this.createBandYearsTreeItem(band, showAlbumsWithKeywords),
         this.createBandAbout(band),
       ]);
     } else {
-      treeItemBuilder.addChild(
-        TreeItemFactory.link(
-          'Open Band/Label Page',
-          band.url.toString(),
-          undefined,
-          false,
-        ),
-      );
+      builder.add(link('Open Band/Label Page', band.url.toString()));
     }
 
-    return treeItemBuilder.build();
+    return builder.build();
   }
 
   private static createArtistsTreeItem(

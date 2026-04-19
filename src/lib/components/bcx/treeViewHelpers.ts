@@ -127,9 +127,20 @@ export async function activateTreeItem({
     }
 
     if (event instanceof KeyboardEvent || event instanceof MouseEvent) {
+      showItemFeedback?.(item, 'Opening...', 0);
+      await waitForActionFeedbackPaint();
       window.open(item.href, '_self');
     }
   }
+}
+
+async function waitForActionFeedbackPaint() {
+  await tick();
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.setTimeout(resolve, 0);
+    });
+  });
 }
 
 export function shouldIgnoreTreeKeyDown(event: KeyboardEvent): boolean {

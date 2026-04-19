@@ -6,7 +6,7 @@ import {
 import { arrayUnique } from 'src/utils/array';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
-import { items, list, TreeItemBuilder, text } from '../TreeItemBuilder';
+import { items, link, list, TreeItemBuilder, text } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
 import {
   ICON_BUILDING,
@@ -59,14 +59,7 @@ export class AlbumTreeItemFactory {
       );
     }
 
-    builder.add(
-      TreeItemFactory.link(
-        'Open Album Page',
-        album.url.toString(),
-        undefined,
-        false,
-      ),
-    );
+    builder.add(link('Open Album Page', album.url.toString()));
 
     return builder.build();
   }

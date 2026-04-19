@@ -3,6 +3,7 @@ import type { Track } from 'src/bandcamp/domain/track/track';
 import { Url } from 'src/core/url';
 import { TreeItemButtonFactory } from './buttons/factory';
 import type { TreeItem } from './TreeItem';
+import { link } from './TreeItemBuilder';
 import type { TreeItemButton } from './TreeItemButton';
 import { ICON_EXTERNAL_LINK, ICON_SQUARE_ARROW_RIGHT } from './utils/icon';
 
@@ -34,23 +35,9 @@ export class TreeItemFactory {
     return TreeItemFactory.items(label, strings.map(TreeItemFactory.text));
   }
 
-  static link(
-    label: string,
-    href: string,
-    actionIcon: string = ICON_EXTERNAL_LINK,
-    includeInFilterSuggestions: boolean = true,
-  ): TreeItem {
-    return {
-      label,
-      href,
-      actionIcon,
-      includeInFilterSuggestions,
-    };
-  }
-
   static linkOrText(label: string, href?: string): TreeItem {
     return href
-      ? TreeItemFactory.link(label, href)
+      ? link(label, href).build()
       : {
           ...TreeItemFactory.text(label),
           includeInFilterSuggestions: true,
@@ -72,9 +59,9 @@ export class TreeItemFactory {
 
   static fromBand(band: Band): TreeItem {
     const href = band.url?.toString();
-    const item = TreeItemFactory.link(band.name, href || '');
-    item.image = band.artwork.tinySizeUrl;
-    return item;
+    return link(band.name, href || '')
+      .withImage(band.artwork.tinySizeUrl)
+      .build();
   }
 
   static fromArtistName(artistName: string): TreeItem {

@@ -2,7 +2,7 @@ import { copyToClipboard } from 'src/utils/clipboard';
 import type { TreeItem, TreeItemClickContext } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 import { TreeItemFactory } from './TreeItemFactory';
-import { ICON_CLIPBOARD_COPY } from './utils/icon';
+import { ICON_CLIPBOARD_COPY, ICON_EXTERNAL_LINK } from './utils/icon';
 
 type ItemOrBuilder = TreeItem | TreeItemBuilder;
 
@@ -29,10 +29,6 @@ export class TreeItemBuilder {
 
   static list(label: string, strings: string[]): TreeItemBuilder {
     return this.create(TreeItemFactory.list(label, strings));
-  }
-
-  static link(label: string, href: string): TreeItemBuilder {
-    return this.create(TreeItemFactory.link(label, href));
   }
 
   withId(id: string): this {
@@ -92,6 +88,10 @@ export class TreeItemBuilder {
   withHref(href: string): this {
     this.item.href = href;
     return this;
+  }
+
+  asLink(href: string, actionIcon?: string): this {
+    return this.withHref(href).withActionIcon(actionIcon ?? ICON_EXTERNAL_LINK);
   }
 
   withoutHref(): this {
@@ -193,8 +193,12 @@ export function text(label: string): TreeItemBuilder {
   return TreeItemBuilder.text(label);
 }
 
-export function link(label: string, href: string): TreeItemBuilder {
-  return TreeItemBuilder.link(label, href);
+export function link(
+  label: string,
+  href: string,
+  actionIcon?: string,
+): TreeItemBuilder {
+  return TreeItemBuilder.text(label).asLink(href, actionIcon);
 }
 
 export function list(label: string, strings: string[]): TreeItemBuilder {
