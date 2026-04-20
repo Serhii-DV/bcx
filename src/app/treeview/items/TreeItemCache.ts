@@ -25,7 +25,6 @@ interface TreeItemSnapshot {
   query?: string;
   keywords?: string[];
   includeInFilterSuggestions?: boolean;
-  interactive?: boolean;
   actionIcon?: string;
   buttons?: TreeItemButtonSnapshot[];
 }
@@ -151,7 +150,6 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
     query: item.query,
     keywords: item.keywords,
     includeInFilterSuggestions: item.includeInFilterSuggestions,
-    interactive: item.interactive,
     actionIcon: item.actionIcon,
     buttons: buttons.length > 0 ? buttons : undefined,
     children: item.children?.map(serializeTreeItem),
@@ -177,7 +175,6 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
     query: item.query,
     keywords: item.keywords,
     includeInFilterSuggestions: item.includeInFilterSuggestions,
-    interactive: item.interactive,
     actionIcon: item.actionIcon,
     buttons,
     children: item.children?.map(deserializeTreeItem),

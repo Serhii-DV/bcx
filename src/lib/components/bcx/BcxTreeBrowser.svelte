@@ -128,7 +128,7 @@ async function handleItemClick(
   item?: TreeItem | null,
   event?: MouseEvent | KeyboardEvent,
 ) {
-  if (!item || !isInteractive(item)) return;
+  if (!item) return;
 
   focusedPath = item.path ?? null;
   await activateTreeItem({
@@ -217,11 +217,9 @@ async function handleKeyDown(event: KeyboardEvent) {
 }
 
 function getNavigableItems(): TreeItem[] {
-  const items = currentRootPath
+  return currentRootPath
     ? [createDrillUpItem(), ...browserItems]
     : browserItems;
-
-  return items.filter(isInteractive);
 }
 
 function visibleItemIndex(path?: string | null): number {
@@ -375,10 +373,6 @@ async function handleBrowserItemClick(
   item: TreeItem,
   event?: MouseEvent | KeyboardEvent,
 ) {
-  if (!isInteractive(item)) {
-    return;
-  }
-
   if (isDrillUpItem(item)) {
     navigateToParentLevel();
     return;
@@ -402,10 +396,6 @@ function getItemVisibleChildCount(item: TreeItem): number {
   }
 
   return item.childrenCount ?? item.children?.length ?? 0;
-}
-
-function isInteractive(item: TreeItem): boolean {
-  return item.interactive !== false;
 }
 
 function withBrowserChildCount(item: TreeItem): TreeItem {
@@ -448,16 +438,7 @@ function withBrowserTreeItemState(item: TreeItem): TreeItem {
 
 {#snippet browserTreeItem(item: TreeItem)}
   {@const hasChildren = isNode(item)}
-  {#if !isInteractive(item)}
-    <div
-      class="tree-item bcx-browser-static-row flex items-center w-full pl-2 text-left px-0 py-0 text-gray-300"
-      data-level="{item.level}"
-      data-path="{item.path}"
-      aria-disabled="true"
-    >
-      <BcxTreeItem item={item} showActions={false} />
-    </div>
-  {:else if hasChildren}
+  {#if hasChildren}
     <div
       role="button"
       class="tree-item bcx-browser-row flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
