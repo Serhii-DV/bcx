@@ -107,7 +107,7 @@ $effect(() => {
   }
 
   :global(.bcx-side-panel-shell) {
-    --bcx-side-panel-width: 300px;
+    --bcx-side-panel-width: 400px;
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 999999;
