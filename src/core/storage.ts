@@ -72,6 +72,14 @@ export class Storage {
     return data;
   }
 
+  async getBooleanByKey(key: string): Promise<boolean | undefined> {
+    const value = await this.getByKey<boolean>(key);
+    if (value === undefined) {
+      return undefined;
+    }
+    return Boolean(value);
+  }
+
   async getKeys(): Promise<string[]> {
     return new Promise<string[]>((resolve, reject) => {
       const logLabel = `[Storage.getKeys]`;
