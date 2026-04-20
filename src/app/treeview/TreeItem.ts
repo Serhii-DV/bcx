@@ -26,6 +26,7 @@ export interface TreeItem {
   query?: string;
   keywords?: string[];
   includeInFilterSuggestions?: boolean;
+  interactive?: boolean;
   buttons?: TreeItemButton[];
   onClick?: (context: TreeItemClickContext) => void | Promise<void>;
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;

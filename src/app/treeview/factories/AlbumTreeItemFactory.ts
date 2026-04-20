@@ -94,12 +94,13 @@ export class AlbumTreeItemFactory {
   static async createWithInformation(album: Album): Promise<TreeItem> {
     const builder = this.builder(album).withoutHref();
     const releaseMetadata = getReleaseMetadataFromAlbum(album);
+    const artistItems = await ArtistTreeItem.createTreeItems(album.artist);
 
     builder.add(
-      items(
-        `Artist: ${album.artist.toString()}`,
-        await ArtistTreeItem.createTreeItems(album.artist),
-      ).withImage(ICON_MIC),
+      text(`Artist: ${album.artist.toString()}`)
+        .withImage(ICON_MIC)
+        .asNonInteractive(),
+      ...artistItems,
     );
 
     if (releaseMetadata.artistNames?.length) {

@@ -119,6 +119,11 @@ export class TreeItemBuilder {
     return this;
   }
 
+  asNonInteractive(): this {
+    this.item.interactive = false;
+    return this;
+  }
+
   withButtons(buttons: TreeItemButton[]): this {
     this.item.buttons = buttons;
     return this;
