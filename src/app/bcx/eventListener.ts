@@ -3,50 +3,81 @@ import { BandIndexData } from 'src/bandcamp/domain/storage/bandIndexData';
 import { StorageKey } from 'src/bandcamp/domain/storageKey';
 import { storage } from 'src/core/shared';
 
-export async function BCXEventListener(event: MessageEvent<any>) {
-  if (event.source !== window || !event.data || event.data.source !== 'BCX')
-    return;
+type BCXEventData = {
+  source: 'BCX';
+  action?: string;
+  albumId?: number;
+};
 
-  if (event.data.action === 'clearAlbumData') {
-    const albumId = event.data.albumId;
-    BandcampStorage.getAlbumsRawDataByIds([albumId]).then((albumsRawData) => {
-      const trackKeys = albumsRawData.flatMap((albumRawData) =>
-        StorageKey.trackKeys(albumRawData.trackIds),
-      );
-      storage.remove(trackKeys).then(() => {
-        const response = trackKeys;
-        window.postMessage(
-          {
-            source: 'BCX',
-            action: 'clearAlbumDataResponse',
-            albumId,
-            response,
-          },
-          '*',
-        );
-      });
-    });
-  } else if (event.data.action === 'getStorageSize') {
-    const count = await storage.count();
-    const size = await storage.getSize();
+type BCXActionHandler = (data: BCXEventData) => Promise<void> | void;
 
-    window.postMessage(
-      {
-        source: 'BCX',
-        action: 'getStorageSizeResponse',
-        response: {
-          count,
-          size,
-          sizeInBytes: size + ' bytes',
-          sizeInKB: (size / 1024).toFixed(2) + ' KB',
-          sizeInMB: (size / (1024 * 1024)).toFixed(2) + ' MB',
-        },
+const actionHandlers: Record<string, BCXActionHandler> = {
+  clearAlbumData,
+  getStorageSize,
+  indexBands,
+};
+
+export async function BCXEventListener(event: MessageEvent<unknown>) {
+  if (!isBCXEvent(event)) return;
+
+  const { action } = event.data;
+  if (!action) return;
+
+  await actionHandlers[action]?.(event.data);
+}
+
+function isBCXEvent(
+  event: MessageEvent<unknown>,
+): event is MessageEvent<BCXEventData> {
+  return (
+    event.source === window &&
+    typeof event.data === 'object' &&
+    event.data !== null &&
+    'source' in event.data &&
+    event.data.source === 'BCX'
+  );
+}
+
+async function clearAlbumData(data: BCXEventData) {
+  const { albumId } = data;
+  if (typeof albumId !== 'number') return;
+
+  const albumsRawData = await BandcampStorage.getAlbumsRawDataByIds([albumId]);
+  const trackKeys = albumsRawData.flatMap((albumRawData) =>
+    StorageKey.trackKeys(albumRawData.trackIds),
+  );
+
+  await storage.remove(trackKeys);
+
+  window.postMessage(
+    {
+      source: 'BCX',
+      action: 'clearAlbumDataResponse',
+      albumId,
+      response: trackKeys,
+    },
+    '*',
+  );
+}
+
+async function getStorageSize() {
+  const count = await storage.count();
+  const size = await storage.getSize();
+
+  window.postMessage(
+    {
+      source: 'BCX',
+      action: 'getStorageSizeResponse',
+      response: {
+        count,
+        size,
+        sizeInBytes: size + ' bytes',
+        sizeInKB: (size / 1024).toFixed(2) + ' KB',
+        sizeInMB: (size / (1024 * 1024)).toFixed(2) + ' MB',
       },
-      '*',
-    );
-  } else if (event.data.action === 'indexBands') {
-    indexBands();
-  }
+    },
+    '*',
+  );
 }
 
 async function indexBands() {

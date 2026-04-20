@@ -1,7 +1,9 @@
 import pkg from '../../../package.json';
 
 const BCX = {
-  getVersion: () => pkg.version,
+  get version() {
+    return pkg.version;
+  },
   storage: {
     async clearAlbumData(albumId: number) {
       console.log(
@@ -39,7 +41,7 @@ const BCX = {
   },
 };
 
-console.log('[BCX]', 'BCX script loaded, version:', BCX.getVersion());
+console.log('[BCX]', 'BCX script loaded, version:', BCX.version);
 (window as any).BCX = BCX;
 
 const logableActionsWithResponse = [
