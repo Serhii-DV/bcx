@@ -10,6 +10,7 @@ import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { markAppSetupStart, measureAppMount } from 'src/utils/performance';
 import type { Album } from '../domain/album/album';
+import type { AlbumDetails } from '../domain/album/details';
 import type { Band } from '../domain/band/band';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
@@ -46,6 +47,7 @@ onDOMReady(async () => {
 
   let band: Band | null = null;
   let album: Album | null = null;
+  let albumDetails: AlbumDetails | null = null;
 
   try {
     if (isBandcampMusicUrl(currentPageUrl)) {
@@ -56,12 +58,18 @@ onDOMReady(async () => {
       const pageAlbum = await PageAlbum.init();
       band = pageAlbum.band;
       album = pageAlbum.album;
+      albumDetails = pageAlbum.details;
     } else if (isBandcampTrackUrl(currentPageUrl)) {
       const trackPage = new PageTrack();
       BandcampStorage.saveTrack(trackPage.track);
     }
 
-    const treeData = await MainTreeData.create(currentPageUrl, band, album);
+    const treeData = await MainTreeData.create(
+      currentPageUrl,
+      band,
+      album,
+      albumDetails,
+    );
     const [initialSidePanelOpen, hasCompletedTour, hasCompletedSidePanelTour] =
       await Promise.all([
         getSessionBoolean(SIDE_PANEL_OPEN_KEY),

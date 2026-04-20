@@ -1,4 +1,5 @@
 import { Album } from 'src/bandcamp/domain/album/album';
+import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { console } from 'src/utils/console';
 import { element, elementHtml } from 'src/utils/dom';
 import { AlbumFactory } from '../album/factory';
@@ -16,6 +17,7 @@ export class PageAlbum {
    */
   private constructor(
     public readonly album: Album,
+    public readonly details: AlbumDetails,
     public readonly band: Band,
   ) {
     elementHtml()?.classList.add('bcx-page-album');
@@ -31,14 +33,16 @@ export class PageAlbum {
     const schema = getMusicAlbumSchema();
     console.log('[PageAlbum]', '[Schema]', schema);
 
-    const album = AlbumFactory.createFromSchema(schema!);
+    const album = AlbumFactory.createFromSchema(schema);
+    const details = AlbumDetails.fromMusicAlbumSchema(schema);
     const bands = await BandcampStorage.getBands([album.bandId]);
-    const band = bands[0] ?? BandFactory.fromMusicAlbumSchema(schema!);
+    const band = bands[0] ?? BandFactory.fromMusicAlbumSchema(schema);
 
-    pageAlbum = new PageAlbum(album, band);
+    pageAlbum = new PageAlbum(album, details, band);
     pageAlbum.appendAlbumYear();
 
     console.log('[PageAlbum]', '[Album]', pageAlbum.album);
+    console.log('[PageAlbum]', '[Details]', pageAlbum.details);
     console.log('[PageAlbum]', '[Band]', pageAlbum.band);
 
     await BandcampStorage.saveAlbum(album);

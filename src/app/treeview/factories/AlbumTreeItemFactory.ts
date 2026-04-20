@@ -1,8 +1,6 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
-import {
-  getArtistNamesFromAlbums,
-  getReleaseMetadataFromAlbum,
-} from 'src/bandcamp/domain/album/helper';
+import type { AlbumDetails } from 'src/bandcamp/domain/album/details';
+import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
 import { arrayUnique } from 'src/utils/array';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import type { TreeItem } from '../TreeItem';
@@ -28,10 +26,10 @@ export class AlbumTreeItemFactory {
     return item;
   }
 
-  static createWithBriefInformation(album: Album): TreeItem {
+  static createWithSummary(album: Album): TreeItem {
     const builder = this.builder(album).withoutLink().withoutChildrenCount();
-    const artistNames = album.artistNames.sort();
-    const keywords = (album.metadata?.keywords || []).sort();
+    const artistNames = [...album.artistNames].sort();
+    const keywords = [...(album.metadata?.keywords || [])].sort();
 
     builder.add(TreeItemFactory.textWithQuery(album.toString()));
 
@@ -64,20 +62,15 @@ export class AlbumTreeItemFactory {
     return builder.build();
   }
 
-  static fromAlbums(
-    albums: Album[],
-    includeBriefInformation: boolean = false,
-  ): TreeItem[] {
+  static fromAlbums(albums: Album[], withSummary: boolean = false): TreeItem[] {
     return albums.map((album) =>
-      includeBriefInformation
-        ? this.createWithBriefInformation(album)
-        : this.create(album),
+      withSummary ? this.createWithSummary(album) : this.create(album),
     );
   }
 
   static fromAlbumsByArtistReleases(
     albums: Album[],
-    includeBriefInformation: boolean = false,
+    withSummary: boolean = false,
   ): TreeItem[] {
     const artists = getArtistNamesFromAlbums(albums);
     return arrayUnique(artists)
@@ -85,77 +78,77 @@ export class AlbumTreeItemFactory {
       .map((artist) => {
         const artistChildren: TreeItem[] = this.fromAlbums(
           albums.filter((album) => album.containsArtistName(artist)),
-          includeBriefInformation,
+          withSummary,
         );
         return TreeItemFactory.items(artist, artistChildren);
       });
   }
 
-  static async createWithInformation(album: Album): Promise<TreeItem> {
-    const builder = this.builder(album).withoutHref();
-    const releaseMetadata = getReleaseMetadataFromAlbum(album);
-    const artistItems = await ArtistTreeItem.createTreeItems(album.artist);
+  static async createWithDetails(details: AlbumDetails): Promise<TreeItem> {
+    const builder = this.detailsBuilder(details).withoutHref();
+    const artistItems = await ArtistTreeItem.createTreeItems(details.artist);
 
-    builder.add(items(`${album.artist}`, artistItems).withImage(ICON_MIC));
+    builder.add(items(`${details.artist}`, artistItems).withImage(ICON_MIC));
 
-    if (releaseMetadata.artistNames?.length) {
-      builder.add(list('Parsed artists', releaseMetadata.artistNames));
-    }
-
-    if (album.metadata) {
-      builder.add(
-        items(`Publisher: ${album.metadata.publisher}`, [
-          text(album.metadata.publisher).makeCopyable(),
-        ]).withImage(ICON_BUILDING),
-      );
-    }
-
-    const year = releaseMetadata?.releaseYear || album.metadata?.year;
-
-    if (year) {
-      builder.add(
-        items(
-          `${year}`,
-          album.metadata
-            ? [
-                text(
-                  `Published Date: ${album.metadata.publishedDate}`,
-                ).withImage(ICON_CALENDAR_DAYS),
-                text(`Modified Date: ${album.metadata.modifiedDate}`).withImage(
-                  ICON_CALENDAR_DAYS,
-                ),
-              ]
-            : [],
-        ).withImage(ICON_CALENDAR_DAYS),
-      );
-    }
-
-    if (releaseMetadata.catalogNumber) {
-      builder.add(
-        TreeItemFactory.text(`Catalog: ${releaseMetadata.catalogNumber}`),
-      );
-    }
-
-    if (releaseMetadata.releaseType) {
-      builder.add(text(`Type: ${releaseMetadata.releaseType}`));
+    if (details.releaseMetadata.artistNames?.length) {
+      builder.add(list('Parsed artists', details.releaseMetadata.artistNames));
     }
 
     builder.add(
-      items('Tracks', TreeItemFactory.fromTracks(album.tracks)).withImage(
+      items(`Publisher: ${details.publisher}`, [
+        text(details.publisher).makeCopyable(),
+      ]).withImage(ICON_BUILDING),
+    );
+
+    const year = details.year;
+
+    if (year) {
+      builder.add(
+        items(`${year}`, [
+          text(`Published Date: ${details.publishedDate}`).withImage(
+            ICON_CALENDAR_DAYS,
+          ),
+          text(`Modified Date: ${details.modifiedDate}`).withImage(
+            ICON_CALENDAR_DAYS,
+          ),
+        ]).withImage(ICON_CALENDAR_DAYS),
+      );
+    }
+
+    if (details.releaseMetadata.catalogNumber) {
+      builder.add(
+        TreeItemFactory.text(
+          `Catalog: ${details.releaseMetadata.catalogNumber}`,
+        ),
+      );
+    }
+
+    if (details.releaseMetadata.releaseType) {
+      builder.add(text(`Type: ${details.releaseMetadata.releaseType}`));
+    }
+
+    builder.add(
+      items('Tracks', TreeItemFactory.fromTracks(details.tracks)).withImage(
         ICON_LIST_MUSIC,
       ),
     );
 
-    builder.add(
-      list('Tags', album.metadata?.keywords || []).withImage(ICON_TAGS),
-    );
+    builder.add(list('Tags', details.tags).withImage(ICON_TAGS));
 
-    builder.add(text(album.url.toString()).makeCopyable().withImage(ICON_LINK));
+    builder.add(text(details.url).makeCopyable().withImage(ICON_LINK));
 
     return builder.build();
   }
 
   private static builder(album: Album): TreeItemBuilder {
     return TreeItemBuilder.create(this.create(album));
+  }
+
+  private static detailsBuilder(details: AlbumDetails): TreeItemBuilder {
+    const item = TreeItemFactory.linkOrText(details.displayTitle, details.url);
+    item.image = details.artwork.tinySizeUrl;
+    item.keywords = details.artist.names;
+
+    return TreeItemBuilder.create(item);
   }
 }

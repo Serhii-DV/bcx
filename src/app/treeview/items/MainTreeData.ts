@@ -1,4 +1,5 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
+import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { bandcampPageData } from 'src/bandcamp/domain/shared';
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
@@ -40,9 +41,10 @@ export class MainTreeData {
     url: Url,
     band: Band | null,
     album: Album | null,
+    albumDetails: AlbumDetails | null = null,
   ): Promise<TreeData> {
     const logLabel = `[MainTreeData.create]`;
-    console.log(logLabel, { url, band, album });
+    console.log(logLabel, { url, band, album, albumDetails });
     console.time(logLabel);
 
     const treeData = new TreeData();
@@ -57,7 +59,10 @@ export class MainTreeData {
         TreeItemFactory.lazy(AlbumTreeItemFactory.create(album), () =>
           TreeItemCache.getOrCreate(
             TreeItemCache.subtreeKey('release', album.id),
-            () => AlbumTreeItemFactory.createWithInformation(album),
+            () =>
+              AlbumTreeItemFactory.createWithDetails(
+                albumDetails || AlbumDetails.fromAlbum(album),
+              ),
             CACHE_TTL.RELEASE,
           ),
         ),
