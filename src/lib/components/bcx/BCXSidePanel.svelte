@@ -82,7 +82,7 @@ $effect(() => {
           <div class="p-3">
             <h3 class="mb-2">Keyboard Shortcuts</h3>
             <div class="space-y-1 text-sm">
-              <div><kbd class="kbd">Ctrl+D</kbd> Toggle panel</div>
+              <div><kbd class="kbd">Alt+X</kbd> Toggle panel</div>
               <div><kbd class="kbd">Esc</kbd> Close panel</div>
             </div>
           </div>

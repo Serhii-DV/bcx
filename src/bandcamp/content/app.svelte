@@ -3,7 +3,7 @@ import { TreeData } from 'src/app/treeview/TreeData';
 import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { element } from 'src/utils/dom';
-import { onCtrlKey } from 'src/utils/keyboard';
+import { onAltPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
 import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
@@ -93,8 +93,8 @@ $effect(() => {
 });
 
 function handleKeydown(e: KeyboardEvent) {
-  // Ctrl+D for drawer
-  onCtrlKey('d', e, () => {
+  // Alt+X for drawer
+  onAltPlusKey('x', e, () => {
     void updateSidePanelOpen(!sidePanelOpen);
   });
 
