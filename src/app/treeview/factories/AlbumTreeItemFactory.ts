@@ -96,12 +96,7 @@ export class AlbumTreeItemFactory {
     const releaseMetadata = getReleaseMetadataFromAlbum(album);
     const artistItems = await ArtistTreeItem.createTreeItems(album.artist);
 
-    builder.add(
-      text(`Artist: ${album.artist.toString()}`)
-        .withImage(ICON_MIC)
-        .asNonInteractive(),
-      ...artistItems,
-    );
+    builder.add(items(`${album.artist}`, artistItems).withImage(ICON_MIC));
 
     if (releaseMetadata.artistNames?.length) {
       builder.add(list('Parsed artists', releaseMetadata.artistNames));
@@ -120,7 +115,7 @@ export class AlbumTreeItemFactory {
     if (year) {
       builder.add(
         items(
-          `Year: ${year}`,
+          `${year}`,
           album.metadata
             ? [
                 text(
