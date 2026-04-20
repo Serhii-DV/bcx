@@ -4,6 +4,17 @@ const BCX = {
   get version() {
     return pkg.version;
   },
+  tour: {
+    reset() {
+      window.postMessage(
+        {
+          source: 'BCX',
+          action: 'resetTour',
+        },
+        '*',
+      );
+    },
+  },
   storage: {
     async clearAlbumData(albumId: number) {
       console.log(

@@ -1,6 +1,6 @@
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandIndexData } from 'src/bandcamp/domain/storage/bandIndexData';
-import { StorageKey } from 'src/bandcamp/domain/storageKey';
+import { StorageKey, TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
 import { storage } from 'src/core/shared';
 
 type BCXEventData = {
@@ -15,6 +15,7 @@ const actionHandlers: Record<string, BCXActionHandler> = {
   clearAlbumData,
   getStorageSize,
   indexBands,
+  resetTour,
 };
 
 export async function BCXEventListener(event: MessageEvent<unknown>) {
@@ -88,6 +89,18 @@ async function indexBands() {
       source: 'BCX',
       action: 'indexBandsResponse',
       response: Object.keys(bandIndexData).length + ' bands indexed',
+    },
+    '*',
+  );
+}
+
+async function resetTour() {
+  await storage.remove(TOUR_COMPLETE_KEY);
+
+  window.postMessage(
+    {
+      source: 'BCX',
+      action: 'resetTourResponse',
     },
     '*',
   );
