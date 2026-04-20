@@ -66,7 +66,7 @@ $effect(() => {
         <div class="space-y-4">
 
           <!-- Tree Browser -->
-          <div class="text-md">
+          <div class="bcx-tree-browser text-md">
             <BcxTreeBrowser bind:this={treeBrowserRef} treeData={treeData} />
           </div>
 
@@ -79,7 +79,7 @@ $effect(() => {
           </div>
 
           <!-- Keyboard Shortcuts -->
-          <div class="p-3">
+          <div class="bcx-keyboard-shortcuts p-3">
             <h3 class="mb-2">Keyboard Shortcuts</h3>
             <div class="space-y-1 text-sm">
               <div><kbd class="kbd">Alt+X</kbd> Toggle panel</div>

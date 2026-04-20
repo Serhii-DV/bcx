@@ -59,6 +59,7 @@ const logableActionsWithResponse = [
   'clearAlbumDataResponse',
   'getStorageSizeResponse',
   'indexBandsResponse',
+  'resetTourResponse',
 ];
 
 window.addEventListener('message', function (event) {

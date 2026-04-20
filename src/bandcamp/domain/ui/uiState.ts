@@ -1,4 +1,4 @@
-import { sessionStorage, storage } from 'src/core/shared';
+import { sessionStorage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 
 const WINDOW_SESSION_STORAGE_PREFIX = 'bcx';
@@ -42,12 +42,12 @@ async function writeWindowSessionBoolean(
   window.sessionStorage.setItem(windowSessionStorageKey(key), String(value));
 }
 
-export async function getUiSessionBoolean(
+export async function getSessionBoolean(
   key: string,
 ): Promise<boolean | undefined> {
   if (canUseExtensionSessionStorage()) {
     try {
-      return await sessionStorage.getByKey<boolean>(key);
+      return await sessionStorage.getBooleanByKey(key);
     } catch (error) {
       console.warn(
         `⚠️ BCX: Falling back to window sessionStorage read for key ${key}:`,

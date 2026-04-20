@@ -5,6 +5,7 @@ export const ALBUM_KEY_PREFIX = '/a/';
 export const TRACK_KEY_PREFIX = '/t/';
 export const BANDS_KEY = '/bands';
 export const TOUR_COMPLETE_KEY = '/ui/tour-complete';
+export const SIDE_PANEL_TOUR_COMPLETE_KEY = '/ui/side-panel-tour-complete';
 export const SIDE_PANEL_OPEN_KEY = '/ui/side-panel-open';
 
 export class StorageKey {

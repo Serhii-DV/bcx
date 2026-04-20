@@ -1,6 +1,10 @@
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandIndexData } from 'src/bandcamp/domain/storage/bandIndexData';
-import { StorageKey, TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
+import {
+  SIDE_PANEL_TOUR_COMPLETE_KEY,
+  StorageKey,
+  TOUR_COMPLETE_KEY,
+} from 'src/bandcamp/domain/storageKey';
 import { storage } from 'src/core/shared';
 
 type BCXEventData = {
@@ -95,12 +99,17 @@ async function indexBands() {
 }
 
 async function resetTour() {
-  await storage.remove(TOUR_COMPLETE_KEY);
+  const tourKeys = [TOUR_COMPLETE_KEY, SIDE_PANEL_TOUR_COMPLETE_KEY];
+  await storage.remove(tourKeys);
 
   window.postMessage(
     {
       source: 'BCX',
       action: 'resetTourResponse',
+      response:
+        'Tour completion status reset.' +
+        tourKeys.join(', ') +
+        ' removed from storage.',
     },
     '*',
   );

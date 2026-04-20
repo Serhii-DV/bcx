@@ -2,7 +2,7 @@
 import { TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
 import { storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { onMount } from 'svelte';
+import { onDestroy, onMount } from 'svelte';
 
 interface TourStep {
   id: string;
@@ -17,6 +17,7 @@ interface Props {
   steps: TourStep[];
   autoStart?: boolean;
   hasCompleted?: boolean;
+  completionStorageKey?: string;
   onTourComplete?: () => void;
   onTourSkipped?: () => void;
 }
@@ -25,6 +26,7 @@ let {
   steps,
   autoStart = true,
   hasCompleted = false,
+  completionStorageKey = TOUR_COMPLETE_KEY,
   onTourComplete,
   onTourSkipped,
 }: Props = $props();
@@ -34,14 +36,24 @@ let isActive = $state(false);
 let isCompleted = $state(false);
 let highlightOverlay: HTMLElement | null = $state(null);
 let hasActiveHighlight = $state(false);
+let autoStartTimer: number | null = null;
 
 onMount(async () => {
   isCompleted = hasCompleted;
   if (!autoStart || isCompleted || steps.length === 0) return;
 
-  setTimeout(() => {
+  autoStartTimer = window.setTimeout(() => {
     startTour();
+    autoStartTimer = null;
   }, 3000);
+});
+
+onDestroy(() => {
+  if (autoStartTimer !== null) {
+    clearTimeout(autoStartTimer);
+  }
+
+  cleanupHighlight();
 });
 
 function startTour() {
@@ -114,6 +126,10 @@ function waitForElement(
       const shadowRoot = bcxApp?.shadowRoot;
 
       if (shadowRoot) {
+        element = shadowRoot.querySelector(selector) as HTMLElement;
+      }
+
+      if (!element && shadowRoot) {
         // Convert selector to class selector for shadow DOM search
         let classSelector = selector;
         if (selector.startsWith('#')) {
@@ -242,7 +258,7 @@ async function completeTour() {
   cleanupHighlight();
 
   try {
-    await storage.setByKey(TOUR_COMPLETE_KEY, true);
+    await storage.setByKey(completionStorageKey, true);
     isActive = false;
     isCompleted = true;
     currentStepIndex = -1;
@@ -261,7 +277,7 @@ function skipTour() {
 }
 
 function resetTour() {
-  storage.setByKey(TOUR_COMPLETE_KEY, false).catch((error) => {
+  storage.setByKey(completionStorageKey, false).catch((error) => {
     console.warn('❌ BCX: Failed to reset tour completion state:', error);
   });
   isCompleted = false;

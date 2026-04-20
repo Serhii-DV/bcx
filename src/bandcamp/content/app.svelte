@@ -6,8 +6,15 @@ import { element } from 'src/utils/dom';
 import { onAltPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
-import { tourSteps } from '$lib/constants/tourSteps';
-import { SIDE_PANEL_OPEN_KEY } from '../domain/storageKey';
+import {
+  musicPageTourSteps,
+  sidePanelTourSteps,
+} from '$lib/constants/tourSteps';
+import {
+  SIDE_PANEL_OPEN_KEY,
+  SIDE_PANEL_TOUR_COMPLETE_KEY,
+  TOUR_COMPLETE_KEY,
+} from '../domain/storageKey';
 import { setUiSessionBoolean } from '../domain/ui/uiState';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 
@@ -16,16 +23,20 @@ interface Props {
   treeData?: TreeData;
   initialSidePanelOpen?: boolean;
   hasCompletedTour?: boolean;
+  hasCompletedSidePanelTour?: boolean;
 }
 
 let {
   treeData = new TreeData(),
   initialSidePanelOpen = false,
   hasCompletedTour = false,
+  hasCompletedSidePanelTour = false,
 }: Props = $props();
 let shadowContainer: HTMLElement | null = $state(null);
 let sidePanelOpen: boolean = $state(false);
 let sidePanelStateInitialized: boolean = $state(true);
+let mainTourCompleted: boolean = $state(false);
+let sidePanelTourCompleted: boolean = $state(false);
 
 // Persist side panel state across page navigations (only after initial load)
 $effect(() => {
@@ -117,15 +128,39 @@ async function updateSidePanelOpen(value: boolean) {
     onClose={() => void updateSidePanelOpen(false)}
   />
 
-  <!-- Tour (only on music pages) -->
+  <!-- Tours (only on music pages) -->
   {#if isBandcampMusicUrl(currentPageUrl)}
     <BCXTour
-      steps={tourSteps}
+      steps={musicPageTourSteps}
       autoStart={true}
-      hasCompleted={hasCompletedTour}
-      onTourComplete={() => console.log('🎉 Tour completed!')}
-      onTourSkipped={() => console.log('⏭️ Tour skipped')}
+      hasCompleted={hasCompletedTour || mainTourCompleted}
+      completionStorageKey={TOUR_COMPLETE_KEY}
+      onTourComplete={() => {
+        mainTourCompleted = true;
+        console.log('🎉 Tour completed!');
+      }}
+      onTourSkipped={() => {
+        mainTourCompleted = true;
+        console.log('⏭️ Tour skipped');
+      }}
     />
+
+    {#if sidePanelOpen && (hasCompletedTour || mainTourCompleted) && !(hasCompletedSidePanelTour || sidePanelTourCompleted)}
+      <BCXTour
+        steps={sidePanelTourSteps}
+        autoStart={true}
+        hasCompleted={hasCompletedSidePanelTour || sidePanelTourCompleted}
+        completionStorageKey={SIDE_PANEL_TOUR_COMPLETE_KEY}
+        onTourComplete={() => {
+          sidePanelTourCompleted = true;
+          console.log('🎉 Side panel tour completed!');
+        }}
+        onTourSkipped={() => {
+          sidePanelTourCompleted = true;
+          console.log('⏭️ Side panel tour skipped');
+        }}
+      />
+    {/if}
   {/if}
 {/if}
 

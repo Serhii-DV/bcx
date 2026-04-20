@@ -15,8 +15,12 @@ import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
 import { BandcampStorage } from '../domain/storage';
-import { SIDE_PANEL_OPEN_KEY, TOUR_COMPLETE_KEY } from '../domain/storageKey';
-import { getUiSessionBoolean } from '../domain/ui/uiState';
+import {
+  SIDE_PANEL_OPEN_KEY,
+  SIDE_PANEL_TOUR_COMPLETE_KEY,
+  TOUR_COMPLETE_KEY,
+} from '../domain/storageKey';
+import { getSessionBoolean } from '../domain/ui/uiState';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -58,10 +62,12 @@ onDOMReady(async () => {
     }
 
     const treeData = await MainTreeData.create(currentPageUrl, band, album);
-    const [initialSidePanelOpen, hasCompletedTour] = await Promise.all([
-      getUiSessionBoolean(SIDE_PANEL_OPEN_KEY),
-      storage.getByKey<boolean>(TOUR_COMPLETE_KEY),
-    ]);
+    const [initialSidePanelOpen, hasCompletedTour, hasCompletedSidePanelTour] =
+      await Promise.all([
+        getSessionBoolean(SIDE_PANEL_OPEN_KEY),
+        storage.getBooleanByKey(TOUR_COMPLETE_KEY),
+        storage.getBooleanByKey(SIDE_PANEL_TOUR_COMPLETE_KEY),
+      ]);
 
     measureAppMount(
       {
@@ -75,6 +81,7 @@ onDOMReady(async () => {
             treeData,
             initialSidePanelOpen,
             hasCompletedTour: hasCompletedTour ?? false,
+            hasCompletedSidePanelTour: hasCompletedSidePanelTour ?? false,
           },
         }),
     );
