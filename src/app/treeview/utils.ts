@@ -1,6 +1,7 @@
 import type { TreeItem } from './TreeItem';
+import { builder } from './TreeItemBuilder';
 
-export const LAZY_TREE_ITEM_CHILDREN_THRESHOLD = 500;
+export const LAZY_TREE_ITEM_CHILDREN_THRESHOLD = 1000;
 
 export function isNode(item: TreeItem): boolean {
   return (
@@ -108,7 +109,7 @@ export function deferDescendants(items: TreeItem[]): TreeItem[] {
   const descendantsCount = countTreeItemDescendants(items);
 
   if (descendantsCount <= LAZY_TREE_ITEM_CHILDREN_THRESHOLD) {
-    return items;
+    return items.map((item) => builder(item).asTree().build());
   }
 
   return items.map((item) => {
