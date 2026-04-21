@@ -1,8 +1,10 @@
 import {
+  Banknote,
   Building,
   Calendar,
   CalendarDays,
   ChevronRight,
+  ChevronsDown,
   ClipboardCopy,
   CornerLeftUp,
   CornerRightUp,
@@ -47,6 +49,8 @@ export const ICON_HEADPHONES = 'headphones';
 export const ICON_CLIPBOARD_COPY = 'clipboard-copy';
 export const ICON_LINK = 'link';
 export const ICON_FILE_TEXT = 'file-text';
+export const ICON_BANKNOTE = 'banknote';
+export const ICON_CHEVRONS_DOWN = 'chevrons-down';
 
 export function makeIcon(iconName?: string): any {
   switch (iconName) {
@@ -96,6 +100,10 @@ export function makeIcon(iconName?: string): any {
       return Link;
     case ICON_FILE_TEXT:
       return FileText;
+    case ICON_BANKNOTE:
+      return Banknote;
+    case ICON_CHEVRONS_DOWN:
+      return ChevronsDown;
     default:
       return undefined;
   }

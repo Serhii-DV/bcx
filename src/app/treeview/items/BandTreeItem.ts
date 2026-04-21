@@ -5,7 +5,15 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import { items, link, list, TreeItemBuilder } from '../TreeItemBuilder';
-import { ICON_CALENDAR, ICON_DISC, ICON_INFO, ICON_MIC } from '../utils/icon';
+import {
+  ICON_BANKNOTE,
+  ICON_CALENDAR,
+  ICON_CALENDAR_DAYS,
+  ICON_CHEVRONS_DOWN,
+  ICON_DISC,
+  ICON_INFO,
+  ICON_MIC,
+} from '../utils/icon';
 
 const RELEASE_BATCH_SIZE = 20;
 const LOAD_MORE_LABEL = 'Load more';
@@ -42,6 +50,7 @@ export class BandTreeItem {
       ),
     )
       .withImage(ICON_MIC)
+      .withChildrenImage(ICON_MIC)
       .build();
   }
 
@@ -94,6 +103,7 @@ export class BandTreeItem {
   ): TreeItem {
     const loadMoreTreeItem: TreeItem = {
       label: this.createLoadMoreLabel(offset, band.metadata.albums.length),
+      image: ICON_CHEVRONS_DOWN,
       includeInFilterSuggestions: false,
     };
 
@@ -173,13 +183,18 @@ export class BandTreeItem {
       return undefined;
     }
 
-    return items(label, children).withImage(ICON_CALENDAR).build();
+    return items(label, children)
+      .withImage(ICON_CALENDAR)
+      .withChildrenImage(ICON_CALENDAR_DAYS)
+      .build();
   }
 
   private static createBandAbout(band: Band): TreeItem {
     return items('About ' + band.name, [
-      list('Created', [band.metadata.created.toLocaleDateString()]),
-      list('Currency', [band.metadata.currency]),
+      list('Created', [band.metadata.created.toLocaleDateString()]).withImage(
+        ICON_CALENDAR_DAYS,
+      ),
+      list('Currency', [band.metadata.currency]).withImage(ICON_BANKNOTE),
     ])
       .asTree()
       .withImage(ICON_INFO)
