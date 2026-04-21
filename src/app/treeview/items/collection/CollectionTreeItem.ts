@@ -1,3 +1,4 @@
+import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import {
   type BandcampItem,
@@ -12,6 +13,7 @@ import type { TreeItem } from '../../TreeItem';
 import { item } from '../../TreeItemBuilder';
 import type { TreeItemButton } from '../../TreeItemButton';
 import { createLoadHandler } from '../../utils';
+import { createPagedReleasesTreeItem } from '../pagedReleasesTreeItem';
 import {
   loadCollectionItemsFromStorage,
   saveCollectionItemsToStorage,
@@ -26,7 +28,7 @@ export class CollectionTreeItem {
     );
     builder.add(
       AlbumTreeItemFactory.createArtistsTreeItem(albums),
-      AlbumTreeItemFactory.createReleasesTreeItem(albums),
+      this.createReleasesTreeItem(albums),
     );
 
     if (isBandcampFanUrl(currentPageUrl, username)) {
@@ -36,6 +38,13 @@ export class CollectionTreeItem {
     builder.addButton(createCollectionOpenTreeItemButton(username));
 
     return builder.build();
+  }
+
+  private static createReleasesTreeItem(albums: Album[]): TreeItem {
+    return createPagedReleasesTreeItem({
+      albums,
+      errorContext: '[CollectionTreeItem.createLoadMoreReleasesTreeItem]',
+    });
   }
 }
 

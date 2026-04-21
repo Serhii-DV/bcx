@@ -10,13 +10,9 @@ import {
   ICON_BANKNOTE,
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
-  ICON_CHEVRONS_DOWN,
-  ICON_DISC,
   ICON_INFO,
 } from '../utils/icon';
-
-const RELEASE_BATCH_SIZE = 20;
-const LOAD_MORE_LABEL = 'Load more';
+import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 
 export class BandTreeItem {
   static create(band: Band, url: Url): TreeItem {
@@ -48,117 +44,11 @@ export class BandTreeItem {
     albums: Album[],
     withAlbumSummary: boolean,
   ): TreeItem {
-    return items(
-      'Releases',
-      this.createReleaseChildrenPage(albums, withAlbumSummary, 0),
-    )
-      .withImage(ICON_DISC)
-      .apply((item) => {
-        item.childrenCount = albums.length;
-      })
-      .build();
-  }
-
-  private static createReleaseChildrenPage(
-    albums: Album[],
-    withAlbumSummary: boolean,
-    offset: number,
-    limit: number = RELEASE_BATCH_SIZE,
-  ): TreeItem[] {
-    const nextOffset = offset + limit;
-    const children = AlbumTreeItemFactory.fromAlbums(
-      albums.slice(offset, nextOffset),
+    return createPagedReleasesTreeItem({
+      albums,
+      errorContext: '[BandTreeItem.createLoadMoreReleasesTreeItem]',
       withAlbumSummary,
-    );
-
-    if (nextOffset < albums.length) {
-      children.push(
-        this.createLoadMoreReleasesTreeItem(
-          albums,
-          withAlbumSummary,
-          nextOffset,
-          limit,
-        ),
-      );
-    }
-
-    return children;
-  }
-
-  private static createLoadMoreReleasesTreeItem(
-    albums: Album[],
-    withAlbumSummary: boolean,
-    offset: number,
-    limit: number,
-  ): TreeItem {
-    const loadMoreTreeItem: TreeItem = {
-      label: this.createLoadMoreLabel(offset, albums.length),
-      image: ICON_CHEVRONS_DOWN,
-      includeInFilterSuggestions: false,
-    };
-
-    loadMoreTreeItem.onClick = async (context) => {
-      const { item } = context;
-      const parent = context.parent ?? context.findParentByPath?.(item.path);
-
-      if (item.isLoadingChildren) {
-        return;
-      }
-
-      item.isLoadingChildren = true;
-      context.showFeedback?.('Loading...', 0);
-
-      try {
-        const children = parent?.children;
-
-        if (!children) {
-          throw new Error('Cannot find parent Releases tree item.');
-        }
-
-        const loadMoreIndex = children.findIndex(
-          (child) => child === item || child.path === item.path,
-        );
-        const nextChildren = this.createReleaseChildrenPage(
-          albums,
-          withAlbumSummary,
-          offset,
-          limit,
-        );
-
-        if (loadMoreIndex >= 0) {
-          children.splice(loadMoreIndex, 1, ...nextChildren);
-          context.focusPath = parent.path
-            ? `${parent.path}.${loadMoreIndex}`
-            : undefined;
-        } else {
-          children.push(...nextChildren);
-          context.focusPath = parent.path
-            ? `${parent.path}.${children.length - nextChildren.length}`
-            : undefined;
-        }
-
-        parent.children = children;
-      } catch (error) {
-        console.error(
-          '[BandTreeItem.createLoadMoreReleasesTreeItem]',
-          'Failed to load more releases:',
-          error,
-        );
-        item.label = `${this.createLoadMoreLabel(offset, albums.length)} (error)`;
-        context.showFeedback?.('Error loading');
-      } finally {
-        item.isLoadingChildren = false;
-      }
-    };
-
-    return loadMoreTreeItem;
-  }
-
-  private static createLoadMoreLabel(
-    loadedCount: number,
-    totalCount: number,
-  ): string {
-    return `${LOAD_MORE_LABEL} (${loadedCount} of ${totalCount} loaded)`;
+    });
   }
 
   private static createBandYearsTreeItem(
