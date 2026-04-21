@@ -551,7 +551,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 {#snippet backTreeItem(item: TreeItem)}
   <div
     role="button"
-    class="tree-item bcx-browser-row flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+    class="tree-item bcx-browser-row"
       class:focused={focusedPath === item.path}
       data-level="{item.level}"
       data-path="{item.path}"
@@ -576,7 +576,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   {#if hasChildren}
     <div
       role="button"
-      class="tree-item bcx-browser-row flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+      class="tree-item bcx-browser-row"
       class:focused={focusedPath === item.path}
       data-level="{item.level}"
       data-path="{item.path}"
@@ -595,7 +595,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
     </div>
   {:else}
     <a
-      class="tree-item bcx-browser-row flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+      class="tree-item bcx-browser-row"
       class:focused={focusedPath === item.path}
       data-level="{item.level}"
       data-path="{item.path}"
@@ -686,14 +686,29 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   padding: 0.5rem;
 }
 
-.bcx-tree-view a {
-    display: inline-flex;
-    padding-block: .25rem;
-    vertical-align: middle;
+.bcx-browser-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border-radius: 4px;
+  cursor: pointer;
+  padding-right: 0;
+  padding-left: 1.5rem;
+  padding-block: 0.25rem;
+  color: rgb(229 231 235);
+  text-align: left;
+  text-decoration: none;
+  transition: background-color 150ms;
+  vertical-align: middle;
 }
 
-.bcx-browser-row {
-  border-radius: 4px;
-  padding-left: 1.5rem;
+.bcx-browser-row:hover {
+  background-color: rgb(255 255 255 / 0.1);
+}
+
+.bcx-browser-row:focus {
+  background-color: rgb(255 255 255 / 0.2);
+  outline: 2px solid rgb(255 255 255 / 0.9);
+  outline-offset: 0;
 }
 </style>

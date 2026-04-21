@@ -24,6 +24,17 @@ let {
   onNodeClick,
 }: Props = $props();
 
+let baseLevel = $derived.by(() => {
+  if (!items || items.length === 0) {
+    return 0;
+  }
+
+  return items.reduce((lowestLevel, item) => {
+    const itemLevel = item.level ?? 0;
+    return itemLevel < lowestLevel ? itemLevel : lowestLevel;
+  }, items[0]?.level ?? 0);
+});
+
 function isItemVisible(item: TreeItem): boolean {
   if (!filterQuery.trim()) {
     return true;
@@ -38,11 +49,20 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
     childrenCount: getVisibleChildCount(item, filterQuery, visibleChildCounts),
   };
 }
+
+function getItemDepth(item: TreeItem): number {
+  const itemLevel = item.level ?? baseLevel;
+  return Math.max(0, itemLevel - baseLevel);
+}
+
+function getItemIndentStyle(item: TreeItem): string {
+  return `--tree-item-indent: ${getItemDepth(item)}rem;`;
+}
 </script>
 
 {#snippet treeItems(nodes: TreeItem[] | undefined)}
   {#if nodes && nodes.length > 0}
-    <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-0">
+    <ol class="tree-list">
       {#each nodes as item}
         <li class:hidden={!isItemVisible(item)}>
           {#if isNode(item)}
@@ -53,13 +73,16 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
               data-path="{item.path}"
             >
               <summary
-                class="tree-item tree-node-summary cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+                class="tree-item tree-node-summary cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
+                style={getItemIndentStyle(item)}
                 title={item.hint}
                 onclick={(event) => onNodeClick(item, event)}
               >
-                <BcxTreeItem item={withVisibleChildCount(item)} />
+                <span class="tree-item-content">
+                  <BcxTreeItem item={withVisibleChildCount(item)} />
+                </span>
               </summary>
               {#if !item.isLoadingChildren}
                 <div class="tree-children">
@@ -69,16 +92,19 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
             </details>
           {:else}
             <a
-              class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+              class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
               tabindex={focusedPath === item.path ? 0 : -1}
+              style={getItemIndentStyle(item)}
               onclick={(event) => onItemClick(item, event)}
               href={item.href}
               title={item.hint}
             >
-              <BcxTreeItem item={withVisibleChildCount(item)} />
+              <span class="tree-item-content">
+                <BcxTreeItem item={withVisibleChildCount(item)} />
+              </span>
             </a>
           {/if}
         </li>
@@ -90,9 +116,28 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
 {@render treeItems(items)}
 
 <style>
+.tree-list {
+  margin-top: 0;
+  margin-left: 0;
+  padding-left: 0;
+}
+
 .tree-node > .tree-node-summary,
 .tree-leaf {
+  width: 100%;
+  border-radius: 4px;
   padding-left: 1.5rem;
+  padding-block: 0.25rem;
+  color: rgb(229 231 235);
+  text-align: left;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.tree-node > .tree-node-summary:focus,
+.tree-leaf:focus {
+  outline: 2px solid rgb(255 255 255 / 0.9);
+  outline-offset: 0;
 }
 
 .tree-node[open] > .tree-node-summary::before {
@@ -123,18 +168,35 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
           mask-size: cover;
 }
 
+.tree-node > .tree-node-summary {
+  padding-left: calc(1.5rem + var(--tree-item-indent, 0rem));
+}
+
+.tree-node > .tree-node-summary::before {
+  left: calc(0.25rem + var(--tree-item-indent, 0rem));
+}
+
 .tree-leaf {
-  display: inline-flex;
-  padding-block: 0.25rem;
-  vertical-align: middle;
+  display: flex;
+}
+
+.tree-item-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
 }
 
 .hidden {
     display: none;
 }
 
-.tree-children > ol > li > .tree-item,
-.tree-children > ol > li > .tree-node > .tree-node-summary {
-  padding-left: 1.5rem;
+.tree-leaf > .tree-item-content {
+  margin-left: var(--tree-item-indent, 0rem);
+}
+
+.tree-children {
+  margin-left: 0;
+  padding-left: 0;
 }
 </style>
