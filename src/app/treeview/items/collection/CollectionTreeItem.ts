@@ -1,4 +1,4 @@
-import { Album } from 'src/bandcamp/domain/album/album';
+import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import {
   type BandcampItem,
   PageCollection,
@@ -9,10 +9,8 @@ import { currentPageUrl } from 'src/core/shared';
 import { TreeItemButtonFactory } from '../../buttons/factory';
 import { AlbumTreeItemFactory } from '../../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../../TreeItem';
-import { items } from '../../TreeItemBuilder';
 import type { TreeItemButton } from '../../TreeItemButton';
 import { createLoadHandler } from '../../utils';
-import { ICON_DISC, ICON_MIC } from '../../utils/icon';
 import {
   loadCollectionItemsFromStorage,
   saveCollectionItemsToStorage,
@@ -22,18 +20,11 @@ export class CollectionTreeItem {
   static async create(username: string): Promise<TreeItem> {
     const collectionItems = await loadCollectionItemsFromStorage();
     const albums = collectionItems.map((item) =>
-      Album.create(
-        item.item_url,
-        item.band_name,
-        item.item_title,
-        item.album_id,
-        item.item_art_id,
-        item.band_id,
-      ),
+      AlbumFactory.fromBandcampItem(item),
     );
     const children: TreeItem[] = [
-      this.createArtistsTreeItem(albums),
-      this.createReleasesTreeItem(albums),
+      AlbumTreeItemFactory.createArtistsTreeItem(albums),
+      AlbumTreeItemFactory.createReleasesTreeItem(albums),
     ];
 
     const buttons: TreeItemButton[] = [
@@ -57,21 +48,6 @@ export class CollectionTreeItem {
       children,
       buttons,
     };
-  }
-
-  private static createArtistsTreeItem(albums: Album[]): TreeItem {
-    return items(
-      'Artists',
-      AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums),
-    )
-      .withImage(ICON_MIC)
-      .build();
-  }
-
-  private static createReleasesTreeItem(albums: Album[]): TreeItem {
-    return items('Releases', AlbumTreeItemFactory.fromAlbums(albums))
-      .withImage(ICON_DISC)
-      .build();
   }
 }
 

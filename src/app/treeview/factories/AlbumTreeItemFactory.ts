@@ -17,6 +17,7 @@ import {
 import {
   ICON_BUILDING,
   ICON_CALENDAR_DAYS,
+  ICON_DISC,
   ICON_LINK,
   ICON_LIST_MUSIC,
   ICON_MIC,
@@ -96,6 +97,28 @@ export class AlbumTreeItemFactory {
         );
         return items(artist, artistChildren).build();
       });
+  }
+
+  static createArtistsTreeItem(
+    albums: Album[],
+    withSummary: boolean = false,
+  ): TreeItem {
+    return items(
+      'Artists',
+      this.fromAlbumsByArtistReleases(albums, withSummary),
+    )
+      .withImage(ICON_MIC)
+      .withChildrenImage(ICON_MIC)
+      .build();
+  }
+
+  static createReleasesTreeItem(
+    albums: Album[],
+    withSummary: boolean = false,
+  ): TreeItem {
+    return items('Releases', this.fromAlbums(albums, withSummary))
+      .withImage(ICON_DISC)
+      .build();
   }
 
   static async createWithDetails(details: AlbumDetails): Promise<TreeItem> {

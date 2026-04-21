@@ -2,6 +2,7 @@ import type { StorageObject } from 'src/core/storage';
 import { ArtistFactory } from '../artist/factory';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
+import type { BandcampItem } from '../page/PageCollection';
 import type {
   AlbumRelease,
   MusicAlbumSchema,
@@ -13,6 +14,17 @@ import { TrackFactory } from '../track/factory';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
 export class AlbumFactory {
+  static fromBandcampItem(item: BandcampItem): Album {
+    return Album.create(
+      item.item_url,
+      item.band_name,
+      item.item_title,
+      item.album_id,
+      item.item_art_id,
+      item.band_id,
+    );
+  }
+
   static fromRawData(rawData: RawAlbumData): Album {
     return Album.create(
       rawData.url,

@@ -13,7 +13,6 @@ import {
   ICON_CHEVRONS_DOWN,
   ICON_DISC,
   ICON_INFO,
-  ICON_MIC,
 } from '../utils/icon';
 
 const RELEASE_BATCH_SIZE = 20;
@@ -27,7 +26,10 @@ export class BandTreeItem {
 
     if (band.hasReleases) {
       builder.withChildren([
-        this.createArtistsTreeItem(band.metadata.albums, showAlbumsWithSummary),
+        AlbumTreeItemFactory.createArtistsTreeItem(
+          band.metadata.albums,
+          showAlbumsWithSummary,
+        ),
         this.createReleasesTreeItem(
           band.metadata.albums,
           showAlbumsWithSummary,
@@ -40,19 +42,6 @@ export class BandTreeItem {
     }
 
     return builder.build();
-  }
-
-  private static createArtistsTreeItem(
-    albums: Album[],
-    withAlbumSummary: boolean,
-  ): TreeItem {
-    return items(
-      'Artists',
-      AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums, withAlbumSummary),
-    )
-      .withImage(ICON_MIC)
-      .withChildrenImage(ICON_MIC)
-      .build();
   }
 
   private static createReleasesTreeItem(
