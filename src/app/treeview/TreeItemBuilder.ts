@@ -1,8 +1,9 @@
 import { copyToClipboard } from 'src/utils/clipboard';
-import type {
-  TreeItem,
-  TreeItemClickContext,
-  TreeItemLayout,
+import {
+  TREE_ITEM_LAYOUT,
+  type TreeItem,
+  type TreeItemClickContext,
+  type TreeItemLayout,
 } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 import {
@@ -113,6 +114,14 @@ export class TreeItemBuilder {
   withLayout(layout: TreeItemLayout): this {
     this.item.layout = layout;
     return this;
+  }
+
+  asTree(): this {
+    return this.withLayout(TREE_ITEM_LAYOUT.TREE);
+  }
+
+  asBrowser(): this {
+    return this.withLayout(TREE_ITEM_LAYOUT.BROWSER);
   }
 
   withButtons(buttons: TreeItemButton[]): this {
