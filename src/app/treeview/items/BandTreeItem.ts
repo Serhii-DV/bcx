@@ -29,13 +29,13 @@ export class BandTreeItem {
 
   private static createArtistsTreeItem(
     band: Band,
-    includeBriefInformation: boolean,
+    withAlbumSummary: boolean,
   ): TreeItem {
     return items(
       'Artists',
       AlbumTreeItemFactory.fromAlbumsByArtistReleases(
         band.metadata.albums,
-        includeBriefInformation,
+        withAlbumSummary,
       ),
     )
       .withImage(ICON_MIC)
@@ -44,14 +44,11 @@ export class BandTreeItem {
 
   private static createReleasesTreeItem(
     band: Band,
-    includeBriefInformation: boolean,
+    withAlbumSummary: boolean,
   ): TreeItem {
     return items(
       'Releases',
-      AlbumTreeItemFactory.fromAlbums(
-        band.metadata.albums,
-        includeBriefInformation,
-      ),
+      AlbumTreeItemFactory.fromAlbums(band.metadata.albums, withAlbumSummary),
     )
       .withImage(ICON_DISC)
       .build();
@@ -59,7 +56,7 @@ export class BandTreeItem {
 
   private static createBandYearsTreeItem(
     band: Band,
-    includeBriefInformation: boolean,
+    withAlbumSummary: boolean,
     label: string = 'Years',
   ): TreeItem | undefined {
     const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
@@ -67,7 +64,7 @@ export class BandTreeItem {
         label: String(year),
         children: AlbumTreeItemFactory.fromAlbums(
           band.metadata.albumsByYear(year),
-          includeBriefInformation,
+          withAlbumSummary,
         ),
       };
     });
