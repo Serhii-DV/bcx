@@ -226,8 +226,12 @@ export function builder(item: TreeItem): TreeItemBuilder {
   return new TreeItemBuilder(item);
 }
 
+export function item(label: string): TreeItemBuilder {
+  return new TreeItemBuilder({ label });
+}
+
 export function text(label: string): TreeItemBuilder {
-  return new TreeItemBuilder({ label }).withImage(ICON_FILE_TEXT);
+  return item(label).withImage(ICON_FILE_TEXT);
 }
 
 export function searchQuery(

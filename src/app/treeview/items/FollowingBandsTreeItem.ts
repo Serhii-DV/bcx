@@ -1,4 +1,3 @@
-import { ExternalLink, RefreshCcw } from '@lucide/svelte';
 import { Band } from 'src/bandcamp/domain/band/band';
 import {
   type FollowingBandItem,
@@ -7,8 +6,10 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
+import { TreeItemButtonFactory } from '../buttons/factory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
+import { item } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
 
@@ -37,30 +38,27 @@ export class FollowingBandsTreeItem {
       buttons.unshift(createFollowingBandsRefreshTreeItemButton());
     }
 
-    return {
-      label: `Following Bands`,
-      children,
-      buttons,
-    };
+    return item('Following Bands')
+      .withChildren(children)
+      .withButtons(buttons)
+      .build();
   }
 }
 
 function createFollowingBandsOpenTreeItemButton(
   username: string,
 ): TreeItemButton {
-  return {
-    title: 'Open Following Bands',
-    icon: ExternalLink,
-    href: BandcampUrlFactory.generateFollowingBandsUrl(username),
-  };
+  return TreeItemButtonFactory.createExternalLink(
+    'Open Following Bands',
+    BandcampUrlFactory.generateFollowingBandsUrl(username),
+  );
 }
 
 function createFollowingBandsRefreshTreeItemButton(): TreeItemButton {
-  return {
-    title: 'Refresh Following Bands',
-    icon: RefreshCcw,
-    onClick: createLoadHandler(loadFollowingBands),
-  };
+  return TreeItemButtonFactory.createRefreshButton(
+    'Refresh Following Bands',
+    createLoadHandler(loadFollowingBands),
+  );
 }
 
 async function loadFollowingBandsFromStorage(): Promise<FollowingBandItem[]> {

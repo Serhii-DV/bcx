@@ -1,11 +1,11 @@
-import { ExternalLink, RefreshCcw } from '@lucide/svelte';
 import { PageCollection } from 'src/bandcamp/domain/page/PageCollection';
 import type { GenreItem } from 'src/bandcamp/domain/types/CollectionPageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
+import { TreeItemButtonFactory } from '../buttons/factory';
 import type { TreeItem } from '../TreeItem';
-import { link } from '../TreeItemBuilder';
+import { item, link } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
 import { ICON_TAG } from '../utils/icon';
@@ -26,30 +26,27 @@ export class FollowingGenresTreeItem {
       buttons.unshift(createFollowingGenresRefreshTreeItemButton());
     }
 
-    return {
-      label: `Following Genres`,
-      children,
-      buttons,
-    };
+    return item('Following Genres')
+      .withChildren(children)
+      .withButtons(buttons)
+      .build();
   }
 }
 
 function createFollowingGenresOpenTreeItemButton(
   username: string,
 ): TreeItemButton {
-  return {
-    title: 'Open Following Genres',
-    icon: ExternalLink,
-    href: BandcampUrlFactory.generateFollowingGenresUrl(username),
-  };
+  return TreeItemButtonFactory.createExternalLink(
+    'Open Following Genres',
+    BandcampUrlFactory.generateFollowingGenresUrl(username),
+  );
 }
 
 function createFollowingGenresRefreshTreeItemButton(): TreeItemButton {
-  return {
-    title: 'Refresh Following Genres',
-    icon: RefreshCcw,
-    onClick: createLoadHandler(loadFollowingGenres),
-  };
+  return TreeItemButtonFactory.createRefreshButton(
+    'Refresh Following Genres',
+    createLoadHandler(loadFollowingGenres),
+  );
 }
 
 async function loadFollowingGenresFromStorage(): Promise<GenreItem[]> {

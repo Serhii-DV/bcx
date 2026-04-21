@@ -1,4 +1,3 @@
-import { ExternalLink, RefreshCcw } from '@lucide/svelte';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import {
   type BandcampItem,
@@ -7,8 +6,10 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
+import { TreeItemButtonFactory } from '../buttons/factory';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
+import { item } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
 
@@ -33,28 +34,22 @@ export class WishlistTreeItem {
       buttons.unshift(createWishlistRefreshTreeItemButton());
     }
 
-    return {
-      label: `Wishlist`,
-      children,
-      buttons,
-    };
+    return item('Wishlist').withChildren(children).withButtons(buttons).build();
   }
 }
 
 function createWishlistOpenTreeItemButton(username: string): TreeItemButton {
-  return {
-    title: 'Open Wishlist',
-    icon: ExternalLink,
-    href: BandcampUrlFactory.generateWishlistUrl(username),
-  };
+  return TreeItemButtonFactory.createExternalLink(
+    'Open Wishlist',
+    BandcampUrlFactory.generateWishlistUrl(username),
+  );
 }
 
 function createWishlistRefreshTreeItemButton(): TreeItemButton {
-  return {
-    title: 'Refresh',
-    icon: RefreshCcw,
-    onClick: createLoadHandler(loadWishlistItems),
-  };
+  return TreeItemButtonFactory.createRefreshButton(
+    'Refresh',
+    createLoadHandler(loadWishlistItems),
+  );
 }
 
 async function loadWishlistItemsFromStorage(): Promise<BandcampItem[]> {

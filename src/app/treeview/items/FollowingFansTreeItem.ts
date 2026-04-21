@@ -1,11 +1,12 @@
-import { ExternalLink, RefreshCcw } from '@lucide/svelte';
 import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
 import { PageCollection } from 'src/bandcamp/domain/page/PageCollection';
 import type { FollowingFanItem } from 'src/bandcamp/domain/types/CollectionPageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
+import { TreeItemButtonFactory } from '../buttons/factory';
 import type { TreeItem } from '../TreeItem';
+import { item, link } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
 
@@ -15,11 +16,11 @@ export class FollowingFansTreeItem {
   static async create(username: string): Promise<TreeItem> {
     const followingFans: FollowingFanItem[] =
       await loadFollowingFansFromStorage();
-    const children: TreeItem[] = followingFans.map((item) => ({
-      label: item.name,
-      image: Artwork.createForBand(item.image_id as number).smallSizeUrl,
-      href: item.trackpipe_url,
-    }));
+    const children: TreeItem[] = followingFans.map((item) =>
+      link(item.name, item.trackpipe_url)
+        .withImage(Artwork.createForBand(item.image_id as number).smallSizeUrl)
+        .build(),
+    );
 
     const buttons: TreeItemButton[] = [
       createFollowingFansOpenTreeItemButton(username),
@@ -29,30 +30,27 @@ export class FollowingFansTreeItem {
       buttons.unshift(createFollowingFansRefreshTreeItemButton());
     }
 
-    return {
-      label: `Following Fans`,
-      children,
-      buttons,
-    };
+    return item('Following Fans')
+      .withChildren(children)
+      .withButtons(buttons)
+      .build();
   }
 }
 
 function createFollowingFansOpenTreeItemButton(
   username: string,
 ): TreeItemButton {
-  return {
-    title: 'Open Following Fans',
-    icon: ExternalLink,
-    href: BandcampUrlFactory.generateFollowingFansUrl(username),
-  };
+  return TreeItemButtonFactory.createExternalLink(
+    'Open Following Fans',
+    BandcampUrlFactory.generateFollowingFansUrl(username),
+  );
 }
 
 function createFollowingFansRefreshTreeItemButton(): TreeItemButton {
-  return {
-    title: 'Refresh Following Fans',
-    icon: RefreshCcw,
-    onClick: createLoadHandler(loadFollowingFans),
-  };
+  return TreeItemButtonFactory.createRefreshButton(
+    'Refresh Following Fans',
+    createLoadHandler(loadFollowingFans),
+  );
 }
 
 async function loadFollowingFansFromStorage(): Promise<FollowingFanItem[]> {
