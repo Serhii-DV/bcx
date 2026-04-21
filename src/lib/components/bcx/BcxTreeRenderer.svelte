@@ -42,7 +42,7 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
 
 {#snippet treeItems(nodes: TreeItem[] | undefined)}
   {#if nodes && nodes.length > 0}
-    <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
+    <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-0">
       {#each nodes as item}
         <li class:hidden={!isItemVisible(item)}>
           {#if isNode(item)}
@@ -61,7 +61,9 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
                 <BcxTreeItem item={withVisibleChildCount(item)} />
               </summary>
               {#if !item.isLoadingChildren}
-                {@render treeItems(item.children)}
+                <div class="tree-children">
+                  {@render treeItems(item.children)}
+                </div>
               {/if}
             </details>
           {:else}
@@ -119,5 +121,10 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
 
 .hidden {
     display: none;
+}
+
+.tree-children > ol > li > .tree-item,
+.tree-children > ol > li > .tree-node > .tree-node-summary {
+  padding-left: 1.5rem;
 }
 </style>

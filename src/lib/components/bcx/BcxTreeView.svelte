@@ -350,7 +350,7 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
   />
   <div
     bind:this={treeContainer}
-    class="bcx-tree-view pr-2 py-2 flex-1 overflow-x-hidden overflow-y-auto"
+    class="bcx-tree-view"
     role="tree"
     tabindex="0"
     onkeydown={handleKeyDown}
@@ -380,3 +380,12 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
     {/if}
   </div>
 </div>
+
+<style>
+.bcx-tree-view {
+  flex: 1 1 0%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+</style>
