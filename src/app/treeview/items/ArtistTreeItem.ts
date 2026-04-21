@@ -24,7 +24,7 @@ export class ArtistTreeItem {
         }
       }
 
-      return text(name).build();
+      return text(name).makeCopyable().build();
     });
   }
 }

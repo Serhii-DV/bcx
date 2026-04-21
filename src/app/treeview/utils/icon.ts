@@ -8,6 +8,7 @@ import {
   CornerRightUp,
   Disc,
   ExternalLink,
+  FileText,
   Funnel,
   Headphones,
   Heart,
@@ -45,6 +46,7 @@ export const ICON_TAG = 'tag';
 export const ICON_HEADPHONES = 'headphones';
 export const ICON_CLIPBOARD_COPY = 'clipboard-copy';
 export const ICON_LINK = 'link';
+export const ICON_FILE_TEXT = 'file-text';
 
 export function makeIcon(iconName?: string): any {
   switch (iconName) {
@@ -92,6 +94,8 @@ export function makeIcon(iconName?: string): any {
       return ClipboardCopy;
     case ICON_LINK:
       return Link;
+    case ICON_FILE_TEXT:
+      return FileText;
     default:
       return undefined;
   }

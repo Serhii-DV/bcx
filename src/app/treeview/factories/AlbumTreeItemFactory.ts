@@ -51,7 +51,7 @@ export class AlbumTreeItemFactory {
       );
     }
 
-    if (album.metadata?.year) {
+    if (album.metadata) {
       builder.add(
         textWithQuery(String(album.metadata.year)).withImage(
           ICON_CALENDAR_DAYS,
@@ -101,10 +101,15 @@ export class AlbumTreeItemFactory {
     const builder = this.detailsBuilder(details).withoutHref().asTree();
     const artistItems = await ArtistTreeItem.createTreeItems(details.artist);
 
+    builder.add(text(details.displayTitle).makeCopyable());
     builder.add(items(`${details.artist}`, artistItems).withImage(ICON_MIC));
 
     if (details.releaseMetadata.artistNames?.length) {
-      builder.add(list('Parsed artists', details.releaseMetadata.artistNames));
+      builder.add(
+        list('Parsed artists', details.releaseMetadata.artistNames).withImage(
+          ICON_MIC,
+        ),
+      );
     }
 
     builder.add(
@@ -143,7 +148,11 @@ export class AlbumTreeItemFactory {
       ).withImage(ICON_LIST_MUSIC),
     );
 
-    builder.add(list('Tags', details.tags).withImage(ICON_TAGS));
+    builder.add(
+      list('Tags', details.tags)
+        .withImage(ICON_TAGS)
+        .withChildrenImage(ICON_TAG),
+    );
 
     builder.add(text(details.url).makeCopyable().withImage(ICON_LINK));
 

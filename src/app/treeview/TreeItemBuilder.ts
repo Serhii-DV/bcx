@@ -9,6 +9,7 @@ import type { TreeItemButton } from './TreeItemButton';
 import {
   ICON_CLIPBOARD_COPY,
   ICON_EXTERNAL_LINK,
+  ICON_FILE_TEXT,
   ICON_LINK,
   ICON_SQUARE_ARROW_RIGHT,
 } from './utils/icon';
@@ -94,6 +95,13 @@ export class TreeItemBuilder {
 
   withImage(image: string): this {
     this.item.image = image;
+    return this;
+  }
+
+  withChildrenImage(image: string): this {
+    this.item.children?.forEach((child) => {
+      child.image = image;
+    });
     return this;
   }
 
@@ -219,7 +227,7 @@ export function builder(item: TreeItem): TreeItemBuilder {
 }
 
 export function text(label: string): TreeItemBuilder {
-  return new TreeItemBuilder({ label });
+  return new TreeItemBuilder({ label }).withImage(ICON_FILE_TEXT);
 }
 
 export function textWithQuery(
