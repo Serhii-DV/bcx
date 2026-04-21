@@ -3,7 +3,7 @@ import { console } from 'src/utils/console';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 
-const CACHE_VERSION = 6;
+const CACHE_VERSION = 7;
 const CACHE_KEY_PREFIX = '/cache/tree-item';
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 
@@ -22,6 +22,7 @@ interface TreeItemSnapshot {
   path?: string;
   href?: string;
   image?: string;
+  hint?: string;
   query?: string;
   keywords?: string[];
   includeInFilterSuggestions?: boolean;
@@ -147,6 +148,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
     path: item.path,
     href: item.href,
     image: item.image,
+    hint: item.hint,
     query: item.query,
     keywords: item.keywords,
     includeInFilterSuggestions: item.includeInFilterSuggestions,
@@ -172,6 +174,7 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
     path: item.path,
     href: item.href,
     image: item.image,
+    hint: item.hint,
     query: item.query,
     keywords: item.keywords,
     includeInFilterSuggestions: item.includeInFilterSuggestions,

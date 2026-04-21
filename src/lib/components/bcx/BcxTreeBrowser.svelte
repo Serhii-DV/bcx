@@ -552,13 +552,13 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   <div
     role="button"
     class="tree-item bcx-browser-row flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
-    class:focused={focusedPath === item.path}
-    data-level="{item.level}"
-    data-path="{item.path}"
-    tabindex={focusedPath === item.path ? 0 : -1}
-    title={getDrillUpLabel()}
-    aria-label={getDrillUpLabel()}
-    onclick={(e) => handleBrowserItemClick(item, e)}
+      class:focused={focusedPath === item.path}
+      data-level="{item.level}"
+      data-path="{item.path}"
+      tabindex={focusedPath === item.path ? 0 : -1}
+      title={item.hint || getDrillUpLabel()}
+      aria-label={getDrillUpLabel()}
+      onclick={(e) => handleBrowserItemClick(item, e)}
     onkeydown={(e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -581,6 +581,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       data-level="{item.level}"
       data-path="{item.path}"
       tabindex={focusedPath === item.path ? 0 : -1}
+      title={item.hint}
       onclick={(e) => handleBrowserItemClick(item, e)}
       onkeydown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -601,7 +602,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       tabindex={focusedPath === item.path ? 0 : -1}
       onclick={(e) => handleItemClick(item, e)}
       href={item.href}
-      title={item.href}
+      title={item.hint}
     >
       <BcxTreeItem item={withBrowserChildCount(item)} />
     </a>

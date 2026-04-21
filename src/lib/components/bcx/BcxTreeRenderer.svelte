@@ -56,6 +56,7 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
                 class="tree-item tree-node-summary cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
+                title={item.hint}
                 onclick={(event) => onNodeClick(item, event)}
               >
                 <BcxTreeItem item={withVisibleChildCount(item)} />
@@ -75,7 +76,7 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
               tabindex={focusedPath === item.path ? 0 : -1}
               onclick={(event) => onItemClick(item, event)}
               href={item.href}
-              title={item.href}
+              title={item.hint}
             >
               <BcxTreeItem item={withVisibleChildCount(item)} />
             </a>

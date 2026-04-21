@@ -96,6 +96,11 @@ export class TreeItemBuilder {
     return this;
   }
 
+  withHint(hint: string): this {
+    this.item.hint = hint;
+    return this;
+  }
+
   withQuery(query: string): this {
     this.item.query = query;
     return this;
@@ -142,15 +147,17 @@ export class TreeItemBuilder {
   }
 
   makeCopyable(copyContent?: string): this {
-    return this.withActionIcon(ICON_CLIPBOARD_COPY).withOnClick(
-      async (context) => {
-        await copyToClipboard(copyContent ?? context.item.label ?? '');
+    const content = copyContent ?? this.item.label ?? '';
+
+    return this.withActionIcon(ICON_CLIPBOARD_COPY)
+      .withOnClick(async (context) => {
+        await copyToClipboard(content);
 
         context.focusPath = context.item.path;
         context.refreshTree = false;
         context.showFeedback?.('Copied');
-      },
-    );
+      })
+      .withHint(`Click to copy: ${content}`);
   }
 
   makeLazy(loadItem: () => Promise<TreeItem | null>): this {
