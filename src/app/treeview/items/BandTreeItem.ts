@@ -181,6 +181,7 @@ export class BandTreeItem {
       list('Created', [band.metadata.created.toLocaleDateString()]),
       list('Currency', [band.metadata.currency]),
     ])
+      .asTree()
       .withImage(ICON_INFO)
       .build();
   }

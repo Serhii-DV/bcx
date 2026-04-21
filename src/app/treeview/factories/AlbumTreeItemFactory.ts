@@ -20,6 +20,7 @@ import {
   ICON_LINK,
   ICON_LIST_MUSIC,
   ICON_MIC,
+  ICON_TAG,
   ICON_TAGS,
 } from '../utils/icon';
 import { TrackTreeItemFactory } from './TrackTreeItemFactory';
@@ -39,10 +40,6 @@ export class AlbumTreeItemFactory {
 
     builder.add(textWithQuery(album.toString()));
 
-    if (album.metadata?.year) {
-      builder.add(textWithQuery(String(album.metadata.year)));
-    }
-
     if (artistNames.length) {
       builder.add(
         items(
@@ -54,16 +51,26 @@ export class AlbumTreeItemFactory {
       );
     }
 
+    if (album.metadata?.year) {
+      builder.add(
+        textWithQuery(String(album.metadata.year)).withImage(
+          ICON_CALENDAR_DAYS,
+        ),
+      );
+    }
+
     if (keywords.length) {
       builder.add(
         items(
           'Tags',
-          keywords.map((keyword) => textWithQuery(keyword)),
-        ).build(),
+          keywords.map((keyword) => textWithQuery(keyword).withImage(ICON_TAG)),
+        )
+          .withImage(ICON_TAGS)
+          .build(),
       );
     }
 
-    builder.add(link('Open Album Page', album.url.toString()));
+    builder.add(link(album.url.toString(), album.url.toString()));
 
     return builder.build();
   }

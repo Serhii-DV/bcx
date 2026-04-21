@@ -9,6 +9,7 @@ import type { TreeItemButton } from './TreeItemButton';
 import {
   ICON_CLIPBOARD_COPY,
   ICON_EXTERNAL_LINK,
+  ICON_LINK,
   ICON_SQUARE_ARROW_RIGHT,
 } from './utils/icon';
 
@@ -238,7 +239,7 @@ export function link(
   href: string,
   actionIcon?: string,
 ): TreeItemBuilder {
-  return text(label).asLink(href, actionIcon);
+  return text(label).asLink(href, actionIcon).withImage(ICON_LINK);
 }
 
 export function list(label: string, strings: string[]): TreeItemBuilder {

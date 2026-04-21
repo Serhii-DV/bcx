@@ -69,7 +69,7 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
             </details>
           {:else}
             <a
-              class="tree-item tree-leaf flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
+              class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
@@ -90,23 +90,32 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
 {@render treeItems(items)}
 
 <style>
+.tree-node > .tree-node-summary,
+.tree-leaf {
+  padding-left: 1.5rem;
+}
+
 .tree-node[open] > .tree-node-summary::before {
-  transform: rotate(90deg);
+  transform: translateY(-50%) rotate(90deg);
 }
 
 .tree-node > .tree-node-summary {
+  position: relative;
   display: flex;
   align-items: center;
   cursor: pointer;
 }
 
 .tree-node > .tree-node-summary::before {
-  display: inline-block;
-  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 0.25rem;
+  display: block;
   width: 1rem;
   height: 1rem;
-  margin: 0.25rem;
   content: "";
+  transform: translateY(-50%);
+  transform-origin: center;
   background-color: currentcolor;
   -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
           mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
@@ -115,9 +124,9 @@ function withVisibleChildCount(item: TreeItem): TreeItem {
 }
 
 .tree-leaf {
-    display: inline-flex;
-    padding-block: .25rem;
-    vertical-align: middle;
+  display: inline-flex;
+  padding-block: 0.25rem;
+  vertical-align: middle;
 }
 
 .hidden {
