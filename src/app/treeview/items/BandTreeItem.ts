@@ -1,3 +1,4 @@
+import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
@@ -20,15 +21,18 @@ const LOAD_MORE_LABEL = 'Load more';
 
 export class BandTreeItem {
   static create(band: Band, url: Url): TreeItem {
-    const showAlbumsWithKeywords = isBandcampMusicUrl(url);
+    const showAlbumsWithSummary = isBandcampMusicUrl(url);
     const builder = new TreeItemBuilder(BandTreeItemFactory.create(band));
-    builder.withOpen(showAlbumsWithKeywords).withoutHref();
+    builder.withOpen(showAlbumsWithSummary).withoutHref();
 
     if (band.hasReleases) {
       builder.withChildren([
-        this.createArtistsTreeItem(band, showAlbumsWithKeywords),
-        this.createReleasesTreeItem(band, showAlbumsWithKeywords),
-        this.createBandYearsTreeItem(band, showAlbumsWithKeywords),
+        this.createArtistsTreeItem(band.metadata.albums, showAlbumsWithSummary),
+        this.createReleasesTreeItem(
+          band.metadata.albums,
+          showAlbumsWithSummary,
+        ),
+        this.createBandYearsTreeItem(band, showAlbumsWithSummary),
         this.createBandAbout(band),
       ]);
     } else {
@@ -39,15 +43,12 @@ export class BandTreeItem {
   }
 
   private static createArtistsTreeItem(
-    band: Band,
+    albums: Album[],
     withAlbumSummary: boolean,
   ): TreeItem {
     return items(
       'Artists',
-      AlbumTreeItemFactory.fromAlbumsByArtistReleases(
-        band.metadata.albums,
-        withAlbumSummary,
-      ),
+      AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums, withAlbumSummary),
     )
       .withImage(ICON_MIC)
       .withChildrenImage(ICON_MIC)
@@ -55,36 +56,36 @@ export class BandTreeItem {
   }
 
   private static createReleasesTreeItem(
-    band: Band,
+    albums: Album[],
     withAlbumSummary: boolean,
   ): TreeItem {
     return items(
       'Releases',
-      this.createReleaseChildrenPage(band, withAlbumSummary, 0),
+      this.createReleaseChildrenPage(albums, withAlbumSummary, 0),
     )
       .withImage(ICON_DISC)
       .apply((item) => {
-        item.childrenCount = band.metadata.albums.length;
+        item.childrenCount = albums.length;
       })
       .build();
   }
 
   private static createReleaseChildrenPage(
-    band: Band,
+    albums: Album[],
     withAlbumSummary: boolean,
     offset: number,
     limit: number = RELEASE_BATCH_SIZE,
   ): TreeItem[] {
     const nextOffset = offset + limit;
     const children = AlbumTreeItemFactory.fromAlbums(
-      band.metadata.albums.slice(offset, nextOffset),
+      albums.slice(offset, nextOffset),
       withAlbumSummary,
     );
 
-    if (nextOffset < band.metadata.albums.length) {
+    if (nextOffset < albums.length) {
       children.push(
         this.createLoadMoreReleasesTreeItem(
-          band,
+          albums,
           withAlbumSummary,
           nextOffset,
           limit,
@@ -96,13 +97,13 @@ export class BandTreeItem {
   }
 
   private static createLoadMoreReleasesTreeItem(
-    band: Band,
+    albums: Album[],
     withAlbumSummary: boolean,
     offset: number,
     limit: number,
   ): TreeItem {
     const loadMoreTreeItem: TreeItem = {
-      label: this.createLoadMoreLabel(offset, band.metadata.albums.length),
+      label: this.createLoadMoreLabel(offset, albums.length),
       image: ICON_CHEVRONS_DOWN,
       includeInFilterSuggestions: false,
     };
@@ -129,7 +130,7 @@ export class BandTreeItem {
           (child) => child === item || child.path === item.path,
         );
         const nextChildren = this.createReleaseChildrenPage(
-          band,
+          albums,
           withAlbumSummary,
           offset,
           limit,
@@ -154,7 +155,7 @@ export class BandTreeItem {
           'Failed to load more releases:',
           error,
         );
-        item.label = `${this.createLoadMoreLabel(offset, band.metadata.albums.length)} (error)`;
+        item.label = `${this.createLoadMoreLabel(offset, albums.length)} (error)`;
         context.showFeedback?.('Error loading');
       } finally {
         item.isLoadingChildren = false;
@@ -176,11 +177,12 @@ export class BandTreeItem {
     withAlbumSummary: boolean,
     label: string = 'Years',
   ): TreeItem | undefined {
-    const children: TreeItem[] = band.metadata.years.reverse().map((year) => {
+    const metadata = band.metadata;
+    const children: TreeItem[] = metadata.years.reverse().map((year) => {
       return {
         label: String(year),
         children: AlbumTreeItemFactory.fromAlbums(
-          band.metadata.albumsByYear(year),
+          metadata.albumsByYear(year),
           withAlbumSummary,
         ),
       };

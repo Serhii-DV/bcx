@@ -230,16 +230,16 @@ export function text(label: string): TreeItemBuilder {
   return new TreeItemBuilder({ label }).withImage(ICON_FILE_TEXT);
 }
 
-export function textWithQuery(
+export function searchQuery(
   label: string,
   query?: string | number,
 ): TreeItemBuilder {
-  return new TreeItemBuilder({
-    label,
-    query: typeof query === 'string' ? query : label,
-    includeInFilterSuggestions: true,
-    actionIcon: ICON_SQUARE_ARROW_RIGHT,
-  });
+  const queryString = query !== undefined ? String(query) : label;
+  return text(label)
+    .withQuery(queryString)
+    .withHint(`Search for "${queryString}"`)
+    .includeInFilterSuggestions()
+    .withActionIcon(ICON_SQUARE_ARROW_RIGHT);
 }
 
 export function link(

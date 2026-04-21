@@ -10,9 +10,9 @@ import {
   link,
   linkOrText,
   list,
+  searchQuery,
   TreeItemBuilder,
   text,
-  textWithQuery,
 } from '../TreeItemBuilder';
 import {
   ICON_BUILDING,
@@ -34,17 +34,20 @@ export class AlbumTreeItemFactory {
   }
 
   static createWithSummary(album: Album): TreeItem {
-    const builder = this.builder(album).withoutLink().withoutChildrenCount();
+    const builder = this.builder(album)
+      .withoutLink()
+      .withoutChildrenCount()
+      .asTree();
     const artistNames = [...album.artistNames].sort();
     const keywords = [...(album.metadata?.keywords || [])].sort();
 
-    builder.add(textWithQuery(album.toString()));
+    builder.add(searchQuery(album.toString()));
 
     if (artistNames.length) {
       builder.add(
         items(
           'Artists',
-          artistNames.map((artistName) => textWithQuery(artistName)),
+          artistNames.map((artistName) => searchQuery(artistName)),
         )
           .withImage(ICON_MIC)
           .build(),
@@ -53,9 +56,7 @@ export class AlbumTreeItemFactory {
 
     if (album.metadata) {
       builder.add(
-        textWithQuery(String(album.metadata.year)).withImage(
-          ICON_CALENDAR_DAYS,
-        ),
+        searchQuery(String(album.metadata.year)).withImage(ICON_CALENDAR_DAYS),
       );
     }
 
@@ -63,7 +64,7 @@ export class AlbumTreeItemFactory {
       builder.add(
         items(
           'Tags',
-          keywords.map((keyword) => textWithQuery(keyword).withImage(ICON_TAG)),
+          keywords.map((keyword) => searchQuery(keyword).withImage(ICON_TAG)),
         )
           .withImage(ICON_TAGS)
           .build(),
