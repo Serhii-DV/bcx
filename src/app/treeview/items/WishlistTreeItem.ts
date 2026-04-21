@@ -9,7 +9,7 @@ import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl, storage } from 'src/core/shared';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import { TreeItemBuilder } from '../TreeItemBuilder';
+import { items } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
 import { ICON_DISC, ICON_MIC } from '../utils/icon';
@@ -50,7 +50,7 @@ export class WishlistTreeItem {
   }
 
   private static createArtistsTreeItem(albums: Album[]): TreeItem {
-    return TreeItemBuilder.items(
+    return items(
       'Artists',
       AlbumTreeItemFactory.fromAlbumsByArtistReleases(albums),
     )
@@ -59,10 +59,7 @@ export class WishlistTreeItem {
   }
 
   private static createReleasesTreeItem(albums: Album[]): TreeItem {
-    return TreeItemBuilder.items(
-      'Releases',
-      AlbumTreeItemFactory.fromAlbums(albums),
-    )
+    return items('Releases', AlbumTreeItemFactory.fromAlbums(albums))
       .withImage(ICON_DISC)
       .build();
   }

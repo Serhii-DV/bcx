@@ -4,7 +4,7 @@ import type { Url } from 'src/core/url';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import { link, list, TreeItemBuilder } from '../TreeItemBuilder';
+import { items, link, list, TreeItemBuilder } from '../TreeItemBuilder';
 import { ICON_CALENDAR, ICON_DISC, ICON_INFO, ICON_MIC } from '../utils/icon';
 
 export class BandTreeItem {
@@ -31,7 +31,7 @@ export class BandTreeItem {
     band: Band,
     includeBriefInformation: boolean,
   ): TreeItem {
-    return TreeItemBuilder.items(
+    return items(
       'Artists',
       AlbumTreeItemFactory.fromAlbumsByArtistReleases(
         band.metadata.albums,
@@ -46,7 +46,7 @@ export class BandTreeItem {
     band: Band,
     includeBriefInformation: boolean,
   ): TreeItem {
-    return TreeItemBuilder.items(
+    return items(
       'Releases',
       AlbumTreeItemFactory.fromAlbums(
         band.metadata.albums,
@@ -76,13 +76,11 @@ export class BandTreeItem {
       return undefined;
     }
 
-    return TreeItemBuilder.items(label, children)
-      .withImage(ICON_CALENDAR)
-      .build();
+    return items(label, children).withImage(ICON_CALENDAR).build();
   }
 
   private static createBandAbout(band: Band): TreeItem {
-    return TreeItemBuilder.items('About ' + band.name, [
+    return items('About ' + band.name, [
       list('Created', [band.metadata.created.toLocaleDateString()]),
       list('Currency', [band.metadata.currency]),
     ])

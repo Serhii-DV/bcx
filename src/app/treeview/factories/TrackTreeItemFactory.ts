@@ -1,10 +1,10 @@
 import type { Track } from 'src/bandcamp/domain/track/track';
 import type { TreeItem } from '../TreeItem';
-import { TreeItemBuilder } from '../TreeItemBuilder';
+import { linkOrText } from '../TreeItemBuilder';
 
 export class TrackTreeItemFactory {
   static create(track: Track): TreeItem {
-    return TreeItemBuilder.linkOrText(
+    return linkOrText(
       track.toAlbumTrackString(),
       track.url?.toString(),
     ).build();

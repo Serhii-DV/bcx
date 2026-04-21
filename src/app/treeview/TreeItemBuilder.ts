@@ -22,60 +22,6 @@ export class TreeItemBuilder {
     }
   }
 
-  static create(item: TreeItem): TreeItemBuilder {
-    return new TreeItemBuilder(item);
-  }
-
-  static text(label: string): TreeItemBuilder {
-    return this.create({ label });
-  }
-
-  static textWithQuery(
-    label: string,
-    query?: string | number,
-  ): TreeItemBuilder {
-    return this.create({
-      label,
-      query: typeof query === 'string' ? query : label,
-      includeInFilterSuggestions: true,
-      actionIcon: ICON_SQUARE_ARROW_RIGHT,
-    });
-  }
-
-  static items(label: string, children: ItemOrBuilder[]): TreeItemBuilder {
-    return this.create({
-      label,
-      open: false,
-      children: buildTreeItems(children),
-    });
-  }
-
-  static list(label: string, strings: string[]): TreeItemBuilder {
-    return this.items(
-      label,
-      strings.map((string) => this.text(string)),
-    );
-  }
-
-  static linkOrText(label: string, href?: string): TreeItemBuilder {
-    return href
-      ? this.text(label).asLink(href)
-      : this.text(label).includeInFilterSuggestions();
-  }
-
-  static lazy(
-    item: TreeItem,
-    loadItem: () => Promise<TreeItem | null>,
-  ): TreeItem {
-    return {
-      ...item,
-      children: undefined,
-      childrenLoaded: false,
-      hasChildren: true,
-      loadChildren: loadItem,
-    };
-  }
-
   withId(id: string): this {
     this.item.id = id;
     return this;
@@ -198,6 +144,14 @@ export class TreeItemBuilder {
     );
   }
 
+  makeLazy(loadItem: () => Promise<TreeItem | null>): this {
+    this.item.children = undefined;
+    this.item.childrenLoaded = false;
+    this.item.hasChildren = true;
+    this.item.loadChildren = loadItem;
+    return this;
+  }
+
   withoutActionIcon(): this {
     this.item.actionIcon = undefined;
     return this;
@@ -236,11 +190,31 @@ export function items(
   label: string,
   children: ItemOrBuilder[],
 ): TreeItemBuilder {
-  return TreeItemBuilder.items(label, children);
+  return new TreeItemBuilder({
+    label,
+    open: false,
+    children: buildTreeItems(children),
+  });
+}
+
+export function builder(item: TreeItem): TreeItemBuilder {
+  return new TreeItemBuilder(item);
 }
 
 export function text(label: string): TreeItemBuilder {
-  return TreeItemBuilder.text(label);
+  return new TreeItemBuilder({ label });
+}
+
+export function textWithQuery(
+  label: string,
+  query?: string | number,
+): TreeItemBuilder {
+  return new TreeItemBuilder({
+    label,
+    query: typeof query === 'string' ? query : label,
+    includeInFilterSuggestions: true,
+    actionIcon: ICON_SQUARE_ARROW_RIGHT,
+  });
 }
 
 export function link(
@@ -248,11 +222,18 @@ export function link(
   href: string,
   actionIcon?: string,
 ): TreeItemBuilder {
-  return TreeItemBuilder.text(label).asLink(href, actionIcon);
+  return text(label).asLink(href, actionIcon);
 }
 
 export function list(label: string, strings: string[]): TreeItemBuilder {
-  return TreeItemBuilder.list(label, strings);
+  return items(
+    label,
+    strings.map((string) => text(string)),
+  );
+}
+
+export function linkOrText(label: string, href?: string): TreeItemBuilder {
+  return href ? link(label, href) : text(label).includeInFilterSuggestions();
 }
 
 function buildTreeItem(item: ItemOrBuilder): TreeItem {

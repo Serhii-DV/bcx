@@ -1,5 +1,5 @@
 import type { TreeItem } from '../TreeItem';
-import { TreeItemBuilder } from '../TreeItemBuilder';
+import { text } from '../TreeItemBuilder';
 
 export class DateTreeItemFactory {
   static create(date: Date): TreeItem {
@@ -9,6 +9,6 @@ export class DateTreeItemFactory {
       day: 'numeric',
     });
 
-    return TreeItemBuilder.text(label).build();
+    return text(label).build();
   }
 }
