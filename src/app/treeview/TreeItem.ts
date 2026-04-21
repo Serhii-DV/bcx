@@ -9,6 +9,14 @@ export interface TreeItemClickContext {
   showFeedback?: (message: string, duration?: number) => void;
 }
 
+export const TREE_ITEM_LAYOUT = {
+  BROWSER: 'browser',
+  TREE: 'tree',
+} as const;
+
+export type TreeItemLayout =
+  (typeof TREE_ITEM_LAYOUT)[keyof typeof TREE_ITEM_LAYOUT];
+
 export interface TreeItem {
   id?: string;
   label?: string;
@@ -26,6 +34,7 @@ export interface TreeItem {
   query?: string;
   keywords?: string[];
   includeInFilterSuggestions?: boolean;
+  layout?: TreeItemLayout;
   buttons?: TreeItemButton[];
   onClick?: (context: TreeItemClickContext) => void | Promise<void>;
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;

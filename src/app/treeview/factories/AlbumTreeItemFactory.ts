@@ -3,7 +3,7 @@ import type { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
 import { arrayUnique } from 'src/utils/array';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
-import type { TreeItem } from '../TreeItem';
+import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items, link, list, TreeItemBuilder, text } from '../TreeItemBuilder';
 import { TreeItemFactory } from '../TreeItemFactory';
 import {
@@ -85,7 +85,9 @@ export class AlbumTreeItemFactory {
   }
 
   static async createWithDetails(details: AlbumDetails): Promise<TreeItem> {
-    const builder = this.detailsBuilder(details).withoutHref();
+    const builder = this.detailsBuilder(details)
+      .withoutHref()
+      .withLayout(TREE_ITEM_LAYOUT.TREE);
     const artistItems = await ArtistTreeItem.createTreeItems(details.artist);
 
     builder.add(items(`${details.artist}`, artistItems).withImage(ICON_MIC));

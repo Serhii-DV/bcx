@@ -1,5 +1,9 @@
 import { copyToClipboard } from 'src/utils/clipboard';
-import type { TreeItem, TreeItemClickContext } from './TreeItem';
+import type {
+  TreeItem,
+  TreeItemClickContext,
+  TreeItemLayout,
+} from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 import { TreeItemFactory } from './TreeItemFactory';
 import { ICON_CLIPBOARD_COPY, ICON_EXTERNAL_LINK } from './utils/icon';
@@ -116,6 +120,11 @@ export class TreeItemBuilder {
 
   includeInFilterSuggestions(include: boolean = true): this {
     this.item.includeInFilterSuggestions = include;
+    return this;
+  }
+
+  withLayout(layout: TreeItemLayout): this {
+    this.item.layout = layout;
     return this;
   }
 
