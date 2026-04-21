@@ -18,6 +18,7 @@ import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
+import BcxTreeRenderer from './BcxTreeRenderer.svelte';
 import {
   activateTreeItem,
   collapseTreeNodeElement,
@@ -26,9 +27,10 @@ import {
   filterTreeItemsFlat,
   findFirstVisibleChildByPath as findFirstVisibleChildInItemsByPath,
   findVisibleItem as findVisibleItemByIndex,
+  findVisibleParentByPath as findVisibleParentInItemsByPath,
   focusTreeItemElement,
+  getNavigableTreeItems,
   getTreeItemFilterSuggestions,
-  getItemVisibleChildCount as getVisibleChildCount,
   visibleItemIndex as getVisibleItemIndex,
   visibleNext as getVisibleNext,
   visiblePrev as getVisiblePrev,
@@ -338,22 +340,15 @@ function visiblePrev(index: number, step: number = 1): TreeItem | null {
 }
 
 function getTreeLayoutNavigableItems(): TreeItem[] {
-  const visibleItems = getVisibleItems(currentLevelItems || []);
-
-  if (!debouncedFilterQuery.trim()) {
-    return visibleItems;
-  }
-
-  return visibleItems.filter((item) =>
-    treeLayoutVisiblePaths.has(item.path || ''),
+  return getNavigableTreeItems(
+    getVisibleItems(currentLevelItems || []),
+    debouncedFilterQuery,
+    treeLayoutVisiblePaths,
   );
 }
 
 function findVisibleParentByPath(path?: string | null): TreeItem | null {
-  if (!path) return null;
-  const parentPath = path.split('.').slice(0, -1).join('.');
-  if (!parentPath) return null;
-  return getNavigableItems().find((item) => item.path === parentPath) ?? null;
+  return findVisibleParentInItemsByPath(getNavigableItems(), path);
 }
 
 function findFirstVisibleChildByPath(path?: string | null): TreeItem | null {
@@ -530,25 +525,6 @@ function withBrowserTreeItemState(item: TreeItem): TreeItem {
   };
 }
 
-function isTreeLayoutItemVisible(item: TreeItem): boolean {
-  if (!debouncedFilterQuery.trim()) {
-    return true;
-  }
-
-  return treeLayoutVisiblePaths.has(item.path || '');
-}
-
-function withTreeLayoutChildCount(item: TreeItem): TreeItem {
-  return {
-    ...item,
-    childrenCount: getVisibleChildCount(
-      item,
-      debouncedFilterQuery,
-      treeLayoutVisibleChildCounts,
-    ),
-  };
-}
-
 async function expandCurrentTreeNode(item: TreeItem) {
   await expandTreeNode({
     item,
@@ -632,50 +608,6 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   {/if}
 {/snippet}
 
-{#snippet treeLayoutTreeItems(items: TreeItem[] | undefined)}
-  {#if items && items.length > 0}
-    <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
-      {#each items as item}
-        <li class:hidden={!isTreeLayoutItemVisible(item)}>
-          {#if isNode(item)}
-            <details
-              open={item.open}
-              class="group"
-              data-level="{item.level}"
-              data-path="{item.path}"
-            >
-              <summary
-                class="tree-item cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
-                class:focused={focusedPath === item.path}
-                tabindex={focusedPath === item.path ? 0 : -1}
-                onclick={(e) => handleTreeLayoutNodeClick(item, e)}
-              >
-                <BcxTreeItem item={withTreeLayoutChildCount(item)} />
-              </summary>
-              {#if !item.isLoadingChildren}
-                {@render treeLayoutTreeItems(item.children)}
-              {/if}
-            </details>
-          {:else}
-            <a
-              class="tree-item flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
-              class:focused={focusedPath === item.path}
-              data-level="{item.level}"
-              data-path="{item.path}"
-              tabindex={focusedPath === item.path ? 0 : -1}
-              onclick={(e) => handleItemClick(item, e)}
-              href={item.href}
-              title={item.href}
-            >
-              <BcxTreeItem item={withTreeLayoutChildCount(item)} />
-            </a>
-          {/if}
-        </li>
-      {/each}
-    </ol>
-  {/if}
-{/snippet}
-
 {#snippet browserTreeItems(items: TreeItem[] | undefined)}
   <ol class="ml-0 mt-0 pl-0">
     {#if currentRootPath}
@@ -686,7 +618,15 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
     {#if isTreeLayout}
       {#if getTreeLayoutNavigableItems().length > 0}
         <li>
-          {@render treeLayoutTreeItems(currentLevelItems)}
+          <BcxTreeRenderer
+            items={currentLevelItems}
+            {focusedPath}
+            filterQuery={debouncedFilterQuery}
+            visiblePaths={treeLayoutVisiblePaths}
+            visibleChildCounts={treeLayoutVisibleChildCounts}
+            onItemClick={handleItemClick}
+            onNodeClick={handleTreeLayoutNodeClick}
+          />
         </li>
       {:else}
         <li class="text-gray-400 text-sm text-center py-4">
@@ -738,30 +678,6 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 </div>
 
 <style>
-:is([open]:is(.bcx-tree-view details) > summary)::before {
-  transform: rotate(90deg);
-}
-
-:is(.bcx-tree-view details) summary {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-:is(:is(.bcx-tree-view details) summary)::before {
-  display: inline-block;
-  flex-shrink: 0;
-  width: 1rem;
-  height: 1rem;
-  margin: 0.25rem;
-  content: "";
-  background-color: currentcolor;
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
-          mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
-  -webkit-mask-size: cover;
-          mask-size: cover;
-}
-
 .bcx-tree-view a {
     display: inline-flex;
     padding-block: .25rem;
@@ -771,9 +687,4 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 .bcx-browser-row {
   border-radius: 4px;
 }
-
-.bcx-tree-view .hidden {
-  display: none;
-}
-
 </style>

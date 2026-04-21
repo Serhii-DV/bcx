@@ -205,6 +205,33 @@ export function findFirstVisibleChildByPath(
   );
 }
 
+export function findVisibleParentByPath(
+  items: TreeItem[],
+  path?: string | null,
+): TreeItem | null {
+  if (!path) return null;
+
+  const parentPath = path.split('.').slice(0, -1).join('.');
+
+  if (!parentPath) {
+    return null;
+  }
+
+  return items.find((item) => item.path === parentPath) ?? null;
+}
+
+export function getNavigableTreeItems(
+  visibleItems: TreeItem[],
+  query: string,
+  visiblePaths: Set<string>,
+): TreeItem[] {
+  if (!query.trim()) {
+    return visibleItems;
+  }
+
+  return visibleItems.filter((item) => visiblePaths.has(item.path || ''));
+}
+
 export function elementByPath(
   container: HTMLElement | undefined,
   path?: string,

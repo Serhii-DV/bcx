@@ -4,7 +4,7 @@ import type { TreeItem } from 'src/app/treeview/TreeItem';
 import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
-import BcxTreeItem from './BcxTreeItem.svelte';
+import BcxTreeRenderer from './BcxTreeRenderer.svelte';
 import BcxTreeViewFilter from './BcxTreeViewFilter.svelte';
 import {
   activateTreeItem,
@@ -13,8 +13,9 @@ import {
   expandTreeNode,
   findFirstVisibleChildByPath as findFirstVisibleChildInItemsByPath,
   findVisibleItem as findVisibleItemByIndex,
+  findVisibleParentByPath as findVisibleParentInItemsByPath,
   focusTreeItemElement,
-  getItemVisibleChildCount as getVisibleChildCount,
+  getNavigableTreeItems,
   visibleItemIndex as getVisibleItemIndex,
   visibleNext as getVisibleNext,
   visiblePrev as getVisiblePrev,
@@ -251,13 +252,11 @@ async function handleKeyDown(event: KeyboardEvent) {
 }
 
 function getNavigableItems(): TreeItem[] {
-  const visibleItems = treeData.visible;
-
-  if (!debouncedFilterQuery.trim()) {
-    return visibleItems;
-  }
-
-  return visibleItems.filter((item) => visiblePaths.has(item.path || ''));
+  return getNavigableTreeItems(
+    treeData.visible,
+    debouncedFilterQuery,
+    visiblePaths,
+  );
 }
 
 function visibleItemIndex(path?: string | null): number {
@@ -277,10 +276,7 @@ function visiblePrev(index: number, step: number = 1): TreeItem | null {
 }
 
 function findVisibleParentByPath(path?: string | null): TreeItem | null {
-  if (!path) return null;
-  const parentPath = path.split('.').slice(0, -1).join('.');
-  if (!parentPath) return null;
-  return getNavigableItems().find((item) => item.path === parentPath) ?? null;
+  return findVisibleParentInItemsByPath(getNavigableItems(), path);
 }
 
 function findFirstVisibleChildByPath(path?: string | null): TreeItem | null {
@@ -332,22 +328,6 @@ function handleFilterArrowDown() {
   focusTreeItem(getNavigableItems()[0]);
 }
 
-function isItemVisible(item: TreeItem): boolean {
-  if (!debouncedFilterQuery.trim()) return true;
-  return visiblePaths.has(item.path || '');
-}
-
-function getItemVisibleChildCount(item: TreeItem): number {
-  return getVisibleChildCount(item, debouncedFilterQuery, visibleChildCounts);
-}
-
-function withVisibleChildCount(item: TreeItem): TreeItem {
-  return {
-    ...item,
-    childrenCount: getItemVisibleChildCount(item),
-  };
-}
-
 function handleNodeClick(item: TreeItem, event: MouseEvent) {
   event.preventDefault();
   focusedPath = item.path ?? null;
@@ -360,50 +340,6 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
   expandNode(item);
 }
 </script>
-
-{#snippet treeItems(items: TreeItem[] | undefined)}
-  {#if items && items.length > 0}
-    <ol class="ml-0 mt-0 border-l border-gray-500/50 pl-2">
-      {#each items as item}
-        <li class:hidden={!isItemVisible(item)}>
-          {#if isNode(item)}
-            <details
-              open={item.open}
-              class="group"
-              data-level="{item.level}"
-              data-path="{item.path}"
-            >
-              <summary
-                class="tree-item cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
-                class:focused={focusedPath === item.path}
-                tabindex={focusedPath === item.path ? 0 : -1}
-                onclick={(e) => handleNodeClick(item, e)}
-              >
-                <BcxTreeItem item={withVisibleChildCount(item)} />
-              </summary>
-              {#if !item.isLoadingChildren}
-                {@render treeItems(item.children)}
-              {/if}
-            </details>
-          {:else}
-            <a
-              class="tree-item flex items-center w-full cursor-pointer pl-2 text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20 focus:ring-2 focus:ring-blue-400"
-              class:focused={focusedPath === item.path}
-              data-level="{item.level}"
-              data-path="{item.path}"
-              tabindex={focusedPath === item.path ? 0 : -1}
-              onclick={(e) => handleItemClick(item, e)}
-              href={item.href}
-              title={item.href}
-              >
-              <BcxTreeItem item={withVisibleChildCount(item)} />
-            </a>
-          {/if}
-        </li>
-      {/each}
-    </ol>
-  {/if}
-{/snippet}
 
 <div class="flex flex-col h-full gap-2">
   <BcxTreeViewFilter
@@ -431,44 +367,16 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
       </div>
     {:else if treeData.items}
       {#key treeVersion}
-        {@render treeItems(treeData.items)}
+        <BcxTreeRenderer
+          items={treeData.items}
+          {focusedPath}
+          filterQuery={debouncedFilterQuery}
+          {visiblePaths}
+          {visibleChildCounts}
+          onItemClick={handleItemClick}
+          onNodeClick={handleNodeClick}
+        />
       {/key}
     {/if}
   </div>
 </div>
-
-<style>
-:is([open]:is(.bcx-tree-view details) > summary)::before {
-  transform: rotate(90deg);
-}
-
-:is(.bcx-tree-view details) summary {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-:is(:is(.bcx-tree-view details) summary)::before {
-  display: inline-block;
-  flex-shrink: 0;
-  width: 1rem;
-  height: 1rem;
-  margin: 0.25rem;
-  content: "";
-  background-color: currentcolor;
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
-          mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>');
-  -webkit-mask-size: cover;
-          mask-size: cover;
-}
-
-.bcx-tree-view a {
-    display: inline-flex;
-    padding-block: .25rem;
-    vertical-align: middle;
-}
-
-.bcx-tree-view .hidden {
-    display: none;
-}
-</style>
