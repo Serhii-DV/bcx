@@ -77,7 +77,11 @@ export async function hydrateTreeItemChildren(
     }
 
     const { path, level, open } = item;
-    const childrenCount = loadedItem.children?.length || 0;
+    const childrenCount =
+      loadedItem.childrenCount ??
+      item.childrenCount ??
+      loadedItem.children?.length ??
+      0;
     Object.assign(item, loadedItem, {
       path,
       level,
