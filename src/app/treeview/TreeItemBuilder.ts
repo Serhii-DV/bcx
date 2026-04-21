@@ -143,6 +143,14 @@ export class TreeItemBuilder {
     return this;
   }
 
+  addButton(button: TreeItemButton): this {
+    if (!this.item.buttons) {
+      this.item.buttons = [];
+    }
+    this.item.buttons.push(button);
+    return this;
+  }
+
   withOnClick(
     onClick: (context: TreeItemClickContext) => void | Promise<void>,
   ): this {

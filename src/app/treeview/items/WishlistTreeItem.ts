@@ -17,24 +17,23 @@ const WISHLIST_KEY = '/wishlist';
 
 export class WishlistTreeItem {
   static async create(username: string): Promise<TreeItem> {
+    const builder = item('Wishlist');
     const wishlistItems = await loadWishlistItemsFromStorage();
     const albums = wishlistItems.map((item) =>
       AlbumFactory.fromBandcampItem(item),
     );
-    const children: TreeItem[] = [
+    builder.add(
       AlbumTreeItemFactory.createArtistsTreeItem(albums),
       AlbumTreeItemFactory.createReleasesTreeItem(albums),
-    ];
-
-    const buttons: TreeItemButton[] = [
-      createWishlistOpenTreeItemButton(username),
-    ];
+    );
 
     if (isBandcampFanUrl(currentPageUrl, username)) {
-      buttons.unshift(createWishlistRefreshTreeItemButton());
+      builder.addButton(createWishlistRefreshTreeItemButton());
     }
 
-    return item('Wishlist').withChildren(children).withButtons(buttons).build();
+    builder.addButton(createWishlistOpenTreeItemButton(username));
+
+    return builder.build();
   }
 }
 
