@@ -9,9 +9,7 @@ import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
 import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { markAppSetupStart, measureAppMount } from 'src/utils/performance';
-import type { Album } from '../domain/album/album';
-import type { AlbumDetails } from '../domain/album/details';
-import type { Band } from '../domain/band/band';
+import type { BandPage } from '../domain/page/BandPage';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
@@ -45,31 +43,22 @@ onDOMReady(async () => {
   const shadowRoot = container.attachShadow({ mode: 'open' });
   injectCssFile(getExtensionUrl('bandcamp.content.app.css'), shadowRoot);
 
-  let band: Band | null = null;
-  let album: Album | null = null;
-  let albumDetails: AlbumDetails | null = null;
+  let page: BandPage | null = null;
 
   try {
     if (isBandcampMusicUrl(currentPageUrl)) {
       const pageMusic = await PageMusic.init();
       await initAppPageMusic(pageMusic);
-      band = pageMusic.band;
+      page = pageMusic;
     } else if (isBandcampAlbumUrl(currentPageUrl)) {
-      const pageAlbum = await PageAlbum.init();
-      band = pageAlbum.band;
-      album = pageAlbum.album;
-      albumDetails = pageAlbum.details;
+      page = await PageAlbum.init();
     } else if (isBandcampTrackUrl(currentPageUrl)) {
       const trackPage = new PageTrack();
       BandcampStorage.saveTrack(trackPage.track);
+      page = trackPage;
     }
 
-    const treeData = await MainTreeData.create(
-      currentPageUrl,
-      band,
-      album,
-      albumDetails,
-    );
+    const treeData = await MainTreeData.create(currentPageUrl, page);
     const [initialSidePanelOpen, hasCompletedTour, hasCompletedSidePanelTour] =
       await Promise.all([
         getSessionBoolean(SIDE_PANEL_OPEN_KEY),

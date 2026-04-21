@@ -1,6 +1,5 @@
-import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
-import type { Band } from 'src/bandcamp/domain/band/band';
+import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
 import { bandcampPageData } from 'src/bandcamp/domain/shared';
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
@@ -37,14 +36,12 @@ const CACHE_TTL = {
 } as const;
 
 export class MainTreeData {
-  static async create(
-    url: Url,
-    band: Band | null,
-    album: Album | null,
-    albumDetails: AlbumDetails | null = null,
-  ): Promise<TreeData> {
+  static async create(url: Url, page: BandPage | null): Promise<TreeData> {
+    const band = page?.band || null;
+    const album = page?.album || null;
+    const albumDetails = page?.albumDetails || null;
     const logLabel = `[MainTreeData.create]`;
-    console.log(logLabel, { url, band, album, albumDetails });
+    console.log(logLabel, { url, page, band, album, albumDetails });
     console.time(logLabel);
 
     const treeData = new TreeData();

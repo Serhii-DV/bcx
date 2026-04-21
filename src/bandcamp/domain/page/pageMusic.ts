@@ -11,6 +11,7 @@ import { BandMetadata } from '../band/metadata';
 import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
+import type { BandPage } from './BandPage';
 import { createMetadataElement, createQueryCountBadgeElement } from './helper';
 
 interface MusicGridClientItem {
@@ -27,10 +28,12 @@ type Release = Album | Track;
 
 let pageMusic: PageMusic | null = null;
 
-export class PageMusic {
+export class PageMusic implements BandPage {
   public musicGridElement: HTMLElement | null = null;
   public musicGridItemElements: HTMLElement[];
   public queryCountMap: QueryCountMap = new Map();
+  public readonly album: null = null;
+  public readonly albumDetails: null = null;
 
   private constructor(public readonly band: Band) {
     elementHtml()?.classList.add('bcx-page-music');

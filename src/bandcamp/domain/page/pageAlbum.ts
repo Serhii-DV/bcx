@@ -6,18 +6,19 @@ import { AlbumFactory } from '../album/factory';
 import type { Band } from '../band/band';
 import { BandFactory } from '../band/factory';
 import { BandcampStorage } from '../storage';
+import type { BandPage } from './BandPage';
 import { createReleaseYearElement } from './helper';
 import { getMusicAlbumSchema } from './schema';
 
 let pageAlbum: PageAlbum | null = null;
 
-export class PageAlbum {
+export class PageAlbum implements BandPage {
   /**
    * @throws Error if schema is not found or invalid
    */
   private constructor(
     public readonly album: Album,
-    public readonly details: AlbumDetails,
+    public readonly albumDetails: AlbumDetails,
     public readonly band: Band,
   ) {
     elementHtml()?.classList.add('bcx-page-album');
@@ -34,15 +35,15 @@ export class PageAlbum {
     console.log('[PageAlbum]', '[Schema]', schema);
 
     const album = AlbumFactory.createFromSchema(schema);
-    const details = AlbumDetails.fromMusicAlbumSchema(schema);
+    const albumDetails = AlbumDetails.fromMusicAlbumSchema(schema);
     const bands = await BandcampStorage.getBands([album.bandId]);
     const band = bands[0] ?? BandFactory.fromMusicAlbumSchema(schema);
 
-    pageAlbum = new PageAlbum(album, details, band);
+    pageAlbum = new PageAlbum(album, albumDetails, band);
     pageAlbum.appendAlbumYear();
 
     console.log('[PageAlbum]', '[Album]', pageAlbum.album);
-    console.log('[PageAlbum]', '[Details]', pageAlbum.details);
+    console.log('[PageAlbum]', '[Details]', pageAlbum.albumDetails);
     console.log('[PageAlbum]', '[Band]', pageAlbum.band);
 
     await BandcampStorage.saveAlbum(album);

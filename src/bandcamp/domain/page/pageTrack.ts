@@ -1,9 +1,16 @@
 import { console } from 'src/utils/console';
+import type { Album } from '../album/album';
+import type { AlbumDetails } from '../album/details';
+import type { Band } from '../band/band';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
+import type { BandPage } from './BandPage';
 import { getMusicRecordingSchema, type MusicRecordingSchema } from './schema';
 
-export class PageTrack {
+export class PageTrack implements BandPage {
+  public readonly band: Band | null = null;
+  public readonly album: Album | null = null;
+  public readonly albumDetails: AlbumDetails | null = null;
   public track: Track;
   public isStandaloneTrack: boolean;
 
@@ -11,8 +18,8 @@ export class PageTrack {
     const schema = getMusicRecordingSchema();
     console.log('[PageTrack]', 'Schema:', schema);
 
-    this.track = TrackFactory.fromSchema(schema!);
-    this.isStandaloneTrack = this.detectIfStandaloneTrack(schema!);
+    this.track = TrackFactory.fromSchema(schema);
+    this.isStandaloneTrack = this.detectIfStandaloneTrack(schema);
 
     console.log('[PageTrack]', 'Extracted track:', this.track);
   }
