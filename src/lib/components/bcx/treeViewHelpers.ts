@@ -97,6 +97,8 @@ export async function activateTreeItem({
       element: event?.currentTarget as HTMLElement,
       item,
       parent: findParentByPath(item.path),
+      findItemByPath,
+      findParentByPath,
       showFeedback: (message, duration) =>
         showItemFeedback?.(item, message, duration),
     };

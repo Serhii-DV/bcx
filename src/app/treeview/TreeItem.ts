@@ -4,6 +4,8 @@ export interface TreeItemClickContext {
   element: HTMLElement;
   item: TreeItem;
   parent?: TreeItem | null;
+  findItemByPath?: (path?: string | null) => TreeItem | null;
+  findParentByPath?: (path?: string | null) => TreeItem | null;
   focusPath?: string;
   refreshTree?: boolean;
   showFeedback?: (message: string, duration?: number) => void;

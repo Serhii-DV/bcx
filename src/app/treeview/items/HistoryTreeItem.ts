@@ -137,7 +137,8 @@ export class HistoryTreeItem {
     };
 
     loadMoreTreeItem.onClick = async (context) => {
-      const { item, parent } = context;
+      const { item } = context;
+      const parent = context.parent ?? context.findParentByPath?.(item.path);
 
       if (item.isLoadingChildren) {
         return;
@@ -153,7 +154,9 @@ export class HistoryTreeItem {
           throw new Error('Cannot find parent History tree item.');
         }
 
-        const loadMoreIndex = children.indexOf(item);
+        const loadMoreIndex = children.findIndex(
+          (child) => child === item || child.path === item.path,
+        );
         const nextChildren = await HistoryTreeItem.createLatestVisitedChildren(
           pages,
           offset,

@@ -108,7 +108,8 @@ export class BandTreeItem {
     };
 
     loadMoreTreeItem.onClick = async (context) => {
-      const { item, parent } = context;
+      const { item } = context;
+      const parent = context.parent ?? context.findParentByPath?.(item.path);
 
       if (item.isLoadingChildren) {
         return;
@@ -124,7 +125,9 @@ export class BandTreeItem {
           throw new Error('Cannot find parent Releases tree item.');
         }
 
-        const loadMoreIndex = children.indexOf(item);
+        const loadMoreIndex = children.findIndex(
+          (child) => child === item || child.path === item.path,
+        );
         const nextChildren = this.createReleaseChildrenPage(
           band,
           withAlbumSummary,
@@ -134,10 +137,14 @@ export class BandTreeItem {
 
         if (loadMoreIndex >= 0) {
           children.splice(loadMoreIndex, 1, ...nextChildren);
-          context.focusPath = `${parent.path}.${loadMoreIndex}`;
+          context.focusPath = parent.path
+            ? `${parent.path}.${loadMoreIndex}`
+            : undefined;
         } else {
           children.push(...nextChildren);
-          context.focusPath = `${parent.path}.${children.length - nextChildren.length}`;
+          context.focusPath = parent.path
+            ? `${parent.path}.${children.length - nextChildren.length}`
+            : undefined;
         }
 
         parent.children = children;
