@@ -2,15 +2,15 @@ import type { Band } from 'src/bandcamp/domain/band/band';
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
+import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import { link, TreeItemBuilder } from '../TreeItemBuilder';
-import { TreeItemFactory } from '../TreeItemFactory';
+import { link, list, TreeItemBuilder } from '../TreeItemBuilder';
 import { ICON_CALENDAR, ICON_DISC, ICON_INFO, ICON_MIC } from '../utils/icon';
 
 export class BandTreeItem {
   static create(band: Band, url: Url): TreeItem {
     const showAlbumsWithKeywords = isBandcampMusicUrl(url);
-    const builder = new TreeItemBuilder(TreeItemFactory.fromBand(band));
+    const builder = new TreeItemBuilder(BandTreeItemFactory.create(band));
     builder.withOpen(showAlbumsWithKeywords).withoutHref();
 
     if (band.hasReleases) {
@@ -83,10 +83,8 @@ export class BandTreeItem {
 
   private static createBandAbout(band: Band): TreeItem {
     return TreeItemBuilder.items('About ' + band.name, [
-      TreeItemFactory.list('Created', [
-        band.metadata.created.toLocaleDateString(),
-      ]),
-      TreeItemFactory.list('Currency', [band.metadata.currency]),
+      list('Created', [band.metadata.created.toLocaleDateString()]),
+      list('Currency', [band.metadata.currency]),
     ])
       .withImage(ICON_INFO)
       .build();

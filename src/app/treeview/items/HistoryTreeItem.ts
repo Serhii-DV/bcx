@@ -9,8 +9,10 @@ import {
 import { History } from 'src/core/history';
 import { Url } from 'src/core/url';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
+import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
+import { DateTreeItemFactory } from '../factories/DateTreeItemFactory';
+import { HistoryEntryTreeItemFactory } from '../factories/HistoryEntryTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import { TreeItemFactory } from '../TreeItemFactory';
 
 type VisitedBandcampPage = {
   item: chrome.history.HistoryItem;
@@ -31,8 +33,9 @@ export class HistoryTreeItem {
 
       pages.forEach(({ item, uuid }) => {
         const historyItem =
-          uuidTreeItemsMap.get(uuid) || TreeItemFactory.fromHistoryItem(item);
-        const dateItem = TreeItemFactory.fromDate(
+          uuidTreeItemsMap.get(uuid) ||
+          HistoryEntryTreeItemFactory.create(item);
+        const dateItem = DateTreeItemFactory.create(
           new Date(item.lastVisitTime as number),
         );
         const childrenDateItem = children.find(
@@ -111,7 +114,7 @@ export class HistoryTreeItem {
       await HistoryTreeItem.createUuidTreeItemsMap(pageBatch);
     const children = pageBatch.map(
       ({ item, uuid }) =>
-        uuidTreeItemsMap.get(uuid) || TreeItemFactory.fromHistoryItem(item),
+        uuidTreeItemsMap.get(uuid) || HistoryEntryTreeItemFactory.create(item),
     );
 
     if (nextOffset < pages.length) {
@@ -234,7 +237,7 @@ export class HistoryTreeItem {
     bandsAndAlbums.forEach((entity) => {
       const treeItem =
         entity instanceof Band
-          ? TreeItemFactory.fromBand(entity)
+          ? BandTreeItemFactory.create(entity)
           : AlbumTreeItemFactory.create(entity);
 
       uuidTreeItemsMap.set(entity.url.uuid!, treeItem);

@@ -5,7 +5,6 @@ import { arrayUnique } from 'src/utils/array';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items, link, list, TreeItemBuilder, text } from '../TreeItemBuilder';
-import { TreeItemFactory } from '../TreeItemFactory';
 import {
   ICON_BUILDING,
   ICON_CALENDAR_DAYS,
@@ -14,16 +13,14 @@ import {
   ICON_MIC,
   ICON_TAGS,
 } from '../utils/icon';
+import { TrackTreeItemFactory } from './TrackTreeItemFactory';
 
 export class AlbumTreeItemFactory {
   static create(album: Album): TreeItem {
-    const item = TreeItemFactory.linkOrText(
-      album.toString(),
-      album.url?.toString(),
-    );
-    item.image = album.artwork.tinySizeUrl;
-    item.keywords = album.artistNames;
-    return item;
+    return TreeItemBuilder.linkOrText(album.toString(), album.url?.toString())
+      .withImage(album.artwork.tinySizeUrl)
+      .withKeywords(album.artistNames)
+      .build();
   }
 
   static createWithSummary(album: Album): TreeItem {
@@ -31,17 +28,19 @@ export class AlbumTreeItemFactory {
     const artistNames = [...album.artistNames].sort();
     const keywords = [...(album.metadata?.keywords || [])].sort();
 
-    builder.add(TreeItemFactory.textWithQuery(album.toString()));
+    builder.add(TreeItemBuilder.textWithQuery(album.toString()));
 
     if (album.metadata?.year) {
-      builder.add(TreeItemFactory.textWithQuery(String(album.metadata.year)));
+      builder.add(TreeItemBuilder.textWithQuery(String(album.metadata.year)));
     }
 
     if (artistNames.length) {
       builder.add(
         TreeItemBuilder.items(
           'Artists',
-          artistNames.map(TreeItemFactory.textWithQuery),
+          artistNames.map((artistName) =>
+            TreeItemBuilder.textWithQuery(artistName),
+          ),
         )
           .withImage(ICON_MIC)
           .build(),
@@ -50,10 +49,10 @@ export class AlbumTreeItemFactory {
 
     if (keywords.length) {
       builder.add(
-        TreeItemFactory.items(
+        TreeItemBuilder.items(
           'Tags',
-          keywords.map(TreeItemFactory.textWithQuery),
-        ),
+          keywords.map((keyword) => TreeItemBuilder.textWithQuery(keyword)),
+        ).build(),
       );
     }
 
@@ -80,7 +79,7 @@ export class AlbumTreeItemFactory {
           albums.filter((album) => album.containsArtistName(artist)),
           withSummary,
         );
-        return TreeItemFactory.items(artist, artistChildren);
+        return TreeItemBuilder.items(artist, artistChildren).build();
       });
   }
 
@@ -118,11 +117,7 @@ export class AlbumTreeItemFactory {
     }
 
     if (details.releaseMetadata.catalogNumber) {
-      builder.add(
-        TreeItemFactory.text(
-          `Catalog: ${details.releaseMetadata.catalogNumber}`,
-        ),
-      );
+      builder.add(text(`Catalog: ${details.releaseMetadata.catalogNumber}`));
     }
 
     if (details.releaseMetadata.releaseType) {
@@ -130,9 +125,10 @@ export class AlbumTreeItemFactory {
     }
 
     builder.add(
-      items('Tracks', TreeItemFactory.fromTracks(details.tracks)).withImage(
-        ICON_LIST_MUSIC,
-      ),
+      items(
+        'Tracks',
+        TrackTreeItemFactory.createMany(details.tracks),
+      ).withImage(ICON_LIST_MUSIC),
     );
 
     builder.add(list('Tags', details.tags).withImage(ICON_TAGS));
@@ -147,10 +143,8 @@ export class AlbumTreeItemFactory {
   }
 
   private static detailsBuilder(details: AlbumDetails): TreeItemBuilder {
-    const item = TreeItemFactory.linkOrText(details.displayTitle, details.url);
-    item.image = details.artwork.tinySizeUrl;
-    item.keywords = details.artist.names;
-
-    return TreeItemBuilder.create(item);
+    return TreeItemBuilder.linkOrText(details.displayTitle, details.url)
+      .withImage(details.artwork.tinySizeUrl)
+      .withKeywords(details.artist.names);
   }
 }

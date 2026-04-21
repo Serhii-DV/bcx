@@ -5,9 +5,10 @@ import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { console } from 'src/utils/console';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
+import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { TreeData } from '../TreeData';
 import type { TreeItem } from '../TreeItem';
-import { TreeItemFactory } from '../TreeItemFactory';
+import { TreeItemBuilder } from '../TreeItemBuilder';
 import { deferDescendants } from '../utils';
 import {
   ICON_HEADPHONES,
@@ -53,7 +54,7 @@ export class MainTreeData {
 
     if (album) {
       items.push(
-        TreeItemFactory.lazy(AlbumTreeItemFactory.create(album), () =>
+        TreeItemBuilder.lazy(AlbumTreeItemFactory.create(album), () =>
           TreeItemCache.getOrCreate(
             TreeItemCache.subtreeKey('release', album.id),
             () =>
@@ -87,8 +88,8 @@ export class MainTreeData {
         items.push(bandTreeItem);
       } else {
         items.push(
-          TreeItemFactory.lazy(
-            TreeItemFactory.fromBand(band),
+          TreeItemBuilder.lazy(
+            BandTreeItemFactory.create(band),
             loadBandTreeItem,
           ),
         );
@@ -100,14 +101,14 @@ export class MainTreeData {
 
       if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
         items.push(
-          TreeItemFactory.lazy({ label: `Fan: ${fanData.name}` }, () =>
+          TreeItemBuilder.lazy({ label: `Fan: ${fanData.name}` }, () =>
             FanPageDataTreeItem.create(bandcampPageData),
           ),
         );
       }
 
       items.push(
-        TreeItemFactory.lazy(
+        TreeItemBuilder.lazy(
           {
             label: 'Following Bands',
             image: ICON_HEADPHONES,
@@ -123,7 +124,7 @@ export class MainTreeData {
         ),
       );
       items.push(
-        TreeItemFactory.lazy(
+        TreeItemBuilder.lazy(
           {
             label: 'Following Genres',
             image: ICON_TAGS,
@@ -139,7 +140,7 @@ export class MainTreeData {
         ),
       );
       items.push(
-        TreeItemFactory.lazy(
+        TreeItemBuilder.lazy(
           {
             label: 'Collection',
             image: ICON_LIBRARY,
@@ -157,7 +158,7 @@ export class MainTreeData {
         ),
       );
       items.push(
-        TreeItemFactory.lazy(
+        TreeItemBuilder.lazy(
           {
             label: 'Wishlist',
             image: ICON_HEART,
@@ -174,7 +175,7 @@ export class MainTreeData {
     }
 
     items.push(
-      TreeItemFactory.lazy({ label: 'History', image: ICON_HISTORY }, () =>
+      TreeItemBuilder.lazy({ label: 'History', image: ICON_HISTORY }, () =>
         HistoryTreeItem.createLatestVisited(),
       ),
     );

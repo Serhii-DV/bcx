@@ -4,8 +4,8 @@ import type { BandcampPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { hasOwnProperty } from 'src/utils/utils';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
+import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import { TreeItemFactory } from '../TreeItemFactory';
 import { updateTreeItemsCounts } from '../utils';
 import { WishlistTreeItem } from './WishlistTreeItem';
 
@@ -83,7 +83,7 @@ function createFollowingBandsTreeItems(pageData: BandcampPageData): TreeItem[] {
         ),
         item.image_id,
       );
-      const treeItem = TreeItemFactory.fromBand(band);
+      const treeItem = BandTreeItemFactory.create(band);
       treeItems.push(treeItem);
     }
   }

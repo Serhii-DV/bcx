@@ -1,8 +1,9 @@
 import type { Artist } from 'src/bandcamp/domain/artist/artist';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandIndexData } from 'src/bandcamp/domain/storage/bandIndexData';
+import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import { TreeItemFactory } from '../TreeItemFactory';
+import { text } from '../TreeItemBuilder';
 
 export class ArtistTreeItem {
   static async createTreeItems(artist: Artist): Promise<TreeItem[]> {
@@ -19,13 +20,11 @@ export class ArtistTreeItem {
         const band = bands.find((b) => b.id === bandId);
 
         if (band) {
-          return TreeItemFactory.fromBand(band);
+          return BandTreeItemFactory.create(band);
         }
       }
 
-      return {
-        label: name,
-      };
+      return text(name).build();
     });
   }
 }

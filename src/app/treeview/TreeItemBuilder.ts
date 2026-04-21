@@ -5,8 +5,11 @@ import type {
   TreeItemLayout,
 } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
-import { TreeItemFactory } from './TreeItemFactory';
-import { ICON_CLIPBOARD_COPY, ICON_EXTERNAL_LINK } from './utils/icon';
+import {
+  ICON_CLIPBOARD_COPY,
+  ICON_EXTERNAL_LINK,
+  ICON_SQUARE_ARROW_RIGHT,
+} from './utils/icon';
 
 type ItemOrBuilder = TreeItem | TreeItemBuilder;
 
@@ -24,15 +27,53 @@ export class TreeItemBuilder {
   }
 
   static text(label: string): TreeItemBuilder {
-    return this.create(TreeItemFactory.text(label));
+    return this.create({ label });
+  }
+
+  static textWithQuery(
+    label: string,
+    query?: string | number,
+  ): TreeItemBuilder {
+    return this.create({
+      label,
+      query: typeof query === 'string' ? query : label,
+      includeInFilterSuggestions: true,
+      actionIcon: ICON_SQUARE_ARROW_RIGHT,
+    });
   }
 
   static items(label: string, children: ItemOrBuilder[]): TreeItemBuilder {
-    return this.create(TreeItemFactory.items(label, buildTreeItems(children)));
+    return this.create({
+      label,
+      open: false,
+      children: buildTreeItems(children),
+    });
   }
 
   static list(label: string, strings: string[]): TreeItemBuilder {
-    return this.create(TreeItemFactory.list(label, strings));
+    return this.items(
+      label,
+      strings.map((string) => this.text(string)),
+    );
+  }
+
+  static linkOrText(label: string, href?: string): TreeItemBuilder {
+    return href
+      ? this.text(label).asLink(href)
+      : this.text(label).includeInFilterSuggestions();
+  }
+
+  static lazy(
+    item: TreeItem,
+    loadItem: () => Promise<TreeItem | null>,
+  ): TreeItem {
+    return {
+      ...item,
+      children: undefined,
+      childrenLoaded: false,
+      hasChildren: true,
+      loadChildren: loadItem,
+    };
   }
 
   withId(id: string): this {
