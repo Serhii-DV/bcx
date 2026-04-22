@@ -1,4 +1,5 @@
 import pkg from '../../../package.json';
+import { BCX_LOGGABLE_ACTION_RESPONSE_NAME } from './constants';
 
 const BCX = {
   get version() {
@@ -50,23 +51,27 @@ const BCX = {
       );
     },
   },
+  sessionStorage: {
+    async clear() {
+      window.postMessage(
+        {
+          source: 'BCX',
+          action: 'sessionStorageClear',
+        },
+        '*',
+      );
+    },
+  },
 };
 
 console.log('[BCX]', 'BCX script loaded, version:', BCX.version);
 (window as any).BCX = BCX;
 
-const logableActionsWithResponse = [
-  'clearAlbumDataResponse',
-  'getStorageSizeResponse',
-  'indexBandsResponse',
-  'resetTourResponse',
-];
-
 window.addEventListener('message', function (event) {
   if (
     event.data &&
     event.data.source === 'BCX' &&
-    logableActionsWithResponse.includes(event.data.action)
+    event.data.action === BCX_LOGGABLE_ACTION_RESPONSE_NAME
   ) {
     console.log(
       '[BCX][window.addEventListener][response]',

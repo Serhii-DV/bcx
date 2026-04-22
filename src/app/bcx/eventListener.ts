@@ -6,6 +6,7 @@ import {
   TOUR_COMPLETE_KEY,
 } from 'src/bandcamp/domain/storageKey';
 import { storage } from 'src/core/shared';
+import { BCX_LOGGABLE_ACTION_RESPONSE_NAME } from './constants';
 
 type BCXEventData = {
   source: 'BCX';
@@ -20,6 +21,7 @@ const actionHandlers: Record<string, BCXActionHandler> = {
   getStorageSize,
   indexBands,
   resetTour,
+  sessionStorageClear,
 };
 
 export async function BCXEventListener(event: MessageEvent<unknown>) {
@@ -57,7 +59,7 @@ async function clearAlbumData(data: BCXEventData) {
   window.postMessage(
     {
       source: 'BCX',
-      action: 'clearAlbumDataResponse',
+      action: BCX_LOGGABLE_ACTION_RESPONSE_NAME,
       albumId,
       response: trackKeys,
     },
@@ -69,47 +71,43 @@ async function getStorageSize() {
   const count = await storage.count();
   const size = await storage.getSize();
 
-  window.postMessage(
-    {
-      source: 'BCX',
-      action: 'getStorageSizeResponse',
-      response: {
-        count,
-        size,
-        sizeInBytes: size + ' bytes',
-        sizeInKB: (size / 1024).toFixed(2) + ' KB',
-        sizeInMB: (size / (1024 * 1024)).toFixed(2) + ' MB',
-      },
-    },
-    '*',
-  );
+  postLoggableActionResponse({
+    count,
+    size,
+    sizeInBytes: size + ' bytes',
+    sizeInKB: (size / 1024).toFixed(2) + ' KB',
+    sizeInMB: (size / (1024 * 1024)).toFixed(2) + ' MB',
+  });
 }
 
 async function indexBands() {
   const bandIndexData = await BandIndexData.refresh();
-
-  window.postMessage(
-    {
-      source: 'BCX',
-      action: 'indexBandsResponse',
-      response: Object.keys(bandIndexData).length + ' bands indexed',
-    },
-    '*',
+  postLoggableActionResponse(
+    Object.keys(bandIndexData).length + ' bands indexed',
   );
 }
 
 async function resetTour() {
   const tourKeys = [TOUR_COMPLETE_KEY, SIDE_PANEL_TOUR_COMPLETE_KEY];
   await storage.remove(tourKeys);
+  postLoggableActionResponse(
+    'Tour completion status reset.' +
+      tourKeys.join(', ') +
+      ' removed from storage.',
+  );
+}
 
+async function sessionStorageClear() {
+  await sessionStorage.clear();
+  postLoggableActionResponse('Session storage cleared.');
+}
+
+async function postLoggableActionResponse(response: Object | string) {
   window.postMessage(
     {
       source: 'BCX',
-      action: 'resetTourResponse',
-      response:
-        'Tour completion status reset.' +
-        tourKeys.join(', ') +
-        ' removed from storage.',
+      action: BCX_LOGGABLE_ACTION_RESPONSE_NAME,
+      response: response,
     },
     '*',
   );
