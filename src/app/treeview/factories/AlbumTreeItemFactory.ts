@@ -6,8 +6,10 @@ import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import { type TreeItem } from '../TreeItem';
 import {
   builder,
+  copyable,
+  item,
   items,
-  link,
+  linkOpen,
   linkOrText,
   list,
   searchQuery,
@@ -17,7 +19,9 @@ import {
 import {
   ICON_BUILDING,
   ICON_CALENDAR_DAYS,
+  ICON_CLIPBOARD,
   ICON_DISC,
+  ICON_FUNNEL,
   ICON_LINK,
   ICON_LIST_MUSIC,
   ICON_MIC,
@@ -41,8 +45,31 @@ export class AlbumTreeItemFactory {
       .asTree();
     const artistNames = [...album.artistNames].sort();
     const keywords = [...(album.metadata?.keywords || [])].sort();
+    const displayTitle = album.toString();
 
-    builder.add(searchQuery(album.toString()));
+    builder.add(
+      linkOpen(`Open release: ${displayTitle}`, album.url.toString()),
+      text('Filter')
+        .add(
+          ...artistNames.map((artistName) => searchQuery(artistName)),
+          searchQuery(displayTitle),
+          album.metadata ? searchQuery(String(album.metadata.year)) : undefined,
+          ...keywords.map((keyword) => searchQuery(keyword)),
+        )
+        .withImage(ICON_FUNNEL),
+      text('Copy')
+        .add(
+          ...artistNames.map((artistName) =>
+            copyable(`Artist name: ${artistName}`, artistName),
+          ),
+          copyable(`Release title: ${album.title}`, album.title),
+          copyable(`Release full title: ${displayTitle}`, displayTitle),
+          copyable(`Release URL: ${album.url}`, album.url.toString()).withImage(
+            ICON_LINK,
+          ),
+        )
+        .withImage(ICON_CLIPBOARD),
+    );
 
     if (artistNames.length) {
       builder.add(
@@ -71,8 +98,6 @@ export class AlbumTreeItemFactory {
           .build(),
       );
     }
-
-    builder.add(link(album.url.toString(), album.url.toString()));
 
     return builder.build();
   }
@@ -122,10 +147,24 @@ export class AlbumTreeItemFactory {
   }
 
   static async createWithDetails(details: AlbumDetails): Promise<TreeItem> {
-    const builder = this.detailsBuilder(details).withoutHref().asTree();
+    const builder = this.detailsBuilder(details).asTree();
     const artistItems = await ArtistTreeItem.createTreeItems(details.artist);
 
-    builder.add(text(details.displayTitle).makeCopyable());
+    builder.add(
+      text('Copy')
+        .add(
+          copyable(`Artist name: ${details.artist}`, details.artist.toString()),
+          copyable(`Release title: ${details.title}`, details.title),
+          copyable(
+            `Release full title: ${details.displayTitle}`,
+            details.displayTitle,
+          ),
+          copyable(`Release URL: ${details.url}`, details.url).withImage(
+            ICON_LINK,
+          ),
+        )
+        .withImage(ICON_CLIPBOARD),
+    );
     builder.add(items(`${details.artist}`, artistItems).withImage(ICON_MIC));
 
     if (details.releaseMetadata.artistNames?.length) {
@@ -178,8 +217,6 @@ export class AlbumTreeItemFactory {
         .withChildrenImage(ICON_TAG),
     );
 
-    builder.add(text(details.url).makeCopyable().withImage(ICON_LINK));
-
     return builder.build();
   }
 
@@ -188,7 +225,7 @@ export class AlbumTreeItemFactory {
   }
 
   private static detailsBuilder(details: AlbumDetails): TreeItemBuilder {
-    return linkOrText(details.displayTitle, details.url)
+    return item(details.displayTitle)
       .withImage(details.artwork.tinySizeUrl)
       .withKeywords(details.artist.names);
   }

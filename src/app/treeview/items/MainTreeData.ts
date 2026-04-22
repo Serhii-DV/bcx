@@ -37,12 +37,15 @@ const CACHE_TTL = {
 } as const;
 
 export class MainTreeData {
-  static async create(url: Url, page: BandPage | null): Promise<TreeData> {
+  static async create(
+    currentPageUrl: Url,
+    page: BandPage | null,
+  ): Promise<TreeData> {
     const band = page?.band || null;
     const album = page?.album || null;
     const albumDetails = page?.albumDetails || null;
     const logLabel = `[MainTreeData.create]`;
-    console.log(logLabel, { url, page, band, album, albumDetails });
+    console.log(logLabel, { currentPageUrl, page, band, album, albumDetails });
     console.time(logLabel);
 
     const treeData = new TreeData();
@@ -73,11 +76,11 @@ export class MainTreeData {
       const loadBandTreeItem = () =>
         TreeItemCache.getOrCreate(
           TreeItemCache.subtreeKey('band', band.id),
-          async () => BandTreeItem.create(band, url),
+          async () => BandTreeItem.create(band, currentPageUrl),
           CACHE_TTL.BAND,
         );
 
-      if (isBandcampMusicUrl(url)) {
+      if (isBandcampMusicUrl(currentPageUrl)) {
         const cachedBandTreeItem = await loadBandTreeItem();
         const children = deferDescendants(cachedBandTreeItem.children || []);
         const bandTreeItem: TreeItem = {

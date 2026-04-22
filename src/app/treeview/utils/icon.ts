@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronRight,
   ChevronsDown,
+  Clipboard,
   ClipboardCopy,
   CornerLeftUp,
   CornerRightUp,
@@ -12,6 +13,7 @@ import {
   ExternalLink,
   FileText,
   Funnel,
+  FunnelPlus,
   Headphones,
   Heart,
   History,
@@ -19,6 +21,7 @@ import {
   Library,
   Link,
   ListMusic,
+  Menu,
   Mic,
   Search,
   SquareArrowRight,
@@ -35,17 +38,20 @@ export const ICON_CALENDAR_DAYS = 'calendar-days';
 export const ICON_DISC = 'disc';
 export const ICON_EXTERNAL_LINK = 'external-link';
 export const ICON_FUNNEL = 'funnel';
+export const ICON_FUNNEL_PLUS = 'funnel-plus';
 export const ICON_HEART = 'heart';
 export const ICON_HISTORY = 'history';
 export const ICON_INFO = 'info';
 export const ICON_LIBRARY = 'library';
 export const ICON_LIST_MUSIC = 'list-music';
+export const ICON_MENU = 'menu';
 export const ICON_MIC = 'mic';
 export const ICON_SEARCH = 'search';
 export const ICON_SQUARE_ARROW_RIGHT = 'square-arrow-right';
 export const ICON_TAGS = 'tags';
 export const ICON_TAG = 'tag';
 export const ICON_HEADPHONES = 'headphones';
+export const ICON_CLIPBOARD = 'clipboard';
 export const ICON_CLIPBOARD_COPY = 'clipboard-copy';
 export const ICON_LINK = 'link';
 export const ICON_FILE_TEXT = 'file-text';
@@ -72,6 +78,8 @@ export function makeIcon(iconName?: string): any {
       return ExternalLink;
     case ICON_FUNNEL:
       return Funnel;
+    case ICON_FUNNEL_PLUS:
+      return FunnelPlus;
     case ICON_HEART:
       return Heart;
     case ICON_HISTORY:
@@ -82,6 +90,8 @@ export function makeIcon(iconName?: string): any {
       return Library;
     case ICON_LIST_MUSIC:
       return ListMusic;
+    case ICON_MENU:
+      return Menu;
     case ICON_MIC:
       return Mic;
     case ICON_SEARCH:
@@ -94,6 +104,8 @@ export function makeIcon(iconName?: string): any {
       return Tag;
     case ICON_HEADPHONES:
       return Headphones;
+    case ICON_CLIPBOARD:
+      return Clipboard;
     case ICON_CLIPBOARD_COPY:
       return ClipboardCopy;
     case ICON_LINK:

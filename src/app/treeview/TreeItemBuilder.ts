@@ -7,9 +7,10 @@ import {
 } from './TreeItem';
 import type { TreeItemButton } from './TreeItemButton';
 import {
-  ICON_CLIPBOARD_COPY,
+  ICON_CLIPBOARD,
   ICON_EXTERNAL_LINK,
   ICON_FILE_TEXT,
+  ICON_FUNNEL_PLUS,
   ICON_LINK,
   ICON_SQUARE_ARROW_RIGHT,
 } from './utils/icon';
@@ -166,7 +167,7 @@ export class TreeItemBuilder {
   makeCopyable(copyContent?: string): this {
     const content = copyContent ?? this.item.label ?? '';
 
-    return this.withActionIcon(ICON_CLIPBOARD_COPY)
+    return this.withActionIcon(ICON_CLIPBOARD)
       .withOnClick(async (context) => {
         await copyToClipboard(content);
 
@@ -242,15 +243,20 @@ export function text(label: string): TreeItemBuilder {
   return item(label).withImage(ICON_FILE_TEXT);
 }
 
+export function copyable(label: string, copyContent?: string): TreeItemBuilder {
+  return text(label).makeCopyable(copyContent);
+}
+
 export function searchQuery(
   label: string,
   query?: string | number,
 ): TreeItemBuilder {
   const queryString = query !== undefined ? String(query) : label;
-  return text(label)
+  return item(label)
     .withQuery(queryString)
     .withHint(`Search for "${queryString}"`)
     .includeInFilterSuggestions()
+    .withImage(ICON_FUNNEL_PLUS)
     .withActionIcon(ICON_SQUARE_ARROW_RIGHT);
 }
 
@@ -260,6 +266,16 @@ export function link(
   actionIcon?: string,
 ): TreeItemBuilder {
   return text(label).asLink(href, actionIcon).withImage(ICON_LINK);
+}
+
+export function linkOpen(label: string, href: string): TreeItemBuilder {
+  return link(label, href, ICON_EXTERNAL_LINK).withHint(label);
+}
+
+export function linkOpenPage(pageName: string, href: string): TreeItemBuilder {
+  return link(`Open page: ${pageName}`, href, ICON_EXTERNAL_LINK).withHint(
+    `Open page: ${pageName}`,
+  );
 }
 
 export function list(label: string, strings: string[]): TreeItemBuilder {
