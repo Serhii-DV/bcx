@@ -9,7 +9,6 @@ import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { TreeData } from '../TreeData';
 import type { TreeItem } from '../TreeItem';
 import { builder } from '../TreeItemBuilder';
-import { deferDescendants } from '../utils';
 import {
   ICON_HEADPHONES,
   ICON_HEART,
@@ -23,18 +22,7 @@ import { FanPageDataTreeItem } from './FanPageDataTreeItem';
 import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
 import { FollowingGenresTreeItem } from './FollowingGenresTreeItem';
 import { HistoryTreeItem } from './HistoryTreeItem';
-import { TreeItemCache } from './TreeItemCache';
 import { WishlistTreeItem } from './WishlistTreeItem';
-
-const CACHE_TTL = {
-  RELEASE: 24 * 60 * 60 * 1000,
-  BAND: 24 * 60 * 60 * 1000,
-  FOLLOWING_BANDS: 60 * 60 * 1000,
-  FOLLOWING_GENRES: 60 * 60 * 1000,
-  COLLECTION: 30 * 60 * 1000,
-  WISHLIST: 30 * 60 * 1000,
-  HISTORY: 10 * 60 * 1000,
-} as const;
 
 export class MainTreeData {
   static async create(
@@ -49,23 +37,14 @@ export class MainTreeData {
     console.time(logLabel);
 
     const treeData = new TreeData();
-    const userKeyPart =
-      bandcampPageData?.fanData?.username ||
-      bandcampPageData?.fanData?.fan_id ||
-      'anonymous';
     const items: TreeItem[] = [];
 
     if (album) {
       items.push(
         builder(AlbumTreeItemFactory.create(album))
           .makeLazy(() =>
-            TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey('release', album.id),
-              () =>
-                AlbumTreeItemFactory.createWithDetails(
-                  albumDetails || AlbumDetails.fromAlbum(album),
-                ),
-              CACHE_TTL.RELEASE,
+            AlbumTreeItemFactory.createWithDetails(
+              albumDetails || AlbumDetails.fromAlbum(album),
             ),
           )
           .build(),
@@ -73,24 +52,11 @@ export class MainTreeData {
     }
 
     if (band) {
-      const loadBandTreeItem = () =>
-        TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('band', band.id),
-          async () => BandTreeItem.create(band, currentPageUrl),
-          CACHE_TTL.BAND,
-        );
+      const loadBandTreeItem = async () =>
+        BandTreeItem.create(band, currentPageUrl);
 
       if (isBandcampMusicUrl(currentPageUrl)) {
-        const cachedBandTreeItem = await loadBandTreeItem();
-        const children = deferDescendants(cachedBandTreeItem.children || []);
-        const bandTreeItem: TreeItem = {
-          ...cachedBandTreeItem,
-          children,
-          childrenLoaded: true,
-          hasChildren: children.length > 0,
-        };
-
-        items.push(bandTreeItem);
+        items.push(await loadBandTreeItem());
       } else {
         items.push(
           builder(BandTreeItemFactory.create(band))
@@ -118,13 +84,7 @@ export class MainTreeData {
           childrenCount:
             bandcampPageData.data?.following_bands_data?.item_count,
         })
-          .makeLazy(() =>
-            TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey(userKeyPart, 'following-bands'),
-              () => FollowingBandsTreeItem.create(fanData.username || ''),
-              CACHE_TTL.FOLLOWING_BANDS,
-            ),
-          )
+          .makeLazy(() => FollowingBandsTreeItem.create(fanData.username || ''))
           .build(),
       );
       items.push(
@@ -135,11 +95,7 @@ export class MainTreeData {
             bandcampPageData.data?.following_genres_data?.item_count,
         })
           .makeLazy(() =>
-            TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey(userKeyPart, 'following-genres'),
-              () => FollowingGenresTreeItem.create(fanData.username || ''),
-              CACHE_TTL.FOLLOWING_GENRES,
-            ),
+            FollowingGenresTreeItem.create(fanData.username || ''),
           )
           .build(),
       );
@@ -152,13 +108,7 @@ export class MainTreeData {
             bandcampPageData.data?.current_fan?.collection_count ??
             bandcampPageData.data?.collection_count,
         })
-          .makeLazy(() =>
-            TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey(userKeyPart, 'collection'),
-              () => CollectionTreeItem.create(fanData.username || ''),
-              CACHE_TTL.COLLECTION,
-            ),
-          )
+          .makeLazy(() => CollectionTreeItem.create(fanData.username || ''))
           .build(),
       );
       items.push(
@@ -167,13 +117,7 @@ export class MainTreeData {
           image: ICON_HEART,
           childrenCount: bandcampPageData.data?.wishlist_data?.item_count,
         })
-          .makeLazy(() =>
-            TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey(userKeyPart, 'wishlist'),
-              () => WishlistTreeItem.create(fanData.username || ''),
-              CACHE_TTL.WISHLIST,
-            ),
-          )
+          .makeLazy(() => WishlistTreeItem.create(fanData.username || ''))
           .build(),
       );
     }
