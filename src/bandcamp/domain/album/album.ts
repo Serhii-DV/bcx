@@ -1,12 +1,17 @@
 import type { Storable, StorableData, StorageObject } from 'src/core/storage';
-import type { Artist } from '../artist/artist';
-import { Artwork } from '../artwork';
+import { Url } from 'src/core/url';
+import { arrayUnique } from 'src/utils/array';
+import { removeInvisibleChars } from 'src/utils/string';
+import { Artist, isVariousArtists } from '../artist/artist';
+import { ArtistFactory } from '../artist/factory';
+import { containsArtistName } from '../artist/helper';
+import { Artwork } from '../artwork/artwork';
 import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
 import { albumDataCompressor } from '../shared';
 import { StorageKey } from '../storageKey';
+import { getUniqueArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
-import { Url } from '../url/url';
 import { AlbumDataCompressor, type RawAlbumData } from './compressor';
 
 export class Album implements Storable, Compressable {
@@ -21,6 +26,54 @@ export class Album implements Storable, Compressable {
     public metadata?: Metadata,
   ) {}
 
+  static create(
+    url: string,
+    artist: string | Artist,
+    title: string,
+    id: string | number,
+    artworkId: string | number,
+    bandId: string | number,
+    tracks: Track[] = [],
+    metadata?: Metadata,
+  ): Album {
+    const albumUrl = Url.create(url);
+    const albumArtist =
+      artist instanceof Artist ? artist : ArtistFactory.create(artist);
+    const albumTitle = removeInvisibleChars(title);
+    const albumId =
+      typeof id === 'string' ? parseInt(id.replace('album-', '')) : id;
+    const albumArtwork = new Artwork(
+      typeof artworkId === 'string' ? parseInt(artworkId) : artworkId,
+    );
+    const albumBandId = typeof bandId === 'string' ? parseInt(bandId) : bandId;
+
+    return new Album(
+      albumUrl,
+      albumArtist,
+      albumTitle,
+      albumId,
+      albumArtwork,
+      albumBandId,
+      tracks,
+      metadata,
+    );
+  }
+
+  get artistNames(): string[] {
+    return arrayUnique([
+      ...this.artist.names,
+      ...getUniqueArtistNamesFromTracks(this.tracks),
+    ]);
+  }
+
+  containsArtistName(name: string): boolean {
+    if (isVariousArtists(name) && this.artist.isVariousArtists) {
+      return true;
+    }
+
+    return containsArtistName(this.artistNames, name);
+  }
+
   get compressor(): AlbumDataCompressor {
     return albumDataCompressor;
   }
@@ -33,7 +86,7 @@ export class Album implements Storable, Compressable {
 
   toStorableData(): StorableData {
     const key = StorageKey.albumKey(this.id);
-    const urlKey = StorageKey.urlKey(this.url);
+    const urlKey = this.url.uuid;
     return {
       [key]: this.toStorageObject(),
       [urlKey]: key,

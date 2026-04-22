@@ -30,13 +30,17 @@ export function createBadgeElement(
   return badge;
 }
 
+export function createQueryCountString(query: string, count: number): string {
+  return query + (count ? ` (${count})` : '');
+}
+
 export function createQueryCountBadgeElement(
   query: string,
   count: number,
   title: string,
   className?: string,
 ): HTMLElement {
-  const value = query + (count > 1 ? ` (${count})` : '');
+  const value = createQueryCountString(query, count);
   title += '\n' + query + '\n' + `On this page: ${count}`;
   return createBadgeElement(value, query, title, className);
 }

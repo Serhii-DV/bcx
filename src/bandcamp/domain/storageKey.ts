@@ -1,11 +1,12 @@
-import type { Url } from './url/url';
-
 // We use `/` at the start to avoid potential collisions with other keys and namespaces
 // Also, it shows up nicely in the storage viewer before UUID values
-const BAND_KEY_PREFIX = '/b/';
-const ALBUM_KEY_PREFIX = '/a/';
-const TRACK_KEY_PREFIX = '/t/';
-const BANDS_KEY = '/bands';
+export const BAND_KEY_PREFIX = '/b/';
+export const ALBUM_KEY_PREFIX = '/a/';
+export const TRACK_KEY_PREFIX = '/t/';
+export const BANDS_KEY = '/bands';
+export const TOUR_COMPLETE_KEY = '/ui/tour-complete';
+export const SIDE_PANEL_TOUR_COMPLETE_KEY = '/ui/side-panel-tour-complete';
+export const SIDE_PANEL_OPEN_KEY = '/ui/side-panel-open';
 
 export class StorageKey {
   static bandKey(bandId: number): string {
@@ -20,8 +21,8 @@ export class StorageKey {
     return `${TRACK_KEY_PREFIX}${trackId}`;
   }
 
-  static urlKey(url: Url): string {
-    return url.uuid;
+  static trackKeys(trackIds: number[]): string[] {
+    return trackIds.map((id) => StorageKey.trackKey(id));
   }
 
   static bandsKey(): string {

@@ -3,48 +3,42 @@
   "name": "Bandcamp Extension (BCX)",
   "version": "0.0.0",
   "description": "",
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["activeTab", "storage", "scripting"],
+  "permissions": ["activeTab", "storage", "scripting", "history"],
   "host_permissions": ["https://*.bandcamp.com/*"],
   "content_scripts": [
     {
-      "js": ["bandcamp.page.all.js"],
+      "js": ["bandcamp.content.app.js"],
       "matches": ["https://*.bandcamp.com/*"],
-      "run_at": "document_start"
-    },
-    {
-      "js": ["bandcamp.page.music.js"],
-      "matches": ["https://*.bandcamp.com/", "https://*.bandcamp.com/music/*"],
-      "run_at": "document_start"
-    },
-    {
-      "js": ["bandcamp.page.album.js"],
-      "matches": ["https://*.bandcamp.com/album/*"],
-      "run_at": "document_start"
-    },
-    {
-      "js": ["bandcamp.page.track.js"],
-      "matches": ["https://*.bandcamp.com/track/*"],
       "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["bandcamp.page.all.css"],
-      "matches": ["https://*.bandcamp.com/*"]
-    },
-    {
-      "resources": ["bandcamp.page.music.css"],
-      "matches": ["https://*.bandcamp.com/*"]
-    },
-    {
-      "resources": ["bandcamp.page.album.css"],
+      "resources": [
+        "bcx.js",
+        "bandcamp.content.app.css",
+        "bandcamp.content.page.music.css",
+        "assets/0.gif"
+      ],
       "matches": ["https://*.bandcamp.com/*"]
     }
   ],
   "action": {
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    },
     "default_popup": "popup.html"
   }
 }

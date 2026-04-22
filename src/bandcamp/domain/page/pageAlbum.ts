@@ -1,0 +1,68 @@
+import { Album } from 'src/bandcamp/domain/album/album';
+import { AlbumDetails } from 'src/bandcamp/domain/album/details';
+import { console } from 'src/utils/console';
+import { element, elementHtml } from 'src/utils/dom';
+import { AlbumFactory } from '../album/factory';
+import type { Band } from '../band/band';
+import { BandFactory } from '../band/factory';
+import { BandcampStorage } from '../storage';
+import type { BandPage } from './BandPage';
+import { createReleaseYearElement } from './helper';
+import { getMusicAlbumSchema } from './schema';
+
+let pageAlbum: PageAlbum | null = null;
+
+export class PageAlbum implements BandPage {
+  /**
+   * @throws Error if schema is not found or invalid
+   */
+  private constructor(
+    public readonly album: Album,
+    public readonly albumDetails: AlbumDetails,
+    public readonly band: Band,
+  ) {
+    elementHtml()?.classList.add('bcx-page-album');
+  }
+
+  static async init(): Promise<PageAlbum> {
+    if (pageAlbum) {
+      return pageAlbum;
+    }
+
+    console.log('[PageAlbum]', 'Initializing PageAlbum');
+
+    const schema = getMusicAlbumSchema();
+    console.log('[PageAlbum]', '[Schema]', schema);
+
+    const album = AlbumFactory.createFromSchema(schema);
+    const albumDetails = AlbumDetails.fromMusicAlbumSchema(schema);
+    const bands = await BandcampStorage.getBands([album.bandId]);
+    const band = bands[0] ?? BandFactory.fromMusicAlbumSchema(schema);
+
+    pageAlbum = new PageAlbum(album, albumDetails, band);
+    pageAlbum.appendAlbumYear();
+
+    console.log('[PageAlbum]', '[Album]', pageAlbum.album);
+    console.log('[PageAlbum]', '[Details]', pageAlbum.albumDetails);
+    console.log('[PageAlbum]', '[Band]', pageAlbum.band);
+
+    await BandcampStorage.saveAlbum(album);
+
+    return pageAlbum;
+  }
+
+  private appendAlbumYear(): void {
+    const trackTitleElement = element('#name-section .trackTitle');
+
+    if (!trackTitleElement || !this.album.metadata?.year) {
+      return;
+    }
+
+    const releaseYearElement = createReleaseYearElement(
+      this.album.metadata.year,
+      this.album.metadata.publishedDate,
+    );
+
+    trackTitleElement.insertAdjacentElement('afterend', releaseYearElement);
+  }
+}

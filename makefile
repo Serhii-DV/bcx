@@ -21,7 +21,7 @@ install: ## Install dependencies
 .PHONY: setup
 setup: ## Setup development environment
 	$(MAKE) install
-	$(PNPM_BIN) setup
+	$(PNPM_BIN) setup-git-hooks
 
 .PHONY: build
 build: ## Build production assets
@@ -34,3 +34,15 @@ dev: ## Start development server
 .PHONY: test
 test: ## Run tests
 	$(PNPM_BIN) test
+
+.PHONY: test-dev
+test-dev: ## Run tests in watch mode
+	$(PNPM_BIN) test-dev
+
+.PHONY: format
+format: ## Format the code
+	$(PNPM_BIN) format
+
+.PHONY: changeset
+changeset: ## Add a new changeset
+	$(PNPM_BIN) changeset

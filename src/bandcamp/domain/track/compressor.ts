@@ -8,6 +8,7 @@ import type { UrlCompressor } from '../url/compressor';
 
 export interface RawTrackData extends RawData {
   id: number;
+  position: number;
   artist: string;
   title: string;
   artworkId: number;
@@ -19,6 +20,7 @@ export interface RawTrackData extends RawData {
 
 export interface CompressedTrackData extends CompressedData {
   i: number; // id
+  p: number; // position
   a: string; // artist
   t: string; // title
   w: number; // artworkId
@@ -36,6 +38,7 @@ export class TrackDataCompressor implements RawDataCompressor {
   compress(data: RawTrackData): CompressedTrackData {
     return {
       i: data.id,
+      p: data.position,
       a: data.artist,
       t: data.title,
       w: data.artworkId,
@@ -51,6 +54,7 @@ export class TrackDataCompressor implements RawDataCompressor {
   decompress(data: CompressedTrackData): RawTrackData {
     return {
       id: data.i,
+      position: data.p,
       artist: data.a,
       title: data.t,
       artworkId: data.w,

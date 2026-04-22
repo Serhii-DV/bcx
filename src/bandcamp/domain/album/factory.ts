@@ -1,9 +1,8 @@
 import type { StorageObject } from 'src/core/storage';
-import { removeInvisibleChars } from 'src/utils/string';
 import { ArtistFactory } from '../artist/factory';
-import { Artwork } from '../artwork';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
+import type { BandcampItem } from '../page/PageCollection';
 import type {
   AlbumRelease,
   MusicAlbumSchema,
@@ -12,38 +11,22 @@ import type {
 import { Price } from '../price';
 import { albumDataCompressor } from '../shared';
 import { TrackFactory } from '../track/factory';
-import type { Track } from '../track/track';
-import { Url } from '../url/url';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
 export class AlbumFactory {
-  static create(
-    url: string | Url,
-    artist: string,
-    title: string,
-    id: string | number,
-    artworkId: string | number,
-    bandId: string | number,
-    tracks: Track[] = [],
-    metadata?: Metadata,
-  ): Album {
-    const albumArtist = ArtistFactory.fromString(artist);
-    return new Album(
-      typeof url === 'string' ? new Url(url) : url,
-      albumArtist,
-      removeInvisibleChars(title),
-      typeof id === 'string' ? parseInt(id.replace('album-', '')) : id,
-      new Artwork(
-        typeof artworkId === 'string' ? parseInt(artworkId) : artworkId,
-      ),
-      typeof bandId === 'string' ? parseInt(bandId) : bandId,
-      tracks,
-      metadata,
+  static fromBandcampItem(item: BandcampItem): Album {
+    return Album.create(
+      item.item_url,
+      item.band_name,
+      item.item_title,
+      item.album_id,
+      item.item_art_id,
+      item.band_id,
     );
   }
 
   static fromRawData(rawData: RawAlbumData): Album {
-    return this.create(
+    return Album.create(
       rawData.url,
       rawData.artist,
       rawData.title,
@@ -79,9 +62,9 @@ export class AlbumFactory {
     );
 
     const url = schema.mainEntityOfPage;
-    const artist = schema.byArtist.name;
     const title = schema.name;
-
+    const tracks = TrackFactory.createTracksFromMusicAlbumSchema(schema);
+    const artist = ArtistFactory.create(schema.byArtist.name);
     const albumId =
       (digitalRelease?.additionalProperty.find(
         (prop: PropertyValue) => prop.name === 'item_id',
@@ -105,8 +88,6 @@ export class AlbumFactory {
       digitalRelease?.offers.priceCurrency || 'USD',
     );
 
-    const tracks = TrackFactory.createTracksFromSchema(schema);
-
     const metadata = Metadata.create(
       price,
       schema.publisher.name,
@@ -115,7 +96,7 @@ export class AlbumFactory {
       schema.keywords,
     );
 
-    return this.create(
+    return Album.create(
       url,
       artist,
       title,

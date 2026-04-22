@@ -1,5 +1,6 @@
 import { storage } from 'src/core/shared';
 import type { StorableData } from 'src/core/storage';
+import { isEqual } from 'src/utils/utils';
 import { Album } from './album/album';
 import type { CompressedAlbumData, RawAlbumData } from './album/compressor';
 import { AlbumFactory } from './album/factory';
@@ -7,19 +8,15 @@ import { Band } from './band/band';
 import { type CompressedBandData } from './band/compressor';
 import { BandFactory } from './band/factory';
 import { bandDataCompressor } from './shared';
+import { BandIndexData } from './storage/bandIndexData';
 import { StorageKey } from './storageKey';
 import { TrackFactory } from './track/factory';
 import type { Track } from './track/track';
 
 export class BandcampStorage {
   static async saveBand(band: Band): Promise<void> {
-    const bandIds: number[] = await this.getBandsIds();
-
-    // Add the current band ID if it's not already in the array
-    if (!bandIds.includes(band.id)) {
-      bandIds.push(band.id);
-      await storage.set(StorageKey.bandsKey(), bandIds);
-    }
+    // Add the current band if it's not already in the map
+    await BandIndexData.set(band.id, band.name);
 
     const storageData: StorableData = band.toStorableData();
     const albumData = await BandcampStorage.getAlbumsStorableData(
@@ -45,11 +42,10 @@ export class BandcampStorage {
     return await storage.set(storageData);
   }
 
-  static async getBands(): Promise<Band[]> {
-    const bandIds: number[] = await this.getBandsIds();
-
+  static async getBands(bandIds: number[] = []): Promise<Band[]> {
     if (bandIds.length === 0) {
-      return [];
+      const bandIds: number[] = await BandIndexData.getBandsIds();
+      return this.getBands(bandIds);
     }
 
     const bandsStorableData = await this.getBandsStorableData(bandIds);
@@ -98,6 +94,45 @@ export class BandcampStorage {
     return bands;
   }
 
+  static async getByUuids(uuids: string[]): Promise<(Band | Album)[]> {
+    const uuidMap = await storage.get(uuids);
+    const keys: string[] = [];
+
+    for (const key in uuidMap) {
+      const value = uuidMap[key];
+
+      if (typeof value !== 'string') {
+        continue;
+      }
+
+      // Only consider band and album keys for now
+      if (StorageKey.isBandKey(value) || StorageKey.isAlbumKey(value)) {
+        keys.push(value);
+      }
+    }
+
+    const storableData = await storage.get(keys);
+    const objects: (Band | Album)[] = [];
+
+    for (const key in storableData) {
+      if (StorageKey.isBandKey(key)) {
+        const band = this.createBandFromStorageObject(
+          storableData[key],
+          storableData,
+        );
+        if (band) {
+          objects.push(band);
+        }
+      } else if (StorageKey.isAlbumKey(key)) {
+        const album = AlbumFactory.fromStorage(storableData[key]);
+        if (album) {
+          objects.push(album);
+        }
+      }
+    }
+
+    return objects;
+  }
   private static createBandFromStorageObject(
     bandStorageObject: any,
     storableData: StorableData,
@@ -180,13 +215,6 @@ export class BandcampStorage {
     return tracks;
   }
 
-  private static async getBandsIds(): Promise<number[]> {
-    const bandsKey = StorageKey.bandsKey();
-    const bandIds: number[] =
-      (await storage.getByKey<number[]>(bandsKey)) || [];
-    return bandIds;
-  }
-
   static async saveTrack(track: Track): Promise<void> {
     return await storage.set(track).catch((reason) => {
       throw new Error(reason);
@@ -226,6 +254,13 @@ export class BandcampStorage {
     return await storage.get(bandKeys);
   }
 
+  static async getAlbumsStorableDataByIds(
+    albumIds: number[],
+  ): Promise<StorableData> {
+    const albumKeys = albumIds.map((albumId) => StorageKey.albumKey(albumId));
+    return await storage.get(albumKeys);
+  }
+
   static async getAlbumsStorableData(albums: Album[]): Promise<StorableData> {
     const albumKeys = albums.map((album) => StorageKey.albumKey(album.id));
     return await storage.get(albumKeys);
@@ -236,16 +271,26 @@ export class BandcampStorage {
     return await storage.get(trackKeys);
   }
 
-  static async getAlbums(albums: Album[]): Promise<Album[]> {
+  static async getAlbumsRawDataByIds(
+    albumIds: number[],
+  ): Promise<RawAlbumData[]> {
     const albumsStorableData =
-      await BandcampStorage.getAlbumsStorableData(albums);
-    const rawAlbumDataArr: RawAlbumData[] = Object.values(albumsStorableData)
+      await BandcampStorage.getAlbumsStorableDataByIds(albumIds);
+    const albumsRawDataArray: RawAlbumData[] = Object.values(albumsStorableData)
       .filter((obj): obj is object => typeof obj === 'object' && obj !== null)
       .map((obj) => AlbumFactory.createRawData(obj as CompressedAlbumData));
 
+    return albumsRawDataArray;
+  }
+
+  static async getAlbums(albums: Album[]): Promise<Album[]> {
+    const albumIds = albums.map((album) => album.id);
+    const albumsRawDataArray =
+      await BandcampStorage.getAlbumsRawDataByIds(albumIds);
+
     // Collect all unique track IDs from loaded albums
     const trackIds: number[] = [];
-    rawAlbumDataArr.forEach((rawAlbumData) => {
+    albumsRawDataArray.forEach((rawAlbumData) => {
       rawAlbumData.trackIds.forEach((id) => {
         if (!trackIds.includes(id)) {
           trackIds.push(id);
@@ -257,16 +302,16 @@ export class BandcampStorage {
     const tracks = await BandcampStorage.getTracksByTrackIds(trackIds);
     const loadedTracksMap = new Map(tracks.map((track) => [track.id, track]));
 
-    const loadedAlbums = rawAlbumDataArr
-      .map((rawAlbumData) => {
-        const album = AlbumFactory.fromRawData(rawAlbumData);
+    const loadedAlbums = albumsRawDataArray
+      .map((albumRawData) => {
+        const album = AlbumFactory.fromRawData(albumRawData);
 
-        if (rawAlbumData.trackIds.length === 0) {
+        if (albumRawData.trackIds.length === 0) {
           return album;
         }
 
         // Map track IDs to loaded Track objects
-        album.tracks = rawAlbumData.trackIds
+        album.tracks = albumRawData.trackIds
           .map((trackId) => loadedTracksMap.get(trackId))
           .filter((track): track is Track => track !== undefined);
 
@@ -280,7 +325,20 @@ export class BandcampStorage {
     );
 
     // Merge albums with loaded data, preferring loaded data when available
-    return albums.map((album) => loadedAlbumsMap.get(album.id) || album);
+    return albums.map((album) => {
+      const storageAlbum = loadedAlbumsMap.get(album.id);
+
+      if (storageAlbum === undefined) {
+        return album;
+      }
+
+      // If the loaded album is equal to the current one, return the current one to preserve object references
+      if (!isEqual(storageAlbum.artwork, album.artwork)) {
+        storageAlbum.artwork = album.artwork;
+      }
+
+      return storageAlbum;
+    });
   }
 
   static async getTracks(tracks: Track[]): Promise<Track[]> {
@@ -300,5 +358,16 @@ export class BandcampStorage {
 
     // Merge tracks with loaded data, preferring loaded data when available
     return tracks.map((track) => loadedTracksMap.get(track.id) || track);
+  }
+
+  static async getAllCompressedBandData(): Promise<CompressedBandData[]> {
+    const keys = await storage.getKeys();
+    const bandKeys = keys.filter((key) => StorageKey.isBandKey(key));
+    const compressedBandDataMap = await storage.get(bandKeys);
+
+    return Object.values(compressedBandDataMap).filter(
+      (data): data is CompressedBandData =>
+        typeof data === 'object' && data !== null,
+    );
   }
 }

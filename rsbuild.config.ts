@@ -21,25 +21,21 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
     ],
     source: {
       entry: {
+        bcx: {
+          import: './src/app/bcx/bcx.ts',
+          html: false,
+        },
         popup: './src/popup/main.ts',
         background: {
           import: './src/background.ts',
           html: false,
         },
-        'bandcamp.page.all': {
-          import: './src/bandcamp/content/app.all.ts',
+        'bandcamp.content.app': {
+          import: './src/bandcamp/content/app.ts',
           html: false,
         },
-        'bandcamp.page.music': {
-          import: './src/bandcamp/content/app.music.ts',
-          html: false,
-        },
-        'bandcamp.page.album': {
-          import: './src/bandcamp/content/app.album.ts',
-          html: false,
-        },
-        'bandcamp.page.track': {
-          import: './src/bandcamp/content/app.track.ts',
+        'bandcamp.content.page.music': {
+          import: './src/bandcamp/content/pages/app.pageMusic.ts',
           html: false,
         },
       },
@@ -65,6 +61,12 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
         js: isProd ? 'source-map' : 'cheap-module-source-map',
       },
       assetPrefix: './',
+      copy: [
+        {
+          from: './src/assets',
+          to: './assets',
+        },
+      ],
     },
     html: {
       outputStructure: 'flat',

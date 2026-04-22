@@ -6,15 +6,14 @@
 import Isotope from 'isotope-layout';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
-import { createQueryCountBadgeElement } from 'src/bandcamp/domain/page/helper';
+import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { createDataListForInput } from 'src/utils/dom';
+import { createDataListForInput, element } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
-import BCXBadgeSection from './BCXBadgeSection.svelte';
 import filterStyles from './BCXMusicFilter.css?inline';
 import type { QueryCountMap } from './types';
 
@@ -32,13 +31,12 @@ let filterInput: HTMLInputElement | null = $state(null);
 let debounceTimer: NodeJS.Timeout | null = null;
 let musicIsotope: Isotope | null = null;
 let searchQuery = $state(
-  currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '',
+  currentPageUrl.getSearchParam(MUSIC_FILTER_QUERY_PARAM) || '',
 );
 let previousQuery = '';
 let visibleCount = $state(0);
 let totalCount = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
-let yearsBadgesContainer: HTMLElement | null = $state(null);
 
 // Reactive values
 $effect(() => {
@@ -52,6 +50,7 @@ $effect(() => {
 
     handleFilterChange(searchQuery);
     updateUrlQueryParamValue(MUSIC_FILTER_QUERY_PARAM, searchQuery);
+    musicFilterStore.setSearchQuery(searchQuery);
   }
 });
 
@@ -69,7 +68,6 @@ onMount(() => {
   injectStyles();
   initMusicIsotope();
   setupDataList();
-  renderBadges();
 
   // Watch for browser navigation (Back/Forward buttons)
   window.addEventListener('popstate', handlePopState);
@@ -104,7 +102,7 @@ function setupDataList(): void {
   // Add artists
   band.metadata.artistNames.forEach((artistName) => {
     const count = queryCountMap?.get(artistName) || 0;
-    options.push(artistName + ' (' + count + ')');
+    options.push(createQueryCountString(artistName, count));
   });
 
   // We don't need to show other bands on the band page
@@ -116,7 +114,7 @@ function setupDataList(): void {
 
   band.metadata.keywords.forEach((keyword) => {
     const count = queryCountMap?.get(keyword) || 0;
-    options.push(keyword + ' (' + count + ')');
+    options.push(createQueryCountString(keyword, count));
   });
 
   createDataListForInput(options, filterInput);
@@ -173,7 +171,7 @@ function updateUrlQueryParamValue(key: string, value: string): void {
 }
 
 function handlePopState(): void {
-  const q = currentPageUrl.getQueryParam(MUSIC_FILTER_QUERY_PARAM) || '';
+  const q = currentPageUrl.getSearchParam(MUSIC_FILTER_QUERY_PARAM) || '';
   if (q !== searchQuery) {
     searchQuery = q;
     if (filterInput) filterInput.value = q;
@@ -215,6 +213,21 @@ function filterItems(query: string): void {
       const filterValue = musicGridItem.getAttribute('data-filter-value') || '';
       return filterValue.includes(query);
     });
+
+    // Lazy load images for visible items
+    visibleItems.forEach((item) => {
+      const img = element(
+        'img.lazy[src="/img/0.gif"]',
+        item,
+      ) as HTMLImageElement | null;
+      if (!img || !img.dataset.original) {
+        return;
+      }
+      img.src = img.dataset.original;
+      img.classList.remove('lazy');
+      img.removeAttribute('data-original');
+    });
+
     visibleCount = visibleItems.length;
   } else {
     visibleCount = totalCount;
@@ -226,32 +239,6 @@ function clearFilter(): void {
   if (filterInput) {
     filterInput.value = '';
   }
-}
-
-function renderYearBadges(): void {
-  if (yearsBadgesContainer === null) return;
-
-  // Clear existing badges
-  yearsBadgesContainer.innerHTML = '';
-
-  // Create year badges
-  band.metadata.years.forEach((year) => {
-    const query = year.toString();
-    if (query) {
-      const count = queryCountMap?.get(query) || 0;
-      const badgeElement = createQueryCountBadgeElement(
-        query,
-        count,
-        'Filter by year',
-        'bcx-badge-year',
-      );
-      yearsBadgesContainer?.appendChild(badgeElement);
-    }
-  });
-}
-
-function renderBadges(): void {
-  renderYearBadges();
 }
 
 function injectStyles(): void {
@@ -287,67 +274,46 @@ function destroy(): void {
 </script>
 
 <div class="bcx-filter-container">
-  <div class="bcx-filter-input-container">
-    <input
-      id="bcx-filter-input"
-      bind:this={filterInput}
-      bind:value={searchQuery}
-      oninput={handleInput}
-      onchange={handleChange}
-      type="text"
-      class="bcx-filter-input"
-      placeholder="Search for artists or albums..."
-    />
+  <div class="bcx-filter-main-row">
+    <div class="bcx-filter-input-container">
+      <input
+        id="bcx-filter-input"
+        bind:this={filterInput}
+        bind:value={searchQuery}
+        oninput={handleInput}
+        onchange={handleChange}
+        type="text"
+        class="bcx-filter-input"
+        placeholder="Search for artists or albums..."
+      />
 
-    {#if searchQuery.trim()}
-      <button
-        type="button"
-        class="bcx-filter-clear-button"
-        onclick={clearFilter}
-        title="Clear search"
-        aria-label="Clear search"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+      {#if searchQuery.trim()}
+        <button
+          type="button"
+          class="bcx-filter-clear-button"
+          onclick={clearFilter}
+          title="Clear search"
+          aria-label="Clear search"
         >
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    {/if}
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      {/if}
+    </div>
+
+    <div class="filter-results-count" title="{visibleCount} of {totalCount} items shown">
+      {visibleCount} / {totalCount}
+    </div>
   </div>
-
-  <div class="filter-results-count">
-    Showing {visibleCount} of {totalCount} albums
-  </div>
-
-  <div class="bcx-filter-badges filter-by-years">
-    <div class="bcx-badges-container" bind:this={yearsBadgesContainer}></div>
-  </div>
-
-  <BCXBadgeSection
-    title="Artists"
-    items={band.metadata.artistNames}
-    queryCountMap={queryCountMap}
-    badgeClass="bcx-badge-artist"
-    tooltipText="Filter by artist"
-    showSorting={true}
-  />
-
-  <BCXBadgeSection
-    title="Keywords"
-    items={band.metadata.keywords}
-    queryCountMap={queryCountMap}
-    badgeClass="bcx-badge-keyword"
-    tooltipText="Filter by keyword"
-    showSorting={true}
-  />
-
 </div>

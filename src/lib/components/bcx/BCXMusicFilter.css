@@ -4,11 +4,19 @@
   padding: 15px;
 }
 
+.bcx-filter-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
 .bcx-filter-input-container {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  width: 100%;
+  flex: 1;
   max-width: 400px;
 }
 
@@ -60,8 +68,14 @@
 }
 
 .filter-results-count {
-  font-size: 12px;
-  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+  color: #eee;
+  background-color: #333333c0;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 10px;
+  line-height: 1;
 }
 
 .results-text {

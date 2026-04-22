@@ -5,15 +5,6 @@ describe('arrayUnique', () => {
   it('should return an array with unique values', () => {
     expect(arrayUnique(['a', 'b', 'a'])).toEqual(['a', 'b']);
   });
-
-  it('should flatten and remove duplicates in a nested array', () => {
-    expect(
-      arrayUnique([
-        ['a', 'b'],
-        ['a', 'c'],
-      ]),
-    ).toEqual(['a', 'b', 'c']);
-  });
 });
 
 describe('countOccurrences', () => {

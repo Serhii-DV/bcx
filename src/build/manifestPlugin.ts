@@ -94,9 +94,13 @@ export function manifestPlugin(options: ManifestOptions = {}): RsbuildPlugin {
       const logger = api.logger;
 
       const generateManifest = (context?: string) => {
+        const dispPath = api.getRsbuildConfig().output?.distPath;
         const actualOutputDir =
-          api.getRsbuildConfig().output?.distPath?.root || outputDir;
-
+          typeof dispPath === 'string'
+            ? dispPath
+            : typeof dispPath === 'object' && dispPath.root
+              ? dispPath.root || outputDir
+              : outputDir;
         const finalManifest = createDynamicManifest({
           customFields,
           transformer,

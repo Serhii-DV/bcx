@@ -16,4 +16,7 @@ global.chrome = {
       set: jest.fn((_items, callback) => callback()),
     },
   },
+  history: {
+    search: jest.fn(),
+  },
 } as unknown as typeof chrome;

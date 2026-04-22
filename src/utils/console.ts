@@ -12,10 +12,14 @@ export const console = {
   debug: globalThis.console.debug.bind(globalThis.console, PREFIX),
   warn: globalThis.console.warn.bind(globalThis.console, PREFIX),
   info: globalThis.console.info.bind(globalThis.console, PREFIX),
+  time: (label?: string) =>
+    globalThis.console.time.bind(globalThis.console, PREFIX + ' ' + label)(),
+  timeEnd: (label?: string) =>
+    globalThis.console.timeEnd.bind(globalThis.console, PREFIX + ' ' + label)(),
 };
 
-export function arrayPreview<T>(arr: T[], limit = 10): [string, T[]] {
+export function arrayPreview<T>(arr: T[], limit = 5): [string, T[]] {
   const preview = arr.slice(0, limit);
-  const summary = `(showing ${Math.min(limit, arr.length)} of ${arr.length})`;
+  const summary = `(${Math.min(limit, arr.length)} of ${arr.length})`;
   return [summary, preview];
 }

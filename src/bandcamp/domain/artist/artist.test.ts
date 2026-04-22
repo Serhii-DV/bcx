@@ -9,11 +9,6 @@ describe('ReleaseArtist', () => {
       expect(artist.joins).toEqual(['&']);
     });
 
-    it('should trim join strings', () => {
-      const artist = new Artist(['Artist A', 'Artist B'], [' | ']);
-      expect(artist.joins).toEqual(['|']);
-    });
-
     it('should handle empty joins array', () => {
       const artist = new Artist(['Solo Artist']);
       expect(artist.names).toEqual(['Solo Artist']);
@@ -21,27 +16,29 @@ describe('ReleaseArtist', () => {
     });
   });
 
-  describe('asString', () => {
-    it('should return the correct artist string', () => {
-      const artist = new Artist(['Band One', 'Band Two'], [' & ']);
+  describe('toString', () => {
+    it('should return the correct artist string with joins', () => {
+      const artist = new Artist(['Band One', 'Band Two'], ['&']);
       expect(artist.toString()).toBe('Band One & Band Two');
+    });
+
+    it('should return the correct artist string with commas', () => {
+      const artist = new Artist(
+        ['Artist A', 'Artist B', 'Artist C'],
+        [',', ','],
+      );
+      expect(artist.toString()).toBe('Artist A, Artist B, Artist C');
     });
 
     it('should return a single artist name if no joins exist', () => {
       const artist = new Artist(['Solo Musician']);
       expect(artist.toString()).toBe('Solo Musician');
     });
-
-    it('should cache the result after the first call', () => {
-      const artist = new Artist(['Artist1', 'Artist2'], [' / ']);
-      expect(artist.toString()).toBe('Artist1 / Artist2');
-      expect(artist.toString()).toBe('Artist1 / Artist2'); // Check caching behavior
-    });
   });
 
-  describe('asArray', () => {
+  describe('toArray', () => {
     it('should return names and joins interleaved', () => {
-      const artist = new Artist(['A', 'B', 'C'], [' & ', ' feat. ']);
+      const artist = new Artist(['A', 'B', 'C'], ['&', 'feat.']);
       expect(artist.toArray()).toEqual(['A', '&', 'B', 'feat.', 'C']);
     });
 
@@ -51,43 +48,69 @@ describe('ReleaseArtist', () => {
     });
   });
 
-  describe('fromString', () => {
+  describe('parse', () => {
     it('should split a string correctly into names and joins', () => {
-      const artist = Artist.fromString('Band1 & Band2 | Band3');
+      const artist = Artist.parse('Band1 & Band2 | Band3');
       expect(artist.names).toEqual(['Band1', 'Band2', 'Band3']);
       expect(artist.joins).toEqual(['&', '|']);
     });
 
-    it('should treat "V/A" as a single entity', () => {
-      const artist = Artist.fromString('V/A');
-      expect(artist.names).toEqual(['V/A']);
-      expect(artist.joins).toEqual([]);
-    });
-
     it('should handle different delimiters', () => {
-      const artist = Artist.fromString('A / B + C • D');
+      const artist = Artist.parse('A / B + C • D');
       expect(artist.names).toEqual(['A', 'B', 'C', 'D']);
       expect(artist.joins).toEqual(['/', '+', '•']);
     });
 
     it('should handle spaces around delimiters properly', () => {
-      const artist = Artist.fromString('Artist 1 Vs Artist 2');
+      const artist = Artist.parse('Artist 1 Vs Artist 2');
       expect(artist.names).toEqual(['Artist 1', 'Artist 2']);
       expect(artist.joins).toEqual(['Vs']);
     });
-  });
 
-  describe('toString', () => {
-    it('should return the same as asString', () => {
-      const artist = new Artist(['Artist X', 'Artist Y'], [' & ']);
-      expect(artist.toString()).toBe('Artist X & Artist Y');
+    it('should convert artist names to title case', () => {
+      const artist = Artist.parse('artist one & artist two');
+      expect(artist.names).toEqual(['Artist One', 'Artist Two']);
+      expect(artist.joins).toEqual(['&']);
     });
 
-    it('should correctly return a cached value on multiple calls', () => {
-      const artist = new Artist(['Solo Performer']);
-      const result1 = artist.toString();
-      const result2 = artist.toString();
-      expect(result1).toBe(result2);
+    const VARIOUS_ALIASES = [
+      'V/A',
+      'VVAA',
+      'Various',
+      'Various Artist',
+      'Various Artists',
+    ];
+
+    VARIOUS_ALIASES.forEach((alias) => {
+      it(`should treat "${alias}" as "Various Artists"`, () => {
+        const artist = Artist.parse(alias);
+        expect(artist.names).toEqual(['Various Artists']);
+        expect(artist.joins).toEqual([]);
+        expect(artist.isVariousArtists).toBe(true);
+      });
+    });
+
+    const delimiters = [
+      ',',
+      '&',
+      '|',
+      '/',
+      '+',
+      '•',
+      'Vs',
+      'vs',
+      'VS',
+      'feat.',
+      'ft.',
+      'featuring',
+    ];
+
+    delimiters.forEach((delimiter) => {
+      it(`should handle "${delimiter}" separated artist names`, () => {
+        const artist = Artist.parse(`Artist 1${delimiter} Artist 2`);
+        expect(artist.names).toEqual(['Artist 1', 'Artist 2']);
+        expect(artist.joins).toEqual([delimiter]);
+      });
     });
   });
 });

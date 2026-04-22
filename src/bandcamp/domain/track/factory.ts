@@ -1,17 +1,17 @@
 import type { StorageObject } from 'src/core/storage';
+import { Url } from 'src/core/url';
 import { Artist } from '../artist/artist';
 import { ArtistFactory } from '../artist/factory';
-import { Artwork } from '../artwork';
+import { Artwork } from '../artwork/artwork';
 import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
-import type {
-  MusicAlbumSchema,
-  MusicRecordingSchema,
-  PropertyValue,
+import {
+  getPropertyValueByName,
+  type MusicAlbumSchema,
+  type MusicRecordingSchema,
 } from '../page/schema';
 import { Price } from '../price';
 import { bandcampPageData, trackDataCompressor } from '../shared';
-import { Url } from '../url/url';
 import { type CompressedTrackData, type RawTrackData } from './compressor';
 import { TrackTime } from './time';
 import { Track } from './track';
@@ -19,22 +19,25 @@ import { Track } from './track';
 export class TrackFactory {
   static create(
     id: string | number,
+    position: string | number,
     artist: string | Artist,
     title: string,
     artwork: string | number | Artwork,
-    url?: string | Url | URL,
+    url?: string,
     time?: string | TrackTime,
     albumId?: number,
     metadata?: Metadata,
   ): Track {
     const trackId =
       typeof id === 'string' ? parseInt(id.replace('track-', ''), 10) : id;
-    const trackUrl = url ? Url.parse(url) : undefined;
+    const trackPosition =
+      typeof position === 'string' ? parseInt(position, 10) : position;
+    const trackUrl = url ? Url.create(url) : undefined;
     const trackTime =
       typeof time === 'string' ? TrackTime.fromString(time) : time;
 
     const trackArtist =
-      typeof artist === 'string' ? ArtistFactory.fromString(artist) : artist;
+      typeof artist === 'string' ? ArtistFactory.create(artist) : artist;
 
     const trackArtwork =
       artwork instanceof Artwork
@@ -45,6 +48,7 @@ export class TrackFactory {
 
     return new Track(
       trackId,
+      trackPosition,
       trackArtist,
       title,
       trackArtwork,
@@ -57,8 +61,10 @@ export class TrackFactory {
 
   static fromSchema(schema: MusicRecordingSchema): Track {
     const trackId =
-      (schema.additionalProperty?.find((prop) => prop.name === 'track_id')
-        ?.value as number) || 0;
+      (getPropertyValueByName(
+        schema.additionalProperty,
+        'track_id',
+      ) as number) || 0;
 
     const url = schema.mainEntityOfPage;
     const mainArtist = schema.inAlbum?.byArtist?.name || schema.byArtist.name;
@@ -66,14 +72,12 @@ export class TrackFactory {
       schema.name,
       mainArtist,
     );
-    const time = schema.duration
-      ? TrackTime.fromDuration(schema.duration)
-      : undefined;
+    const time = TrackTime.fromDuration(schema.duration);
     // albumId is not available in schema, try to get it from pagedata
-    const albumId = bandcampPageData.albumId || undefined;
+    const albumId = bandcampPageData.data?.album_id || undefined;
     const artId =
-      (schema.additionalProperty?.find((prop) => prop.name === 'art_id')
-        ?.value as number) || 0;
+      (getPropertyValueByName(schema.additionalProperty, 'art_id') as number) ||
+      0;
 
     const digitalRelease = schema?.inAlbum?.albumRelease?.filter(
       (release) => release.musicReleaseFormat === 'Digital',
@@ -93,6 +97,7 @@ export class TrackFactory {
 
     return TrackFactory.create(
       trackId,
+      0, // position is not available in schema, set it to 0 for now
       artist,
       title,
       artId,
@@ -106,19 +111,23 @@ export class TrackFactory {
   /**
    * Extract track information from schema
    */
-  static createTracksFromSchema(schema: MusicAlbumSchema): Track[] {
+  static createTracksFromMusicAlbumSchema(schema: MusicAlbumSchema): Track[] {
     const tracks: Track[] = [];
-    const albumArtId = schema.albumRelease[0]?.additionalProperty.find(
-      (prop: PropertyValue) => prop.name === 'art_id',
-    )?.value as number;
-    const albumId = schema.albumRelease[0]?.additionalProperty.find(
-      (prop: PropertyValue) => prop.name === 'item_id',
-    )?.value as number;
+    const propertyValues = schema.albumRelease.find(
+      (release) => release.musicReleaseFormat === 'DigitalFormat',
+    )?.additionalProperty;
+    const albumArtId = getPropertyValueByName(
+      propertyValues,
+      'art_id',
+    ) as number;
+    const albumId = getPropertyValueByName(propertyValues, 'item_id') as number;
 
     schema.track.itemListElement.forEach((trackItem) => {
-      const trackId = trackItem.item.additionalProperty.find(
-        (prop: PropertyValue) => prop.name === 'track_id',
-      )?.value as number;
+      const trackId = getPropertyValueByName(
+        trackItem.item.additionalProperty,
+        'track_id',
+      ) as number;
+      const position = trackItem.position;
       const url = trackItem.item.mainEntityOfPage;
       const { artist, title } = ArtistFactory.fromTrackTitle(
         trackItem.item.name,
@@ -126,13 +135,12 @@ export class TrackFactory {
           ? trackItem.item.byArtist.name
           : schema.byArtist.name,
       );
-      const time = trackItem.item.duration
-        ? TrackTime.fromDuration(trackItem.item.duration)
-        : undefined;
+      const time = TrackTime.fromDuration(trackItem.item.duration);
       const artId = albumArtId;
 
       const track = TrackFactory.create(
         trackId,
+        position,
         artist,
         title,
         artId,
@@ -151,6 +159,7 @@ export class TrackFactory {
   static fromRawData(rawData: RawTrackData): Track {
     return TrackFactory.create(
       rawData.id,
+      rawData.position,
       rawData.artist,
       rawData.title,
       rawData.artworkId,

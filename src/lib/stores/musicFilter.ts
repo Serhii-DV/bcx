@@ -25,8 +25,15 @@ export const musicFilterStore = {
   setSearchQuery: (query: string) => {
     filterState.searchQuery = query;
     filterState.timestamp = Date.now();
+    console.log(
+      '[setSearchQuery]',
+      filterState,
+      musicFilterStore.getSubscribersCount(),
+    );
     subscribers.forEach((callback) => callback({ ...filterState }));
   },
 
   getState: () => ({ ...filterState }),
+
+  getSubscribersCount: () => subscribers.size,
 };

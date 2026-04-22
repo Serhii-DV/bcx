@@ -1,5 +1,5 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
-import { arrayUnique } from 'src/utils/array';
+import { arrayNumberUnique, arrayUnique } from 'src/utils/array';
 import type { Album } from '../album/album';
 import { type Compressable, compress, decompress } from '../compressor';
 import { bandMetadataCompressor } from '../shared';
@@ -45,21 +45,31 @@ export class BandMetadata implements StorableObject, Compressable {
     return artistNames;
   }
 
-  get years(): string[] {
-    return arrayUnique(this.releaseYears).sort();
+  get years(): number[] {
+    return arrayNumberUnique(this.releaseYears).sort();
   }
 
-  get releaseYears(): string[] {
+  get releaseYears(): number[] {
     const years: number[] = [];
 
-    this.albums.forEach((album: Album) => {
+    this.albumsWithYears.forEach((album: Album) => {
       const year = album.metadata?.year;
       if (year) {
         years.push(year);
       }
     });
 
-    return years.map((year) => year.toString());
+    return years;
+  }
+
+  get albumsWithYears(): Album[] {
+    return this.albums.filter(
+      (album: Album) => album.metadata?.year !== undefined,
+    );
+  }
+
+  albumsByYear(year: number): Album[] {
+    return this.albums.filter((album: Album) => album.metadata?.year === year);
   }
 
   get keywords(): string[] {
@@ -84,7 +94,7 @@ export class BandMetadata implements StorableObject, Compressable {
     const queries: string[] = [];
     queries.push(...this.releaseArtistNames);
     queries.push(...this.releaseKeywords);
-    queries.push(...this.releaseYears);
+    queries.push(...this.releaseYears.map((year) => year.toString()));
     return queries;
   }
 

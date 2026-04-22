@@ -7,8 +7,9 @@ export class ArtistMemoryCache {
     return this.memoryCache.get(input);
   }
 
-  set(input: string, artist: Artist): void {
+  set(input: string, artist: Artist): Artist {
     this.memoryCache.set(input, artist);
+    return artist;
   }
 
   clear(): void {
