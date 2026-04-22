@@ -323,6 +323,9 @@ export function createLoadHandler<T>(fetchData: () => Promise<T[]>) {
 
     try {
       const data = await fetchData();
+      const { TreeItemCache } = await import('./items/TreeItemCache');
+      await TreeItemCache.invalidateAll();
+
       showActionFeedback(element, `Loaded ${data.length} items`);
     } catch (error) {
       console.error('Failed to load data:', error);
