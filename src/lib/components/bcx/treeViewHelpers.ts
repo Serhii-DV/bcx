@@ -125,6 +125,7 @@ export async function activateTreeItem({
   if (item.query) {
     musicFilterStore.setSearchQuery(item.query);
     await applyMusicFilterQuery(item.query);
+    focusTreeItem(item);
     return;
   }
 

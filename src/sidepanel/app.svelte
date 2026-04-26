@@ -20,7 +20,11 @@ onMount(() => {
     void loadTreeData();
   };
   const handleUpdated = (tabId: number, changeInfo: { url?: string }) => {
-    if (tabId === activeTab?.id && changeInfo.url) {
+    if (
+      tabId === activeTab?.id &&
+      changeInfo.url &&
+      shouldReloadForUrlChange(activeTab.url, changeInfo.url)
+    ) {
       void loadTreeData();
     }
   };
@@ -54,6 +58,21 @@ async function loadTreeData() {
     treeData = null;
   } finally {
     isLoading = false;
+  }
+}
+
+function shouldReloadForUrlChange(previousUrl: string, nextUrl: string) {
+  try {
+    const previous = new URL(previousUrl);
+    const next = new URL(nextUrl);
+
+    return (
+      previous.origin !== next.origin ||
+      previous.pathname !== next.pathname ||
+      previous.hash !== next.hash
+    );
+  } catch {
+    return previousUrl !== nextUrl;
   }
 }
 </script>
