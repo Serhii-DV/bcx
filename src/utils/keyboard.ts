@@ -19,3 +19,14 @@ export function onAltPlusKey(
     callback(e);
   }
 }
+
+export function onCtrlShiftPlusKey(
+  key: string,
+  e: KeyboardEvent,
+  callback: (e: KeyboardEvent) => void,
+): void {
+  if (e.key.toLowerCase() === key.toLowerCase() && e.ctrlKey && e.shiftKey) {
+    e.preventDefault();
+    callback(e);
+  }
+}

@@ -4,6 +4,7 @@ import { bandcampPageData } from 'src/bandcamp/domain/shared';
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { console } from 'src/utils/console';
+import type { FanData } from '../../types/FanData';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { TreeData } from '../TreeData';
@@ -40,7 +41,13 @@ export class MainTreeData {
   static async create(
     currentPageUrl: Url,
     page: BandPage | null,
+    options: {
+      includePageData?: boolean;
+      pageData?: PageDataContext | null;
+    } = {},
   ): Promise<TreeData> {
+    const includePageData = options.includePageData ?? true;
+    const pageDataContext = options.pageData ?? bandcampPageData;
     const band = page?.band || null;
     const album = page?.album || null;
     const albumDetails = page?.albumDetails || null;
@@ -49,10 +56,11 @@ export class MainTreeData {
     console.time(logLabel);
 
     const treeData = new TreeData();
-    const userKeyPart =
-      bandcampPageData?.fanData?.username ||
-      bandcampPageData?.fanData?.fan_id ||
-      'anonymous';
+    const userKeyPart = includePageData
+      ? pageDataContext?.fanData?.username ||
+        pageDataContext?.fanData?.fan_id ||
+        'anonymous'
+      : 'anonymous';
     const items: TreeItem[] = [];
 
     if (album) {
@@ -81,10 +89,15 @@ export class MainTreeData {
         );
 
       if (isBandcampMusicUrl(currentPageUrl)) {
-        const cachedBandTreeItem = await loadBandTreeItem();
-        const children = deferDescendants(cachedBandTreeItem.children || []);
+        const bandTreeItemFromStorage = BandTreeItem.create(
+          band,
+          currentPageUrl,
+        );
+        const children = deferDescendants(
+          bandTreeItemFromStorage.children || [],
+        );
         const bandTreeItem: TreeItem = {
-          ...cachedBandTreeItem,
+          ...bandTreeItemFromStorage,
           children,
           childrenLoaded: true,
           hasChildren: children.length > 0,
@@ -100,13 +113,14 @@ export class MainTreeData {
       }
     }
 
-    if (bandcampPageData) {
-      const fanData = bandcampPageData.fanData;
+    if (includePageData && pageDataContext) {
+      const fanData = pageDataContext.fanData;
+      const pageData = pageDataContext.data;
 
-      if (fanData.fan_id !== bandcampPageData.data?.fan_data?.fan_id) {
+      if (fanData.fan_id !== pageData?.fan_data?.fan_id) {
         items.push(
           builder({ label: `Fan: ${fanData.name}` })
-            .makeLazy(() => FanPageDataTreeItem.create(bandcampPageData))
+            .makeLazy(() => FanPageDataTreeItem.create(pageDataContext))
             .build(),
         );
       }
@@ -115,8 +129,7 @@ export class MainTreeData {
         builder({
           label: 'Following Bands',
           image: ICON_HEADPHONES,
-          childrenCount:
-            bandcampPageData.data?.following_bands_data?.item_count,
+          childrenCount: pageData?.following_bands_data?.item_count,
         })
           .makeLazy(() =>
             TreeItemCache.getOrCreate(
@@ -131,8 +144,7 @@ export class MainTreeData {
         builder({
           label: 'Following Genres',
           image: ICON_TAGS,
-          childrenCount:
-            bandcampPageData.data?.following_genres_data?.item_count,
+          childrenCount: pageData?.following_genres_data?.item_count,
         })
           .makeLazy(() =>
             TreeItemCache.getOrCreate(
@@ -148,9 +160,9 @@ export class MainTreeData {
           label: 'Collection',
           image: ICON_LIBRARY,
           childrenCount:
-            bandcampPageData.data?.collection_data?.item_count ??
-            bandcampPageData.data?.current_fan?.collection_count ??
-            bandcampPageData.data?.collection_count,
+            pageData?.collection_data?.item_count ??
+            pageData?.current_fan?.collection_count ??
+            pageData?.collection_count,
         })
           .makeLazy(() =>
             TreeItemCache.getOrCreate(
@@ -165,7 +177,7 @@ export class MainTreeData {
         builder({
           label: 'Wishlist',
           image: ICON_HEART,
-          childrenCount: bandcampPageData.data?.wishlist_data?.item_count,
+          childrenCount: pageData?.wishlist_data?.item_count,
         })
           .makeLazy(() =>
             TreeItemCache.getOrCreate(
@@ -194,4 +206,9 @@ export class MainTreeData {
 
     return treeData;
   }
+}
+
+interface PageDataContext {
+  data: any;
+  fanData: FanData;
 }

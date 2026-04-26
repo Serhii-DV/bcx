@@ -1,135 +1,87 @@
 <script lang="ts">
-import { TreeData } from 'src/app/treeview/TreeData';
-import { currentPageUrl } from 'src/core/shared';
+import { MessageType } from 'src/core/message';
+import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { element } from 'src/utils/dom';
-import { onAltPlusKey } from 'src/utils/keyboard';
+import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
-import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
-import {
-  musicPageTourSteps,
-  sidePanelTourSteps,
-} from '$lib/constants/tourSteps';
-import {
-  SIDE_PANEL_OPEN_KEY,
-  SIDE_PANEL_TOUR_COMPLETE_KEY,
-  TOUR_COMPLETE_KEY,
-} from '../domain/storageKey';
-import { setUiSessionBoolean } from '../domain/ui/uiState';
+import { BCXDrawerButton, BCXTour } from '$lib/components/bcx';
+import { musicPageTourSteps } from '$lib/constants/tourSteps';
+import { TOUR_COMPLETE_KEY } from '../domain/storageKey';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 
-// Props interface
-interface Props {
-  treeData?: TreeData;
-  initialSidePanelOpen?: boolean;
-  hasCompletedTour?: boolean;
-  hasCompletedSidePanelTour?: boolean;
-}
-
-let {
-  treeData = new TreeData(),
-  initialSidePanelOpen = false,
-  hasCompletedTour = false,
-  hasCompletedSidePanelTour = false,
-}: Props = $props();
-let shadowContainer: HTMLElement | null = $state(null);
-let sidePanelOpen: boolean = $state(false);
-let sidePanelStateInitialized: boolean = $state(true);
-let mainTourCompleted: boolean = $state(false);
-let sidePanelTourCompleted: boolean = $state(false);
-
-// Persist side panel state across page navigations (only after initial load)
-$effect(() => {
-  if (sidePanelStateInitialized) {
-    setUiSessionBoolean(SIDE_PANEL_OPEN_KEY, sidePanelOpen).catch((error) => {
-      console.warn('❌ BCX: Failed to persist side panel state:', error);
-    });
-  }
-});
-
-// Effect to change main BC block position when side panel is open
-$effect(() => {
-  const pgBody = element('#pgBd');
-  if (pgBody === null) return;
-
-  const shadowRoot = shadowContainer?.getRootNode();
-  const sidePanel =
-    shadowRoot instanceof ShadowRoot
-      ? shadowRoot.querySelector('#bcx-side-panel')
-      : null;
-  const sidePanelWidth = sidePanel
-    ? Number.parseFloat(
-        getComputedStyle(sidePanel).getPropertyValue('--bcx-side-panel-width'),
-      ) || 0
-    : 0;
-  const curLeft = (window.innerWidth - 950) / 2;
-
-  if (curLeft < sidePanelWidth) {
-    pgBody.style.left = sidePanelOpen
-      ? `${sidePanelWidth - curLeft + 20}px`
-      : '';
-  }
-});
-
-function handleKeydown(e: KeyboardEvent) {
-  // Alt+X for drawer
-  onAltPlusKey('x', e, () => {
-    void updateSidePanelOpen(!sidePanelOpen);
-  });
-
-  if (e.key === 'Escape' && sidePanelOpen) {
-    void updateSidePanelOpen(false);
-  }
-}
+let hasCompletedTour = $state(true);
+let tourStateLoaded = $state(false);
+let mainTourCompleted = $state(false);
+let tourVersion = $state(0);
 
 onMount(() => {
-  sidePanelOpen = initialSidePanelOpen;
+  storage
+    .getBooleanByKey(TOUR_COMPLETE_KEY)
+    .then((completed) => {
+      hasCompletedTour = completed ?? false;
+    })
+    .catch((error) => {
+      console.warn('BCX: Failed to load tour state:', error);
+      hasCompletedTour = false;
+    })
+    .finally(() => {
+      tourStateLoaded = true;
+    });
 
-  const bcxApp = document.querySelector('#bcx-app');
-  if (bcxApp?.shadowRoot) {
-    const portalContainer = document.createElement('div');
-    portalContainer.id = 'bcx-portal-container';
-    portalContainer.setAttribute('data-bcx-portal', 'true');
-    portalContainer.style.cssText = `
-      position: fixed;
-      inset: 0;
-      z-index: 999999;
-      pointer-events: none;
-    `;
+  const handleStorageChanged = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    areaName: string,
+  ) => {
+    if (areaName !== 'local' || !(TOUR_COMPLETE_KEY in changes)) {
+      return;
+    }
 
-    // Add dark theme by default
-    portalContainer.classList.add('dark');
-    portalContainer.style.cssText += 'color-theme: dark;';
+    const change = changes[TOUR_COMPLETE_KEY];
+    if (change.newValue === true) {
+      hasCompletedTour = true;
+      tourStateLoaded = true;
+      return;
+    }
 
-    bcxApp.shadowRoot.appendChild(portalContainer);
-    shadowContainer = portalContainer;
-  } else {
-    console.warn('❌ BCX: Could not find #bcx-app shadow root');
-  }
+    tourStateLoaded = true;
+    hasCompletedTour = false;
+    mainTourCompleted = false;
+    tourVersion += 1;
+  };
+
+  chrome.storage.onChanged.addListener(handleStorageChanged);
+
+  return () => {
+    chrome.storage.onChanged.removeListener(handleStorageChanged);
+  };
 });
 
-async function updateSidePanelOpen(value: boolean) {
-  sidePanelOpen = value; // update UI immediately
+function handleKeydown(event: KeyboardEvent) {
+  onCtrlShiftPlusKey('x', event, () => {
+    void toggleBrowserSidePanel();
+  });
+}
 
-  if (!sidePanelStateInitialized) return;
-
-  await setUiSessionBoolean(SIDE_PANEL_OPEN_KEY, sidePanelOpen); // persist in sessionStorage for current session
+async function toggleBrowserSidePanel() {
+  try {
+    await chrome.runtime.sendMessage({ type: MessageType.TOGGLE_SIDE_PANEL });
+  } catch (error) {
+    console.warn('BCX: Failed to toggle browser side panel:', error);
+  }
 }
 </script>
 
 <svelte:document onkeydown={handleKeydown} />
 
-{#if shadowContainer}
-  <!-- Side Panel -->
-  <BCXSidePanel
-    treeData={treeData}
-    open={sidePanelOpen}
-    onToggle={() => void updateSidePanelOpen(!sidePanelOpen)}
-    onClose={() => void updateSidePanelOpen(false)}
+<div class="bcx-browser-side-panel-drawer">
+  <BCXDrawerButton
+    sidePanelOpen={false}
+    onToggle={() => void toggleBrowserSidePanel()}
   />
+</div>
 
-  <!-- Tours (only on music pages) -->
-  {#if isBandcampMusicUrl(currentPageUrl)}
+{#if isBandcampMusicUrl(currentPageUrl) && tourStateLoaded}
+  {#key tourVersion}
     <BCXTour
       steps={musicPageTourSteps}
       autoStart={true}
@@ -137,33 +89,22 @@ async function updateSidePanelOpen(value: boolean) {
       completionStorageKey={TOUR_COMPLETE_KEY}
       onTourComplete={() => {
         mainTourCompleted = true;
-        console.log('🎉 Tour completed!');
+        console.log('Tour completed');
       }}
       onTourSkipped={() => {
         mainTourCompleted = true;
-        console.log('⏭️ Tour skipped');
+        console.log('Tour skipped');
       }}
     />
-
-    {#if sidePanelOpen && (hasCompletedTour || mainTourCompleted) && !(hasCompletedSidePanelTour || sidePanelTourCompleted)}
-      <BCXTour
-        steps={sidePanelTourSteps}
-        autoStart={true}
-        hasCompleted={hasCompletedSidePanelTour || sidePanelTourCompleted}
-        completionStorageKey={SIDE_PANEL_TOUR_COMPLETE_KEY}
-        onTourComplete={() => {
-          sidePanelTourCompleted = true;
-          console.log('🎉 Side panel tour completed!');
-        }}
-        onTourSkipped={() => {
-          sidePanelTourCompleted = true;
-          console.log('⏭️ Side panel tour skipped');
-        }}
-      />
-    {/if}
-  {/if}
+  {/key}
 {/if}
 
 <style>
-
+  :global(.bcx-browser-side-panel-drawer) {
+    inset: auto 0 0 auto;
+    pointer-events: none;
+    position: fixed;
+    width: 0;
+    z-index: 999998;
+  }
 </style>
