@@ -10,7 +10,9 @@ import { TOUR_COMPLETE_KEY } from '../domain/storageKey';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 
 let hasCompletedTour = $state(true);
+let tourStateLoaded = $state(false);
 let mainTourCompleted = $state(false);
+let tourVersion = $state(0);
 
 onMount(() => {
   storage
@@ -21,7 +23,37 @@ onMount(() => {
     .catch((error) => {
       console.warn('BCX: Failed to load tour state:', error);
       hasCompletedTour = false;
+    })
+    .finally(() => {
+      tourStateLoaded = true;
     });
+
+  const handleStorageChanged = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    areaName: string,
+  ) => {
+    if (areaName !== 'local' || !(TOUR_COMPLETE_KEY in changes)) {
+      return;
+    }
+
+    const change = changes[TOUR_COMPLETE_KEY];
+    if (change.newValue === true) {
+      hasCompletedTour = true;
+      tourStateLoaded = true;
+      return;
+    }
+
+    tourStateLoaded = true;
+    hasCompletedTour = false;
+    mainTourCompleted = false;
+    tourVersion += 1;
+  };
+
+  chrome.storage.onChanged.addListener(handleStorageChanged);
+
+  return () => {
+    chrome.storage.onChanged.removeListener(handleStorageChanged);
+  };
 });
 
 function handleKeydown(event: KeyboardEvent) {
@@ -48,21 +80,23 @@ async function toggleBrowserSidePanel() {
   />
 </div>
 
-{#if isBandcampMusicUrl(currentPageUrl)}
-  <BCXTour
-    steps={musicPageTourSteps}
-    autoStart={true}
-    hasCompleted={hasCompletedTour || mainTourCompleted}
-    completionStorageKey={TOUR_COMPLETE_KEY}
-    onTourComplete={() => {
-      mainTourCompleted = true;
-      console.log('Tour completed');
-    }}
-    onTourSkipped={() => {
-      mainTourCompleted = true;
-      console.log('Tour skipped');
-    }}
-  />
+{#if isBandcampMusicUrl(currentPageUrl) && tourStateLoaded}
+  {#key tourVersion}
+    <BCXTour
+      steps={musicPageTourSteps}
+      autoStart={true}
+      hasCompleted={hasCompletedTour || mainTourCompleted}
+      completionStorageKey={TOUR_COMPLETE_KEY}
+      onTourComplete={() => {
+        mainTourCompleted = true;
+        console.log('Tour completed');
+      }}
+      onTourSkipped={() => {
+        mainTourCompleted = true;
+        console.log('Tour skipped');
+      }}
+    />
+  {/key}
 {/if}
 
 <style>
