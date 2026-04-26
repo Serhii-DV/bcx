@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/TreeData';
 import { MessageType } from 'src/core/message';
-import { onAltPlusKey } from 'src/utils/keyboard';
+import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel } from '$lib/components/bcx';
 import {
@@ -64,7 +64,7 @@ async function loadTreeData() {
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  onAltPlusKey('x', event, () => {
+  onCtrlShiftPlusKey('x', event, () => {
     void toggleBrowserSidePanel();
   });
 }

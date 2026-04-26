@@ -27,7 +27,7 @@ function handleKeyDown(event: KeyboardEvent) {
   tabindex="0"
   aria-label="Toggle BCX side panel"
   aria-pressed={sidePanelOpen}
-  title="Open BCX side panel (Alt+X)"
+  title="Open BCX side panel (Ctrl+Shift+X)"
   onclick={handleToggle}
   onkeydown={handleKeyDown}
 >

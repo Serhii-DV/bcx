@@ -28,7 +28,7 @@ export const musicPageTourSteps = [
     targetElement: '#bcx-drawer-button',
     title: '📂 Side Panel',
     message:
-      'This button opens the side panel where you can explore your music collection. You can also use <kbd>Alt+X</kbd> to toggle it.',
+      'This button opens the side panel where you can explore your music collection. You can also use <kbd>Ctrl+Shift+X</kbd> to toggle it.',
     useShadowRoot: true,
   },
 ];
@@ -55,7 +55,7 @@ export const sidePanelTourSteps = [
     targetElement: '.bcx-keyboard-shortcuts',
     title: 'Keyboard Shortcuts',
     message:
-      'Keep these shortcuts handy: <kbd>Alt+X</kbd> toggles the panel, and <kbd>Esc</kbd> closes it when you are done.',
+      'Keep these shortcuts handy: <kbd>Ctrl+Shift+X</kbd> toggles the panel, and <kbd>Esc</kbd> closes it when you are done.',
     useShadowRoot: true,
   },
 ];

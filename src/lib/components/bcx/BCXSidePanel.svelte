@@ -86,8 +86,7 @@ $effect(() => {
           <div class="bcx-keyboard-shortcuts p-3">
             <h3 class="mb-2">Keyboard Shortcuts</h3>
             <div class="space-y-1 text-sm">
-              <div><kbd class="kbd">Alt+X</kbd> Toggle panel</div>
-              <div><kbd class="kbd">Esc</kbd> Close panel</div>
+              <div><kbd class="kbd">Ctrl+Shift+X</kbd> Toggle panel</div>
             </div>
           </div>
         </div>

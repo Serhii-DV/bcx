@@ -2,7 +2,7 @@
 import { MessageType } from 'src/core/message';
 import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
-import { onAltPlusKey } from 'src/utils/keyboard';
+import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXDrawerButton, BCXTour } from '$lib/components/bcx';
 import { musicPageTourSteps } from '$lib/constants/tourSteps';
@@ -25,7 +25,7 @@ onMount(() => {
 });
 
 function handleKeydown(event: KeyboardEvent) {
-  onAltPlusKey('x', event, () => {
+  onCtrlShiftPlusKey('x', event, () => {
     void toggleBrowserSidePanel();
   });
 }
