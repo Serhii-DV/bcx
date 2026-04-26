@@ -26,6 +26,7 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           html: false,
         },
         popup: './src/popup/main.ts',
+        sidepanel: './src/sidepanel/main.ts',
         background: {
           import: './src/background.ts',
           html: false,

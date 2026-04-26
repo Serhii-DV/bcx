@@ -1,6 +1,5 @@
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
-import type { BandcampPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { hasOwnProperty } from 'src/utils/utils';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
@@ -10,7 +9,7 @@ import { updateTreeItemsCounts } from '../utils';
 import { WishlistTreeItem } from './WishlistTreeItem';
 
 export class FanPageDataTreeItem {
-  static async create(pageData: BandcampPageData): Promise<TreeItem | null> {
+  static async create(pageData: PageDataContext): Promise<TreeItem | null> {
     const { fan_data } = pageData.data;
 
     if (!fan_data) {
@@ -61,7 +60,7 @@ function createAlbumsTreeItemsFromItemsCache(items: any): TreeItem[] {
   return treeItems;
 }
 
-function createFollowingBandsTreeItems(pageData: BandcampPageData): TreeItem[] {
+function createFollowingBandsTreeItems(pageData: PageDataContext): TreeItem[] {
   const treeItems: TreeItem[] = [];
   const bands = pageData.data?.item_cache?.following_bands;
 
@@ -83,9 +82,7 @@ function createFollowingBandsTreeItems(pageData: BandcampPageData): TreeItem[] {
   return treeItems;
 }
 
-function createFollowingGenresTreeItems(
-  pageData: BandcampPageData,
-): TreeItem[] {
+function createFollowingGenresTreeItems(pageData: PageDataContext): TreeItem[] {
   const treeItems: TreeItem[] = [];
   const genres = pageData.data?.item_cache?.following_genres;
 
@@ -100,4 +97,8 @@ function createFollowingGenresTreeItems(
     }
   }
   return treeItems;
+}
+
+interface PageDataContext {
+  data: any;
 }

@@ -5,6 +5,10 @@ import {
   hydrateTreeItemChildren,
   isNode,
 } from 'src/app/treeview/utils';
+import {
+  applyMusicFilterQuery,
+  openUrlInActiveTab,
+} from 'src/core/extensionActions';
 import { tick } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
 
@@ -120,6 +124,7 @@ export async function activateTreeItem({
 
   if (item.query) {
     musicFilterStore.setSearchQuery(item.query);
+    await applyMusicFilterQuery(item.query);
     return;
   }
 
@@ -131,6 +136,9 @@ export async function activateTreeItem({
     if (event instanceof KeyboardEvent || event instanceof MouseEvent) {
       showItemFeedback?.(item, 'Opening...', 0);
       await waitForActionFeedbackPaint();
+      if (await openUrlInActiveTab(item.href)) {
+        return;
+      }
       window.open(item.href, '_self');
     }
   }

@@ -5,21 +5,16 @@ import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCssFile, injectJSFile, onDOMReady } from 'src/utils/dom';
 import 'src/utils/console';
 import { BCXEventListener } from 'src/app/bcx/eventListener';
-import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
-import { currentPageUrl, storage } from 'src/core/shared';
+import { bandcampPageData } from 'src/bandcamp/domain/shared';
+import { type Message, MessageType } from 'src/core/message';
+import { currentPageUrl } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { markAppSetupStart, measureAppMount } from 'src/utils/performance';
-import type { BandPage } from '../domain/page/BandPage';
+import { musicFilterStore } from '$lib/stores/musicFilter';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
 import { BandcampStorage } from '../domain/storage';
-import {
-  SIDE_PANEL_OPEN_KEY,
-  SIDE_PANEL_TOUR_COMPLETE_KEY,
-  TOUR_COMPLETE_KEY,
-} from '../domain/storageKey';
-import { getSessionBoolean } from '../domain/ui/uiState';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -43,28 +38,16 @@ onDOMReady(async () => {
   const shadowRoot = container.attachShadow({ mode: 'open' });
   injectCssFile(getExtensionUrl('bandcamp.content.app.css'), shadowRoot);
 
-  let page: BandPage | null = null;
-
   try {
     if (isBandcampMusicUrl(currentPageUrl)) {
       const pageMusic = await PageMusic.init();
       await initAppPageMusic(pageMusic);
-      page = pageMusic;
     } else if (isBandcampAlbumUrl(currentPageUrl)) {
-      page = await PageAlbum.init();
+      await PageAlbum.init();
     } else if (isBandcampTrackUrl(currentPageUrl)) {
       const trackPage = new PageTrack();
       BandcampStorage.saveTrack(trackPage.track);
-      page = trackPage;
     }
-
-    const treeData = await MainTreeData.create(currentPageUrl, page);
-    const [initialSidePanelOpen, hasCompletedTour, hasCompletedSidePanelTour] =
-      await Promise.all([
-        getSessionBoolean(SIDE_PANEL_OPEN_KEY),
-        storage.getBooleanByKey(TOUR_COMPLETE_KEY),
-        storage.getBooleanByKey(SIDE_PANEL_TOUR_COMPLETE_KEY),
-      ]);
 
     measureAppMount(
       {
@@ -74,12 +57,6 @@ onDOMReady(async () => {
       () =>
         mount(App, {
           target: shadowRoot,
-          props: {
-            treeData,
-            initialSidePanelOpen,
-            hasCompletedTour: hasCompletedTour ?? false,
-            hasCompletedSidePanelTour: hasCompletedSidePanelTour ?? false,
-          },
         }),
     );
   } catch (error) {
@@ -90,6 +67,38 @@ onDOMReady(async () => {
     );
   }
 });
+
+chrome.runtime.onMessage.addListener(
+  (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.GET_ACTIVE_BANDCAMP_PAGE_DATA) {
+      try {
+        sendResponse({
+          pageData: {
+            data: bandcampPageData.data,
+            fanData: bandcampPageData.fanData,
+          },
+        });
+      } catch (error) {
+        sendResponse({
+          pageData: null,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to read Bandcamp page data',
+        });
+      }
+
+      return;
+    }
+
+    if (message.type !== MessageType.APPLY_MUSIC_FILTER_QUERY) {
+      return;
+    }
+
+    musicFilterStore.setSearchQuery(message.query);
+    sendResponse({ ok: true });
+  },
+);
 
 injectJSFile(getExtensionUrl('bcx.js'), () => {
   console.log('[bcx.js]', 'Injected BCX dev tools script JS file');

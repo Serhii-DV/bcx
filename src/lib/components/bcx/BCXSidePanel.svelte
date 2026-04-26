@@ -8,6 +8,7 @@ import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 interface Props {
   treeData: TreeData;
   open?: boolean;
+  browserPanel?: boolean;
   onToggle?: () => void;
   onClose?: () => void;
 }
@@ -15,6 +16,7 @@ interface Props {
 let {
   treeData,
   open = false,
+  browserPanel = false,
   onToggle = () => {},
   onClose = () => {},
 }: Props = $props();
@@ -37,7 +39,7 @@ $effect(() => {
 
 <div
   id="bcx-side-panel"
-  class="bcx-side-panel-shell {open ? 'open' : ''}"
+  class="bcx-side-panel-shell {open ? 'open' : ''} {browserPanel ? 'browser-panel' : ''}"
 >
   <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white transition-opacity duration-400">
     <div class="flex h-full flex-col">
@@ -49,15 +51,17 @@ $effect(() => {
             <h2 class="text-lg font-semibold">Music Explorer</h2>
           </div>
 
-          <button
-            type="button"
-            class="bcx-side-panel-close-button"
-            aria-label="Close BCX side panel"
-            title="Close side panel"
-            onclick={handleClose}
-          >
-            <X size="20" />
-          </button>
+          {#if !browserPanel}
+            <button
+              type="button"
+              class="bcx-side-panel-close-button"
+              aria-label="Close BCX side panel"
+              title="Close side panel"
+              onclick={handleClose}
+            >
+              <X size="20" />
+            </button>
+          {/if}
         </div>
       </div>
 
@@ -91,7 +95,9 @@ $effect(() => {
     </div>
   </div>
 
-  <BCXDrawerButton sidePanelOpen={open} {onToggle} />
+  {#if !browserPanel}
+    <BCXDrawerButton sidePanelOpen={open} {onToggle} />
+  {/if}
 </div>
 
 <style>
@@ -125,6 +131,21 @@ $effect(() => {
     background-color: rgb(31 41 55 / 85%);
     pointer-events: auto;
     width: var(--bcx-side-panel-width);
+  }
+
+  :global(.bcx-side-panel-shell.browser-panel) {
+    height: 100vh;
+    inset: 0;
+    position: fixed;
+    transform: none;
+    width: 100vw;
+  }
+
+  :global(.bcx-side-panel-shell.browser-panel .bcx-side-panel-content) {
+    backdrop-filter: none;
+    background-color: rgb(31 41 55);
+    inset: 0;
+    width: 100vw;
   }
 
   :global(.bcx-side-panel-close-button) {
