@@ -67,11 +67,10 @@ async function toggleBrowserSidePanel() {
 
 <style>
   :global(.bcx-browser-side-panel-drawer) {
-    --bcx-side-panel-width: 0px;
-    inset: 0 auto 0 0;
+    inset: auto 0 0 auto;
     pointer-events: none;
     position: fixed;
-    width: 48px;
+    width: 0;
     z-index: 999998;
   }
 </style>
