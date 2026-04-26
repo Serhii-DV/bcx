@@ -252,11 +252,17 @@ async function toggleSidePanelForMessageSender(
   sender: chrome.runtime.MessageSender,
   requestedTabId?: number,
 ): Promise<void> {
+  const tab = sender.tab ?? (await getTabById(requestedTabId));
+  await toggleSidePanelForTab(tab);
+}
+
+async function toggleSidePanelForTab(
+  tab: chrome.tabs.Tab | null,
+): Promise<void> {
   if (!chrome.sidePanel) {
     throw new Error('Chrome sidePanel API is not available');
   }
 
-  const tab = sender.tab ?? (await getTabById(requestedTabId));
   if (!tab?.id || !isBandcampTabUrl(tab.url)) {
     throw new Error('No active Bandcamp tab');
   }
