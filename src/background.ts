@@ -10,6 +10,7 @@ const activeBandcampPageDataByTabId = new Map<
   number,
   { hostname: string; pageData: unknown }
 >();
+const openSidePanelTabIds = new Set<number>();
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed!');
@@ -23,6 +24,18 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.sidePanel
   ?.setPanelBehavior({ openPanelOnActionClick: true })
   .catch(console.error);
+
+getSidePanelEvents()?.onOpened?.addListener((info) => {
+  if (info.tabId) {
+    openSidePanelTabIds.add(info.tabId);
+  }
+});
+
+getSidePanelEvents()?.onClosed?.addListener((info) => {
+  if (info.tabId) {
+    openSidePanelTabIds.delete(info.tabId);
+  }
+});
 
 chrome.tabs.onUpdated.addListener((tabId, _changeInfo, tab) => {
   updateSidePanelOptions(tabId, tab.url).catch(console.error);
@@ -157,6 +170,19 @@ chrome.runtime.onMessage.addListener(
       return true;
     }
 
+    if (message.type === MessageType.TOGGLE_SIDE_PANEL) {
+      toggleSidePanelForMessageSender(_sender, message.tabId)
+        .then(() => {
+          sendResponse({ ok: true });
+        })
+        .catch((error) => {
+          console.error('Failed to toggle side panel:', error);
+          sendResponse({ ok: false, error: error.message });
+        });
+
+      return true;
+    }
+
     if (message.type === MessageType.APPLY_MUSIC_FILTER_QUERY) {
       getActiveBandcampTab()
         .then((tab) => {
@@ -221,6 +247,82 @@ chrome.runtime.onMessage.addListener(
     }
   },
 );
+
+async function toggleSidePanelForMessageSender(
+  sender: chrome.runtime.MessageSender,
+  requestedTabId?: number,
+): Promise<void> {
+  if (!chrome.sidePanel) {
+    throw new Error('Chrome sidePanel API is not available');
+  }
+
+  const tab = sender.tab ?? (await getTabById(requestedTabId));
+  if (!tab?.id || !isBandcampTabUrl(tab.url)) {
+    throw new Error('No active Bandcamp tab');
+  }
+
+  if (openSidePanelTabIds.has(tab.id)) {
+    await closeSidePanel(tab.id);
+    openSidePanelTabIds.delete(tab.id);
+    return;
+  }
+
+  enableSidePanel(tab.id).catch(console.error);
+  await chrome.sidePanel.open({ tabId: tab.id });
+  openSidePanelTabIds.add(tab.id);
+}
+
+async function getTabById(tabId?: number): Promise<chrome.tabs.Tab | null> {
+  if (!tabId) {
+    return getActiveBandcampTab();
+  }
+
+  try {
+    return await chrome.tabs.get(tabId);
+  } catch {
+    return null;
+  }
+}
+
+async function closeSidePanel(tabId: number): Promise<void> {
+  const sidePanel = chrome.sidePanel as typeof chrome.sidePanel & {
+    close?: (options: { tabId: number }) => Promise<void>;
+  };
+
+  if (sidePanel.close) {
+    await sidePanel.close({ tabId });
+    return;
+  }
+
+  await chrome.sidePanel.setOptions({
+    tabId,
+    enabled: false,
+  });
+  await enableSidePanel(tabId);
+}
+
+async function enableSidePanel(tabId: number): Promise<void> {
+  await chrome.sidePanel.setOptions({
+    tabId,
+    path: SIDEPANEL_PATH,
+    enabled: true,
+  });
+}
+
+function getSidePanelEvents(): SidePanelEvents | null {
+  return chrome.sidePanel
+    ? (chrome.sidePanel as typeof chrome.sidePanel & SidePanelEvents)
+    : null;
+}
+
+interface SidePanelEvents {
+  onOpened?: chrome.events.Event<
+    (info: { windowId: number; tabId?: number }) => void
+  >;
+  onClosed?: chrome.events.Event<
+    (info: { windowId: number; tabId?: number }) => void
+  >;
+}
 
 function getCachedPageData(tab: chrome.tabs.Tab): unknown | null {
   if (!tab.id || !tab.url) {

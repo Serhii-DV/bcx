@@ -4,6 +4,7 @@ export enum MessageType {
   GET_ACTIVE_BANDCAMP_PAGE_DATA = 'GET_ACTIVE_BANDCAMP_PAGE_DATA',
   APPLY_MUSIC_FILTER_QUERY = 'APPLY_MUSIC_FILTER_QUERY',
   OPEN_ACTIVE_TAB_URL = 'OPEN_ACTIVE_TAB_URL',
+  TOGGLE_SIDE_PANEL = 'TOGGLE_SIDE_PANEL',
 }
 
 export interface HistorySearchMessage {
@@ -29,9 +30,15 @@ export interface OpenActiveTabUrlMessage {
   url: string;
 }
 
+export interface ToggleSidePanelMessage {
+  type: MessageType.TOGGLE_SIDE_PANEL;
+  tabId?: number;
+}
+
 export type Message =
   | HistorySearchMessage
   | GetActiveBandcampTabMessage
   | GetActiveBandcampPageDataMessage
   | ApplyMusicFilterQueryMessage
-  | OpenActiveTabUrlMessage;
+  | OpenActiveTabUrlMessage
+  | ToggleSidePanelMessage;

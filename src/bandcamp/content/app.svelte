@@ -1,8 +1,10 @@
 <script lang="ts">
+import { MessageType } from 'src/core/message';
 import { currentPageUrl, storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
+import { onAltPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
-import { BCXTour } from '$lib/components/bcx';
+import { BCXDrawerButton, BCXTour } from '$lib/components/bcx';
 import { musicPageTourSteps } from '$lib/constants/tourSteps';
 import { TOUR_COMPLETE_KEY } from '../domain/storageKey';
 import { isBandcampMusicUrl } from '../domain/url/helper';
@@ -21,7 +23,30 @@ onMount(() => {
       hasCompletedTour = false;
     });
 });
+
+function handleKeydown(event: KeyboardEvent) {
+  onAltPlusKey('x', event, () => {
+    void toggleBrowserSidePanel();
+  });
+}
+
+async function toggleBrowserSidePanel() {
+  try {
+    await chrome.runtime.sendMessage({ type: MessageType.TOGGLE_SIDE_PANEL });
+  } catch (error) {
+    console.warn('BCX: Failed to toggle browser side panel:', error);
+  }
+}
 </script>
+
+<svelte:document onkeydown={handleKeydown} />
+
+<div class="bcx-browser-side-panel-drawer">
+  <BCXDrawerButton
+    sidePanelOpen={false}
+    onToggle={() => void toggleBrowserSidePanel()}
+  />
+</div>
 
 {#if isBandcampMusicUrl(currentPageUrl)}
   <BCXTour
@@ -39,3 +64,14 @@ onMount(() => {
     }}
   />
 {/if}
+
+<style>
+  :global(.bcx-browser-side-panel-drawer) {
+    --bcx-side-panel-width: 0px;
+    inset: 0 auto 0 0;
+    pointer-events: none;
+    position: fixed;
+    width: 48px;
+    z-index: 999998;
+  }
+</style>

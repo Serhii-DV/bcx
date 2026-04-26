@@ -1,5 +1,7 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/TreeData';
+import { MessageType } from 'src/core/message';
+import { onAltPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import { BCXSidePanel } from '$lib/components/bcx';
 import {
@@ -61,6 +63,19 @@ async function loadTreeData() {
   }
 }
 
+function handleKeydown(event: KeyboardEvent) {
+  onAltPlusKey('x', event, () => {
+    void toggleBrowserSidePanel();
+  });
+}
+
+async function toggleBrowserSidePanel() {
+  await chrome.runtime.sendMessage({
+    type: MessageType.TOGGLE_SIDE_PANEL,
+    tabId: activeTab?.id,
+  });
+}
+
 function shouldReloadForUrlChange(previousUrl: string, nextUrl: string) {
   try {
     const previous = new URL(previousUrl);
@@ -76,6 +91,8 @@ function shouldReloadForUrlChange(previousUrl: string, nextUrl: string) {
   }
 }
 </script>
+
+<svelte:document onkeydown={handleKeydown} />
 
 {#if treeData}
   <BCXSidePanel treeData={treeData} open={true} browserPanel={true} />
