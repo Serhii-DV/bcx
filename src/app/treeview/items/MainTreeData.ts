@@ -62,6 +62,7 @@ export class MainTreeData {
         'anonymous'
       : 'anonymous';
     const items: TreeItem[] = [];
+    const sections: Array<{ label: string; defaultOpen?: boolean }> = [];
 
     if (album) {
       items.push(
@@ -78,6 +79,7 @@ export class MainTreeData {
           )
           .build(),
       );
+      sections.push({ label: album.title });
     }
 
     if (band) {
@@ -104,12 +106,14 @@ export class MainTreeData {
         };
 
         items.push(bandTreeItem);
+        sections.push({ label: band.name, defaultOpen: true });
       } else {
         items.push(
           builder(BandTreeItemFactory.create(band))
             .makeLazy(loadBandTreeItem)
             .build(),
         );
+        sections.push({ label: band.name });
       }
     }
 
@@ -123,6 +127,7 @@ export class MainTreeData {
             .makeLazy(() => FanPageDataTreeItem.create(pageDataContext))
             .build(),
         );
+        sections.push({ label: `Fan: ${fanData.name}` });
       }
 
       items.push(
@@ -140,6 +145,7 @@ export class MainTreeData {
           )
           .build(),
       );
+      sections.push({ label: 'Following Bands' });
       items.push(
         builder({
           label: 'Following Genres',
@@ -155,6 +161,7 @@ export class MainTreeData {
           )
           .build(),
       );
+      sections.push({ label: 'Following Genres' });
       items.push(
         builder({
           label: 'Collection',
@@ -173,6 +180,7 @@ export class MainTreeData {
           )
           .build(),
       );
+      sections.push({ label: 'Collection' });
       items.push(
         builder({
           label: 'Wishlist',
@@ -188,6 +196,7 @@ export class MainTreeData {
           )
           .build(),
       );
+      sections.push({ label: 'Wishlist' });
     }
 
     items.push(
@@ -195,12 +204,20 @@ export class MainTreeData {
         .makeLazy(() => HistoryTreeItem.createLatestVisited())
         .build(),
     );
+    sections.push({ label: 'History' });
 
     items.forEach((item) => {
       if (item) {
         treeData.add(item);
       }
     });
+    treeData.setSections(
+      sections.map((section, index) => ({
+        ...section,
+        id: createSectionId(section.label, index),
+        itemPath: String(index),
+      })),
+    );
 
     console.timeEnd(logLabel);
 
@@ -211,4 +228,13 @@ export class MainTreeData {
 interface PageDataContext {
   data: any;
   fanData: FanData;
+}
+
+function createSectionId(label: string, index: number): string {
+  const slug = label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return `${slug || 'section'}-${index}`;
 }

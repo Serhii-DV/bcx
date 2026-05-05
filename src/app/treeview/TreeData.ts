@@ -7,6 +7,13 @@ import {
   getVisibleItems,
 } from './utils';
 
+export interface TreeDataSection {
+  id: string;
+  label: string;
+  itemPath: string;
+  defaultOpen?: boolean;
+}
+
 const FILTER_SUGGESTION_GROUP_LABELS = new Set([
   'Artists',
   'Releases',
@@ -16,14 +23,20 @@ const FILTER_SUGGESTION_GROUP_LABELS = new Set([
 
 export class TreeData {
   treeItems: TreeItem[];
+  sections: TreeDataSection[];
 
-  constructor(treeItems: TreeItem[] = []) {
+  constructor(treeItems: TreeItem[] = [], sections: TreeDataSection[] = []) {
     this.treeItems = treeItems;
+    this.sections = sections;
   }
 
   add(item: TreeItem) {
     this.treeItems.push(item);
     this.treeItems = generateTreeHierarchy(this.treeItems);
+  }
+
+  setSections(sections: TreeDataSection[]) {
+    this.sections = sections;
   }
 
   get items(): TreeItem[] {
@@ -99,7 +112,7 @@ export class TreeData {
     }
 
     const filteredItems = createFilteredTreeItems(this.treeItems, query);
-    return new TreeData(filteredItems);
+    return new TreeData(filteredItems, this.sections);
   }
 
   get filterSuggestions(): string[] {

@@ -125,4 +125,24 @@ describe('TreeData filter', () => {
     expect(treeData.filter('ambient').items).toHaveLength(1);
     expect(treeData.filter('missing').items).toHaveLength(0);
   });
+
+  it('preserves section metadata while filtering items', () => {
+    const treeData = new TreeData(
+      [
+        {
+          label: 'Collection',
+          children: [{ label: 'Album Title' }],
+        },
+      ],
+      [
+        {
+          id: 'collection-0',
+          label: 'Collection',
+          itemPath: '0',
+        },
+      ],
+    );
+
+    expect(treeData.filter('album').sections).toEqual(treeData.sections);
+  });
 });
