@@ -25,8 +25,8 @@ let Icon = $derived(makeIcon(icon));
 let bodyStyle = $derived(`--bcx-section-height: ${height};`);
 let detailsElement: HTMLDetailsElement;
 
-function handleToggle(event: ToggleEvent) {
-  onOpenChange?.((event.currentTarget as HTMLDetailsElement).open);
+function handleToggle(event: Event & { currentTarget: HTMLDetailsElement }) {
+  onOpenChange?.(event.currentTarget.open);
 }
 
 function handleHeaderKeyDown(event: KeyboardEvent) {
