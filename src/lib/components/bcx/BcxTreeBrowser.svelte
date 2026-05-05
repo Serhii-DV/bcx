@@ -224,6 +224,14 @@ async function handleKeyDown(event: KeyboardEvent) {
       focusTreeItem(visibleNext(currentIndex));
       break;
 
+    case 'Tab':
+      focusTreeItem(
+        event.shiftKey
+          ? visiblePrevLoop(currentIndex)
+          : visibleNextLoop(currentIndex),
+      );
+      break;
+
     case 'ArrowUp':
       if (currentIndex <= 0) {
         filterRef?.focus();
@@ -362,6 +370,26 @@ function visibleNext(index: number, step: number = 1): TreeItem | null {
 
 function visiblePrev(index: number, step: number = 1): TreeItem | null {
   return getVisiblePrev(getNavigableItems(), index, step);
+}
+
+function visibleNextLoop(index: number): TreeItem | null {
+  const items = getNavigableItems();
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return index >= 0 && index < items.length - 1 ? items[index + 1] : items[0];
+}
+
+function visiblePrevLoop(index: number): TreeItem | null {
+  const items = getNavigableItems();
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return index > 0 ? items[index - 1] : items[items.length - 1];
 }
 
 function getTreeLayoutNavigableItems(): TreeItem[] {
