@@ -165,10 +165,15 @@ export class HistoryTreeItem {
 
         if (loadMoreIndex >= 0) {
           children.splice(loadMoreIndex, 1, ...nextChildren);
-          context.focusPath = `${parent.path}.${loadMoreIndex}`;
+          context.focusPath = parent.path
+            ? `${parent.path}.${loadMoreIndex}`
+            : String(loadMoreIndex);
         } else {
           children.push(...nextChildren);
-          context.focusPath = `${parent.path}.${children.length - nextChildren.length}`;
+          const firstNewChildIndex = children.length - nextChildren.length;
+          context.focusPath = parent.path
+            ? `${parent.path}.${firstNewChildIndex}`
+            : String(firstNewChildIndex);
         }
 
         parent.children = children;

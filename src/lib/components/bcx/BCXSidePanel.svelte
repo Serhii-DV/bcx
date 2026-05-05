@@ -1,12 +1,16 @@
 <script lang="ts">
 import { X } from '@lucide/svelte';
+import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import { TreeData } from 'src/app/treeview/TreeData';
+import { ICON_INFO } from 'src/app/treeview/utils/icon';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
+import BcxSection from './BcxSection.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
+import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 
 interface Props {
-  treeData: TreeData;
+  sections: SidePanelSection[];
   open?: boolean;
   browserPanel?: boolean;
   onToggle?: () => void;
@@ -14,24 +18,140 @@ interface Props {
 }
 
 let {
-  treeData,
+  sections,
   open = false,
   browserPanel = false,
   onToggle = () => {},
   onClose = () => {},
 }: Props = $props();
-let treeBrowserRef: BcxTreeBrowser;
+let sectionsContainer: HTMLDivElement;
+let sectionTreeDataById: Record<string, TreeData> = $state({});
+let sectionLoadingById: Record<string, boolean> = $state({});
+let globalFilterQuery = $state('');
+let currentSections: SidePanelSection[] | null = null;
+let sectionLoadGeneration = 0;
+let globalFilterSuggestions = $derived.by(() => {
+  const suggestions = new Set<string>(sections.map((section) => section.label));
+
+  Object.values(sectionTreeDataById).forEach((sectionTreeData) => {
+    sectionTreeData.filterSuggestions.forEach((suggestion) =>
+      suggestions.add(suggestion),
+    );
+  });
+
+  return Array.from(suggestions).sort();
+});
 
 function handleClose() {
   onClose();
 }
 
+function getTreeDataForSection(section: SidePanelSection): TreeData {
+  return sectionTreeDataById[section.id] ?? new TreeData();
+}
+
+function isSectionLoading(section: SidePanelSection): boolean {
+  return sectionLoadingById[section.id] ?? false;
+}
+
+function getSectionIcon(section: SidePanelSection): string | undefined {
+  const image = section.image;
+  return image && !image.includes('/') ? image : undefined;
+}
+
+function getSectionImage(section: SidePanelSection): string | undefined {
+  const image = section.image;
+  return image && image.includes('/') ? image : undefined;
+}
+
+async function loadSectionTreeData(section: SidePanelSection) {
+  if (sectionTreeDataById[section.id] || sectionLoadingById[section.id]) {
+    return;
+  }
+
+  const loadGeneration = sectionLoadGeneration;
+  sectionLoadingById = {
+    ...sectionLoadingById,
+    [section.id]: true,
+  };
+
+  try {
+    const sectionTreeData = await section.createTreeData();
+
+    if (loadGeneration !== sectionLoadGeneration) {
+      return;
+    }
+
+    sectionTreeDataById = {
+      ...sectionTreeDataById,
+      [section.id]: sectionTreeData,
+    };
+  } finally {
+    if (loadGeneration === sectionLoadGeneration) {
+      sectionLoadingById = {
+        ...sectionLoadingById,
+        [section.id]: false,
+      };
+    }
+  }
+}
+
+async function handleSectionOpenChange(
+  section: SidePanelSection,
+  open: boolean,
+) {
+  if (!open) {
+    return;
+  }
+
+  await loadSectionTreeData(section);
+}
+
+function handleGlobalFilterArrowDown() {
+  focusFirstSectionHeader();
+}
+
+function focusFirstSectionHeader() {
+  sectionsContainer?.querySelector<HTMLElement>('.bcx-section-header')?.focus();
+}
+
+$effect(() => {
+  if (sections === currentSections) {
+    return;
+  }
+
+  currentSections = sections;
+  sectionLoadGeneration += 1;
+  sectionTreeDataById = {};
+  sectionLoadingById = {};
+});
+
+$effect(() => {
+  sections.forEach((section) => {
+    if (section.defaultOpen && !sectionTreeDataById[section.id]) {
+      void loadSectionTreeData(section);
+    }
+  });
+});
+
+$effect(() => {
+  if (!globalFilterQuery.trim()) {
+    return;
+  }
+
+  sections.forEach((section) => {
+    if (!sectionTreeDataById[section.id]) {
+      void loadSectionTreeData(section);
+    }
+  });
+});
+
 // Focus first item when panel opens
 $effect(() => {
-  if (open && treeBrowserRef) {
+  if (open) {
     // Use setTimeout to ensure DOM is ready
     setTimeout(() => {
-      treeBrowserRef.focusFirstItem();
+      focusFirstSectionHeader();
     }, 100);
   }
 });
@@ -44,7 +164,7 @@ $effect(() => {
   <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white transition-opacity duration-400">
     <div class="flex h-full flex-col">
       <!-- Header -->
-      <div class="border-b border-gray-200/30 dark:border-gray-700/30 p-4">
+      <div class="p-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <img src={iconUrl} alt="BCX" class="w-12 h-12" />
@@ -69,25 +189,44 @@ $effect(() => {
       <div class="flex-1 overflow-y-auto">
         <div class="space-y-4">
 
-          <!-- Tree Browser -->
-          <div class="bcx-tree-browser text-md">
-            <BcxTreeBrowser bind:this={treeBrowserRef} treeData={treeData} />
-          </div>
+          <div bind:this={sectionsContainer} class="bcx-sections">
+            <BcxTreeBrowserFilter
+              bind:value={globalFilterQuery}
+              suggestions={globalFilterSuggestions}
+              onArrowDown={handleGlobalFilterArrowDown}
+            />
 
-          <!-- Extension Info -->
-          <div class="p-3">
-            <h3 class="mb-2">Extension Info</h3>
-            <p class="text-sm">
-              BCX enhances your Bandcamp experience with powerful search and filtering tools.
-            </p>
-          </div>
+            {#each sections as section}
+              <BcxSection
+                title={section.label}
+                icon={getSectionIcon(section)}
+                image={getSectionImage(section)}
+                defaultOpen={section.defaultOpen}
+                onOpenChange={(open) => handleSectionOpenChange(section, open)}
+              >
+                <div class="bcx-section-tree-browser">
+                  <BcxTreeBrowser
+                    treeData={getTreeDataForSection(section)}
+                    isLoading={isSectionLoading(section)}
+                    filterQuery={globalFilterQuery}
+                    showBreadcrumb={false}
+                    showFilter={false}
+                  />
+                </div>
+              </BcxSection>
+            {/each}
 
-          <!-- Keyboard Shortcuts -->
-          <div class="bcx-keyboard-shortcuts p-3">
-            <h3 class="mb-2">Keyboard Shortcuts</h3>
-            <div class="space-y-1 text-sm">
-              <div><kbd class="kbd">Ctrl+Shift+X</kbd> Toggle panel</div>
-            </div>
+            <BcxSection title="Extension Info" icon={ICON_INFO} height="10rem">
+              <div class="bcx-section-content">
+                <p>
+                  BCX enhances your Bandcamp experience with powerful search and filtering tools.
+                </p>
+                <div class="bcx-keyboard-shortcuts">
+                  <h3>Keyboard Shortcuts</h3>
+                  <div><kbd class="kbd">Ctrl+Shift+X</kbd> Toggle panel</div>
+                </div>
+              </div>
+            </BcxSection>
           </div>
         </div>
       </div>
@@ -100,17 +239,6 @@ $effect(() => {
 </div>
 
 <style>
-  /* Custom kbd styling */
-  :global(.kbd) {
-    background: #374151;
-    color: #f9fafb;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-family: monospace;
-    border: 1px solid #4b5563;
-  }
-
   :global(.bcx-side-panel-shell) {
     --bcx-side-panel-width: 400px;
     position: fixed;
@@ -169,6 +297,44 @@ $effect(() => {
     background: rgb(255 255 255 / 12%);
     color: #04b1fe;
     outline: none;
+  }
+
+  :global(.bcx-sections) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  :global(.bcx-section-tree-browser .bcx-tree-view) {
+    padding: 0;
+  }
+
+  :global(.bcx-section-content) {
+    color: rgb(209 213 219);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    padding: 0.5rem 0.5rem 0.75rem 1.5rem;
+  }
+
+  :global(.bcx-section-content p) {
+    margin: 0 0 0.75rem;
+  }
+
+  :global(.bcx-section-content h3) {
+    color: rgb(243 244 246);
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin: 0 0 0.375rem;
+  }
+
+  :global(.bcx-section-content .kbd) {
+    background: #374151;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    color: #f9fafb;
+    font-family: monospace;
+    font-size: 0.75rem;
+    padding: 2px 6px;
   }
 
   @media (prefers-reduced-motion: reduce) {

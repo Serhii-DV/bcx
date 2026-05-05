@@ -1,6 +1,10 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/TreeData';
-import type { TreeItem } from 'src/app/treeview/TreeItem';
+import {
+  TREE_ITEM_LAYOUT,
+  type TreeItem,
+  type TreeItemLayout,
+} from 'src/app/treeview/TreeItem';
 import {
   createFilteredTreeItems,
   findItemByPath,
@@ -41,18 +45,35 @@ import {
 
 interface Props {
   treeData: TreeData;
+  filterQuery?: string | null;
+  initialRootPath?: string | null;
+  lockInitialRoot?: boolean;
+  showBreadcrumb?: boolean;
+  showFilter?: boolean;
+  isLoading?: boolean;
+  loadingMessage?: string;
 }
 
 const DRILL_UP_PATH = '__bcx_tree_drill_up__';
 
-let { treeData }: Props = $props();
+let {
+  treeData,
+  filterQuery: externalFilterQuery = null,
+  initialRootPath = null,
+  lockInitialRoot = false,
+  showBreadcrumb = true,
+  showFilter = true,
+  isLoading = false,
+  loadingMessage = 'Loading',
+}: Props = $props();
 let treeContainer: HTMLDivElement;
 let filterRef: BcxTreeBrowserFilter;
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
-let filterQuery = $state('');
+let localFilterQuery = $state('');
 let debouncedFilterQuery = $state('');
-let currentRootPath: string | null = $state(null);
+let currentRootPath: string | null = $state(initialRootPath);
+const lockedRootPath = lockInitialRoot ? initialRootPath : null;
 let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
@@ -78,7 +99,8 @@ let filterSuggestions = $derived.by(() => {
   treeVersion;
   return getTreeItemFilterSuggestions(currentLevelItems);
 });
-let isTreeLayout = $derived(currentRootItem?.layout === 'tree');
+let effectiveLayout = $derived(treeData.layout ?? currentRootItem?.layout);
+let isTreeLayout = $derived(effectiveLayout === TREE_ITEM_LAYOUT.TREE);
 let treeLayoutItems = $derived.by(() => {
   treeVersion;
 
@@ -106,13 +128,23 @@ let treeLayoutVisibleData = $derived.by(() => {
 });
 let treeLayoutVisiblePaths = $derived(treeLayoutVisibleData.paths);
 let treeLayoutVisibleChildCounts = $derived(treeLayoutVisibleData.childCounts);
+let effectiveFilterQuery = $derived(externalFilterQuery ?? localFilterQuery);
+let emptyStateMessage = $derived.by(() => {
+  if (isLoading) {
+    return loadingMessage;
+  }
+
+  return debouncedFilterQuery.trim()
+    ? 'No items match your filter'
+    : 'No items here';
+});
 
 export function focusFirstItem() {
   focusTreeItem(getNavigableItems()[0]);
 }
 
 $effect(() => {
-  const currentQuery = filterQuery;
+  const currentQuery = effectiveFilterQuery;
 
   if (filterDebounceTimer !== null) {
     clearTimeout(filterDebounceTimer);
@@ -139,6 +171,17 @@ $effect(() => {
   treeVersion;
   if (currentRootPath && !findTreeItemByPath(currentRootPath)) {
     currentRootPath = null;
+  }
+});
+
+$effect(() => {
+  treeVersion;
+  if (
+    currentRootItem?.loadChildren &&
+    !currentRootItem.childrenLoaded &&
+    !currentRootItem.isLoadingChildren
+  ) {
+    void loadCurrentRootItem(currentRootItem);
   }
 });
 
@@ -197,6 +240,14 @@ async function handleKeyDown(event: KeyboardEvent) {
   switch (event.key) {
     case 'ArrowDown':
       focusTreeItem(visibleNext(currentIndex));
+      break;
+
+    case 'Tab':
+      focusTreeItem(
+        event.shiftKey
+          ? visiblePrevLoop(currentIndex)
+          : visibleNextLoop(currentIndex),
+      );
       break;
 
     case 'ArrowUp':
@@ -307,10 +358,10 @@ async function handleKeyDown(event: KeyboardEvent) {
 function getNavigableItems(): TreeItem[] {
   if (isTreeLayout) {
     const items = getTreeLayoutNavigableItems();
-    return currentRootPath ? [createDrillUpItem(), ...items] : items;
+    return canNavigateToParentLevel() ? [createDrillUpItem(), ...items] : items;
   }
 
-  return currentRootPath
+  return canNavigateToParentLevel()
     ? [createDrillUpItem(), ...browserItems]
     : browserItems;
 }
@@ -337,6 +388,26 @@ function visibleNext(index: number, step: number = 1): TreeItem | null {
 
 function visiblePrev(index: number, step: number = 1): TreeItem | null {
   return getVisiblePrev(getNavigableItems(), index, step);
+}
+
+function visibleNextLoop(index: number): TreeItem | null {
+  const items = getNavigableItems();
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return index >= 0 && index < items.length - 1 ? items[index + 1] : items[0];
+}
+
+function visiblePrevLoop(index: number): TreeItem | null {
+  const items = getNavigableItems();
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return index > 0 ? items[index - 1] : items[items.length - 1];
 }
 
 function getTreeLayoutNavigableItems(): TreeItem[] {
@@ -442,7 +513,7 @@ function navigateToLevel(path: string | null, focusPath?: string | null) {
 }
 
 function navigateToParentLevel() {
-  if (!currentRootPath) {
+  if (!canNavigateToParentLevel()) {
     return;
   }
 
@@ -451,13 +522,17 @@ function navigateToParentLevel() {
   navigateToLevel(parentItem?.path || null, previousRootPath);
 }
 
+function canNavigateToParentLevel(): boolean {
+  return !!currentRootPath && currentRootPath !== lockedRootPath;
+}
+
 function applyFilterImmediately() {
   if (filterDebounceTimer !== null) {
     clearTimeout(filterDebounceTimer);
     filterDebounceTimer = null;
   }
 
-  debouncedFilterQuery = filterQuery;
+  debouncedFilterQuery = effectiveFilterQuery;
 }
 
 async function enterBrowserItem(item: TreeItem) {
@@ -480,6 +555,16 @@ async function enterBrowserItem(item: TreeItem) {
   }
 
   navigateToLevel(itemPath);
+}
+
+async function loadCurrentRootItem(item: TreeItem) {
+  item.isLoadingChildren = true;
+  refreshTreeRendering();
+  await waitForLoadingStatePaint(item, focusTreeItem);
+  showItemFeedback(item, 'Loading...', 0);
+  await hydrateTreeItemChildren(item, true);
+  refreshTreeRendering();
+  await tick();
 }
 
 async function handleBrowserItemClick(
@@ -609,9 +694,18 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   {/if}
 {/snippet}
 
+{#snippet browserEmptyState()}
+  <li class="bcx-browser-empty-state" aria-live="polite">
+    {#if isLoading}
+      <span class="bcx-browser-loading-icon" aria-hidden="true"></span>
+    {/if}
+    <span>{emptyStateMessage}</span>
+  </li>
+{/snippet}
+
 {#snippet browserTreeItems(items: TreeItem[] | undefined)}
   <ol class="ml-0 mt-0 pl-0">
-    {#if currentRootPath}
+    {#if canNavigateToParentLevel()}
       <li>
         {@render backTreeItem(createDrillUpItem())}
       </li>
@@ -630,9 +724,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
           />
         </li>
       {:else}
-        <li class="text-gray-400 text-sm text-center py-4">
-          {debouncedFilterQuery.trim() ? 'No items match your filter' : 'No items here'}
-        </li>
+        {@render browserEmptyState()}
       {/if}
     {:else if items && items.length > 0}
       {#each items as item}
@@ -641,25 +733,27 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
         </li>
       {/each}
     {:else}
-      <li class="text-gray-400 text-sm text-center py-4">
-        {debouncedFilterQuery.trim() ? 'No items match your filter' : 'No items here'}
-      </li>
+      {@render browserEmptyState()}
     {/if}
   </ol>
 {/snippet}
 
 <div class="flex flex-col h-full gap-2">
-  <BcxTreeBrowserFilter
-    bind:this={filterRef}
-    bind:value={filterQuery}
-    suggestions={filterSuggestions}
-    onArrowDown={handleFilterArrowDown}
-  />
-  <BcxTreeBreadcrumb
-    items={breadcrumbItems}
-    currentPath={currentRootPath}
-    onNavigate={navigateToLevel}
-  />
+  {#if showFilter}
+    <BcxTreeBrowserFilter
+      bind:this={filterRef}
+      bind:value={localFilterQuery}
+      suggestions={filterSuggestions}
+      onArrowDown={handleFilterArrowDown}
+    />
+  {/if}
+  {#if showBreadcrumb}
+    <BcxTreeBreadcrumb
+      items={breadcrumbItems}
+      currentPath={currentRootPath}
+      onNavigate={navigateToLevel}
+    />
+  {/if}
   <div
     bind:this={treeContainer}
     class="bcx-tree-view"
@@ -667,7 +761,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
     tabindex="0"
     onkeydown={handleKeyDown}
     onfocus={() => {
-      if (!focusedPath && browserItems.length > 0) {
+      if (!focusedPath && getNavigableItems().length > 0) {
         focusTreeItem(getNavigableItems()[0]);
       }
     }}
@@ -683,14 +777,38 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   flex: 1 1 0%;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 0.5rem;
+}
+
+.bcx-browser-empty-state {
+  align-items: center;
+  color: rgb(156 163 175);
+  display: flex;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+  justify-content: center;
+  padding-block: 1rem;
+}
+
+.bcx-browser-loading-icon {
+  animation: bcx-browser-loading-spin 700ms linear infinite;
+  border: 2px solid rgb(156 163 175 / 0.35);
+  border-top-color: rgb(229 231 235);
+  border-radius: 9999px;
+  display: inline-block;
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+@keyframes bcx-browser-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .bcx-browser-row {
   display: flex;
   align-items: center;
   width: 100%;
-  border-radius: 4px;
   cursor: pointer;
   padding-right: 0;
   padding-left: 1.5rem;
@@ -702,13 +820,4 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   vertical-align: middle;
 }
 
-.bcx-browser-row:hover {
-  background-color: rgb(255 255 255 / 0.1);
-}
-
-.bcx-browser-row:focus {
-  background-color: rgb(255 255 255 / 0.2);
-  outline: 2px solid rgb(255 255 255 / 0.9);
-  outline-offset: 0;
-}
 </style>

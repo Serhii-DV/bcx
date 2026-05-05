@@ -1,5 +1,5 @@
-import { MainTreeData } from 'src/app/treeview/items/MainTreeData';
-import type { TreeData } from 'src/app/treeview/TreeData';
+import { MainSidePanelSections } from 'src/app/treeview/items/MainSidePanelSections';
+import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import type { FanData } from 'src/app/types/FanData';
 import { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
@@ -48,16 +48,16 @@ export async function getActiveBandcampTab(): Promise<ActiveBandcampTab | null> 
   return response?.tab ?? null;
 }
 
-export async function createActiveTabTreeData(
+export async function createActiveTabSidePanelSections(
   tab: ActiveBandcampTab,
-): Promise<TreeData> {
+): Promise<SidePanelSection[]> {
   const currentPageUrl = Url.create(tab.url);
   const [page, pageData] = await Promise.all([
     createBandPage(currentPageUrl),
     getActiveBandcampPageData(currentPageUrl),
   ]);
 
-  return MainTreeData.create(currentPageUrl, page, {
+  return MainSidePanelSections.create(currentPageUrl, page, {
     includePageData: !!pageData,
     pageData,
   });

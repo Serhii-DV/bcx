@@ -1,16 +1,16 @@
-# Main tree subtree caching (`TreeItemCache`)
+# Side panel subtree caching (`TreeItemCache`)
 
 ## Current implementation summary
 
-The extension no longer caches the whole `MainTreeData` object. Instead, it caches individual subtree `TreeItem`s through `TreeItemCache`.
+The extension does not cache a whole side panel tree object. Instead, it caches individual subtree `TreeItem`s through `TreeItemCache`.
 
 Location:
 - `src/app/treeview/items/TreeItemCache.ts`
-- consumed by `src/app/treeview/items/MainTreeData.ts`
+- consumed by `src/app/treeview/items/MainSidePanelSections.ts`
 
 ## Why subtree cache instead of whole-tree cache
 
-`MainTreeData.create(...)` composes multiple sections with different volatility:
+`MainSidePanelSections.create(...)` composes multiple sections with different volatility:
 - release / band details
 - following bands / following genres
 - collection / wishlist
@@ -52,7 +52,7 @@ Where:
 
 ## TTL strategy (current)
 
-Configured in `src/app/treeview/items/MainTreeData.ts` via `CACHE_TTL` constants:
+Configured in `src/app/treeview/items/MainSidePanelSections.ts` via `CACHE_TTL` constants:
 
 - release: 24h
 - band: 24h

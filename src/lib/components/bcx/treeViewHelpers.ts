@@ -100,7 +100,8 @@ export async function activateTreeItem({
     const clickContext: TreeItemClickContext = {
       element: event?.currentTarget as HTMLElement,
       item,
-      parent: findParentByPath(item.path),
+      parent:
+        findParentByPath(item.path) ?? createRootItemsParent(item, treeData),
       findItemByPath,
       findParentByPath,
       showFeedback: (message, duration) =>
@@ -143,6 +144,19 @@ export async function activateTreeItem({
       window.open(item.href, '_self');
     }
   }
+}
+
+function createRootItemsParent(
+  item: TreeItem,
+  treeData: TreeData,
+): TreeItem | null {
+  if (!item.path || item.path.includes('.')) {
+    return null;
+  }
+
+  return treeData.items.some((rootItem) => rootItem === item)
+    ? { children: treeData.items }
+    : null;
 }
 
 async function waitForActionFeedbackPaint() {
