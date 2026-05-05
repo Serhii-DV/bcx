@@ -7,6 +7,7 @@ import { console } from 'src/utils/console';
 import type { FanData } from '../../types/FanData';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
+import type { SidePanelSection } from '../SidePanelSection';
 import { TreeData } from '../TreeData';
 import type { TreeItem } from '../TreeItem';
 import { deferDescendants } from '../utils';
@@ -36,7 +37,7 @@ const CACHE_TTL = {
   HISTORY: 10 * 60 * 1000,
 } as const;
 
-export class MainTreeData {
+export class MainSidePanelSections {
   static async create(
     currentPageUrl: Url,
     page: BandPage | null,
@@ -44,27 +45,26 @@ export class MainTreeData {
       includePageData?: boolean;
       pageData?: PageDataContext | null;
     } = {},
-  ): Promise<TreeData> {
+  ): Promise<SidePanelSection[]> {
     const includePageData = options.includePageData ?? true;
     const pageDataContext = options.pageData ?? bandcampPageData;
     const band = page?.band || null;
     const album = page?.album || null;
     const albumDetails = page?.albumDetails || null;
-    const logLabel = `[MainTreeData.create]`;
+    const logLabel = `[MainSidePanelSections.create]`;
     console.log(logLabel, { currentPageUrl, page, band, album, albumDetails });
     console.time(logLabel);
 
-    const treeData = new TreeData();
     const userKeyPart = includePageData
       ? pageDataContext?.fanData?.username ||
         pageDataContext?.fanData?.fan_id ||
         'anonymous'
       : 'anonymous';
-    const sections: PendingTreeDataSection[] = [];
+    const sections: PendingSidePanelSection[] = [];
 
     function addSection(
       section: Pick<
-        PendingTreeDataSection,
+        PendingSidePanelSection,
         'label' | 'image' | 'childrenCount' | 'defaultOpen' | 'createTreeData'
       >,
     ) {
@@ -213,16 +213,14 @@ export class MainTreeData {
         ),
     });
 
-    treeData.setSections(
-      sections.map((section, index) => ({
-        ...section,
-        id: createSectionId(section.label, index),
-      })),
-    );
+    const sidePanelSections = sections.map((section, index) => ({
+      ...section,
+      id: createSectionId(section.label, index),
+    }));
 
     console.timeEnd(logLabel);
 
-    return treeData;
+    return sidePanelSections;
   }
 }
 
@@ -231,13 +229,7 @@ interface PageDataContext {
   fanData: FanData;
 }
 
-interface PendingTreeDataSection {
-  label: string;
-  image?: string;
-  childrenCount?: number;
-  defaultOpen?: boolean;
-  createTreeData: () => Promise<TreeData>;
-}
+type PendingSidePanelSection = Omit<SidePanelSection, 'id'>;
 
 function createTreeDataFromTreeItemChildren(
   treeItem?: TreeItem | null,

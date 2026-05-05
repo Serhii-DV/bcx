@@ -1,6 +1,7 @@
 <script lang="ts">
 import { X } from '@lucide/svelte';
-import { TreeData, type TreeDataSection } from 'src/app/treeview/TreeData';
+import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
+import { TreeData } from 'src/app/treeview/TreeData';
 import { ICON_INFO } from 'src/app/treeview/utils/icon';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
@@ -9,7 +10,7 @@ import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 
 interface Props {
-  treeData: TreeData;
+  sections: SidePanelSection[];
   open?: boolean;
   browserPanel?: boolean;
   onToggle?: () => void;
@@ -17,22 +18,19 @@ interface Props {
 }
 
 let {
-  treeData,
+  sections,
   open = false,
   browserPanel = false,
   onToggle = () => {},
   onClose = () => {},
 }: Props = $props();
 let sectionsContainer: HTMLDivElement;
-let treeSections = $derived(treeData.sections);
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let globalFilterQuery = $state('');
-let currentTreeData: TreeData | null = null;
+let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
 let globalFilterSuggestions = $derived.by(() => {
-  const suggestions = new Set<string>(
-    treeSections.map((section) => section.label),
-  );
+  const suggestions = new Set<string>(sections.map((section) => section.label));
 
   Object.values(sectionTreeDataById).forEach((sectionTreeData) => {
     sectionTreeData.filterSuggestions.forEach((suggestion) =>
@@ -47,21 +45,21 @@ function handleClose() {
   onClose();
 }
 
-function getTreeDataForSection(section: TreeDataSection): TreeData {
+function getTreeDataForSection(section: SidePanelSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
 }
 
-function getSectionIcon(section: TreeDataSection): string | undefined {
+function getSectionIcon(section: SidePanelSection): string | undefined {
   const image = section.image;
   return image && !image.includes('/') ? image : undefined;
 }
 
-function getSectionImage(section: TreeDataSection): string | undefined {
+function getSectionImage(section: SidePanelSection): string | undefined {
   const image = section.image;
   return image && image.includes('/') ? image : undefined;
 }
 
-async function loadSectionTreeData(section: TreeDataSection) {
+async function loadSectionTreeData(section: SidePanelSection) {
   if (sectionTreeDataById[section.id]) {
     return;
   }
@@ -80,7 +78,7 @@ async function loadSectionTreeData(section: TreeDataSection) {
 }
 
 async function handleSectionOpenChange(
-  section: TreeDataSection,
+  section: SidePanelSection,
   open: boolean,
 ) {
   if (!open) {
@@ -99,17 +97,17 @@ function focusFirstSectionHeader() {
 }
 
 $effect(() => {
-  if (treeData === currentTreeData) {
+  if (sections === currentSections) {
     return;
   }
 
-  currentTreeData = treeData;
+  currentSections = sections;
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
 });
 
 $effect(() => {
-  treeSections.forEach((section) => {
+  sections.forEach((section) => {
     if (section.defaultOpen && !sectionTreeDataById[section.id]) {
       void loadSectionTreeData(section);
     }
@@ -121,7 +119,7 @@ $effect(() => {
     return;
   }
 
-  treeSections.forEach((section) => {
+  sections.forEach((section) => {
     if (!sectionTreeDataById[section.id]) {
       void loadSectionTreeData(section);
     }
@@ -178,7 +176,7 @@ $effect(() => {
               onArrowDown={handleGlobalFilterArrowDown}
             />
 
-            {#each treeSections as section}
+            {#each sections as section}
               <BcxSection
                 title={section.label}
                 icon={getSectionIcon(section)}

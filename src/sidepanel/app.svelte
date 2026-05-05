@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { TreeData } from 'src/app/treeview/TreeData';
+import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import { SIDE_PANEL_TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
 import { MessageType } from 'src/core/message';
 import { storage } from 'src/core/shared';
@@ -10,11 +10,11 @@ import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
 import { sidePanelTourSteps } from '$lib/constants/tourSteps';
 import {
   type ActiveBandcampTab,
-  createActiveTabTreeData,
+  createActiveTabSidePanelSections,
   getActiveBandcampTab,
 } from './activeTabTreeData';
 
-let treeData: TreeData | null = $state(null);
+let sidePanelSections: SidePanelSection[] | null = $state(null);
 let activeTab: ActiveBandcampTab | null = $state(null);
 let errorMessage = $state('');
 let isLoading = $state(true);
@@ -24,11 +24,11 @@ let sidePanelTourCompleted = $state(false);
 let sidePanelTourVersion = $state(0);
 
 onMount(() => {
-  loadTreeData();
+  loadSidePanelSections();
   loadSidePanelTourState();
 
   const handleActivated = () => {
-    void loadTreeData();
+    void loadSidePanelSections();
   };
   const handleUpdated = (tabId: number, changeInfo: { url?: string }) => {
     if (
@@ -36,7 +36,7 @@ onMount(() => {
       changeInfo.url &&
       shouldReloadForUrlChange(activeTab.url, changeInfo.url)
     ) {
-      void loadTreeData();
+      void loadSidePanelSections();
     }
   };
 
@@ -51,7 +51,7 @@ onMount(() => {
   };
 });
 
-async function loadTreeData() {
+async function loadSidePanelSections() {
   isLoading = true;
   errorMessage = '';
 
@@ -60,15 +60,15 @@ async function loadTreeData() {
     activeTab = tab;
 
     if (!tab) {
-      treeData = null;
+      sidePanelSections = null;
       return;
     }
 
-    treeData = await createActiveTabTreeData(tab);
+    sidePanelSections = await createActiveTabSidePanelSections(tab);
   } catch (error) {
     errorMessage =
       error instanceof Error ? error.message : 'Failed to load Music Explorer';
-    treeData = null;
+    sidePanelSections = null;
   } finally {
     isLoading = false;
   }
@@ -136,8 +136,8 @@ function shouldReloadForUrlChange(previousUrl: string, nextUrl: string) {
 
 <svelte:document onkeydown={handleKeydown} />
 
-{#if treeData}
-  <BCXSidePanel treeData={treeData} open={true} browserPanel={true} />
+{#if sidePanelSections}
+  <BCXSidePanel sections={sidePanelSections} open={true} browserPanel={true} />
   {#if sidePanelTourStateLoaded}
     {#key sidePanelTourVersion}
       <BCXTour
