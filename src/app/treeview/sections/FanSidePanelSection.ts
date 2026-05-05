@@ -1,13 +1,13 @@
 import { FanPageDataTreeItem } from '../items/FanPageDataTreeItem';
 import type { SidePanelSection } from '../SidePanelSection';
 import { createTreeDataFromTreeItemChildren } from './treeDataFactory';
-import type { SidePanelSectionsContext } from './types';
+import type { PageDataContext } from './types';
 
 export class FanSidePanelSection {
-  static create({
-    pageDataContext,
-    userKeyPart,
-  }: SidePanelSectionsContext): SidePanelSection | null {
+  static create(
+    pageDataContext: PageDataContext | null,
+    userKeyPart: string,
+  ): SidePanelSection | null {
     if (!pageDataContext) {
       return null;
     }

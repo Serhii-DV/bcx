@@ -2,10 +2,11 @@ import { TreeItemCache } from '../items/TreeItemCache';
 import type { SidePanelSection } from '../SidePanelSection';
 import type { TreeItem } from '../TreeItem';
 import { createTreeDataFromTreeItemChildren } from './treeDataFactory';
-import type { SidePanelSectionsContext } from './types';
+import type { PageDataContext } from './types';
 
 export function createFanDataSubtreeSection(
-  { pageDataContext, userKeyPart }: SidePanelSectionsContext,
+  pageDataContext: PageDataContext | null,
+  userKeyPart: string,
   options: {
     cacheKey: string;
     icon: string;

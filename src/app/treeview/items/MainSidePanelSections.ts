@@ -10,10 +10,7 @@ import { FanSidePanelSection } from '../sections/FanSidePanelSection';
 import { FollowingBandsSidePanelSection } from '../sections/FollowingBandsSidePanelSection';
 import { FollowingGenresSidePanelSection } from '../sections/FollowingGenresSidePanelSection';
 import { HistorySidePanelSection } from '../sections/HistorySidePanelSection';
-import type {
-  PageDataContext,
-  SidePanelSectionsContext,
-} from '../sections/types';
+import type { PageDataContext } from '../sections/types';
 import { WishlistSidePanelSection } from '../sections/WishlistSidePanelSection';
 
 export class MainSidePanelSections {
@@ -34,16 +31,6 @@ export class MainSidePanelSections {
     console.log(logLabel, { currentPageUrl, page, band, album, albumDetails });
     console.time(logLabel);
 
-    const userKeyPart = getUserKeyPart(includePageData, pageDataContext);
-    const context: SidePanelSectionsContext = {
-      album,
-      albumDetails,
-      band,
-      currentPageUrl,
-      includePageData,
-      pageDataContext,
-      userKeyPart,
-    };
     const sections: SidePanelSection[] = [];
 
     function addSection(section?: SidePanelSection | null) {
@@ -58,9 +45,11 @@ export class MainSidePanelSections {
       nextSections.forEach(addSection);
     }
 
-    addSection(AlbumSidePanelSection.create(context));
-    addSection(BandSidePanelSection.create(context));
-    addSections(createPageDataSections(context));
+    addSection(AlbumSidePanelSection.create(album, albumDetails));
+    addSection(BandSidePanelSection.create(band, currentPageUrl));
+    if (includePageData && pageDataContext) {
+      addSections(createPageDataSections(pageDataContext));
+    }
     addSection(HistorySidePanelSection.create());
 
     console.timeEnd(logLabel);
@@ -70,29 +59,19 @@ export class MainSidePanelSections {
 }
 
 function createPageDataSections(
-  context: SidePanelSectionsContext,
+  pageDataContext: PageDataContext,
 ): SidePanelSection[] {
-  if (!context.includePageData || !context.pageDataContext) {
-    return [];
-  }
-
+  const userKeyPart = getUserKeyPart(pageDataContext);
   return [
-    FanSidePanelSection.create(context),
-    FollowingBandsSidePanelSection.create(context),
-    FollowingGenresSidePanelSection.create(context),
-    CollectionSidePanelSection.create(context),
-    WishlistSidePanelSection.create(context),
+    FanSidePanelSection.create(pageDataContext, userKeyPart),
+    FollowingBandsSidePanelSection.create(pageDataContext, userKeyPart),
+    FollowingGenresSidePanelSection.create(pageDataContext, userKeyPart),
+    CollectionSidePanelSection.create(pageDataContext, userKeyPart),
+    WishlistSidePanelSection.create(pageDataContext, userKeyPart),
   ].filter((section): section is SidePanelSection => !!section);
 }
 
-function getUserKeyPart(
-  includePageData: boolean,
-  pageDataContext: PageDataContext | null,
-): string {
-  if (!includePageData) {
-    return 'anonymous';
-  }
-
+function getUserKeyPart(pageDataContext: PageDataContext): string {
   return String(
     pageDataContext?.fanData?.username ||
       pageDataContext?.fanData?.fan_id ||
