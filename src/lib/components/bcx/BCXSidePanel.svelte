@@ -1,11 +1,6 @@
 <script lang="ts">
 import { X } from '@lucide/svelte';
 import { TreeData, type TreeDataSection } from 'src/app/treeview/TreeData';
-import type { TreeItem } from 'src/app/treeview/TreeItem';
-import {
-  findItemByPath,
-  hydrateTreeItemChildren,
-} from 'src/app/treeview/utils';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
 import BcxSection from './BcxSection.svelte';
@@ -31,36 +26,56 @@ let treeBrowserRef: BcxTreeBrowser;
 let treeSections = $derived(treeData.sections);
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let globalFilterQuery = $state('');
+let currentTreeData: TreeData | null = null;
+let sectionLoadGeneration = 0;
+let globalFilterSuggestions = $derived.by(() => {
+  const suggestions = new Set<string>(
+    treeSections.map((section) => section.label),
+  );
+
+  Object.values(sectionTreeDataById).forEach((sectionTreeData) => {
+    sectionTreeData.filterSuggestions.forEach((suggestion) =>
+      suggestions.add(suggestion),
+    );
+  });
+
+  return Array.from(suggestions).sort();
+});
 
 function handleClose() {
   onClose();
-}
-
-function createTreeDataForSection(section: TreeDataSection): TreeData {
-  const item = findSectionItem(section);
-  const sectionTreeData = new TreeData();
-
-  item?.children?.forEach((child) => sectionTreeData.add(child));
-
-  return sectionTreeData;
 }
 
 function getTreeDataForSection(section: TreeDataSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
 }
 
-function findSectionItem(section: TreeDataSection): TreeItem | null {
-  return findItemByPath(treeData.items, section.itemPath);
-}
-
 function getSectionIcon(section: TreeDataSection): string | undefined {
-  const image = findSectionItem(section)?.image;
+  const image = section.image;
   return image && !image.includes('/') ? image : undefined;
 }
 
 function getSectionImage(section: TreeDataSection): string | undefined {
-  const image = findSectionItem(section)?.image;
+  const image = section.image;
   return image && image.includes('/') ? image : undefined;
+}
+
+async function loadSectionTreeData(section: TreeDataSection) {
+  if (sectionTreeDataById[section.id]) {
+    return;
+  }
+
+  const loadGeneration = sectionLoadGeneration;
+  const sectionTreeData = await section.createTreeData();
+
+  if (loadGeneration !== sectionLoadGeneration) {
+    return;
+  }
+
+  sectionTreeDataById = {
+    ...sectionTreeDataById,
+    [section.id]: sectionTreeData,
+  };
 }
 
 async function handleSectionOpenChange(
@@ -71,18 +86,7 @@ async function handleSectionOpenChange(
     return;
   }
 
-  const item = findSectionItem(section);
-
-  if (!item?.loadChildren || item.childrenLoaded || item.isLoadingChildren) {
-    return;
-  }
-
-  item.isLoadingChildren = true;
-  await hydrateTreeItemChildren(item, true);
-  sectionTreeDataById = {
-    ...sectionTreeDataById,
-    [section.id]: createTreeDataForSection(section),
-  };
+  await loadSectionTreeData(section);
 }
 
 function handleGlobalFilterArrowDown() {
@@ -90,13 +94,33 @@ function handleGlobalFilterArrowDown() {
 }
 
 $effect(() => {
-  const nextSectionTreeDataById: Record<string, TreeData> = {};
+  if (treeData === currentTreeData) {
+    return;
+  }
+
+  currentTreeData = treeData;
+  sectionLoadGeneration += 1;
+  sectionTreeDataById = {};
+});
+
+$effect(() => {
+  treeSections.forEach((section) => {
+    if (section.defaultOpen && !sectionTreeDataById[section.id]) {
+      void loadSectionTreeData(section);
+    }
+  });
+});
+
+$effect(() => {
+  if (!globalFilterQuery.trim()) {
+    return;
+  }
 
   treeSections.forEach((section) => {
-    nextSectionTreeDataById[section.id] = createTreeDataForSection(section);
+    if (!sectionTreeDataById[section.id]) {
+      void loadSectionTreeData(section);
+    }
   });
-
-  sectionTreeDataById = nextSectionTreeDataById;
 });
 
 // Focus first item when panel opens
@@ -145,7 +169,7 @@ $effect(() => {
           <div class="bcx-sections">
             <BcxTreeBrowserFilter
               bind:value={globalFilterQuery}
-              suggestions={treeData.filterSuggestions}
+              suggestions={globalFilterSuggestions}
               onArrowDown={handleGlobalFilterArrowDown}
             />
 

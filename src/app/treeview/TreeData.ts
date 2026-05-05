@@ -10,8 +10,10 @@ import {
 export interface TreeDataSection {
   id: string;
   label: string;
-  itemPath: string;
+  image?: string;
+  childrenCount?: number;
   defaultOpen?: boolean;
+  createTreeData: () => Promise<TreeData>;
 }
 
 const FILTER_SUGGESTION_GROUP_LABELS = new Set([

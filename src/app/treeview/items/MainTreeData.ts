@@ -9,7 +9,6 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { TreeData } from '../TreeData';
 import type { TreeItem } from '../TreeItem';
-import { builder } from '../TreeItemBuilder';
 import { deferDescendants } from '../utils';
 import {
   ICON_HEADPHONES,
@@ -61,34 +60,34 @@ export class MainTreeData {
         pageDataContext?.fanData?.fan_id ||
         'anonymous'
       : 'anonymous';
-    const items: TreeItem[] = [];
     const sections: PendingTreeDataSection[] = [];
 
-    function addSectionItem(
-      item: TreeItem,
-      section: Pick<PendingTreeDataSection, 'label' | 'defaultOpen'>,
+    function addSection(
+      section: Pick<
+        PendingTreeDataSection,
+        'label' | 'image' | 'childrenCount' | 'defaultOpen' | 'createTreeData'
+      >,
     ) {
-      const itemPath = String(items.length);
-      items.push(item);
-      sections.push({ ...section, itemPath });
+      sections.push(section);
     }
 
     if (album) {
-      addSectionItem(
-        builder(AlbumTreeItemFactory.create(album))
-          .makeLazy(() =>
-            TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey('release', album.id),
-              () =>
-                AlbumTreeItemFactory.createWithDetails(
-                  albumDetails || AlbumDetails.fromAlbum(album),
-                ),
-              CACHE_TTL.RELEASE,
-            ),
-          )
-          .build(),
-        { label: album.title },
-      );
+      addSection({
+        label: album.title,
+        image: AlbumTreeItemFactory.create(album).image,
+        createTreeData: async () => {
+          const albumTreeItem = await TreeItemCache.getOrCreate(
+            TreeItemCache.subtreeKey('release', album.id),
+            () =>
+              AlbumTreeItemFactory.createWithDetails(
+                albumDetails || AlbumDetails.fromAlbum(album),
+              ),
+            CACHE_TTL.RELEASE,
+          );
+
+          return createTreeDataFromTreeItemChildren(albumTreeItem);
+        },
+      });
     }
 
     if (band) {
@@ -114,17 +113,23 @@ export class MainTreeData {
           hasChildren: children.length > 0,
         };
 
-        addSectionItem(bandTreeItem, {
+        addSection({
           label: band.name,
+          image: bandTreeItem.image,
+          childrenCount: bandTreeItem.childrenCount,
           defaultOpen: true,
+          createTreeData: async () =>
+            createTreeDataFromTreeItemChildren(bandTreeItem),
         });
       } else {
-        addSectionItem(
-          builder(BandTreeItemFactory.create(band))
-            .makeLazy(loadBandTreeItem)
-            .build(),
-          { label: band.name },
-        );
+        const bandTreeItem = BandTreeItemFactory.create(band);
+        addSection({
+          label: band.name,
+          image: bandTreeItem.image,
+          childrenCount: bandTreeItem.childrenCount,
+          createTreeData: async () =>
+            createTreeDataFromTreeItemChildren(await loadBandTreeItem()),
+        });
       }
     }
 
@@ -133,95 +138,81 @@ export class MainTreeData {
       const pageData = pageDataContext.data;
 
       if (fanData.fan_id !== pageData?.fan_data?.fan_id) {
-        addSectionItem(
-          builder({ label: `Fan: ${fanData.name}` })
-            .makeLazy(() => FanPageDataTreeItem.create(pageDataContext))
-            .build(),
-          { label: `Fan: ${fanData.name}` },
-        );
+        addSection({
+          label: `Fan: ${fanData.name}`,
+          createTreeData: async () =>
+            createTreeDataFromTreeItemChildren(
+              await FanPageDataTreeItem.create(pageDataContext),
+            ),
+        });
       }
 
-      addSectionItem(
-        builder({
-          label: 'Following Bands',
-          image: ICON_HEADPHONES,
-          childrenCount: pageData?.following_bands_data?.item_count,
-        })
-          .makeLazy(() =>
-            TreeItemCache.getOrCreate(
+      addSection({
+        label: 'Following Bands',
+        image: ICON_HEADPHONES,
+        childrenCount: pageData?.following_bands_data?.item_count,
+        createTreeData: async () =>
+          createTreeDataFromTreeItemChildren(
+            await TreeItemCache.getOrCreate(
               TreeItemCache.subtreeKey(userKeyPart, 'following-bands'),
               () => FollowingBandsTreeItem.create(fanData.username || ''),
               CACHE_TTL.FOLLOWING_BANDS,
             ),
-          )
-          .build(),
-        { label: 'Following Bands' },
-      );
-      addSectionItem(
-        builder({
-          label: 'Following Genres',
-          image: ICON_TAGS,
-          childrenCount: pageData?.following_genres_data?.item_count,
-        })
-          .makeLazy(() =>
-            TreeItemCache.getOrCreate(
+          ),
+      });
+      addSection({
+        label: 'Following Genres',
+        image: ICON_TAGS,
+        childrenCount: pageData?.following_genres_data?.item_count,
+        createTreeData: async () =>
+          createTreeDataFromTreeItemChildren(
+            await TreeItemCache.getOrCreate(
               TreeItemCache.subtreeKey(userKeyPart, 'following-genres'),
               () => FollowingGenresTreeItem.create(fanData.username || ''),
               CACHE_TTL.FOLLOWING_GENRES,
             ),
-          )
-          .build(),
-        { label: 'Following Genres' },
-      );
-      addSectionItem(
-        builder({
-          label: 'Collection',
-          image: ICON_LIBRARY,
-          childrenCount:
-            pageData?.collection_data?.item_count ??
-            pageData?.current_fan?.collection_count ??
-            pageData?.collection_count,
-        })
-          .makeLazy(() =>
-            TreeItemCache.getOrCreate(
+          ),
+      });
+      addSection({
+        label: 'Collection',
+        image: ICON_LIBRARY,
+        childrenCount:
+          pageData?.collection_data?.item_count ??
+          pageData?.current_fan?.collection_count ??
+          pageData?.collection_count,
+        createTreeData: async () =>
+          createTreeDataFromTreeItemChildren(
+            await TreeItemCache.getOrCreate(
               TreeItemCache.subtreeKey(userKeyPart, 'collection'),
               () => CollectionTreeItem.create(fanData.username || ''),
               CACHE_TTL.COLLECTION,
             ),
-          )
-          .build(),
-        { label: 'Collection' },
-      );
-      addSectionItem(
-        builder({
-          label: 'Wishlist',
-          image: ICON_HEART,
-          childrenCount: pageData?.wishlist_data?.item_count,
-        })
-          .makeLazy(() =>
-            TreeItemCache.getOrCreate(
+          ),
+      });
+      addSection({
+        label: 'Wishlist',
+        image: ICON_HEART,
+        childrenCount: pageData?.wishlist_data?.item_count,
+        createTreeData: async () =>
+          createTreeDataFromTreeItemChildren(
+            await TreeItemCache.getOrCreate(
               TreeItemCache.subtreeKey(userKeyPart, 'wishlist'),
               () => WishlistTreeItem.create(fanData.username || ''),
               CACHE_TTL.WISHLIST,
             ),
-          )
-          .build(),
-        { label: 'Wishlist' },
-      );
+          ),
+      });
     }
 
-    addSectionItem(
-      builder({ label: 'History', image: ICON_HISTORY })
-        .makeLazy(() => HistoryTreeItem.createLatestVisited())
-        .build(),
-      { label: 'History' },
-    );
-
-    items.forEach((item) => {
-      if (item) {
-        treeData.add(item);
-      }
+    addSection({
+      label: 'History',
+      image: ICON_HISTORY,
+      createTreeData: async () =>
+        createTreeDataFromTreeItemChildren(
+          await HistoryTreeItem.createLatestVisited(),
+        ),
     });
+
     treeData.setSections(
       sections.map((section, index) => ({
         ...section,
@@ -242,8 +233,24 @@ interface PageDataContext {
 
 interface PendingTreeDataSection {
   label: string;
-  itemPath: string;
+  image?: string;
+  childrenCount?: number;
   defaultOpen?: boolean;
+  createTreeData: () => Promise<TreeData>;
+}
+
+function createTreeDataFromTreeItemChildren(
+  treeItem?: TreeItem | null,
+): TreeData {
+  return createTreeDataFromItems(treeItem?.children || []);
+}
+
+function createTreeDataFromItems(items: TreeItem[]): TreeData {
+  const treeData = new TreeData();
+
+  items.forEach((item) => treeData.add(item));
+
+  return treeData;
 }
 
 function createSectionId(label: string, index: number): string {

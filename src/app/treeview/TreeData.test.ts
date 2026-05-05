@@ -138,7 +138,7 @@ describe('TreeData filter', () => {
         {
           id: 'collection-0',
           label: 'Collection',
-          itemPath: '0',
+          createTreeData: async () => new TreeData(),
         },
       ],
     );
