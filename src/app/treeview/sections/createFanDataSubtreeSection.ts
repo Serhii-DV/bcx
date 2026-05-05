@@ -1,22 +1,21 @@
 import { TreeItemCache } from '../items/TreeItemCache';
+import type { SidePanelSection } from '../SidePanelSection';
 import type { TreeItem } from '../TreeItem';
 import { createTreeDataFromTreeItemChildren } from './treeDataFactory';
-import type {
-  PendingSidePanelSection,
-  SidePanelSectionsContext,
-} from './types';
+import type { SidePanelSectionsContext } from './types';
 
 export function createFanDataSubtreeSection(
   { pageDataContext, userKeyPart }: SidePanelSectionsContext,
   options: {
     cacheKey: string;
     icon: string;
+    id: string;
     itemCountPath: string;
     label: string;
     ttl: number;
     createTreeItem: (username: string) => Promise<TreeItem>;
   },
-): PendingSidePanelSection | null {
+): SidePanelSection | null {
   if (!pageDataContext) {
     return null;
   }
@@ -25,6 +24,7 @@ export function createFanDataSubtreeSection(
   const pageData = pageDataContext.data;
 
   return {
+    id: options.id,
     label: options.label,
     image: options.icon,
     childrenCount: pageData?.[options.itemCountPath]?.item_count,

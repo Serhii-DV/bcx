@@ -12,7 +12,6 @@ import { FollowingGenresSidePanelSection } from '../sections/FollowingGenresSide
 import { HistorySidePanelSection } from '../sections/HistorySidePanelSection';
 import type {
   PageDataContext,
-  PendingSidePanelSection,
   SidePanelSectionsContext,
 } from '../sections/types';
 import { WishlistSidePanelSection } from '../sections/WishlistSidePanelSection';
@@ -45,9 +44,9 @@ export class MainSidePanelSections {
       pageDataContext,
       userKeyPart,
     };
-    const sections: PendingSidePanelSection[] = [];
+    const sections: SidePanelSection[] = [];
 
-    function addSection(section?: PendingSidePanelSection | null) {
+    function addSection(section?: SidePanelSection | null) {
       if (!section) {
         return;
       }
@@ -55,7 +54,7 @@ export class MainSidePanelSections {
       sections.push(section);
     }
 
-    function addSections(nextSections: PendingSidePanelSection[]) {
+    function addSections(nextSections: SidePanelSection[]) {
       nextSections.forEach(addSection);
     }
 
@@ -64,20 +63,15 @@ export class MainSidePanelSections {
     addSections(createPageDataSections(context));
     addSection(HistorySidePanelSection.create());
 
-    const sidePanelSections = sections.map((section, index) => ({
-      ...section,
-      id: createSectionId(section.label, index),
-    }));
-
     console.timeEnd(logLabel);
 
-    return sidePanelSections;
+    return sections;
   }
 }
 
 function createPageDataSections(
   context: SidePanelSectionsContext,
-): PendingSidePanelSection[] {
+): SidePanelSection[] {
   if (!context.includePageData || !context.pageDataContext) {
     return [];
   }
@@ -88,7 +82,7 @@ function createPageDataSections(
     FollowingGenresSidePanelSection.create(context),
     CollectionSidePanelSection.create(context),
     WishlistSidePanelSection.create(context),
-  ].filter((section): section is PendingSidePanelSection => !!section);
+  ].filter((section): section is SidePanelSection => !!section);
 }
 
 function getUserKeyPart(
@@ -104,13 +98,4 @@ function getUserKeyPart(
       pageDataContext?.fanData?.fan_id ||
       'anonymous',
   );
-}
-
-function createSectionId(label: string, index: number): string {
-  const slug = label
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  return `${slug || 'section'}-${index}`;
 }

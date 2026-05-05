@@ -4,20 +4,18 @@ import type { Url } from 'src/core/url';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { BandTreeItem } from '../items/BandTreeItem';
 import { TreeItemCache } from '../items/TreeItemCache';
+import type { SidePanelSection } from '../SidePanelSection';
 import type { TreeItem } from '../TreeItem';
 import { deferDescendants } from '../utils';
 import { SIDE_PANEL_SECTION_CACHE_TTL } from './cacheTtl';
 import { createTreeDataFromTreeItemChildren } from './treeDataFactory';
-import type {
-  PendingSidePanelSection,
-  SidePanelSectionsContext,
-} from './types';
+import type { SidePanelSectionsContext } from './types';
 
 export class BandSidePanelSection {
   static create({
     band,
     currentPageUrl,
-  }: SidePanelSectionsContext): PendingSidePanelSection | null {
+  }: SidePanelSectionsContext): SidePanelSection | null {
     if (!band) {
       return null;
     }
@@ -29,6 +27,7 @@ export class BandSidePanelSection {
     const bandTreeItem = BandTreeItemFactory.create(band);
 
     return {
+      id: `band-${band.id}`,
       label: band.name,
       image: bandTreeItem.image,
       childrenCount: bandTreeItem.childrenCount,
@@ -47,7 +46,7 @@ export class BandSidePanelSection {
 function createCurrentBandPageSection(
   band: NonNullable<BandPage['band']>,
   currentPageUrl: Url,
-): PendingSidePanelSection {
+): SidePanelSection {
   const bandTreeItemFromStorage = BandTreeItem.create(band, currentPageUrl);
   const children = deferDescendants(bandTreeItemFromStorage.children || []);
   const bandTreeItem: TreeItem = {
@@ -58,6 +57,7 @@ function createCurrentBandPageSection(
   };
 
   return {
+    id: `band-${band.id}`,
     label: band.name,
     image: bandTreeItem.image,
     childrenCount: bandTreeItem.childrenCount,

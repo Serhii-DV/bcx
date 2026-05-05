@@ -1,18 +1,16 @@
 import { CollectionTreeItem } from '../items/collection/CollectionTreeItem';
 import { TreeItemCache } from '../items/TreeItemCache';
+import type { SidePanelSection } from '../SidePanelSection';
 import { ICON_LIBRARY } from '../utils/icon';
 import { SIDE_PANEL_SECTION_CACHE_TTL } from './cacheTtl';
 import { createTreeDataFromTreeItemChildren } from './treeDataFactory';
-import type {
-  PendingSidePanelSection,
-  SidePanelSectionsContext,
-} from './types';
+import type { SidePanelSectionsContext } from './types';
 
 export class CollectionSidePanelSection {
   static create({
     pageDataContext,
     userKeyPart,
-  }: SidePanelSectionsContext): PendingSidePanelSection | null {
+  }: SidePanelSectionsContext): SidePanelSection | null {
     if (!pageDataContext) {
       return null;
     }
@@ -21,6 +19,7 @@ export class CollectionSidePanelSection {
     const pageData = pageDataContext.data;
 
     return {
+      id: `collection-${userKeyPart}`,
       label: 'Collection',
       image: ICON_LIBRARY,
       childrenCount:

@@ -1,14 +1,13 @@
 import { FanPageDataTreeItem } from '../items/FanPageDataTreeItem';
+import type { SidePanelSection } from '../SidePanelSection';
 import { createTreeDataFromTreeItemChildren } from './treeDataFactory';
-import type {
-  PendingSidePanelSection,
-  SidePanelSectionsContext,
-} from './types';
+import type { SidePanelSectionsContext } from './types';
 
 export class FanSidePanelSection {
   static create({
     pageDataContext,
-  }: SidePanelSectionsContext): PendingSidePanelSection | null {
+    userKeyPart,
+  }: SidePanelSectionsContext): SidePanelSection | null {
     if (!pageDataContext) {
       return null;
     }
@@ -21,6 +20,7 @@ export class FanSidePanelSection {
     }
 
     return {
+      id: `fan-${userKeyPart}`,
       label: `Fan: ${fanData.name}`,
       createTreeData: async () =>
         createTreeDataFromTreeItemChildren(
