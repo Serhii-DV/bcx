@@ -46,6 +46,8 @@ interface Props {
   lockInitialRoot?: boolean;
   showBreadcrumb?: boolean;
   showFilter?: boolean;
+  isLoading?: boolean;
+  loadingMessage?: string;
 }
 
 const DRILL_UP_PATH = '__bcx_tree_drill_up__';
@@ -57,6 +59,8 @@ let {
   lockInitialRoot = false,
   showBreadcrumb = true,
   showFilter = true,
+  isLoading = false,
+  loadingMessage = 'Loading',
 }: Props = $props();
 let treeContainer: HTMLDivElement;
 let filterRef: BcxTreeBrowserFilter;
@@ -120,6 +124,15 @@ let treeLayoutVisibleData = $derived.by(() => {
 let treeLayoutVisiblePaths = $derived(treeLayoutVisibleData.paths);
 let treeLayoutVisibleChildCounts = $derived(treeLayoutVisibleData.childCounts);
 let effectiveFilterQuery = $derived(externalFilterQuery ?? localFilterQuery);
+let emptyStateMessage = $derived.by(() => {
+  if (isLoading) {
+    return loadingMessage;
+  }
+
+  return debouncedFilterQuery.trim()
+    ? 'No items match your filter'
+    : 'No items here';
+});
 
 export function focusFirstItem() {
   focusTreeItem(getNavigableItems()[0]);
@@ -676,6 +689,15 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   {/if}
 {/snippet}
 
+{#snippet browserEmptyState()}
+  <li class="bcx-browser-empty-state" aria-live="polite">
+    {#if isLoading}
+      <span class="bcx-browser-loading-icon" aria-hidden="true"></span>
+    {/if}
+    <span>{emptyStateMessage}</span>
+  </li>
+{/snippet}
+
 {#snippet browserTreeItems(items: TreeItem[] | undefined)}
   <ol class="ml-0 mt-0 pl-0">
     {#if canNavigateToParentLevel()}
@@ -697,9 +719,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
           />
         </li>
       {:else}
-        <li class="text-gray-400 text-sm text-center py-4">
-          {debouncedFilterQuery.trim() ? 'No items match your filter' : 'No items here'}
-        </li>
+        {@render browserEmptyState()}
       {/if}
     {:else if items && items.length > 0}
       {#each items as item}
@@ -708,9 +728,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
         </li>
       {/each}
     {:else}
-      <li class="text-gray-400 text-sm text-center py-4">
-        {debouncedFilterQuery.trim() ? 'No items match your filter' : 'No items here'}
-      </li>
+      {@render browserEmptyState()}
     {/if}
   </ol>
 {/snippet}
@@ -754,6 +772,32 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   flex: 1 1 0%;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+.bcx-browser-empty-state {
+  align-items: center;
+  color: rgb(156 163 175);
+  display: flex;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+  justify-content: center;
+  padding-block: 1rem;
+}
+
+.bcx-browser-loading-icon {
+  animation: bcx-browser-loading-spin 700ms linear infinite;
+  border: 2px solid rgb(156 163 175 / 0.35);
+  border-top-color: rgb(229 231 235);
+  border-radius: 9999px;
+  display: inline-block;
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+@keyframes bcx-browser-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .bcx-browser-row {

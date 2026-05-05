@@ -26,6 +26,7 @@ let {
 }: Props = $props();
 let sectionsContainer: HTMLDivElement;
 let sectionTreeDataById: Record<string, TreeData> = $state({});
+let sectionLoadingById: Record<string, boolean> = $state({});
 let globalFilterQuery = $state('');
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
@@ -49,6 +50,10 @@ function getTreeDataForSection(section: SidePanelSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
 }
 
+function isSectionLoading(section: SidePanelSection): boolean {
+  return sectionLoadingById[section.id] ?? false;
+}
+
 function getSectionIcon(section: SidePanelSection): string | undefined {
   const image = section.image;
   return image && !image.includes('/') ? image : undefined;
@@ -60,21 +65,35 @@ function getSectionImage(section: SidePanelSection): string | undefined {
 }
 
 async function loadSectionTreeData(section: SidePanelSection) {
-  if (sectionTreeDataById[section.id]) {
+  if (sectionTreeDataById[section.id] || sectionLoadingById[section.id]) {
     return;
   }
 
   const loadGeneration = sectionLoadGeneration;
-  const sectionTreeData = await section.createTreeData();
-
-  if (loadGeneration !== sectionLoadGeneration) {
-    return;
-  }
-
-  sectionTreeDataById = {
-    ...sectionTreeDataById,
-    [section.id]: sectionTreeData,
+  sectionLoadingById = {
+    ...sectionLoadingById,
+    [section.id]: true,
   };
+
+  try {
+    const sectionTreeData = await section.createTreeData();
+
+    if (loadGeneration !== sectionLoadGeneration) {
+      return;
+    }
+
+    sectionTreeDataById = {
+      ...sectionTreeDataById,
+      [section.id]: sectionTreeData,
+    };
+  } finally {
+    if (loadGeneration === sectionLoadGeneration) {
+      sectionLoadingById = {
+        ...sectionLoadingById,
+        [section.id]: false,
+      };
+    }
+  }
 }
 
 async function handleSectionOpenChange(
@@ -104,6 +123,7 @@ $effect(() => {
   currentSections = sections;
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
+  sectionLoadingById = {};
 });
 
 $effect(() => {
@@ -187,6 +207,7 @@ $effect(() => {
                 <div class="bcx-section-tree-browser">
                   <BcxTreeBrowser
                     treeData={getTreeDataForSection(section)}
+                    isLoading={isSectionLoading(section)}
                     filterQuery={globalFilterQuery}
                     showBreadcrumb={false}
                     showFilter={false}
