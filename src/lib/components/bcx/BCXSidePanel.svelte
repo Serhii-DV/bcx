@@ -2,11 +2,15 @@
 import { X } from '@lucide/svelte';
 import { TreeData, type TreeDataSection } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
-import { findItemByPath } from 'src/app/treeview/utils';
+import {
+  findItemByPath,
+  hydrateTreeItemChildren,
+} from 'src/app/treeview/utils';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
 import BcxSection from './BcxSection.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
+import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 
 interface Props {
   treeData: TreeData;
@@ -24,10 +28,9 @@ let {
   onClose = () => {},
 }: Props = $props();
 let treeBrowserRef: BcxTreeBrowser;
-let treeSections = $derived(
-  treeData.sections.filter((section) => !!section.itemPath),
-);
+let treeSections = $derived(treeData.sections);
 let sectionTreeDataById: Record<string, TreeData> = $state({});
+let globalFilterQuery = $state('');
 
 function handleClose() {
   onClose();
@@ -37,9 +40,7 @@ function createTreeDataForSection(section: TreeDataSection): TreeData {
   const item = findSectionItem(section);
   const sectionTreeData = new TreeData();
 
-  if (item) {
-    sectionTreeData.add(item);
-  }
+  item?.children?.forEach((child) => sectionTreeData.add(child));
 
   return sectionTreeData;
 }
@@ -49,9 +50,43 @@ function getTreeDataForSection(section: TreeDataSection): TreeData {
 }
 
 function findSectionItem(section: TreeDataSection): TreeItem | null {
-  return section.itemPath
-    ? findItemByPath(treeData.items, section.itemPath)
-    : null;
+  return findItemByPath(treeData.items, section.itemPath);
+}
+
+function getSectionIcon(section: TreeDataSection): string | undefined {
+  const image = findSectionItem(section)?.image;
+  return image && !image.includes('/') ? image : undefined;
+}
+
+function getSectionImage(section: TreeDataSection): string | undefined {
+  const image = findSectionItem(section)?.image;
+  return image && image.includes('/') ? image : undefined;
+}
+
+async function handleSectionOpenChange(
+  section: TreeDataSection,
+  open: boolean,
+) {
+  if (!open) {
+    return;
+  }
+
+  const item = findSectionItem(section);
+
+  if (!item?.loadChildren || item.childrenLoaded || item.isLoadingChildren) {
+    return;
+  }
+
+  item.isLoadingChildren = true;
+  await hydrateTreeItemChildren(item, true);
+  sectionTreeDataById = {
+    ...sectionTreeDataById,
+    [section.id]: createTreeDataForSection(section),
+  };
+}
+
+function handleGlobalFilterArrowDown() {
+  treeBrowserRef?.focusFirstItem();
 }
 
 $effect(() => {
@@ -108,17 +143,25 @@ $effect(() => {
         <div class="space-y-4">
 
           <div class="bcx-sections">
+            <BcxTreeBrowserFilter
+              bind:value={globalFilterQuery}
+              suggestions={treeData.filterSuggestions}
+              onArrowDown={handleGlobalFilterArrowDown}
+            />
+
             {#each treeSections as section}
               <BcxSection
                 title={section.label}
+                icon={getSectionIcon(section)}
+                image={getSectionImage(section)}
                 defaultOpen={section.defaultOpen}
+                onOpenChange={(open) => handleSectionOpenChange(section, open)}
               >
                 <div class="bcx-section-tree-browser">
                   <BcxTreeBrowser
                     bind:this={treeBrowserRef}
                     treeData={getTreeDataForSection(section)}
-                    initialRootPath="0"
-                    lockInitialRoot
+                    filterQuery={globalFilterQuery}
                     showBreadcrumb={false}
                     showFilter={false}
                   />
@@ -126,7 +169,7 @@ $effect(() => {
               </BcxSection>
             {/each}
 
-            <BcxSection title="Extension Info">
+            <BcxSection title="Extension Info" height="10rem">
               <div class="bcx-section-content">
                 <p>
                   BCX enhances your Bandcamp experience with powerful search and filtering tools.

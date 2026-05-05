@@ -242,7 +242,7 @@ interface PageDataContext {
 
 interface PendingTreeDataSection {
   label: string;
-  itemPath?: string;
+  itemPath: string;
   defaultOpen?: boolean;
 }
 

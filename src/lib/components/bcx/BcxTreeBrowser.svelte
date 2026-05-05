@@ -41,6 +41,7 @@ import {
 
 interface Props {
   treeData: TreeData;
+  filterQuery?: string | null;
   initialRootPath?: string | null;
   lockInitialRoot?: boolean;
   showBreadcrumb?: boolean;
@@ -51,6 +52,7 @@ const DRILL_UP_PATH = '__bcx_tree_drill_up__';
 
 let {
   treeData,
+  filterQuery: externalFilterQuery = null,
   initialRootPath = null,
   lockInitialRoot = false,
   showBreadcrumb = true,
@@ -60,7 +62,7 @@ let treeContainer: HTMLDivElement;
 let filterRef: BcxTreeBrowserFilter;
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
-let filterQuery = $state('');
+let localFilterQuery = $state('');
 let debouncedFilterQuery = $state('');
 let currentRootPath: string | null = $state(initialRootPath);
 const lockedRootPath = lockInitialRoot ? initialRootPath : null;
@@ -117,13 +119,14 @@ let treeLayoutVisibleData = $derived.by(() => {
 });
 let treeLayoutVisiblePaths = $derived(treeLayoutVisibleData.paths);
 let treeLayoutVisibleChildCounts = $derived(treeLayoutVisibleData.childCounts);
+let effectiveFilterQuery = $derived(externalFilterQuery ?? localFilterQuery);
 
 export function focusFirstItem() {
   focusTreeItem(getNavigableItems()[0]);
 }
 
 $effect(() => {
-  const currentQuery = filterQuery;
+  const currentQuery = effectiveFilterQuery;
 
   if (filterDebounceTimer !== null) {
     clearTimeout(filterDebounceTimer);
@@ -483,7 +486,7 @@ function applyFilterImmediately() {
     filterDebounceTimer = null;
   }
 
-  debouncedFilterQuery = filterQuery;
+  debouncedFilterQuery = effectiveFilterQuery;
 }
 
 async function enterBrowserItem(item: TreeItem) {
@@ -688,7 +691,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   {#if showFilter}
     <BcxTreeBrowserFilter
       bind:this={filterRef}
-      bind:value={filterQuery}
+      bind:value={localFilterQuery}
       suggestions={filterSuggestions}
       onArrowDown={handleFilterArrowDown}
     />

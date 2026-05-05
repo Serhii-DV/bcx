@@ -1,37 +1,50 @@
 <script lang="ts">
+import { makeIcon } from 'src/app/treeview/utils/icon';
 import type { Snippet } from 'svelte';
 
 interface Props {
   title: string;
+  icon?: string;
+  image?: string;
+  height?: string;
   defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
   children?: Snippet;
 }
 
-let { title, defaultOpen = false, children }: Props = $props();
-let open = $state(defaultOpen);
+let {
+  title,
+  icon,
+  image,
+  height = '16rem',
+  defaultOpen = false,
+  onOpenChange,
+  children,
+}: Props = $props();
+let Icon = $derived(makeIcon(icon));
+let bodyStyle = $derived(`--bcx-section-height: ${height};`);
 
-function toggleSection() {
-  open = !open;
+function handleToggle(event: ToggleEvent) {
+  onOpenChange?.((event.currentTarget as HTMLDetailsElement).open);
 }
 </script>
 
-<section class="bcx-section">
-  <button
-    type="button"
-    class="bcx-section-header"
-    class:open
-    aria-expanded={open}
-    onclick={toggleSection}
-  >
+<details class="bcx-section" open={defaultOpen} ontoggle={handleToggle}>
+  <summary class="bcx-section-header">
     <span class="bcx-section-chevron" aria-hidden="true"></span>
+    <span class="bcx-section-title-media" aria-hidden={icon || image ? undefined : 'true'}>
+      {#if Icon}
+        <Icon size="16" />
+      {:else if image}
+        <img src={image} alt="" class="bcx-section-title-image" loading="lazy" />
+      {/if}
+    </span>
     <span class="bcx-section-title">{title}</span>
-  </button>
-  {#if open}
-    <div class="bcx-section-body">
-      {@render children?.()}
-    </div>
-  {/if}
-</section>
+  </summary>
+  <div class="bcx-section-body" style={bodyStyle}>
+    {@render children?.()}
+  </div>
+</details>
 
 <style>
 .bcx-section {
@@ -42,10 +55,8 @@ function toggleSection() {
   border-top: 0;
 }
 
-.bcx-section-header {
+.bcx-section > .bcx-section-header {
   align-items: center;
-  background: transparent;
-  border: 0;
   border-radius: 4px;
   color: rgb(229 231 235);
   cursor: pointer;
@@ -59,8 +70,16 @@ function toggleSection() {
   width: 100%;
 }
 
-.bcx-section-header:hover,
-.bcx-section-header:focus {
+.bcx-section > .bcx-section-header::-webkit-details-marker {
+  display: none;
+}
+
+.bcx-section > .bcx-section-header::marker {
+  content: "";
+}
+
+.bcx-section > .bcx-section-header:hover,
+.bcx-section > .bcx-section-header:focus {
   background-color: rgb(255 255 255 / 0.1);
   outline: none;
 }
@@ -80,8 +99,25 @@ function toggleSection() {
           mask-size: cover;
 }
 
-.bcx-section-header.open .bcx-section-chevron {
+.bcx-section[open] > .bcx-section-header .bcx-section-chevron {
   transform: rotate(90deg);
+}
+
+.bcx-section-title-media {
+  align-items: center;
+  color: rgb(209 213 219);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 1.5rem;
+  justify-content: center;
+  margin-right: 0.5rem;
+  width: 1.5rem;
+}
+
+.bcx-section-title-image {
+  height: 1.5rem;
+  object-fit: cover;
+  width: 1.5rem;
 }
 
 .bcx-section-title {
@@ -90,6 +126,9 @@ function toggleSection() {
 }
 
 .bcx-section-body {
+  height: var(--bcx-section-height);
+  overflow: auto;
   padding-bottom: 0.25rem;
+  resize: vertical;
 }
 </style>
