@@ -23,14 +23,67 @@ let {
 }: Props = $props();
 let Icon = $derived(makeIcon(icon));
 let bodyStyle = $derived(`--bcx-section-height: ${height};`);
+let detailsElement: HTMLDetailsElement;
 
 function handleToggle(event: ToggleEvent) {
   onOpenChange?.((event.currentTarget as HTMLDetailsElement).open);
 }
+
+function handleHeaderKeyDown(event: KeyboardEvent) {
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      focusSiblingHeader(1);
+      break;
+
+    case 'ArrowUp':
+      event.preventDefault();
+      focusSiblingHeader(-1);
+      break;
+
+    case 'ArrowRight':
+      event.preventDefault();
+      detailsElement.open = true;
+      break;
+
+    case 'ArrowLeft':
+      event.preventDefault();
+      detailsElement.open = false;
+      break;
+
+    case 'Enter':
+      event.preventDefault();
+      detailsElement.open = !detailsElement.open;
+      break;
+  }
+}
+
+function focusSiblingHeader(direction: 1 | -1) {
+  const rootElement = detailsElement.parentElement;
+  const headers = Array.from(
+    rootElement?.querySelectorAll<HTMLElement>('.bcx-section-header') || [],
+  );
+  const currentIndex = headers.findIndex(
+    (header) => header.parentElement === detailsElement,
+  );
+
+  if (currentIndex < 0) {
+    return;
+  }
+
+  const nextIndex =
+    (currentIndex + direction + headers.length) % headers.length;
+  headers[nextIndex]?.focus();
+}
 </script>
 
-<details class="bcx-section" open={defaultOpen} ontoggle={handleToggle}>
-  <summary class="bcx-section-header">
+<details
+  bind:this={detailsElement}
+  class="bcx-section"
+  open={defaultOpen}
+  ontoggle={handleToggle}
+>
+  <summary class="bcx-section-header" onkeydown={handleHeaderKeyDown}>
     <span class="bcx-section-chevron" aria-hidden="true"></span>
     <span class="bcx-section-title-media" aria-hidden={icon || image ? undefined : 'true'}>
       {#if Icon}

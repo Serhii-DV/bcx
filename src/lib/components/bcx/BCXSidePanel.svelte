@@ -23,7 +23,7 @@ let {
   onToggle = () => {},
   onClose = () => {},
 }: Props = $props();
-let treeBrowserRef: BcxTreeBrowser;
+let sectionsContainer: HTMLDivElement;
 let treeSections = $derived(treeData.sections);
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let globalFilterQuery = $state('');
@@ -91,7 +91,11 @@ async function handleSectionOpenChange(
 }
 
 function handleGlobalFilterArrowDown() {
-  treeBrowserRef?.focusFirstItem();
+  focusFirstSectionHeader();
+}
+
+function focusFirstSectionHeader() {
+  sectionsContainer?.querySelector<HTMLElement>('.bcx-section-header')?.focus();
 }
 
 $effect(() => {
@@ -126,10 +130,10 @@ $effect(() => {
 
 // Focus first item when panel opens
 $effect(() => {
-  if (open && treeBrowserRef) {
+  if (open) {
     // Use setTimeout to ensure DOM is ready
     setTimeout(() => {
-      treeBrowserRef.focusFirstItem();
+      focusFirstSectionHeader();
     }, 100);
   }
 });
@@ -167,7 +171,7 @@ $effect(() => {
       <div class="flex-1 overflow-y-auto">
         <div class="space-y-4">
 
-          <div class="bcx-sections">
+          <div bind:this={sectionsContainer} class="bcx-sections">
             <BcxTreeBrowserFilter
               bind:value={globalFilterQuery}
               suggestions={globalFilterSuggestions}
@@ -184,7 +188,6 @@ $effect(() => {
               >
                 <div class="bcx-section-tree-browser">
                   <BcxTreeBrowser
-                    bind:this={treeBrowserRef}
                     treeData={getTreeDataForSection(section)}
                     filterQuery={globalFilterQuery}
                     showBreadcrumb={false}
