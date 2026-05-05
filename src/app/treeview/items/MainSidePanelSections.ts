@@ -1,41 +1,21 @@
-import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
 import { bandcampPageData } from 'src/bandcamp/domain/shared';
-import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { console } from 'src/utils/console';
-import type { FanData } from '../../types/FanData';
-import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
-import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { SidePanelSection } from '../SidePanelSection';
-import { TreeData } from '../TreeData';
-import type { TreeItem } from '../TreeItem';
-import { deferDescendants } from '../utils';
-import {
-  ICON_HEADPHONES,
-  ICON_HEART,
-  ICON_HISTORY,
-  ICON_LIBRARY,
-  ICON_TAGS,
-} from '../utils/icon';
-import { BandTreeItem } from './BandTreeItem';
-import { CollectionTreeItem } from './collection/CollectionTreeItem';
-import { FanPageDataTreeItem } from './FanPageDataTreeItem';
-import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
-import { FollowingGenresTreeItem } from './FollowingGenresTreeItem';
-import { HistoryTreeItem } from './HistoryTreeItem';
-import { TreeItemCache } from './TreeItemCache';
-import { WishlistTreeItem } from './WishlistTreeItem';
-
-const CACHE_TTL = {
-  RELEASE: 24 * 60 * 60 * 1000,
-  BAND: 24 * 60 * 60 * 1000,
-  FOLLOWING_BANDS: 60 * 60 * 1000,
-  FOLLOWING_GENRES: 60 * 60 * 1000,
-  COLLECTION: 30 * 60 * 1000,
-  WISHLIST: 30 * 60 * 1000,
-  HISTORY: 10 * 60 * 1000,
-} as const;
+import { AlbumSidePanelSection } from '../sections/AlbumSidePanelSection';
+import { BandSidePanelSection } from '../sections/BandSidePanelSection';
+import { CollectionSidePanelSection } from '../sections/CollectionSidePanelSection';
+import { FanSidePanelSection } from '../sections/FanSidePanelSection';
+import { FollowingBandsSidePanelSection } from '../sections/FollowingBandsSidePanelSection';
+import { FollowingGenresSidePanelSection } from '../sections/FollowingGenresSidePanelSection';
+import { HistorySidePanelSection } from '../sections/HistorySidePanelSection';
+import type {
+  PageDataContext,
+  PendingSidePanelSection,
+  SidePanelSectionsContext,
+} from '../sections/types';
+import { WishlistSidePanelSection } from '../sections/WishlistSidePanelSection';
 
 export class MainSidePanelSections {
   static async create(
@@ -60,158 +40,33 @@ export class MainSidePanelSections {
         pageDataContext?.fanData?.fan_id ||
         'anonymous'
       : 'anonymous';
+    const context: SidePanelSectionsContext = {
+      album,
+      albumDetails,
+      band,
+      currentPageUrl,
+      includePageData,
+      pageDataContext,
+      userKeyPart,
+    };
     const sections: PendingSidePanelSection[] = [];
 
-    function addSection(
-      section: Pick<
-        PendingSidePanelSection,
-        'label' | 'image' | 'childrenCount' | 'defaultOpen' | 'createTreeData'
-      >,
-    ) {
+    function addSection(section?: PendingSidePanelSection | null) {
+      if (!section) {
+        return;
+      }
+
       sections.push(section);
     }
 
-    if (album) {
-      addSection({
-        label: album.title,
-        image: AlbumTreeItemFactory.create(album).image,
-        createTreeData: async () => {
-          const albumTreeItem = await TreeItemCache.getOrCreate(
-            TreeItemCache.subtreeKey('release', album.id),
-            () =>
-              AlbumTreeItemFactory.createWithDetails(
-                albumDetails || AlbumDetails.fromAlbum(album),
-              ),
-            CACHE_TTL.RELEASE,
-          );
-
-          return createTreeDataFromTreeItemChildren(albumTreeItem);
-        },
-      });
+    function addSections(nextSections: PendingSidePanelSection[]) {
+      nextSections.forEach(addSection);
     }
 
-    if (band) {
-      const loadBandTreeItem = () =>
-        TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('band', band.id),
-          async () => BandTreeItem.create(band, currentPageUrl),
-          CACHE_TTL.BAND,
-        );
-
-      if (isBandcampMusicUrl(currentPageUrl)) {
-        const bandTreeItemFromStorage = BandTreeItem.create(
-          band,
-          currentPageUrl,
-        );
-        const children = deferDescendants(
-          bandTreeItemFromStorage.children || [],
-        );
-        const bandTreeItem: TreeItem = {
-          ...bandTreeItemFromStorage,
-          children,
-          childrenLoaded: true,
-          hasChildren: children.length > 0,
-        };
-
-        addSection({
-          label: band.name,
-          image: bandTreeItem.image,
-          childrenCount: bandTreeItem.childrenCount,
-          defaultOpen: true,
-          createTreeData: async () =>
-            createTreeDataFromTreeItemChildren(bandTreeItem),
-        });
-      } else {
-        const bandTreeItem = BandTreeItemFactory.create(band);
-        addSection({
-          label: band.name,
-          image: bandTreeItem.image,
-          childrenCount: bandTreeItem.childrenCount,
-          createTreeData: async () =>
-            createTreeDataFromTreeItemChildren(await loadBandTreeItem()),
-        });
-      }
-    }
-
-    if (includePageData && pageDataContext) {
-      const fanData = pageDataContext.fanData;
-      const pageData = pageDataContext.data;
-
-      if (fanData.fan_id !== pageData?.fan_data?.fan_id) {
-        addSection({
-          label: `Fan: ${fanData.name}`,
-          createTreeData: async () =>
-            createTreeDataFromTreeItemChildren(
-              await FanPageDataTreeItem.create(pageDataContext),
-            ),
-        });
-      }
-
-      addSection({
-        label: 'Following Bands',
-        image: ICON_HEADPHONES,
-        childrenCount: pageData?.following_bands_data?.item_count,
-        createTreeData: async () =>
-          createTreeDataFromTreeItemChildren(
-            await TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey(userKeyPart, 'following-bands'),
-              () => FollowingBandsTreeItem.create(fanData.username || ''),
-              CACHE_TTL.FOLLOWING_BANDS,
-            ),
-          ),
-      });
-      addSection({
-        label: 'Following Genres',
-        image: ICON_TAGS,
-        childrenCount: pageData?.following_genres_data?.item_count,
-        createTreeData: async () =>
-          createTreeDataFromTreeItemChildren(
-            await TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey(userKeyPart, 'following-genres'),
-              () => FollowingGenresTreeItem.create(fanData.username || ''),
-              CACHE_TTL.FOLLOWING_GENRES,
-            ),
-          ),
-      });
-      addSection({
-        label: 'Collection',
-        image: ICON_LIBRARY,
-        childrenCount:
-          pageData?.collection_data?.item_count ??
-          pageData?.current_fan?.collection_count ??
-          pageData?.collection_count,
-        createTreeData: async () =>
-          createTreeDataFromTreeItemChildren(
-            await TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey(userKeyPart, 'collection'),
-              () => CollectionTreeItem.create(fanData.username || ''),
-              CACHE_TTL.COLLECTION,
-            ),
-          ),
-      });
-      addSection({
-        label: 'Wishlist',
-        image: ICON_HEART,
-        childrenCount: pageData?.wishlist_data?.item_count,
-        createTreeData: async () =>
-          createTreeDataFromTreeItemChildren(
-            await TreeItemCache.getOrCreate(
-              TreeItemCache.subtreeKey(userKeyPart, 'wishlist'),
-              () => WishlistTreeItem.create(fanData.username || ''),
-              CACHE_TTL.WISHLIST,
-            ),
-          ),
-      });
-    }
-
-    addSection({
-      label: 'History',
-      image: ICON_HISTORY,
-      createTreeData: async () =>
-        createTreeDataFromTreeItemChildren(
-          await HistoryTreeItem.createLatestVisited(),
-        ),
-    });
+    addSection(AlbumSidePanelSection.create(context));
+    addSection(BandSidePanelSection.create(context));
+    addSections(createPageDataSections(context));
+    addSection(HistorySidePanelSection.create());
 
     const sidePanelSections = sections.map((section, index) => ({
       ...section,
@@ -224,25 +79,20 @@ export class MainSidePanelSections {
   }
 }
 
-interface PageDataContext {
-  data: any;
-  fanData: FanData;
-}
+function createPageDataSections(
+  context: SidePanelSectionsContext,
+): PendingSidePanelSection[] {
+  if (!context.includePageData || !context.pageDataContext) {
+    return [];
+  }
 
-type PendingSidePanelSection = Omit<SidePanelSection, 'id'>;
-
-function createTreeDataFromTreeItemChildren(
-  treeItem?: TreeItem | null,
-): TreeData {
-  return createTreeDataFromItems(treeItem?.children || []);
-}
-
-function createTreeDataFromItems(items: TreeItem[]): TreeData {
-  const treeData = new TreeData();
-
-  items.forEach((item) => treeData.add(item));
-
-  return treeData;
+  return [
+    FanSidePanelSection.create(context),
+    FollowingBandsSidePanelSection.create(context),
+    FollowingGenresSidePanelSection.create(context),
+    CollectionSidePanelSection.create(context),
+    WishlistSidePanelSection.create(context),
+  ].filter((section): section is PendingSidePanelSection => !!section);
 }
 
 function createSectionId(label: string, index: number): string {
