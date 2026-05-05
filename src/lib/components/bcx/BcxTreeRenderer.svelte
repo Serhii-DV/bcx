@@ -134,12 +134,6 @@ function getItemIndentStyle(item: TreeItem): string {
   vertical-align: middle;
 }
 
-.tree-node > .tree-node-summary:focus,
-.tree-leaf:focus {
-  outline: 2px solid rgb(255 255 255 / 0.9);
-  outline-offset: 0;
-}
-
 .tree-node[open] > .tree-node-summary::before {
   transform: translateY(-50%) rotate(90deg);
 }

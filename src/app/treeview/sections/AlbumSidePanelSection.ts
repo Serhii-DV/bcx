@@ -3,6 +3,7 @@ import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TreeItemCache } from '../items/TreeItemCache';
 import type { SidePanelSection } from '../SidePanelSection';
+import { TREE_ITEM_LAYOUT } from '../TreeItem';
 import { SIDE_PANEL_SECTION_CACHE_TTL } from './cacheTtl';
 import { createTreeDataFromTreeItemChildren } from './treeDataFactory';
 
@@ -21,7 +22,7 @@ export class AlbumSidePanelSection {
       image: AlbumTreeItemFactory.create(album).image,
       createTreeData: async () => {
         const albumTreeItem = await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey('release', album.id),
+          TreeItemCache.subtreeKey('album', album.id),
           () =>
             AlbumTreeItemFactory.createWithDetails(
               albumDetails || AlbumDetails.fromAlbum(album),
@@ -29,7 +30,10 @@ export class AlbumSidePanelSection {
           SIDE_PANEL_SECTION_CACHE_TTL.RELEASE,
         );
 
-        return createTreeDataFromTreeItemChildren(albumTreeItem);
+        return createTreeDataFromTreeItemChildren(
+          albumTreeItem,
+          TREE_ITEM_LAYOUT.TREE,
+        );
       },
     };
   }

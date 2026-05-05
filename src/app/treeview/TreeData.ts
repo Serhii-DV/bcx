@@ -1,4 +1,4 @@
-import type { TreeItem } from './TreeItem';
+import type { TreeItem, TreeItemLayout } from './TreeItem';
 import {
   createFilteredTreeItems,
   findItemByPath,
@@ -16,9 +16,11 @@ const FILTER_SUGGESTION_GROUP_LABELS = new Set([
 
 export class TreeData {
   treeItems: TreeItem[];
+  layout?: TreeItemLayout;
 
-  constructor(treeItems: TreeItem[] = []) {
+  constructor(treeItems: TreeItem[] = [], layout?: TreeItemLayout) {
     this.treeItems = treeItems;
+    this.layout = layout;
   }
 
   add(item: TreeItem) {
@@ -99,7 +101,7 @@ export class TreeData {
     }
 
     const filteredItems = createFilteredTreeItems(this.treeItems, query);
-    return new TreeData(filteredItems);
+    return new TreeData(filteredItems, this.layout);
   }
 
   get filterSuggestions(): string[] {

@@ -170,4 +170,14 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   max-width: 100%;
   min-width: 0;
 }
+
+:global(.tree-item:hover),
+:global(.tree-item:focus),
+:global(.tree-item.focused) {
+  background-color: rgb(255 255 255 / 0.1);
+}
+
+:global(.tree-item:focus) {
+  outline: none;
+}
 </style>

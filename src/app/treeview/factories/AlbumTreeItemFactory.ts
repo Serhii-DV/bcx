@@ -147,7 +147,7 @@ export class AlbumTreeItemFactory {
   }
 
   static async createWithDetails(details: AlbumDetails): Promise<TreeItem> {
-    const builder = this.detailsBuilder(details).asTree();
+    const builder = this.detailsBuilder(details);
     const artistItems = await ArtistTreeItem.createTreeItems(details.artist);
 
     builder.add(
@@ -217,7 +217,7 @@ export class AlbumTreeItemFactory {
         .withChildrenImage(ICON_TAG),
     );
 
-    return builder.build();
+    return builder.asTree().build();
   }
 
   private static builder(album: Album): TreeItemBuilder {

@@ -1,6 +1,10 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/TreeData';
-import type { TreeItem } from 'src/app/treeview/TreeItem';
+import {
+  TREE_ITEM_LAYOUT,
+  type TreeItem,
+  type TreeItemLayout,
+} from 'src/app/treeview/TreeItem';
 import {
   createFilteredTreeItems,
   findItemByPath,
@@ -95,7 +99,8 @@ let filterSuggestions = $derived.by(() => {
   treeVersion;
   return getTreeItemFilterSuggestions(currentLevelItems);
 });
-let isTreeLayout = $derived(currentRootItem?.layout === 'tree');
+let effectiveLayout = $derived(treeData.layout ?? currentRootItem?.layout);
+let isTreeLayout = $derived(effectiveLayout === TREE_ITEM_LAYOUT.TREE);
 let treeLayoutItems = $derived.by(() => {
   treeVersion;
 
@@ -815,12 +820,4 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   vertical-align: middle;
 }
 
-.bcx-browser-row:hover {
-  background-color: rgb(255 255 255 / 0.1);
-}
-
-.bcx-browser-row:focus {
-  background-color: rgb(255 255 255 / 0.1);
-  outline: none;
-}
 </style>
