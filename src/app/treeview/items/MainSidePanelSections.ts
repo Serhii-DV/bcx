@@ -35,11 +35,7 @@ export class MainSidePanelSections {
     console.log(logLabel, { currentPageUrl, page, band, album, albumDetails });
     console.time(logLabel);
 
-    const userKeyPart = includePageData
-      ? pageDataContext?.fanData?.username ||
-        pageDataContext?.fanData?.fan_id ||
-        'anonymous'
-      : 'anonymous';
+    const userKeyPart = getUserKeyPart(includePageData, pageDataContext);
     const context: SidePanelSectionsContext = {
       album,
       albumDetails,
@@ -93,6 +89,21 @@ function createPageDataSections(
     CollectionSidePanelSection.create(context),
     WishlistSidePanelSection.create(context),
   ].filter((section): section is PendingSidePanelSection => !!section);
+}
+
+function getUserKeyPart(
+  includePageData: boolean,
+  pageDataContext: PageDataContext | null,
+): string {
+  if (!includePageData) {
+    return 'anonymous';
+  }
+
+  return String(
+    pageDataContext?.fanData?.username ||
+      pageDataContext?.fanData?.fan_id ||
+      'anonymous',
+  );
 }
 
 function createSectionId(label: string, index: number): string {
