@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { TreeData, TreeDataSection } from 'src/app/treeview/TreeData';
+import type { TreeData } from 'src/app/treeview/TreeData';
 import type { TreeItem } from 'src/app/treeview/TreeItem';
 import {
   createFilteredTreeItems,
@@ -19,7 +19,6 @@ import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
 import BcxTreeRenderer from './BcxTreeRenderer.svelte';
-import BcxTreeSection from './BcxTreeSection.svelte';
 import {
   activateTreeItem,
   collapseTreeNodeElement,
@@ -42,19 +41,29 @@ import {
 
 interface Props {
   treeData: TreeData;
+  initialRootPath?: string | null;
+  lockInitialRoot?: boolean;
+  showBreadcrumb?: boolean;
+  showFilter?: boolean;
 }
 
 const DRILL_UP_PATH = '__bcx_tree_drill_up__';
 
-let { treeData }: Props = $props();
+let {
+  treeData,
+  initialRootPath = null,
+  lockInitialRoot = false,
+  showBreadcrumb = true,
+  showFilter = true,
+}: Props = $props();
 let treeContainer: HTMLDivElement;
 let filterRef: BcxTreeBrowserFilter;
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let filterQuery = $state('');
 let debouncedFilterQuery = $state('');
-let currentRootPath: string | null = $state(null);
-let sectionOpenState: Record<string, boolean> = $state({});
+let currentRootPath: string | null = $state(initialRootPath);
+const lockedRootPath = lockInitialRoot ? initialRootPath : null;
 let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
@@ -108,30 +117,10 @@ let treeLayoutVisibleData = $derived.by(() => {
 });
 let treeLayoutVisiblePaths = $derived(treeLayoutVisibleData.paths);
 let treeLayoutVisibleChildCounts = $derived(treeLayoutVisibleData.childCounts);
-let isSectionRootView = $derived(
-  !currentRootPath && treeData.sections.length > 0,
-);
 
 export function focusFirstItem() {
   focusTreeItem(getNavigableItems()[0]);
 }
-
-$effect(() => {
-  treeVersion;
-  const nextState = { ...sectionOpenState };
-  let changed = false;
-
-  treeData.sections.forEach((section) => {
-    if (nextState[section.id] === undefined) {
-      nextState[section.id] = !!section.defaultOpen;
-      changed = true;
-    }
-  });
-
-  if (changed) {
-    sectionOpenState = nextState;
-  }
-});
 
 $effect(() => {
   const currentQuery = filterQuery;
@@ -161,6 +150,17 @@ $effect(() => {
   treeVersion;
   if (currentRootPath && !findTreeItemByPath(currentRootPath)) {
     currentRootPath = null;
+  }
+});
+
+$effect(() => {
+  treeVersion;
+  if (
+    currentRootItem?.loadChildren &&
+    !currentRootItem.childrenLoaded &&
+    !currentRootItem.isLoadingChildren
+  ) {
+    void loadCurrentRootItem(currentRootItem);
   }
 });
 
@@ -327,24 +327,14 @@ async function handleKeyDown(event: KeyboardEvent) {
 }
 
 function getNavigableItems(): TreeItem[] {
-  if (isSectionRootView) {
-    return getSectionRootNavigableItems();
-  }
-
   if (isTreeLayout) {
     const items = getTreeLayoutNavigableItems();
-    return currentRootPath ? [createDrillUpItem(), ...items] : items;
+    return canNavigateToParentLevel() ? [createDrillUpItem(), ...items] : items;
   }
 
-  return currentRootPath
+  return canNavigateToParentLevel()
     ? [createDrillUpItem(), ...browserItems]
     : browserItems;
-}
-
-function getSectionRootNavigableItems(): TreeItem[] {
-  return treeData.sections.flatMap((section) =>
-    isSectionExpanded(section) ? getSectionBrowserItems(section) : [],
-  );
 }
 
 function visibleItemIndex(path?: string | null): number {
@@ -474,13 +464,17 @@ function navigateToLevel(path: string | null, focusPath?: string | null) {
 }
 
 function navigateToParentLevel() {
-  if (!currentRootPath) {
+  if (!canNavigateToParentLevel()) {
     return;
   }
 
   const previousRootPath = currentRootPath;
   const parentItem = findParentTreeItemByPath(currentRootPath);
   navigateToLevel(parentItem?.path || null, previousRootPath);
+}
+
+function canNavigateToParentLevel(): boolean {
+  return !!currentRootPath && currentRootPath !== lockedRootPath;
 }
 
 function applyFilterImmediately() {
@@ -514,11 +508,14 @@ async function enterBrowserItem(item: TreeItem) {
   navigateToLevel(itemPath);
 }
 
-function setSectionOpen(section: TreeDataSection, isOpen: boolean) {
-  sectionOpenState = {
-    ...sectionOpenState,
-    [section.id]: isOpen,
-  };
+async function loadCurrentRootItem(item: TreeItem) {
+  item.isLoadingChildren = true;
+  refreshTreeRendering();
+  await waitForLoadingStatePaint(item, focusTreeItem);
+  showItemFeedback(item, 'Loading...', 0);
+  await hydrateTreeItemChildren(item, true);
+  refreshTreeRendering();
+  await tick();
 }
 
 async function handleBrowserItemClick(
@@ -585,32 +582,6 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 
   expandCurrentTreeNode(item);
 }
-
-function getSectionItem(section: TreeDataSection): TreeItem | null {
-  return findTreeItemByPath(section.itemPath);
-}
-
-function isSectionOpen(section: TreeDataSection): boolean {
-  return !!sectionOpenState[section.id];
-}
-
-function isSectionExpanded(section: TreeDataSection): boolean {
-  return isSectionOpen(section) || !!debouncedFilterQuery.trim();
-}
-
-function getSectionBrowserItems(section: TreeDataSection): TreeItem[] {
-  const item = getSectionItem(section);
-
-  if (!item?.children) {
-    return [];
-  }
-
-  if (!debouncedFilterQuery.trim()) {
-    return item.children;
-  }
-
-  return createFilteredTreeItems(item.children, debouncedFilterQuery);
-}
 </script>
 
 {#snippet backTreeItem(item: TreeItem)}
@@ -675,25 +646,8 @@ function getSectionBrowserItems(section: TreeDataSection): TreeItem[] {
 {/snippet}
 
 {#snippet browserTreeItems(items: TreeItem[] | undefined)}
-  {#if isSectionRootView}
-    <div class="bcx-tree-sections">
-      {#each treeData.sections as section}
-        <BcxTreeSection
-          {section}
-          isOpen={isSectionOpen(section)}
-          {focusedPath}
-          filterQuery={debouncedFilterQuery}
-          findItemByPath={findTreeItemByPath}
-          onOpenChange={setSectionOpen}
-          onItemClick={handleItemClick}
-          onBrowserItemClick={handleBrowserItemClick}
-          {refreshTreeRendering}
-        />
-      {/each}
-    </div>
-  {:else}
-    <ol class="ml-0 mt-0 pl-0">
-    {#if currentRootPath}
+  <ol class="ml-0 mt-0 pl-0">
+    {#if canNavigateToParentLevel()}
       <li>
         {@render backTreeItem(createDrillUpItem())}
       </li>
@@ -727,22 +681,25 @@ function getSectionBrowserItems(section: TreeDataSection): TreeItem[] {
         {debouncedFilterQuery.trim() ? 'No items match your filter' : 'No items here'}
       </li>
     {/if}
-    </ol>
-  {/if}
+  </ol>
 {/snippet}
 
 <div class="flex flex-col h-full gap-2">
-  <BcxTreeBrowserFilter
-    bind:this={filterRef}
-    bind:value={filterQuery}
-    suggestions={filterSuggestions}
-    onArrowDown={handleFilterArrowDown}
-  />
-  <BcxTreeBreadcrumb
-    items={breadcrumbItems}
-    currentPath={currentRootPath}
-    onNavigate={navigateToLevel}
-  />
+  {#if showFilter}
+    <BcxTreeBrowserFilter
+      bind:this={filterRef}
+      bind:value={filterQuery}
+      suggestions={filterSuggestions}
+      onArrowDown={handleFilterArrowDown}
+    />
+  {/if}
+  {#if showBreadcrumb}
+    <BcxTreeBreadcrumb
+      items={breadcrumbItems}
+      currentPath={currentRootPath}
+      onNavigate={navigateToLevel}
+    />
+  {/if}
   <div
     bind:this={treeContainer}
     class="bcx-tree-view"
@@ -793,11 +750,5 @@ function getSectionBrowserItems(section: TreeDataSection): TreeItem[] {
   background-color: rgb(255 255 255 / 0.2);
   outline: 2px solid rgb(255 255 255 / 0.9);
   outline-offset: 0;
-}
-
-.bcx-tree-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
 }
 </style>

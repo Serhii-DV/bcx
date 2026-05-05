@@ -10,7 +10,7 @@ import {
 export interface TreeDataSection {
   id: string;
   label: string;
-  itemPath: string;
+  itemPath?: string;
   defaultOpen?: boolean;
 }
 

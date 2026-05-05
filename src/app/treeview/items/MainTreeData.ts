@@ -62,10 +62,19 @@ export class MainTreeData {
         'anonymous'
       : 'anonymous';
     const items: TreeItem[] = [];
-    const sections: Array<{ label: string; defaultOpen?: boolean }> = [];
+    const sections: PendingTreeDataSection[] = [];
+
+    function addSectionItem(
+      item: TreeItem,
+      section: Pick<PendingTreeDataSection, 'label' | 'defaultOpen'>,
+    ) {
+      const itemPath = String(items.length);
+      items.push(item);
+      sections.push({ ...section, itemPath });
+    }
 
     if (album) {
-      items.push(
+      addSectionItem(
         builder(AlbumTreeItemFactory.create(album))
           .makeLazy(() =>
             TreeItemCache.getOrCreate(
@@ -78,8 +87,8 @@ export class MainTreeData {
             ),
           )
           .build(),
+        { label: album.title },
       );
-      sections.push({ label: album.title });
     }
 
     if (band) {
@@ -105,15 +114,17 @@ export class MainTreeData {
           hasChildren: children.length > 0,
         };
 
-        items.push(bandTreeItem);
-        sections.push({ label: band.name, defaultOpen: true });
+        addSectionItem(bandTreeItem, {
+          label: band.name,
+          defaultOpen: true,
+        });
       } else {
-        items.push(
+        addSectionItem(
           builder(BandTreeItemFactory.create(band))
             .makeLazy(loadBandTreeItem)
             .build(),
+          { label: band.name },
         );
-        sections.push({ label: band.name });
       }
     }
 
@@ -122,15 +133,15 @@ export class MainTreeData {
       const pageData = pageDataContext.data;
 
       if (fanData.fan_id !== pageData?.fan_data?.fan_id) {
-        items.push(
+        addSectionItem(
           builder({ label: `Fan: ${fanData.name}` })
             .makeLazy(() => FanPageDataTreeItem.create(pageDataContext))
             .build(),
+          { label: `Fan: ${fanData.name}` },
         );
-        sections.push({ label: `Fan: ${fanData.name}` });
       }
 
-      items.push(
+      addSectionItem(
         builder({
           label: 'Following Bands',
           image: ICON_HEADPHONES,
@@ -144,9 +155,9 @@ export class MainTreeData {
             ),
           )
           .build(),
+        { label: 'Following Bands' },
       );
-      sections.push({ label: 'Following Bands' });
-      items.push(
+      addSectionItem(
         builder({
           label: 'Following Genres',
           image: ICON_TAGS,
@@ -160,9 +171,9 @@ export class MainTreeData {
             ),
           )
           .build(),
+        { label: 'Following Genres' },
       );
-      sections.push({ label: 'Following Genres' });
-      items.push(
+      addSectionItem(
         builder({
           label: 'Collection',
           image: ICON_LIBRARY,
@@ -179,9 +190,9 @@ export class MainTreeData {
             ),
           )
           .build(),
+        { label: 'Collection' },
       );
-      sections.push({ label: 'Collection' });
-      items.push(
+      addSectionItem(
         builder({
           label: 'Wishlist',
           image: ICON_HEART,
@@ -195,16 +206,16 @@ export class MainTreeData {
             ),
           )
           .build(),
+        { label: 'Wishlist' },
       );
-      sections.push({ label: 'Wishlist' });
     }
 
-    items.push(
+    addSectionItem(
       builder({ label: 'History', image: ICON_HISTORY })
         .makeLazy(() => HistoryTreeItem.createLatestVisited())
         .build(),
+      { label: 'History' },
     );
-    sections.push({ label: 'History' });
 
     items.forEach((item) => {
       if (item) {
@@ -215,7 +226,6 @@ export class MainTreeData {
       sections.map((section, index) => ({
         ...section,
         id: createSectionId(section.label, index),
-        itemPath: String(index),
       })),
     );
 
@@ -228,6 +238,12 @@ export class MainTreeData {
 interface PageDataContext {
   data: any;
   fanData: FanData;
+}
+
+interface PendingTreeDataSection {
+  label: string;
+  itemPath?: string;
+  defaultOpen?: boolean;
 }
 
 function createSectionId(label: string, index: number): string {

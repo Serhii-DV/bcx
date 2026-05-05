@@ -1,8 +1,11 @@
 <script lang="ts">
 import { X } from '@lucide/svelte';
-import { TreeData } from 'src/app/treeview/TreeData';
+import { TreeData, type TreeDataSection } from 'src/app/treeview/TreeData';
+import type { TreeItem } from 'src/app/treeview/TreeItem';
+import { findItemByPath } from 'src/app/treeview/utils';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
+import BcxSection from './BcxSection.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 
 interface Props {
@@ -21,10 +24,45 @@ let {
   onClose = () => {},
 }: Props = $props();
 let treeBrowserRef: BcxTreeBrowser;
+let treeSections = $derived(
+  treeData.sections.filter((section) => !!section.itemPath),
+);
+let sectionTreeDataById: Record<string, TreeData> = $state({});
 
 function handleClose() {
   onClose();
 }
+
+function createTreeDataForSection(section: TreeDataSection): TreeData {
+  const item = findSectionItem(section);
+  const sectionTreeData = new TreeData();
+
+  if (item) {
+    sectionTreeData.add(item);
+  }
+
+  return sectionTreeData;
+}
+
+function getTreeDataForSection(section: TreeDataSection): TreeData {
+  return sectionTreeDataById[section.id] ?? new TreeData();
+}
+
+function findSectionItem(section: TreeDataSection): TreeItem | null {
+  return section.itemPath
+    ? findItemByPath(treeData.items, section.itemPath)
+    : null;
+}
+
+$effect(() => {
+  const nextSectionTreeDataById: Record<string, TreeData> = {};
+
+  treeSections.forEach((section) => {
+    nextSectionTreeDataById[section.id] = createTreeDataForSection(section);
+  });
+
+  sectionTreeDataById = nextSectionTreeDataById;
+});
 
 // Focus first item when panel opens
 $effect(() => {
@@ -69,25 +107,36 @@ $effect(() => {
       <div class="flex-1 overflow-y-auto">
         <div class="space-y-4">
 
-          <!-- Tree Browser -->
-          <div class="bcx-tree-browser text-md">
-            <BcxTreeBrowser bind:this={treeBrowserRef} treeData={treeData} />
-          </div>
+          <div class="bcx-sections">
+            {#each treeSections as section}
+              <BcxSection
+                title={section.label}
+                defaultOpen={section.defaultOpen}
+              >
+                <div class="bcx-section-tree-browser">
+                  <BcxTreeBrowser
+                    bind:this={treeBrowserRef}
+                    treeData={getTreeDataForSection(section)}
+                    initialRootPath="0"
+                    lockInitialRoot
+                    showBreadcrumb={false}
+                    showFilter={false}
+                  />
+                </div>
+              </BcxSection>
+            {/each}
 
-          <!-- Extension Info -->
-          <div class="p-3">
-            <h3 class="mb-2">Extension Info</h3>
-            <p class="text-sm">
-              BCX enhances your Bandcamp experience with powerful search and filtering tools.
-            </p>
-          </div>
-
-          <!-- Keyboard Shortcuts -->
-          <div class="bcx-keyboard-shortcuts p-3">
-            <h3 class="mb-2">Keyboard Shortcuts</h3>
-            <div class="space-y-1 text-sm">
-              <div><kbd class="kbd">Ctrl+Shift+X</kbd> Toggle panel</div>
-            </div>
+            <BcxSection title="Extension Info">
+              <div class="bcx-section-content">
+                <p>
+                  BCX enhances your Bandcamp experience with powerful search and filtering tools.
+                </p>
+                <div class="bcx-keyboard-shortcuts">
+                  <h3>Keyboard Shortcuts</h3>
+                  <div><kbd class="kbd">Ctrl+Shift+X</kbd> Toggle panel</div>
+                </div>
+              </div>
+            </BcxSection>
           </div>
         </div>
       </div>
@@ -100,17 +149,6 @@ $effect(() => {
 </div>
 
 <style>
-  /* Custom kbd styling */
-  :global(.kbd) {
-    background: #374151;
-    color: #f9fafb;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-family: monospace;
-    border: 1px solid #4b5563;
-  }
-
   :global(.bcx-side-panel-shell) {
     --bcx-side-panel-width: 400px;
     position: fixed;
@@ -169,6 +207,45 @@ $effect(() => {
     background: rgb(255 255 255 / 12%);
     color: #04b1fe;
     outline: none;
+  }
+
+  :global(.bcx-sections) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0.5rem;
+  }
+
+  :global(.bcx-section-tree-browser .bcx-tree-view) {
+    padding: 0;
+  }
+
+  :global(.bcx-section-content) {
+    color: rgb(209 213 219);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    padding: 0.5rem 0.5rem 0.75rem 1.5rem;
+  }
+
+  :global(.bcx-section-content p) {
+    margin: 0 0 0.75rem;
+  }
+
+  :global(.bcx-section-content h3) {
+    color: rgb(243 244 246);
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin: 0 0 0.375rem;
+  }
+
+  :global(.bcx-section-content .kbd) {
+    background: #374151;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    color: #f9fafb;
+    font-family: monospace;
+    font-size: 0.75rem;
+    padding: 2px 6px;
   }
 
   @media (prefers-reduced-motion: reduce) {
