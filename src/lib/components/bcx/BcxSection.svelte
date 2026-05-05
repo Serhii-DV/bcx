@@ -133,7 +133,7 @@ function focusSiblingHeader(direction: 1 | -1) {
   display: inline-flex;
   flex: 0 0 auto;
   height: 1rem;
-  margin-right: 0.25rem;
+  margin: 0 0.25rem;
   transform: rotate(0deg);
   transition: transform 120ms ease;
   width: 1rem;
