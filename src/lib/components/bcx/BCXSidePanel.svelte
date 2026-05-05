@@ -1,6 +1,7 @@
 <script lang="ts">
 import { X } from '@lucide/svelte';
 import { TreeData, type TreeDataSection } from 'src/app/treeview/TreeData';
+import { ICON_INFO } from 'src/app/treeview/utils/icon';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
 import BcxSection from './BcxSection.svelte';
@@ -141,7 +142,7 @@ $effect(() => {
   <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white transition-opacity duration-400">
     <div class="flex h-full flex-col">
       <!-- Header -->
-      <div class="border-b border-gray-200/30 dark:border-gray-700/30 p-4">
+      <div class="p-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <img src={iconUrl} alt="BCX" class="w-12 h-12" />
@@ -193,7 +194,7 @@ $effect(() => {
               </BcxSection>
             {/each}
 
-            <BcxSection title="Extension Info" height="10rem">
+            <BcxSection title="Extension Info" icon={ICON_INFO} height="10rem">
               <div class="bcx-section-content">
                 <p>
                   BCX enhances your Bandcamp experience with powerful search and filtering tools.
@@ -280,7 +281,6 @@ $effect(() => {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
-    padding: 0.5rem;
   }
 
   :global(.bcx-section-tree-browser .bcx-tree-view) {

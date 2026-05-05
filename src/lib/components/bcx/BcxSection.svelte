@@ -47,17 +47,8 @@ function handleToggle(event: ToggleEvent) {
 </details>
 
 <style>
-.bcx-section {
-  border-top: 1px solid rgb(255 255 255 / 0.08);
-}
-
-.bcx-section:first-child {
-  border-top: 0;
-}
-
 .bcx-section > .bcx-section-header {
   align-items: center;
-  border-radius: 4px;
   color: rgb(229 231 235);
   cursor: pointer;
   display: flex;
