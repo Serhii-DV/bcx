@@ -386,6 +386,5 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
   flex: 1 1 0%;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 0.5rem;
 }
 </style>

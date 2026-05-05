@@ -726,14 +726,12 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   flex: 1 1 0%;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 0.5rem;
 }
 
 .bcx-browser-row {
   display: flex;
   align-items: center;
   width: 100%;
-  border-radius: 4px;
   cursor: pointer;
   padding-right: 0;
   padding-left: 1.5rem;
@@ -750,8 +748,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 }
 
 .bcx-browser-row:focus {
-  background-color: rgb(255 255 255 / 0.2);
-  outline: 2px solid rgb(255 255 255 / 0.9);
-  outline-offset: 0;
+  background-color: rgb(255 255 255 / 0.1);
+  outline: none;
 }
 </style>
