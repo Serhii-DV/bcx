@@ -14,8 +14,8 @@ import { item } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
 import { ICON_MIC } from '../utils/icon';
+import { createPagedTreeItem } from './createPagedTreeItem';
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
-import { createPagedTreeItem } from './pagedTreeItem';
 
 const WISHLIST_KEY = '/wishlist';
 const ARTISTS_BATCH_SIZE = 20;

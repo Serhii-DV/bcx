@@ -2,7 +2,7 @@ import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import { ICON_DISC } from '../utils/icon';
-import { createPagedTreeItem } from './pagedTreeItem';
+import { createPagedTreeItem } from './createPagedTreeItem';
 
 const RELEASE_BATCH_SIZE = 20;
 

@@ -11,7 +11,7 @@ import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
-import { createPagedTreeItem } from './pagedTreeItem';
+import { createPagedTreeItem } from './createPagedTreeItem';
 
 const FOLLOWING_BANDS_KEY = '/following-bands';
 const FOLLOWING_BANDS_BATCH_SIZE = 20;

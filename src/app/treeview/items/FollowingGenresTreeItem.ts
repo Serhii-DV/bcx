@@ -4,7 +4,7 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import type { TreeItem } from '../TreeItem';
 import { link } from '../TreeItemBuilder';
 import { ICON_TAG } from '../utils/icon';
-import { createStoredFanListTreeItem } from './storedFanListTreeItem';
+import { createStoredFanListTreeItem } from './createStoredFanListTreeItem';
 
 const FOLLOWING_GENRES_KEY = '/following-genres';
 

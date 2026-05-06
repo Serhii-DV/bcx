@@ -4,7 +4,7 @@ import type { FollowingFanItem } from 'src/bandcamp/domain/types/CollectionPageD
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import type { TreeItem } from '../TreeItem';
 import { link } from '../TreeItemBuilder';
-import { createStoredFanListTreeItem } from './storedFanListTreeItem';
+import { createStoredFanListTreeItem } from './createStoredFanListTreeItem';
 
 const FOLLOWING_FANS_KEY = '/following-fans';
 
