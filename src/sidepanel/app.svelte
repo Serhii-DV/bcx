@@ -6,7 +6,7 @@ import { storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
-import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
+import { BcxSidePanel, BcxTour } from '$lib/components/bcx';
 import { sidePanelTourSteps } from '$lib/constants/tourSteps';
 import {
   type ActiveBandcampTab,
@@ -137,10 +137,10 @@ function shouldReloadForUrlChange(previousUrl: string, nextUrl: string) {
 <svelte:document onkeydown={handleKeydown} />
 
 {#if sidePanelSections}
-  <BCXSidePanel sections={sidePanelSections} open={true} browserPanel={true} />
+  <BcxSidePanel sections={sidePanelSections} open={true} browserPanel={true} />
   {#if sidePanelTourStateLoaded}
     {#key sidePanelTourVersion}
-      <BCXTour
+      <BcxTour
         steps={sidePanelTourSteps}
         autoStart={true}
         hasCompleted={hasCompletedSidePanelTour || sidePanelTourCompleted}

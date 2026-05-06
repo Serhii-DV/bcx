@@ -37,7 +37,7 @@ function handleKeyDown(event: KeyboardEvent) {
 </div>
 
 <style>
-  /* BCX Drawer Button Styles */
+  /* Bcx drawer button styles */
   :global(.bcx-drawer-button) {
     position: fixed;
     right: 16px;

@@ -6,7 +6,7 @@ import { TREE_ITEM_LAYOUT, type TreeItem } from 'src/app/treeview/TreeItem';
 import { buildBreadcrumbItems, isNode } from 'src/app/treeview/utils';
 import { ICON_INFO } from 'src/app/treeview/utils/icon';
 import iconUrl from 'src/assets/icons/icon-48.png';
-import BCXDrawerButton from './BCXDrawerButton.svelte';
+import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxSection from './BcxSection.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
@@ -280,7 +280,7 @@ $effect(() => {
   </div>
 
   {#if !browserPanel}
-    <BCXDrawerButton sidePanelOpen={open} {onToggle} />
+    <BcxDrawerButton sidePanelOpen={open} {onToggle} />
   {/if}
 </div>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 /**
- * BCX Music Filter Component
+ * Bcx music filter component
  */
 
 import Isotope from 'isotope-layout';
@@ -14,7 +14,7 @@ import { createDataListForInput, element } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
 import { musicFilterStore } from '$lib/stores/musicFilter';
-import filterStyles from './BCXMusicFilter.css?inline';
+import filterStyles from './BcxMusicFilter.css?inline';
 import type { QueryCountMap } from './types';
 
 interface Props {
@@ -56,7 +56,7 @@ $effect(() => {
 
 onMount(() => {
   console.log(
-    '[BCXMusicFilter]',
+    '[BcxMusicFilter]',
     'Initialized with',
     musicGridItems.length,
     'DOM elements',
