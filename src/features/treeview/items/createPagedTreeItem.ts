@@ -89,7 +89,7 @@ function createLoadMoreTreeItem<T>(
       }
 
       const loadMoreIndex = children.findIndex(
-        (child) => child === item || child.path === item.path,
+        (child) => child === item || (!!item.path && child.path === item.path),
       );
       const nextChildren = createChildrenPage(options, offset);
 
