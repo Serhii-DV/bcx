@@ -18,8 +18,8 @@ export class AlbumSidePanelSection {
 
     return {
       id: `album-${album.id}`,
-      label: album.title,
-      image: AlbumTreeItemFactory.create(album).image,
+      label: album.fullTitle,
+      image: album.artwork.tinySizeUrl,
       createTreeData: async () => {
         const albumTreeItem = await TreeItemCache.getOrCreate(
           TreeItemCache.subtreeKey('album', album.id),
