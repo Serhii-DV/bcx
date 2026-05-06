@@ -14,6 +14,7 @@ import { musicFilterStore } from '$lib/stores/musicFilter';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
+import { getMusicAlbumSchema } from '../domain/page/schema';
 import { BandcampStorage } from '../domain/storage';
 import {
   isBandcampAlbumUrl,
@@ -76,6 +77,9 @@ chrome.runtime.onMessage.addListener(
           pageData: {
             data: bandcampPageData.data,
             fanData: bandcampPageData.fanData,
+            albumSchema: isBandcampAlbumUrl(currentPageUrl)
+              ? getMusicAlbumSchema()
+              : null,
           },
         });
       } catch (error) {

@@ -2,8 +2,12 @@ import { MainSidePanelSections } from 'src/app/treeview/items/MainSidePanelSecti
 import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import type { FanData } from 'src/app/types/FanData';
 import { Album } from 'src/bandcamp/domain/album/album';
+import { AlbumDetails } from 'src/bandcamp/domain/album/details';
+import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import type { Band } from 'src/bandcamp/domain/band/band';
+import { BandFactory } from 'src/bandcamp/domain/band/factory';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
+import type { MusicAlbumSchema } from 'src/bandcamp/domain/page/schema';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import {
   isBandcampAlbumUrl,
@@ -32,6 +36,7 @@ interface ActiveBandcampPageDataResponse {
 interface ActiveBandcampPageData {
   data: any;
   fanData: FanData;
+  albumSchema?: MusicAlbumSchema | null;
 }
 
 const pageDataByHostname = new Map<string, ActiveBandcampPageData>();
@@ -52,10 +57,8 @@ export async function createActiveTabSidePanelSections(
   tab: ActiveBandcampTab,
 ): Promise<SidePanelSection[]> {
   const currentPageUrl = Url.create(tab.url);
-  const [page, pageData] = await Promise.all([
-    createBandPage(currentPageUrl),
-    getActiveBandcampPageData(currentPageUrl),
-  ]);
+  const pageData = await getActiveBandcampPageData(currentPageUrl);
+  const page = await createBandPage(currentPageUrl, pageData);
 
   return MainSidePanelSections.create(currentPageUrl, page, {
     includePageData: !!pageData,
@@ -82,7 +85,21 @@ async function getActiveBandcampPageData(
   return pageDataByHostname.get(currentPageUrl.hostname) ?? null;
 }
 
-async function createBandPage(currentPageUrl: Url): Promise<BandPage | null> {
+async function createBandPage(
+  currentPageUrl: Url,
+  pageData: ActiveBandcampPageData | null,
+): Promise<BandPage | null> {
+  if (isBandcampAlbumUrl(currentPageUrl) && pageData?.albumSchema) {
+    const album = AlbumFactory.createFromSchema(pageData.albumSchema);
+    const [band] = await BandcampStorage.getBands([album.bandId]);
+
+    return {
+      album,
+      albumDetails: AlbumDetails.fromMusicAlbumSchema(pageData.albumSchema),
+      band: band ?? BandFactory.fromMusicAlbumSchema(pageData.albumSchema),
+    };
+  }
+
   const entities = await BandcampStorage.getByUuids(
     getStoredEntityUrlUuids(currentPageUrl),
   );
@@ -91,10 +108,11 @@ async function createBandPage(currentPageUrl: Url): Promise<BandPage | null> {
   );
 
   if (album && isBandcampAlbumUrl(currentPageUrl)) {
+    const [hydratedAlbum] = await BandcampStorage.getAlbums([album]);
     const [band] = await BandcampStorage.getBands([album.bandId]);
 
     return {
-      album,
+      album: hydratedAlbum ?? album,
       albumDetails: null,
       band: band ?? null,
     };
