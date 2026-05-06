@@ -1,6 +1,6 @@
 import { storage } from 'src/core/shared';
 import type { StorableData } from 'src/core/storage';
-import { isEqual } from 'src/utils/utils';
+import { isEqual } from 'src/utils/object';
 import { Album } from './album/album';
 import type { CompressedAlbumData, RawAlbumData } from './album/compressor';
 import { AlbumFactory } from './album/factory';

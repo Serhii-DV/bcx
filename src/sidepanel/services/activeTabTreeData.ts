@@ -1,6 +1,3 @@
-import { MainSidePanelSections } from 'src/app/treeview/items/MainSidePanelSections';
-import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
-import type { FanData } from 'src/app/types/FanData';
 import { Album } from 'src/bandcamp/domain/album/album';
 import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
@@ -13,12 +10,15 @@ import type { MusicAlbumSchema } from 'src/bandcamp/domain/page/schema';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
+import type { FanData } from 'src/bandcamp/domain/types/FanData';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
 } from 'src/bandcamp/domain/url/helper';
 import { MessageType } from 'src/core/message';
 import { Url } from 'src/core/url';
+import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
+import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 
 export interface ActiveBandcampTab {
   id: number;

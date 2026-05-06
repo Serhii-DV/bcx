@@ -1,5 +1,6 @@
 // Bcx component exports
 
+export * from '../types';
 export { default as BcxDrawerButton } from './BcxDrawerButton.svelte';
 export { default as BcxMusicFilter } from './BcxMusicFilter.svelte';
 export { default as BcxSection } from './BcxSection.svelte';
@@ -12,4 +13,3 @@ export { default as BcxTreeFilterInput } from './BcxTreeFilterInput.svelte';
 export { default as BcxTreeItem } from './BcxTreeItem.svelte';
 export { default as BcxTreeView } from './BcxTreeView.svelte';
 export { default as BcxTreeViewFilter } from './BcxTreeViewFilter.svelte';
-export * from './types';

@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { TreeItem } from 'src/app/treeview/TreeItem';
-import { isNode } from 'src/app/treeview/utils';
+import type { TreeItem } from 'src/features/treeview/TreeItem';
+import { isNode } from 'src/features/treeview/utils';
 import BcxTreeItem from './BcxTreeItem.svelte';
 import { getItemVisibleChildCount as getVisibleChildCount } from './treeViewHelpers';
 

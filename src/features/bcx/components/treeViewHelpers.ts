@@ -1,16 +1,19 @@
-import type { TreeData } from 'src/app/treeview/TreeData';
-import type { TreeItem, TreeItemClickContext } from 'src/app/treeview/TreeItem';
-import {
-  generateTreeHierarchy,
-  hydrateTreeItemChildren,
-  isNode,
-} from 'src/app/treeview/utils';
 import {
   applyMusicFilterQuery,
   openUrlInActiveTab,
 } from 'src/core/extensionActions';
+import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
+import type { TreeData } from 'src/features/treeview/TreeData';
+import type {
+  TreeItem,
+  TreeItemClickContext,
+} from 'src/features/treeview/TreeItem';
+import {
+  generateTreeHierarchy,
+  hydrateTreeItemChildren,
+  isNode,
+} from 'src/features/treeview/utils';
 import { tick } from 'svelte';
-import { musicFilterStore } from '$lib/stores/musicFilter';
 
 export interface VisibleTreeData {
   paths: Set<string>;

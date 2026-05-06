@@ -1,6 +1,10 @@
 <script lang="ts">
-import type { TreeData } from 'src/app/treeview/TreeData';
-import { TREE_ITEM_LAYOUT, type TreeItem } from 'src/app/treeview/TreeItem';
+import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
+import type { TreeData } from 'src/features/treeview/TreeData';
+import {
+  TREE_ITEM_LAYOUT,
+  type TreeItem,
+} from 'src/features/treeview/TreeItem';
 import {
   buildBreadcrumbItems,
   createFilteredTreeItems,
@@ -9,13 +13,12 @@ import {
   hydrateTreeItemChildren,
   isNode,
   isNodeExpanded,
-} from 'src/app/treeview/utils';
+} from 'src/features/treeview/utils';
 import {
   ICON_CHEVRON_RIGHT,
   ICON_CORNER_RIGHT_UP,
-} from 'src/app/treeview/utils/icon';
+} from 'src/features/treeview/utils/icon';
 import { onDestroy, onMount, tick } from 'svelte';
-import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';

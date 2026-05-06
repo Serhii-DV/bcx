@@ -1,7 +1,7 @@
 <script lang="ts">
-import type { TreeItem } from 'src/app/treeview/TreeItem';
-import type { TreeItemButton } from 'src/app/treeview/TreeItemButton';
-import { makeIcon } from 'src/app/treeview/utils/icon';
+import type { TreeItem } from 'src/features/treeview/TreeItem';
+import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
+import { makeIcon } from 'src/features/treeview/utils/icon';
 
 interface Props {
   item: TreeItem;

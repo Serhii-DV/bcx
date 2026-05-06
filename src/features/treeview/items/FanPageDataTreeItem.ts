@@ -1,7 +1,7 @@
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
-import { hasOwnProperty } from 'src/utils/utils';
+import { hasOwnProperty } from 'src/utils/object';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';

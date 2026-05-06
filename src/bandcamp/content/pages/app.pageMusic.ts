@@ -1,7 +1,7 @@
+import { BcxMusicFilter } from 'src/features/bcx/components';
 import { console } from 'src/utils/console';
 import { markAppSetupStart, measureAppMount } from 'src/utils/performance';
 import { mount } from 'svelte';
-import { BcxMusicFilter } from '$lib/components/bcx';
 import type { PageMusic } from '../../domain/page/pageMusic';
 import { BandcampStorage } from '../../domain/storage';
 

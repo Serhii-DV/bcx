@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@rstest/core';
-import { isString } from './utils';
+import { isString } from './typeGuards';
 
 describe('isString', () => {
   it('should return true for a string', () => {

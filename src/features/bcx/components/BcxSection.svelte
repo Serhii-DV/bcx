@@ -1,5 +1,5 @@
 <script lang="ts">
-import { makeIcon } from 'src/app/treeview/utils/icon';
+import { makeIcon } from 'src/features/treeview/utils/icon';
 import type { Snippet } from 'svelte';
 
 interface Props {

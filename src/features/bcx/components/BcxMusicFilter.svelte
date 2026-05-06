@@ -9,13 +9,13 @@ import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
 import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
+import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
 import { console } from 'src/utils/console';
 import { createDataListForInput, element } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
 import { onDestroy, onMount } from 'svelte';
-import { musicFilterStore } from '$lib/stores/musicFilter';
+import type { QueryCountMap } from '../types';
 import filterStyles from './BcxMusicFilter.css?inline';
-import type { QueryCountMap } from './types';
 
 interface Props {
   band: Band;

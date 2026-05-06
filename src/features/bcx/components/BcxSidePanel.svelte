@@ -1,11 +1,14 @@
 <script lang="ts">
 import { X } from '@lucide/svelte';
-import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
-import { TreeData } from 'src/app/treeview/TreeData';
-import { TREE_ITEM_LAYOUT, type TreeItem } from 'src/app/treeview/TreeItem';
-import { buildBreadcrumbItems, isNode } from 'src/app/treeview/utils';
-import { ICON_INFO } from 'src/app/treeview/utils/icon';
 import iconUrl from 'src/assets/icons/icon-48.png';
+import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
+import { TreeData } from 'src/features/treeview/TreeData';
+import {
+  TREE_ITEM_LAYOUT,
+  type TreeItem,
+} from 'src/features/treeview/TreeItem';
+import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
+import { ICON_INFO } from 'src/features/treeview/utils/icon';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxSection from './BcxSection.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';

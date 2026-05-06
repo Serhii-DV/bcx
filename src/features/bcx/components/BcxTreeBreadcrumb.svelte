@@ -1,6 +1,6 @@
 <script lang="ts">
 import { House } from '@lucide/svelte';
-import type { TreeItem } from 'src/app/treeview/TreeItem';
+import type { TreeItem } from 'src/features/treeview/TreeItem';
 
 interface Props {
   items: TreeItem[];

@@ -1,7 +1,7 @@
-import type { FanData } from 'src/app/types/FanData';
+import type { FanData } from 'src/bandcamp/domain/types/FanData';
 import { currentPageUrl } from 'src/core/shared';
 import type { Url } from 'src/core/url';
-import { getJsonFromElementDataAttr } from 'src/utils/utils';
+import { getJsonFromElementDataAttr } from 'src/utils/dom';
 import type { CollectionPageData } from '../types/CollectionPageData';
 import type { MusicPageData } from '../types/MusicPageData';
 import {

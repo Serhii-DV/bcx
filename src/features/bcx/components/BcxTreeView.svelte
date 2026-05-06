@@ -1,9 +1,9 @@
 <script lang="ts">
-import type { TreeData } from 'src/app/treeview/TreeData';
-import type { TreeItem } from 'src/app/treeview/TreeItem';
-import { isNode, isNodeExpanded } from 'src/app/treeview/utils';
+import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
+import type { TreeData } from 'src/features/treeview/TreeData';
+import type { TreeItem } from 'src/features/treeview/TreeItem';
+import { isNode, isNodeExpanded } from 'src/features/treeview/utils';
 import { onDestroy, onMount } from 'svelte';
-import { musicFilterStore } from '$lib/stores/musicFilter';
 import BcxTreeRenderer from './BcxTreeRenderer.svelte';
 import BcxTreeViewFilter from './BcxTreeViewFilter.svelte';
 import {

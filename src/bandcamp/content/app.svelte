@@ -1,11 +1,11 @@
 <script lang="ts">
 import { MessageType } from 'src/core/message';
 import { currentPageUrl, storage } from 'src/core/shared';
+import { BcxDrawerButton, BcxTour } from 'src/features/bcx/components';
+import { musicPageTourSteps } from 'src/features/bcx/constants/tourSteps';
 import { console } from 'src/utils/console';
 import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
-import { BcxDrawerButton, BcxTour } from '$lib/components/bcx';
-import { musicPageTourSteps } from '$lib/constants/tourSteps';
 import { TOUR_COMPLETE_KEY } from '../domain/storageKey';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 
