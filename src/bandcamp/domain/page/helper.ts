@@ -1,6 +1,6 @@
 import './styles/bcx.css';
+import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
 import { createElement, onClick } from 'src/utils/dom';
-import { musicFilterStore } from '$lib/stores/musicFilter';
 
 export function createMetadataElement(): HTMLElement {
   return createElement(

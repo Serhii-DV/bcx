@@ -3,6 +3,7 @@ import {
   capitalizeWords,
   containsOneOf,
   removeInvisibleChars,
+  removeParentheses,
   splitString,
   trim,
 } from './string';
@@ -158,6 +159,20 @@ describe('removeInvisibleChars', () => {
     expect(removeInvisibleChars('\u200BHello&lrm; World\u200F')).toBe(
       'Hello World',
     );
+  });
+});
+
+describe('removeParentheses', () => {
+  it('removes parenthesized text and normalizes whitespace', () => {
+    expect(removeParentheses('Hello (beautiful) world')).toBe('Hello world');
+  });
+
+  it('removes multiple parenthesized groups', () => {
+    expect(removeParentheses('Album (Demo) title (2024)')).toBe('Album title');
+  });
+
+  it('returns a trimmed string when no parentheses are present', () => {
+    expect(removeParentheses('  Plain title  ')).toBe('Plain title');
   });
 });
 

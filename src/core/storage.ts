@@ -68,7 +68,9 @@ export class Storage {
     const items = await this.storage.get(key);
     const t1 = performance.now();
     const data = items[key] as T | undefined;
-    console.log(`[Storage.getByKey(${key})]:`, t1 - t0, 'ms');
+    if (this.debug) {
+      console.log(`[Storage.getByKey(${key})]:`, t1 - t0, 'ms');
+    }
     return data;
   }
 
@@ -83,15 +85,19 @@ export class Storage {
   async getKeys(): Promise<string[]> {
     return new Promise<string[]>((resolve, reject) => {
       const logLabel = `[Storage.getKeys]`;
-      console.time(logLabel);
+      if (this.debug) {
+        console.time(logLabel);
+      }
 
       this.storage.getKeys().then((keys) => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log(logLabel, ...arrayPreview(keys));
-        console.timeEnd(logLabel);
+        if (this.debug) {
+          console.log(logLabel, ...arrayPreview(keys));
+          console.timeEnd(logLabel);
+        }
 
         resolve(keys);
       });
@@ -101,15 +107,19 @@ export class Storage {
   async getAll(): Promise<StorageDataMap> {
     return new Promise<StorageDataMap>((resolve, reject) => {
       const logLabel = `[Storage.getAll]`;
-      console.time(logLabel);
+      if (this.debug) {
+        console.time(logLabel);
+      }
 
       this.storage.get(null, (items) => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log(logLabel, ...arrayPreview(Object.keys(items)));
-        console.timeEnd(logLabel);
+        if (this.debug) {
+          console.log(logLabel, ...arrayPreview(Object.keys(items)));
+          console.timeEnd(logLabel);
+        }
 
         resolve(items);
       });
@@ -135,15 +145,19 @@ export class Storage {
 
     return new Promise((resolve, reject) => {
       const logLabel = `[Storage.set(${Object.keys(storableData).length})]`;
-      console.time(logLabel);
+      if (this.debug) {
+        console.time(logLabel);
+      }
 
       this.storage.set(storableData, () => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log(logLabel, storableData);
-        console.timeEnd(logLabel);
+        if (this.debug) {
+          console.log(logLabel, storableData);
+          console.timeEnd(logLabel);
+        }
 
         resolve();
       });
@@ -161,18 +175,22 @@ export class Storage {
   async remove(key: string | string[]): Promise<void> {
     return new Promise((resolve, reject) => {
       const logLabel = `[Storage.remove(${Array.isArray(key) ? key.length : key})]`;
-      console.time(logLabel);
+      if (this.debug) {
+        console.time(logLabel);
+      }
 
       this.storage.remove(key, () => {
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
 
-        console.log(
-          logLabel,
-          ...arrayPreview(Array.isArray(key) ? key : [key]),
-        );
-        console.timeEnd(logLabel);
+        if (this.debug) {
+          console.log(
+            logLabel,
+            ...arrayPreview(Array.isArray(key) ? key : [key]),
+          );
+          console.timeEnd(logLabel);
+        }
         resolve();
       });
     });
@@ -181,7 +199,9 @@ export class Storage {
   async count(): Promise<number> {
     return new Promise((resolve, reject) => {
       const logLabel = `[Storage.count]`;
-      console.time(logLabel);
+      if (this.debug) {
+        console.time(logLabel);
+      }
 
       this.getAll().then((items) => {
         if (chrome.runtime.lastError) {
@@ -189,8 +209,10 @@ export class Storage {
         }
 
         const count = Object.keys(items).length;
-        console.log('[Storage.count]', count);
-        console.timeEnd(logLabel);
+        if (this.debug) {
+          console.log('[Storage.count]', count);
+          console.timeEnd(logLabel);
+        }
 
         resolve(count);
       });
@@ -208,7 +230,9 @@ export class Storage {
             return reject(chrome.runtime.lastError);
           }
 
-          console.log('[Storage.getSize]', bytesInUse);
+          if (this.debug) {
+            console.log('[Storage.getSize]', bytesInUse);
+          }
           resolve(bytesInUse);
         });
       } else {
@@ -223,7 +247,9 @@ export class Storage {
             );
           }, 0);
 
-          console.log('[Storage.getSize]', bytesInUse);
+          if (this.debug) {
+            console.log('[Storage.getSize]', bytesInUse);
+          }
           resolve(bytesInUse);
         });
       }

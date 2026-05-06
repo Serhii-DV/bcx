@@ -2,14 +2,14 @@ import { describe, expect, it } from '@rstest/core';
 import { getReleaseMetadataFromAlbum } from './helper';
 
 describe('Album helper release metadata', () => {
-  it('parses artist/title into type/year/catalog info', () => {
+  it('parses release metadata from the album title only', () => {
     const album = {
       artist: {
-        toString: () => 'Primitive Outtakes',
-        names: ['Primitive Outtakes'],
+        toString: () => 'Different Artist',
+        names: ['Different Artist'],
         isVariousArtists: false,
       },
-      title: 'Schwarzmondnacht (EP 2023)',
+      title: 'Primitive Outtakes - Schwarzmondnacht (EP 2023)',
       metadata: undefined,
     } as any;
 

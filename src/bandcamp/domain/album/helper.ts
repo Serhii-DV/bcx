@@ -27,7 +27,7 @@ export function getArtistNamesFromAlbums(albums: Album[]): string[] {
 }
 
 /**
- * Parse structured release metadata from album artist/title text.
+ * Parse structured release metadata from the album title.
  */
 export function getReleaseMetadataFromAlbum(
   album: Album,

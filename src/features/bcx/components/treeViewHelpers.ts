@@ -1,0 +1,478 @@
+import {
+  applyMusicFilterQuery,
+  openUrlInActiveTab,
+} from 'src/core/extensionActions';
+import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
+import type { TreeData } from 'src/features/treeview/TreeData';
+import type {
+  TreeItem,
+  TreeItemClickContext,
+} from 'src/features/treeview/TreeItem';
+import {
+  generateTreeHierarchy,
+  hydrateTreeItemChildren,
+  isNode,
+} from 'src/features/treeview/utils';
+import { tick } from 'svelte';
+
+export interface VisibleTreeData {
+  paths: Set<string>;
+  childCounts: Map<string, number>;
+}
+
+export interface ActivateTreeItemOptions {
+  item?: TreeItem | null;
+  event?: MouseEvent | KeyboardEvent;
+  treeData: TreeData;
+  focusTreeItem: (item?: TreeItem | null) => void;
+  findItemByPath: (path?: string | null) => TreeItem | null;
+  findParentByPath: (path?: string | null) => TreeItem | null;
+  refreshTreeRendering: () => void;
+  showItemFeedback?: (
+    item: TreeItem,
+    message: string,
+    duration?: number,
+  ) => void;
+  logLabel: string;
+}
+
+export interface ExpandTreeNodeOptions {
+  item: TreeItem;
+  container: HTMLElement | undefined;
+  focusTreeItem: (item?: TreeItem | null) => void;
+  refreshTreeRendering: () => void;
+  showItemFeedback?: (
+    item: TreeItem,
+    message: string,
+    duration?: number,
+  ) => void;
+}
+
+export function createVisibleTreeData(
+  visibleItems: TreeItem[] | undefined,
+  sourceItems: TreeItem[] | undefined,
+): VisibleTreeData {
+  const paths = new Set<string>();
+  const childCounts = new Map<string, number>();
+
+  function collectPaths(items: TreeItem[] | undefined) {
+    if (!items) return;
+    for (const item of items) {
+      if (item.path) paths.add(item.path);
+      if (item.children) collectPaths(item.children);
+    }
+  }
+
+  function countVisibleChildren(items: TreeItem[] | undefined) {
+    if (!items) return;
+    for (const item of items) {
+      if (item.children && item.children.length > 0) {
+        const visibleCount = item.children.filter((child) =>
+          paths.has(child.path || ''),
+        ).length;
+        if (item.path) {
+          childCounts.set(item.path, visibleCount);
+        }
+        countVisibleChildren(item.children);
+      }
+    }
+  }
+
+  collectPaths(visibleItems);
+  countVisibleChildren(sourceItems);
+
+  return { paths, childCounts };
+}
+
+export async function activateTreeItem({
+  item,
+  event,
+  treeData,
+  focusTreeItem,
+  findItemByPath,
+  findParentByPath,
+  refreshTreeRendering,
+  showItemFeedback,
+  logLabel,
+}: ActivateTreeItemOptions) {
+  if (!item) return;
+
+  console.log(logLabel, '[handleItemClick]', item, event);
+
+  if (item.onClick) {
+    const clickContext: TreeItemClickContext = {
+      element: event?.currentTarget as HTMLElement,
+      item,
+      parent:
+        findParentByPath(item.path) ?? createRootItemsParent(item, treeData),
+      findItemByPath,
+      findParentByPath,
+      showFeedback: (message, duration) =>
+        showItemFeedback?.(item, message, duration),
+    };
+
+    await item.onClick(clickContext);
+
+    if (clickContext.refreshTree !== false) {
+      treeData.treeItems = generateTreeHierarchy(treeData.items);
+      refreshTreeRendering();
+    }
+
+    if (clickContext.focusPath) {
+      await tick();
+      focusTreeItem(findItemByPath(clickContext.focusPath));
+    }
+
+    return;
+  }
+
+  if (item.query) {
+    musicFilterStore.setSearchQuery(item.query);
+    await applyMusicFilterQuery(item.query);
+    focusTreeItem(item);
+    return;
+  }
+
+  if (item.href) {
+    if (event?.currentTarget instanceof HTMLAnchorElement) {
+      event.preventDefault();
+    }
+
+    if (event instanceof KeyboardEvent || event instanceof MouseEvent) {
+      showItemFeedback?.(item, 'Opening...', 0);
+      await waitForActionFeedbackPaint();
+      if (await openUrlInActiveTab(item.href)) {
+        return;
+      }
+      window.open(item.href, '_self');
+    }
+  }
+}
+
+function createRootItemsParent(
+  item: TreeItem,
+  treeData: TreeData,
+): TreeItem | null {
+  if (!item.path || item.path.includes('.')) {
+    return null;
+  }
+
+  return treeData.items.some((rootItem) => rootItem === item)
+    ? { children: treeData.items }
+    : null;
+}
+
+async function waitForActionFeedbackPaint() {
+  await tick();
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.setTimeout(resolve, 0);
+    });
+  });
+}
+
+export function shouldIgnoreTreeKeyDown(event: KeyboardEvent): boolean {
+  return (event.ctrlKey || event.metaKey) && /^r$/i.test(event.key);
+}
+
+export function visibleItemIndex(
+  items: TreeItem[],
+  path?: string | null,
+): number {
+  if (!path) return -1;
+  return items.findIndex((item) => item.path === path);
+}
+
+export function findVisibleItem(
+  items: TreeItem[],
+  index: number,
+): TreeItem | null {
+  return index >= 0 && index < items.length ? items[index] : null;
+}
+
+export function visibleNext(
+  items: TreeItem[],
+  index: number,
+  step: number = 1,
+): TreeItem | null {
+  if (index < items.length - 1) {
+    const targetIndex =
+      step > 1 ? Math.min(index + step, items.length - 1) : index + 1;
+    return items[targetIndex];
+  }
+
+  return null;
+}
+
+export function visiblePrev(
+  items: TreeItem[],
+  index: number,
+  step: number = 1,
+): TreeItem | null {
+  if (index > 0) {
+    const targetIndex = step > 1 ? Math.max(index - step, 0) : index - 1;
+    return items[targetIndex];
+  }
+
+  return null;
+}
+
+export function findFirstVisibleChildByPath(
+  items: TreeItem[],
+  path?: string | null,
+): TreeItem | null {
+  if (!path) return null;
+
+  const currentIndex = visibleItemIndex(items, path);
+  if (currentIndex < 0) return null;
+
+  return (
+    items
+      .slice(currentIndex + 1)
+      .find((item) => item.path?.startsWith(`${path}.`)) ?? null
+  );
+}
+
+export function findVisibleParentByPath(
+  items: TreeItem[],
+  path?: string | null,
+): TreeItem | null {
+  if (!path) return null;
+
+  const parentPath = path.split('.').slice(0, -1).join('.');
+
+  if (!parentPath) {
+    return null;
+  }
+
+  return items.find((item) => item.path === parentPath) ?? null;
+}
+
+export function getNavigableTreeItems(
+  visibleItems: TreeItem[],
+  query: string,
+  visiblePaths: Set<string>,
+): TreeItem[] {
+  if (!query.trim()) {
+    return visibleItems;
+  }
+
+  return visibleItems.filter((item) => visiblePaths.has(item.path || ''));
+}
+
+export function elementByPath(
+  container: HTMLElement | undefined,
+  path?: string,
+): HTMLElement | null {
+  if (!path || !container) return null;
+  return container.querySelector(`[data-path="${path}"]`) as HTMLElement;
+}
+
+export function focusTreeItemElement(
+  container: HTMLElement | undefined,
+  item?: TreeItem | null,
+) {
+  if (!item || !item.path) {
+    return;
+  }
+
+  const element = elementByPath(container, item.path);
+
+  if (!element) {
+    return;
+  }
+
+  if (element instanceof HTMLDetailsElement) {
+    element.querySelector('summary')?.focus();
+  } else {
+    element.focus();
+  }
+}
+
+export function showTreeItemActionFeedback(
+  container: HTMLElement | undefined,
+  item: TreeItem,
+  message: string,
+  timers: Map<string, number>,
+  duration: number = 1600,
+) {
+  if (!item.path) return;
+
+  const element = elementByPath(container, item.path);
+  const feedback = element?.querySelector<HTMLElement>('.item-action-feedback');
+
+  if (!element || !feedback) {
+    return;
+  }
+
+  const previousTimer = timers.get(item.path);
+  if (previousTimer) {
+    clearTimeout(previousTimer);
+  }
+
+  element.dataset.actionFeedback = 'true';
+  feedback.textContent = message;
+
+  if (duration <= 0) {
+    return;
+  }
+
+  const timer = window.setTimeout(() => {
+    if (element.dataset.actionFeedback === 'true') {
+      delete element.dataset.actionFeedback;
+      feedback.textContent = '';
+    }
+    timers.delete(item.path || '');
+  }, duration);
+
+  timers.set(item.path, timer);
+}
+
+export function collapseTreeNodeElement(
+  container: HTMLElement | undefined,
+  item: TreeItem,
+) {
+  if (!isNode(item)) {
+    return;
+  }
+
+  const element = elementByPath(container, item.path);
+
+  if (element instanceof HTMLDetailsElement) {
+    item.open = false;
+    element.open = false;
+  }
+}
+
+export async function expandTreeNode({
+  item,
+  container,
+  focusTreeItem,
+  refreshTreeRendering,
+  showItemFeedback,
+}: ExpandTreeNodeOptions) {
+  if (!isNode(item)) {
+    return;
+  }
+
+  const itemToFocus = item;
+  item.open = true;
+  let didHydrate = false;
+
+  if (item.loadChildren && !item.childrenLoaded) {
+    item.isLoadingChildren = true;
+    refreshTreeRendering();
+    await waitForLoadingStatePaint(itemToFocus, focusTreeItem);
+    showItemFeedback?.(itemToFocus, 'Loading...', 0);
+    await hydrateTreeItemChildren(item, true);
+    didHydrate = true;
+  }
+
+  if (didHydrate) {
+    refreshTreeRendering();
+    await tick();
+  }
+
+  const element = elementByPath(container, item.path);
+
+  if (element instanceof HTMLDetailsElement) {
+    item.open = true;
+    element.open = true;
+  }
+
+  focusTreeItem(itemToFocus);
+}
+
+export async function waitForLoadingStatePaint(
+  itemToFocus: TreeItem,
+  focusTreeItem: (item?: TreeItem | null) => void,
+) {
+  await tick();
+  focusTreeItem(itemToFocus);
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.setTimeout(resolve, 0);
+    });
+  });
+}
+
+export function getItemVisibleChildCount(
+  item: TreeItem,
+  query: string,
+  visibleChildCounts: Map<string, number>,
+): number {
+  if (item.showChildrenCount === false) {
+    return 0;
+  }
+
+  const loadedChildCount = item.children?.length;
+  const knownChildCount = item.childrenCount ?? loadedChildCount ?? 0;
+
+  if (!query.trim()) {
+    return knownChildCount;
+  }
+
+  return visibleChildCounts.get(item.path || '') ?? knownChildCount;
+}
+
+export function treeItemMatchesQuery(item: TreeItem, query: string): boolean {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  return getTreeItemSearchValues(item).some((value) =>
+    value.toLowerCase().includes(normalizedQuery),
+  );
+}
+
+export function filterTreeItemsFlat(
+  items: TreeItem[] | undefined,
+  query: string,
+): TreeItem[] {
+  if (!query.trim()) {
+    return items || [];
+  }
+
+  const matches: TreeItem[] = [];
+
+  function collectMatchingItems(treeItems: TreeItem[] | undefined) {
+    if (!treeItems) return;
+
+    for (const item of treeItems) {
+      if (treeItemMatchesQuery(item, query)) {
+        matches.push(item);
+      }
+
+      collectMatchingItems(item.children);
+    }
+  }
+
+  collectMatchingItems(items);
+  return matches;
+}
+
+export function getTreeItemFilterSuggestions(
+  items: TreeItem[] | undefined,
+): string[] {
+  const suggestions = new Set<string>();
+
+  function collectSuggestions(treeItems: TreeItem[] | undefined) {
+    if (!treeItems) return;
+
+    for (const item of treeItems) {
+      getTreeItemSearchValues(item).forEach((value) => suggestions.add(value));
+      collectSuggestions(item.children);
+    }
+  }
+
+  collectSuggestions(items);
+  return Array.from(suggestions).sort();
+}
+
+function getTreeItemSearchValues(item: TreeItem): string[] {
+  return [item.label, item.query, ...(item.keywords || [])].filter(
+    (value): value is string => !!value?.trim(),
+  );
+}

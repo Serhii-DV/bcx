@@ -1,18 +1,18 @@
 <script lang="ts">
-import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import { SIDE_PANEL_TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
 import { MessageType } from 'src/core/message';
 import { storage } from 'src/core/shared';
+import { BcxSidePanel, BcxTour } from 'src/features/bcx/components';
+import { sidePanelTourSteps } from 'src/features/bcx/constants/tourSteps';
+import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { console } from 'src/utils/console';
 import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
-import { BCXSidePanel, BCXTour } from '$lib/components/bcx';
-import { sidePanelTourSteps } from '$lib/constants/tourSteps';
 import {
   type ActiveBandcampTab,
   createActiveTabSidePanelSections,
   getActiveBandcampTab,
-} from './activeTabTreeData';
+} from './services/activeTabTreeData';
 
 let sidePanelSections: SidePanelSection[] | null = $state(null);
 let activeTab: ActiveBandcampTab | null = $state(null);
@@ -137,10 +137,10 @@ function shouldReloadForUrlChange(previousUrl: string, nextUrl: string) {
 <svelte:document onkeydown={handleKeydown} />
 
 {#if sidePanelSections}
-  <BCXSidePanel sections={sidePanelSections} open={true} browserPanel={true} />
+  <BcxSidePanel sections={sidePanelSections} open={true} browserPanel={true} />
   {#if sidePanelTourStateLoaded}
     {#key sidePanelTourVersion}
-      <BCXTour
+      <BcxTour
         steps={sidePanelTourSteps}
         autoStart={true}
         hasCompleted={hasCompletedSidePanelTour || sidePanelTourCompleted}

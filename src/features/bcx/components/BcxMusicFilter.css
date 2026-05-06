@@ -1,0 +1,222 @@
+/* Bcx music filter interface styling */
+.bcx-filter-container {
+  margin: 0 0 20px 0;
+  padding: 15px;
+}
+
+.bcx-filter-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.bcx-filter-input-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  max-width: 400px;
+}
+
+.bcx-filter-input {
+  flex: 1;
+  field-sizing: content;
+  padding: 8px 12px;
+  font-size: 16px;
+  background-color: transparent;
+  border-width: 0 0 1px 0;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+  color: inherit;
+  margin-bottom: 10px;
+}
+
+.bcx-filter-input:focus {
+  border-bottom-color: #0070f3;
+  outline: none;
+}
+
+.bcx-filter-clear-button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  height: fit-content;
+  margin-top: 4px;
+}
+
+.bcx-filter-clear-button:hover {
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-color: #999;
+}
+
+.bcx-filter-clear-button:focus {
+  outline: 2px solid #0070f3;
+  outline-offset: 1px;
+}
+
+.filter-results-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: #eee;
+  background-color: #333333c0;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 10px;
+  line-height: 1;
+}
+
+.results-text {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.progress-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.results-progress {
+  flex: 1;
+  height: 8px;
+  border: none;
+  background-color: rgba(128, 128, 128, 0.2);
+  overflow: hidden;
+}
+
+.results-progress::-webkit-progress-bar {
+  background-color: rgba(128, 128, 128, 0.2);
+}
+
+.results-progress::-webkit-progress-value {
+  background: #6b8e23;
+}
+
+.results-progress::-moz-progress-bar {
+  background: #6b8e23;
+}
+
+.progress-percentage {
+  font-size: 12px;
+  color: #666;
+  min-width: 35px;
+  text-align: right;
+}
+
+/* Hide filtered out items */
+.filtered-hidden {
+  display: none !important;
+}
+
+.bcx-filter-badges {
+  margin: 10px 0 0;
+}
+
+.bcx-filter-badges details summary {
+  cursor: pointer;
+}
+
+.bcx-filter-badges .bcx-badges-container {
+  padding: 5px 0;
+}
+
+.bcx-sort-badges-container {
+  margin: 5px 0 5px 5px;
+  display: flex;
+  align-items: center;
+}
+
+.bcx-sort-badges-container button {
+  margin-right: 4px;
+  font-size: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background-color: transparent;
+  border: 1px solid #ccc;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bcx-sort-badges-container button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+}
+
+.bcx-sort-badges-container button.is-checked {
+  background-color: rgba(0, 112, 243, 0.2);
+  border-color: rgba(0, 112, 243, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 112, 243, 0.2);
+}
+
+/* Tabs Component Styling */
+.bcx-tabs-root {
+  width: 100%;
+}
+
+.bcx-tabs-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  background-color: transparent;
+}
+
+.bcx-tabs-trigger {
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  background-color: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bcx-tabs-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+}
+
+.bcx-tabs-trigger[data-state="active"] {
+  background-color: rgba(0, 112, 243, 0.2);
+  border: 1px solid rgba(0, 112, 243, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 112, 243, 0.2);
+}
+
+.bcx-tabs-trigger:focus {
+  outline: 2px solid #0070f3;
+  outline-offset: 1px;
+}
+
+.bcx-tabs-content {
+  padding: 10px 5px 0 5px;
+  background-color: transparent;
+}
+
+.bcx-tabs-content:empty::after {
+  content: "No items available";
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 13px;
+}

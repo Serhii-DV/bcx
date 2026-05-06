@@ -1,9 +1,9 @@
+import type { QueryCountMap } from 'src/features/bcx/types';
 import { arrayUnique, createQueryCountMap } from 'src/utils/array';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { console } from 'src/utils/console';
 import { element, elementHtml, elements, injectCssFile } from 'src/utils/dom';
 import { removeInvisibleChars, trim } from 'src/utils/string';
-import type { QueryCountMap } from '$lib/components/bcx';
 import { Album } from '../album/album';
 import { Artwork } from '../artwork/artwork';
 import { Band } from '../band/band';

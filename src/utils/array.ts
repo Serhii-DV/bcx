@@ -1,4 +1,4 @@
-import type { QueryCountMap } from '$lib/components/bcx';
+import type { QueryCountMap } from 'src/features/bcx/types';
 
 export function arrayUnique(arr: string[]): string[] {
   if (arr.length === 0) {

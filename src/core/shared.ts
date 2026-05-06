@@ -1,7 +1,9 @@
 import { Storage } from './storage';
 import { Url } from './url';
 
-const debug = true;
+const isTestEnvironment =
+  typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+const debug = !isTestEnvironment;
 
 /**
  * Shared storage instance for use across content scripts

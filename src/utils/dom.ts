@@ -1,5 +1,5 @@
 import { console } from './console';
-import { isString } from './utils';
+import { isString } from './typeGuards';
 
 export function element(
   selector: string,
@@ -25,6 +25,22 @@ export function createElement(htmlString: string): HTMLElement | null {
   const div = document.createElement('div');
   div.innerHTML = htmlString.trim();
   return div.firstChild as HTMLElement | null;
+}
+
+export function getJsonFromElementDataAttr(
+  selector: string,
+  dataAttr: string,
+): unknown {
+  const el = document.querySelector<HTMLElement>(selector);
+  if (!el) throw new Error(`Element not found for selector: ${selector}`);
+
+  const attrValue = el.dataset[dataAttr];
+  if (!attrValue)
+    throw new Error(
+      `Element missing [data-${dataAttr}] for selector: ${selector}`,
+    );
+
+  return JSON.parse(attrValue);
 }
 
 export function hasDataAttribute(

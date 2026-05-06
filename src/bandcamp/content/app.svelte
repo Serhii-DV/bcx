@@ -1,11 +1,11 @@
 <script lang="ts">
 import { MessageType } from 'src/core/message';
 import { currentPageUrl, storage } from 'src/core/shared';
+import { BcxDrawerButton, BcxTour } from 'src/features/bcx/components';
+import { musicPageTourSteps } from 'src/features/bcx/constants/tourSteps';
 import { console } from 'src/utils/console';
 import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
-import { BCXDrawerButton, BCXTour } from '$lib/components/bcx';
-import { musicPageTourSteps } from '$lib/constants/tourSteps';
 import { TOUR_COMPLETE_KEY } from '../domain/storageKey';
 import { isBandcampMusicUrl } from '../domain/url/helper';
 
@@ -74,7 +74,7 @@ async function toggleBrowserSidePanel() {
 <svelte:document onkeydown={handleKeydown} />
 
 <div class="bcx-browser-side-panel-drawer">
-  <BCXDrawerButton
+  <BcxDrawerButton
     sidePanelOpen={false}
     onToggle={() => void toggleBrowserSidePanel()}
   />
@@ -82,7 +82,7 @@ async function toggleBrowserSidePanel() {
 
 {#if isBandcampMusicUrl(currentPageUrl) && tourStateLoaded}
   {#key tourVersion}
-    <BCXTour
+    <BcxTour
       steps={musicPageTourSteps}
       autoStart={true}
       hasCompleted={hasCompletedTour || mainTourCompleted}
