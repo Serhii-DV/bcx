@@ -2,13 +2,17 @@ import { MainSidePanelSections } from 'src/app/treeview/items/MainSidePanelSecti
 import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import type { FanData } from 'src/app/types/FanData';
 import { Album } from 'src/bandcamp/domain/album/album';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
-import type { Band } from 'src/bandcamp/domain/band/band';
+import { Band } from 'src/bandcamp/domain/band/band';
 import { BandFactory } from 'src/bandcamp/domain/band/factory';
+import { BandMetadata } from 'src/bandcamp/domain/band/metadata';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
 import type { MusicAlbumSchema } from 'src/bandcamp/domain/page/schema';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -37,6 +41,20 @@ interface ActiveBandcampPageData {
   data: any;
   fanData: FanData;
   albumSchema?: MusicAlbumSchema | null;
+  musicBand?: ActiveMusicBandData | null;
+}
+
+interface ActiveMusicBandData {
+  id: number;
+  name: string;
+  url: string;
+  artworkId: number;
+  metadata: {
+    created: string;
+    currency: string;
+  };
+  albums: RawAlbumData[];
+  tracks: RawTrackData[];
 }
 
 const pageDataByHostname = new Map<string, ActiveBandcampPageData>();
@@ -100,6 +118,14 @@ async function createBandPage(
     };
   }
 
+  if (isBandcampMusicUrl(currentPageUrl) && pageData?.musicBand) {
+    return {
+      album: null,
+      albumDetails: null,
+      band: createBandFromActiveMusicData(pageData.musicBand),
+    };
+  }
+
   const entities = await BandcampStorage.getByUuids(
     getStoredEntityUrlUuids(currentPageUrl),
   );
@@ -131,6 +157,24 @@ async function createBandPage(
   }
 
   return null;
+}
+
+function createBandFromActiveMusicData(data: ActiveMusicBandData): Band {
+  const albums = data.albums.map((album) => AlbumFactory.fromRawData(album));
+  const tracks = data.tracks.map((track) => TrackFactory.fromRawData(track));
+
+  return Band.create(
+    data.id,
+    data.name,
+    data.url,
+    data.artworkId,
+    BandMetadata.create(
+      data.metadata.created,
+      data.metadata.currency,
+      albums,
+      tracks,
+    ),
+  );
 }
 
 function getStoredEntityUrlUuids(currentPageUrl: Url): string[] {
