@@ -11,10 +11,13 @@ export function createFanDataSubtreeSection(
     cacheKey: string;
     icon: string;
     id: string;
-    itemCountPath: string;
+    itemCountPath?: string;
     label: string;
     ttl: number;
     createTreeItem: (username: string) => Promise<TreeItem>;
+    getChildrenCount?: (
+      pageData: PageDataContext['data'],
+    ) => number | undefined;
   },
 ): SidePanelSection | null {
   if (!pageDataContext) {
@@ -28,7 +31,11 @@ export function createFanDataSubtreeSection(
     id: options.id,
     label: options.label,
     image: options.icon,
-    childrenCount: pageData?.[options.itemCountPath]?.item_count,
+    childrenCount:
+      options.getChildrenCount?.(pageData) ??
+      (options.itemCountPath
+        ? pageData?.[options.itemCountPath]?.item_count
+        : undefined),
     createTreeData: async () =>
       createTreeDataFromTreeItemChildren(
         await TreeItemCache.getOrCreate(
