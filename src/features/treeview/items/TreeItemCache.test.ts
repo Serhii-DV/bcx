@@ -36,10 +36,12 @@ describe('TreeItemCache', () => {
 
   it('creates stable subtree keys while skipping empty parts', async () => {
     const { TreeItemCache } = await import('./TreeItemCache');
+    const { sessionStorage } = await import('src/core/shared');
 
     expect(TreeItemCache.subtreeKey('fan', '', null, undefined, 42)).toBe(
       '/cache/tree-item/fan/42',
     );
+    expect((sessionStorage as unknown as { debug: boolean }).debug).toBe(false);
   });
 
   it('caches tree item snapshots and strips runtime-only handlers', async () => {

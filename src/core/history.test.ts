@@ -13,8 +13,17 @@ describe('History', () => {
   });
 
   it('uses chrome.history when the API is available', async () => {
-    const results = [{ id: '1', url: 'https://bandcamp.com' }];
-    const search = rstest.fn((_query, callback) => callback(results));
+    const results: chrome.history.HistoryItem[] = [
+      { id: '1', url: 'https://bandcamp.com' },
+    ];
+    const search = rstest.fn(
+      (
+        _query: chrome.history.HistoryQuery,
+        callback?: (results: chrome.history.HistoryItem[]) => void,
+      ) => {
+        callback?.(results);
+      },
+    );
     installChrome({ history: { search } });
 
     await expect(History.search({ text: 'bandcamp' })).resolves.toBe(results);
@@ -26,9 +35,14 @@ describe('History', () => {
   });
 
   it('falls back to runtime messaging when chrome.history is unavailable', async () => {
-    const results = [{ id: '1', url: 'https://bandcamp.com' }];
-    const sendMessage = rstest.fn((_message, callback) =>
-      callback({ results }),
+    const results: chrome.history.HistoryItem[] = [
+      { id: '1', url: 'https://bandcamp.com' },
+    ];
+    const sendMessage = rstest.fn(
+      (
+        _message: unknown,
+        callback: (response: HistorySearchResponse) => void,
+      ) => callback({ results }),
     );
     installChrome({ runtime: { sendMessage } });
 
@@ -44,8 +58,11 @@ describe('History', () => {
   });
 
   it('rejects message fallback errors', async () => {
-    const sendMessage = rstest.fn((_message, callback) =>
-      callback({ error: 'Denied' }),
+    const sendMessage = rstest.fn(
+      (
+        _message: unknown,
+        callback: (response: HistorySearchResponse) => void,
+      ) => callback({ error: 'Denied' }),
     );
     installChrome({ runtime: { sendMessage } });
 
@@ -55,7 +72,27 @@ describe('History', () => {
   });
 });
 
-function installChrome(chromeMock: Partial<typeof chrome>) {
+type HistorySearchResponse = {
+  error?: string;
+  results?: chrome.history.HistoryItem[];
+};
+
+type ChromeTestMock = {
+  history?: {
+    search: (
+      query: chrome.history.HistoryQuery,
+      callback: (results: chrome.history.HistoryItem[]) => void,
+    ) => void | Promise<chrome.history.HistoryItem[]>;
+  };
+  runtime?: {
+    sendMessage: (
+      message: unknown,
+      callback: (response: HistorySearchResponse) => void,
+    ) => void;
+  };
+};
+
+function installChrome(chromeMock: ChromeTestMock) {
   Object.defineProperty(globalThis, 'chrome', {
     value: {
       runtime: {

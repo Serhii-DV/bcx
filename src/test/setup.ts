@@ -1,5 +1,7 @@
 const storageArea = createStorageArea();
 
+process.env.NODE_ENV = 'test';
+
 if (!globalThis.chrome) {
   Object.defineProperty(globalThis, 'chrome', {
     value: {
