@@ -185,6 +185,25 @@ export function findItemByPath(
   return null;
 }
 
+export function buildBreadcrumbItems(
+  items: TreeItem[],
+  path: string,
+): TreeItem[] {
+  const pathParts = path.split('.');
+  const breadcrumbItems: TreeItem[] = [];
+
+  for (let index = 0; index < pathParts.length; index += 1) {
+    const pathAtLevel = pathParts.slice(0, index + 1).join('.');
+    const item = findItemByPath(items, pathAtLevel);
+
+    if (item) {
+      breadcrumbItems.push(item);
+    }
+  }
+
+  return breadcrumbItems;
+}
+
 export function hasDescendantMatchingQuery(
   item: TreeItem,
   query: string,

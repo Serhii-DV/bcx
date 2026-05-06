@@ -3,7 +3,7 @@
 > These rules apply to ALL interactions with this repository
 
 ## Mandatory Commands & Tools
-- **Package Manager**: ONLY use `pnpm` (never npm/yarn)
+- **Package Manager**: ONLY use `pnpm` (never npm/yarn). If unavailable, notify the user to install it.
 - **TypeScript**: ONLY create .ts/.svelte files (never .js)
 - **Testing**: Use `pnpm test` with RSTest framework
 - **Linting**: Use `pnpm check` and `pnpm fix`
@@ -26,11 +26,5 @@
 This is a **Bandcamp browser extension** that enhances music discovery. Any code suggestions must:
 - Not break Bandcamp's existing functionality
 - Follow browser extension security practices
-- Use minimal DOM manipulation
+- Avoid direct DOM manipulation unless absolutely necessary, and prefer using Svelte's reactive features for DOM updates
 - Respect Content Security Policy
-
-## When suggesting commands, ALWAYS use:
-- `pnpm dev` (not npm run dev)
-- `pnpm add package` (not npm install)
-- `pnpm test` (not npm test)
-- `pnpm build` (not npm run build)

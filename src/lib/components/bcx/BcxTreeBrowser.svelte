@@ -1,11 +1,8 @@
 <script lang="ts">
 import type { TreeData } from 'src/app/treeview/TreeData';
+import { TREE_ITEM_LAYOUT, type TreeItem } from 'src/app/treeview/TreeItem';
 import {
-  TREE_ITEM_LAYOUT,
-  type TreeItem,
-  type TreeItemLayout,
-} from 'src/app/treeview/TreeItem';
-import {
+  buildBreadcrumbItems,
   createFilteredTreeItems,
   findItemByPath,
   getVisibleItems,
@@ -48,6 +45,7 @@ interface Props {
   filterQuery?: string | null;
   initialRootPath?: string | null;
   lockInitialRoot?: boolean;
+  rootPath?: string | null;
   showBreadcrumb?: boolean;
   showFilter?: boolean;
   isLoading?: boolean;
@@ -61,19 +59,19 @@ let {
   filterQuery: externalFilterQuery = null,
   initialRootPath = null,
   lockInitialRoot = false,
+  rootPath = $bindable(),
   showBreadcrumb = true,
   showFilter = true,
   isLoading = false,
   loadingMessage = 'Loading',
 }: Props = $props();
 let treeContainer: HTMLDivElement;
-let filterRef: BcxTreeBrowserFilter;
+let filterRef: BcxTreeBrowserFilter | undefined = $state();
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let localFilterQuery = $state('');
 let debouncedFilterQuery = $state('');
-let currentRootPath: string | null = $state(initialRootPath);
-const lockedRootPath = lockInitialRoot ? initialRootPath : null;
+let lockedRootPath = $derived(lockInitialRoot ? initialRootPath : null);
 let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
@@ -81,7 +79,7 @@ const feedbackTimers = new Map<string, number>();
 
 let currentRootItem = $derived.by(() => {
   treeVersion;
-  return currentRootPath ? findTreeItemByPath(currentRootPath) : null;
+  return rootPath ? findTreeItemByPath(rootPath) : null;
 });
 let currentLevelItems = $derived.by(() => {
   treeVersion;
@@ -89,7 +87,7 @@ let currentLevelItems = $derived.by(() => {
 });
 let breadcrumbItems = $derived.by(() => {
   treeVersion;
-  return currentRootPath ? buildBreadcrumb(currentRootPath) : [];
+  return rootPath ? buildBreadcrumbItems(treeData.items, rootPath) : [];
 });
 let browserItems = $derived.by(() => {
   treeVersion;
@@ -144,6 +142,12 @@ export function focusFirstItem() {
 }
 
 $effect(() => {
+  if (rootPath === undefined) {
+    rootPath = initialRootPath;
+  }
+});
+
+$effect(() => {
   const currentQuery = effectiveFilterQuery;
 
   if (filterDebounceTimer !== null) {
@@ -169,8 +173,8 @@ $effect(() => {
 
 $effect(() => {
   treeVersion;
-  if (currentRootPath && !findTreeItemByPath(currentRootPath)) {
-    currentRootPath = null;
+  if (rootPath && !findTreeItemByPath(rootPath)) {
+    rootPath = null;
   }
 });
 
@@ -468,22 +472,6 @@ function findParentTreeItemByPath(path?: string | null): TreeItem | null {
   return parentPath ? findTreeItemByPath(parentPath) : null;
 }
 
-function buildBreadcrumb(path: string): TreeItem[] {
-  const pathParts = path.split('.');
-  const items: TreeItem[] = [];
-
-  for (let index = 0; index < pathParts.length; index += 1) {
-    const pathAtLevel = pathParts.slice(0, index + 1).join('.');
-    const item = findTreeItemByPath(pathAtLevel);
-
-    if (item) {
-      items.push(item);
-    }
-  }
-
-  return items;
-}
-
 function createDrillUpItem(): TreeItem {
   return {
     label: '..',
@@ -494,7 +482,7 @@ function createDrillUpItem(): TreeItem {
 }
 
 function getDrillUpLabel(): string {
-  const parentItem = findParentTreeItemByPath(currentRootPath);
+  const parentItem = findParentTreeItemByPath(rootPath);
   return parentItem ? `Back to ${parentItem.label}` : 'Back to root';
 }
 
@@ -504,7 +492,7 @@ function isDrillUpItem(item: TreeItem): boolean {
 
 function navigateToLevel(path: string | null, focusPath?: string | null) {
   applyFilterImmediately();
-  currentRootPath = path;
+  rootPath = path;
   focusedPath = null;
   refreshTreeRendering();
   tick().then(() => {
@@ -517,13 +505,13 @@ function navigateToParentLevel() {
     return;
   }
 
-  const previousRootPath = currentRootPath;
-  const parentItem = findParentTreeItemByPath(currentRootPath);
+  const previousRootPath = rootPath;
+  const parentItem = findParentTreeItemByPath(rootPath);
   navigateToLevel(parentItem?.path || null, previousRootPath);
 }
 
 function canNavigateToParentLevel(): boolean {
-  return !!currentRootPath && currentRootPath !== lockedRootPath;
+  return !!rootPath && rootPath !== lockedRootPath;
 }
 
 function applyFilterImmediately() {
@@ -750,7 +738,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   {#if showBreadcrumb}
     <BcxTreeBreadcrumb
       items={breadcrumbItems}
-      currentPath={currentRootPath}
+      currentPath={rootPath}
       onNavigate={navigateToLevel}
     />
   {/if}
