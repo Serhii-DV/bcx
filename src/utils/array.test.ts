@@ -1,9 +1,19 @@
 import { describe, expect, it } from '@rstest/core';
-import { arrayUnique, createQueryCountMap } from './array';
+import { arrayNumberUnique, arrayUnique, createQueryCountMap } from './array';
 
 describe('arrayUnique', () => {
   it('should return an array with unique values', () => {
     expect(arrayUnique(['a', 'b', 'a'])).toEqual(['a', 'b']);
+  });
+});
+
+describe('arrayNumberUnique', () => {
+  it('returns numbers with duplicates removed in first-seen order', () => {
+    expect(arrayNumberUnique([3, 1, 3, 2, 1])).toEqual([3, 1, 2]);
+  });
+
+  it('returns an empty array for empty input', () => {
+    expect(arrayNumberUnique([])).toEqual([]);
   });
 });
 
