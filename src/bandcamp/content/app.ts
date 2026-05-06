@@ -1,3 +1,5 @@
+import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
+import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
 import { mount } from 'svelte';
 import App from './app.svelte';
 import './app.css';
@@ -14,6 +16,7 @@ import { musicFilterStore } from '$lib/stores/musicFilter';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
+import { getMusicAlbumSchema } from '../domain/page/schema';
 import { BandcampStorage } from '../domain/storage';
 import {
   isBandcampAlbumUrl,
@@ -22,6 +25,21 @@ import {
   isBandcampUrl,
 } from '../domain/url/helper';
 import { initAppPageMusic } from './pages/app.pageMusic';
+
+interface ActiveMusicBandData {
+  id: number;
+  name: string;
+  url: string;
+  artworkId: number;
+  metadata: {
+    created: string;
+    currency: string;
+  };
+  albums: RawAlbumData[];
+  tracks: RawTrackData[];
+}
+
+let activePageMusic: PageMusic | null = null;
 
 onDOMReady(async () => {
   if (!isBandcampUrl(currentPageUrl)) {
@@ -41,6 +59,7 @@ onDOMReady(async () => {
   try {
     if (isBandcampMusicUrl(currentPageUrl)) {
       const pageMusic = await PageMusic.init();
+      activePageMusic = pageMusic;
       await initAppPageMusic(pageMusic);
     } else if (isBandcampAlbumUrl(currentPageUrl)) {
       await PageAlbum.init();
@@ -76,6 +95,12 @@ chrome.runtime.onMessage.addListener(
           pageData: {
             data: bandcampPageData.data,
             fanData: bandcampPageData.fanData,
+            albumSchema: isBandcampAlbumUrl(currentPageUrl)
+              ? getMusicAlbumSchema()
+              : null,
+            musicBand: isBandcampMusicUrl(currentPageUrl)
+              ? createActiveMusicBandData()
+              : null,
           },
         });
       } catch (error) {
@@ -99,6 +124,27 @@ chrome.runtime.onMessage.addListener(
     sendResponse({ ok: true });
   },
 );
+
+function createActiveMusicBandData(): ActiveMusicBandData | null {
+  const band = activePageMusic?.band;
+
+  if (!band) {
+    return null;
+  }
+
+  return {
+    id: band.id,
+    name: band.name,
+    url: band.url.toString(),
+    artworkId: band.artwork.id,
+    metadata: {
+      created: band.metadata.created.toISOString(),
+      currency: band.metadata.currency,
+    },
+    albums: band.metadata.albums.map((album) => album.toRawData()),
+    tracks: band.metadata.tracks.map((track) => track.toRawData()),
+  };
+}
 
 injectJSFile(getExtensionUrl('bcx.js'), () => {
   console.log('[bcx.js]', 'Injected BCX dev tools script JS file');

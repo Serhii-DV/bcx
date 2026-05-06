@@ -2,10 +2,13 @@
 import { X } from '@lucide/svelte';
 import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import { TreeData } from 'src/app/treeview/TreeData';
+import { TREE_ITEM_LAYOUT, type TreeItem } from 'src/app/treeview/TreeItem';
+import { buildBreadcrumbItems, isNode } from 'src/app/treeview/utils';
 import { ICON_INFO } from 'src/app/treeview/utils/icon';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
 import BcxSection from './BcxSection.svelte';
+import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 
@@ -27,6 +30,7 @@ let {
 let sectionsContainer: HTMLDivElement;
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let sectionLoadingById: Record<string, boolean> = $state({});
+let sectionRootPathById: Record<string, string | null> = $state({});
 let globalFilterQuery = $state('');
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
@@ -50,6 +54,17 @@ function getTreeDataForSection(section: SidePanelSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
 }
 
+function getRootPathForSection(section: SidePanelSection): string | null {
+  return sectionRootPathById[section.id] ?? null;
+}
+
+function setRootPathForSection(section: SidePanelSection, path: string | null) {
+  sectionRootPathById = {
+    ...sectionRootPathById,
+    [section.id]: path,
+  };
+}
+
 function isSectionLoading(section: SidePanelSection): boolean {
   return sectionLoadingById[section.id] ?? false;
 }
@@ -62,6 +77,28 @@ function getSectionIcon(section: SidePanelSection): string | undefined {
 function getSectionImage(section: SidePanelSection): string | undefined {
   const image = section.image;
   return image && image.includes('/') ? image : undefined;
+}
+
+function getBreadcrumbItemsForSection(section: SidePanelSection): TreeItem[] {
+  const rootPath = getRootPathForSection(section);
+
+  if (!rootPath) {
+    return [];
+  }
+
+  return buildBreadcrumbItems(getTreeDataForSection(section).items, rootPath);
+}
+
+function startsInTreeLayout(section: SidePanelSection): boolean {
+  return getTreeDataForSection(section).layout === TREE_ITEM_LAYOUT.TREE;
+}
+
+function hasRootItemsWithChildren(section: SidePanelSection): boolean {
+  return getTreeDataForSection(section).items.some(isNode);
+}
+
+function shouldShowBreadcrumb(section: SidePanelSection): boolean {
+  return !startsInTreeLayout(section) && hasRootItemsWithChildren(section);
 }
 
 async function loadSectionTreeData(section: SidePanelSection) {
@@ -124,6 +161,7 @@ $effect(() => {
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
   sectionLoadingById = {};
+  sectionRootPathById = {};
 });
 
 $effect(() => {
@@ -205,10 +243,18 @@ $effect(() => {
                 onOpenChange={(open) => handleSectionOpenChange(section, open)}
               >
                 <div class="bcx-section-tree-browser">
+                  {#if shouldShowBreadcrumb(section)}
+                    <BcxTreeBreadcrumb
+                      items={getBreadcrumbItemsForSection(section)}
+                      currentPath={getRootPathForSection(section)}
+                      onNavigate={(path) => setRootPathForSection(section, path)}
+                    />
+                  {/if}
                   <BcxTreeBrowser
                     treeData={getTreeDataForSection(section)}
                     isLoading={isSectionLoading(section)}
                     filterQuery={globalFilterQuery}
+                    bind:rootPath={sectionRootPathById[section.id]}
                     showBreadcrumb={false}
                     showFilter={false}
                   />

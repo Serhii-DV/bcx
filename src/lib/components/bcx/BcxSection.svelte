@@ -174,5 +174,35 @@ function focusSiblingHeader(direction: 1 | -1) {
   overflow: auto;
   padding-bottom: 0.25rem;
   resize: vertical;
+  scrollbar-color: rgb(156 163 175 / 0.45) transparent;
+  scrollbar-width: thin;
+}
+
+.bcx-section-body::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.bcx-section-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bcx-section-body::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.bcx-section-body::-webkit-scrollbar-thumb {
+  background-color: rgb(156 163 175 / 0.35);
+  border-radius: 9999px;
+}
+
+.bcx-section-body::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(209 213 219 / 0.55);
+}
+
+.bcx-section-body::-webkit-scrollbar-corner {
+  background: transparent;
 }
 </style>

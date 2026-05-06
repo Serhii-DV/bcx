@@ -39,7 +39,7 @@ let { items, currentPath = null, onNavigate }: Props = $props();
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
-  padding-inline: 0.5rem;
+  padding: 0.5rem 1.5rem;
   font-size: 0.75rem;
   color: rgb(209 213 219);
 }

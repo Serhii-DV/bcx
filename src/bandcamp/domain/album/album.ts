@@ -66,6 +66,12 @@ export class Album implements Storable, Compressable {
     ]);
   }
 
+  get fullTitle(): string {
+    const year =
+      this.metadata instanceof Metadata ? ` (${this.metadata.year})` : '';
+    return `${this.artist.toString()} - ${this.title}${year}`;
+  }
+
   containsArtistName(name: string): boolean {
     if (isVariousArtists(name) && this.artist.isVariousArtists) {
       return true;
@@ -79,9 +85,7 @@ export class Album implements Storable, Compressable {
   }
 
   toString(): string {
-    const year =
-      this.metadata instanceof Metadata ? ` (${this.metadata.year})` : '';
-    return `${this.artist.toString()} - ${this.title}${year}`;
+    return this.fullTitle;
   }
 
   toStorableData(): StorableData {

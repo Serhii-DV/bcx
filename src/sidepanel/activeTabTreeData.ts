@@ -2,9 +2,17 @@ import { MainSidePanelSections } from 'src/app/treeview/items/MainSidePanelSecti
 import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import type { FanData } from 'src/app/types/FanData';
 import { Album } from 'src/bandcamp/domain/album/album';
-import type { Band } from 'src/bandcamp/domain/band/band';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
+import { AlbumDetails } from 'src/bandcamp/domain/album/details';
+import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
+import { Band } from 'src/bandcamp/domain/band/band';
+import { BandFactory } from 'src/bandcamp/domain/band/factory';
+import { BandMetadata } from 'src/bandcamp/domain/band/metadata';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
+import type { MusicAlbumSchema } from 'src/bandcamp/domain/page/schema';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import {
   isBandcampAlbumUrl,
   isBandcampMusicUrl,
@@ -32,6 +40,21 @@ interface ActiveBandcampPageDataResponse {
 interface ActiveBandcampPageData {
   data: any;
   fanData: FanData;
+  albumSchema?: MusicAlbumSchema | null;
+  musicBand?: ActiveMusicBandData | null;
+}
+
+interface ActiveMusicBandData {
+  id: number;
+  name: string;
+  url: string;
+  artworkId: number;
+  metadata: {
+    created: string;
+    currency: string;
+  };
+  albums: RawAlbumData[];
+  tracks: RawTrackData[];
 }
 
 const pageDataByHostname = new Map<string, ActiveBandcampPageData>();
@@ -52,10 +75,8 @@ export async function createActiveTabSidePanelSections(
   tab: ActiveBandcampTab,
 ): Promise<SidePanelSection[]> {
   const currentPageUrl = Url.create(tab.url);
-  const [page, pageData] = await Promise.all([
-    createBandPage(currentPageUrl),
-    getActiveBandcampPageData(currentPageUrl),
-  ]);
+  const pageData = await getActiveBandcampPageData(currentPageUrl);
+  const page = await createBandPage(currentPageUrl, pageData);
 
   return MainSidePanelSections.create(currentPageUrl, page, {
     includePageData: !!pageData,
@@ -82,7 +103,29 @@ async function getActiveBandcampPageData(
   return pageDataByHostname.get(currentPageUrl.hostname) ?? null;
 }
 
-async function createBandPage(currentPageUrl: Url): Promise<BandPage | null> {
+async function createBandPage(
+  currentPageUrl: Url,
+  pageData: ActiveBandcampPageData | null,
+): Promise<BandPage | null> {
+  if (isBandcampAlbumUrl(currentPageUrl) && pageData?.albumSchema) {
+    const album = AlbumFactory.createFromSchema(pageData.albumSchema);
+    const [band] = await BandcampStorage.getBands([album.bandId]);
+
+    return {
+      album,
+      albumDetails: AlbumDetails.fromMusicAlbumSchema(pageData.albumSchema),
+      band: band ?? BandFactory.fromMusicAlbumSchema(pageData.albumSchema),
+    };
+  }
+
+  if (isBandcampMusicUrl(currentPageUrl) && pageData?.musicBand) {
+    return {
+      album: null,
+      albumDetails: null,
+      band: createBandFromActiveMusicData(pageData.musicBand),
+    };
+  }
+
   const entities = await BandcampStorage.getByUuids(
     getStoredEntityUrlUuids(currentPageUrl),
   );
@@ -91,10 +134,11 @@ async function createBandPage(currentPageUrl: Url): Promise<BandPage | null> {
   );
 
   if (album && isBandcampAlbumUrl(currentPageUrl)) {
+    const [hydratedAlbum] = await BandcampStorage.getAlbums([album]);
     const [band] = await BandcampStorage.getBands([album.bandId]);
 
     return {
-      album,
+      album: hydratedAlbum ?? album,
       albumDetails: null,
       band: band ?? null,
     };
@@ -113,6 +157,24 @@ async function createBandPage(currentPageUrl: Url): Promise<BandPage | null> {
   }
 
   return null;
+}
+
+function createBandFromActiveMusicData(data: ActiveMusicBandData): Band {
+  const albums = data.albums.map((album) => AlbumFactory.fromRawData(album));
+  const tracks = data.tracks.map((track) => TrackFactory.fromRawData(track));
+
+  return Band.create(
+    data.id,
+    data.name,
+    data.url,
+    data.artworkId,
+    BandMetadata.create(
+      data.metadata.created,
+      data.metadata.currency,
+      albums,
+      tracks,
+    ),
+  );
 }
 
 function getStoredEntityUrlUuids(currentPageUrl: Url): string[] {
