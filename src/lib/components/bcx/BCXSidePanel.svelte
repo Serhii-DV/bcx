@@ -3,11 +3,7 @@ import { X } from '@lucide/svelte';
 import type { SidePanelSection } from 'src/app/treeview/SidePanelSection';
 import { TreeData } from 'src/app/treeview/TreeData';
 import { TREE_ITEM_LAYOUT, type TreeItem } from 'src/app/treeview/TreeItem';
-import {
-  buildBreadcrumbItems,
-  findItemByPath,
-  isNode,
-} from 'src/app/treeview/utils';
+import { buildBreadcrumbItems, isNode } from 'src/app/treeview/utils';
 import { ICON_INFO } from 'src/app/treeview/utils/icon';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import BCXDrawerButton from './BCXDrawerButton.svelte';
@@ -93,12 +89,8 @@ function getBreadcrumbItemsForSection(section: SidePanelSection): TreeItem[] {
   return buildBreadcrumbItems(getTreeDataForSection(section).items, rootPath);
 }
 
-function usesTreeLayout(section: SidePanelSection): boolean {
-  const treeData = getTreeDataForSection(section);
-  const rootPath = getRootPathForSection(section);
-  const rootItem = rootPath ? findItemByPath(treeData.items, rootPath) : null;
-
-  return (treeData.layout ?? rootItem?.layout) === TREE_ITEM_LAYOUT.TREE;
+function startsInTreeLayout(section: SidePanelSection): boolean {
+  return getTreeDataForSection(section).layout === TREE_ITEM_LAYOUT.TREE;
 }
 
 function hasRootItemsWithChildren(section: SidePanelSection): boolean {
@@ -106,7 +98,7 @@ function hasRootItemsWithChildren(section: SidePanelSection): boolean {
 }
 
 function shouldShowBreadcrumb(section: SidePanelSection): boolean {
-  return !usesTreeLayout(section) && hasRootItemsWithChildren(section);
+  return !startsInTreeLayout(section) && hasRootItemsWithChildren(section);
 }
 
 async function loadSectionTreeData(section: SidePanelSection) {
