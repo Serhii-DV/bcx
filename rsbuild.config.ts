@@ -49,10 +49,6 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
     },
     output: {
       cleanDistPath: true,
-      // distPath: {
-      //   js: '',
-      //   css: '',
-      // },
       filename: {
         js: '[name].js?v=[contenthash:8]',
         css: '[name].css?v=[contenthash:8]',

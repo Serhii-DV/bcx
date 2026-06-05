@@ -10,7 +10,7 @@
     "128": "assets/icons/icon-128.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "static/js/background.js"
   },
   "permissions": [
     "activeTab",
@@ -23,7 +23,7 @@
   "host_permissions": ["https://*.bandcamp.com/*"],
   "content_scripts": [
     {
-      "js": ["bandcamp.content.app.js"],
+      "js": ["static/js/bandcamp.content.app.js"],
       "matches": ["https://*.bandcamp.com/*"],
       "run_at": "document_start"
     }
@@ -31,9 +31,9 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "bcx.js",
-        "bandcamp.content.app.css",
-        "bandcamp.content.page.music.css",
+        "static/js/bcx.js",
+        "static/css/bandcamp.content.app.css",
+        "static/css/bandcamp.content.page.music.css",
         "assets/0.gif"
       ],
       "matches": ["https://*.bandcamp.com/*"]

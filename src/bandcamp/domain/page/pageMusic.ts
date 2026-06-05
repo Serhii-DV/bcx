@@ -56,7 +56,9 @@ export class PageMusic implements BandPage {
       return pageMusic;
     }
 
-    await injectCssFile(getExtensionUrl('bandcamp.content.page.music.css'));
+    await injectCssFile(
+      getExtensionUrl('static/css/bandcamp.content.page.music.css'),
+    );
 
     const band = this.createBand();
     pageMusic = new PageMusic(band);
