@@ -8,6 +8,7 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
   const isProd = env.envMode === 'production';
 
   return defineConfig({
+    splitChunks: false, // Disable code splitting for browser extensions
     plugins: [
       pluginSvelte(),
       manifestPlugin({
@@ -59,12 +60,6 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           to: './assets',
         },
       ],
-    },
-    performance: {
-      buildCache: false, // Disable cache for browser extensions
-      chunkSplit: {
-        strategy: 'all-in-one', // Bundle everything in one file. Fix issue with loading content script.
-      },
     },
     dev: {
       writeToDisk: true, // Write files to disk for browser extension development
