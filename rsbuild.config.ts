@@ -5,9 +5,10 @@ import pkg from './package.json';
 import { manifestPlugin } from './src/build/manifestPlugin';
 
 export default function (env: any = {}, argv: Record<string, any> = {}) {
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = env.envMode === 'production';
 
   return defineConfig({
+    splitChunks: false, // Disable code splitting for browser extensions
     plugins: [
       pluginSvelte(),
       manifestPlugin({
@@ -48,18 +49,9 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
       },
     },
     output: {
-      cleanDistPath: true,
-      distPath: {
-        js: '',
-        css: '',
-      },
       filename: {
-        js: isProd ? '[name].js?v=[contenthash:8]' : `[name].js`,
-        css: isProd ? '[name].css?v=[contenthash:8]' : `[name].css`,
-      },
-      minify: isProd,
-      sourceMap: {
-        js: isProd ? 'source-map' : 'cheap-module-source-map',
+        js: '[name].js?v=[contenthash:8]',
+        css: '[name].css?v=[contenthash:8]',
       },
       assetPrefix: './',
       copy: [
@@ -68,15 +60,6 @@ export default function (env: any = {}, argv: Record<string, any> = {}) {
           to: './assets',
         },
       ],
-    },
-    html: {
-      outputStructure: 'flat',
-    },
-    performance: {
-      buildCache: false, // Disable cache for browser extensions
-      chunkSplit: {
-        strategy: 'all-in-one', // Bundle everything in one file. Fix issue with loading content script.
-      },
     },
     dev: {
       writeToDisk: true, // Write files to disk for browser extension development

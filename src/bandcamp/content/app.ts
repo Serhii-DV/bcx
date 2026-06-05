@@ -54,7 +54,10 @@ onDOMReady(async () => {
   document.body.appendChild(container);
 
   const shadowRoot = container.attachShadow({ mode: 'open' });
-  injectCssFile(getExtensionUrl('bandcamp.content.app.css'), shadowRoot);
+  injectCssFile(
+    getExtensionUrl('static/css/bandcamp.content.app.css'),
+    shadowRoot,
+  );
 
   try {
     if (isBandcampMusicUrl(currentPageUrl)) {
@@ -146,7 +149,7 @@ function createActiveMusicBandData(): ActiveMusicBandData | null {
   };
 }
 
-injectJSFile(getExtensionUrl('bcx.js'), () => {
-  console.log('[bcx.js]', 'Injected BCX dev tools script JS file');
+injectJSFile(getExtensionUrl('static/js/bcx.js'), () => {
+  console.log('[static/js/bcx.js]', 'Injected BCX dev tools script JS file');
   window.addEventListener('message', BCXEventListener);
 });
