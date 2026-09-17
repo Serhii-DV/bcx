@@ -1,0 +1,8 @@
+allowBuilds:
+  '@parcel/watcher': true
+  core-js: true
+  esbuild: true
+  svelte-preprocess: true
+minimumReleaseAgeExclude:
+  - '@rstest/core@0.12.0'
+  - jsdom@30.1.0
