@@ -50,9 +50,9 @@ export const sidePanelTourSteps = [
   },
   {
     id: 'keyboard-shortcuts',
-    targetElement: '.bcx-keyboard-shortcuts',
+    targetElement: '.bcx-section-tabs',
     title: 'Keyboard Shortcuts',
     message:
-      'Keep this shortcut handy: <kbd>Ctrl+Shift+X</kbd> toggles the panel.',
+      'Switch tabs to explore each section. The Extension Info tab lists keyboard shortcuts, including <kbd>Ctrl+Shift+X</kbd> to toggle the panel.',
   },
 ];
