@@ -38,20 +38,9 @@ let sectionErrorById: Record<string, string> = $state({});
 let sectionRootPathById: Record<string, string | null> = $state({});
 const infoTabId = '__extension-info__';
 let selectedSectionId = $state('');
-let globalFilterQuery = $state('');
+let sectionFilterQueryById: Record<string, string> = $state({});
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
-let globalFilterSuggestions = $derived.by(() => {
-  const suggestions = new Set<string>(sections.map((section) => section.label));
-
-  Object.values(sectionTreeDataById).forEach((sectionTreeData) => {
-    sectionTreeData.filterSuggestions.forEach((suggestion) =>
-      suggestions.add(suggestion),
-    );
-  });
-
-  return Array.from(suggestions).sort();
-});
 
 function handleClose() {
   onClose();
@@ -139,7 +128,7 @@ async function loadSectionTreeData(section: SidePanelSection) {
   }
 }
 
-function handleGlobalFilterArrowDown() {
+function handleSectionFilterArrowDown() {
   sectionsContainer
     ?.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden]) .tree-item')
     ?.focus();
@@ -171,6 +160,9 @@ $effect(() => {
   sectionLoadingById = {};
   sectionErrorById = {};
   sectionRootPathById = {};
+  sectionFilterQueryById = Object.fromEntries(
+    sections.map((section) => [section.id, '']),
+  );
 });
 
 $effect(() => {
@@ -241,17 +233,14 @@ $effect(() => {
                   <span class="truncate">Extension Info</span>
                 </Tabs.Trigger>
               </Tabs.List>
-              {#if selectedSectionId !== infoTabId}
-                <BcxTreeBrowserFilter
-                  bind:value={globalFilterQuery}
-                  suggestions={globalFilterSuggestions}
-                  onArrowDown={handleGlobalFilterArrowDown}
-                />
-
-              {/if}
               {#each sections as section (section.id)}
                 <Tabs.Content value={section.id}>
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
+                    <BcxTreeBrowserFilter
+                      bind:value={sectionFilterQueryById[section.id]}
+                      suggestions={getTreeDataForSection(section).filterSuggestions}
+                      onArrowDown={handleSectionFilterArrowDown}
+                    />
                     <div class="bcx-section-tree-browser">
                       {#if shouldShowBreadcrumb(section)}
                         <BcxTreeBreadcrumb
@@ -266,7 +255,7 @@ $effect(() => {
                         <BcxTreeBrowser
                           treeData={getTreeDataForSection(section)}
                           isLoading={isSectionLoading(section)}
-                          filterQuery={globalFilterQuery}
+                          filterQuery={sectionFilterQueryById[section.id] ?? ''}
                           bind:rootPath={sectionRootPathById[section.id]}
                           showBreadcrumb={false}
                           showFilter={false}
