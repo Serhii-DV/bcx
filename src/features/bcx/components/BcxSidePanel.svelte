@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Info, X } from '@lucide/svelte';
+import { X } from '@lucide/svelte';
 import { Tabs } from 'bits-ui';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
@@ -9,9 +9,10 @@ import {
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
 import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
-import { makeIcon } from 'src/features/treeview/utils/icon';
+import { ICON_INFO } from 'src/features/treeview/utils/icon';
 import { untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
+import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
@@ -216,23 +217,10 @@ $effect(() => {
 
           <div bind:this={sectionsContainer} class="bcx-sections">
             <Tabs.Root bind:value={selectedSectionId}>
-              <Tabs.List class="bcx-section-tabs" aria-label="Music Explorer sections">
-                {#each sections as section (section.id)}
-                  {@const Icon = makeIcon(section.image?.includes('/') ? undefined : section.image)}
-                  <Tabs.Trigger value={section.id} class="bcx-section-tab" title={section.label}>
-                    {#if Icon}
-                      <Icon size={16} class="shrink-0" aria-hidden="true" />
-                    {:else if section.image}
-                      <img src={section.image} alt="" class="size-4 shrink-0 rounded-sm object-cover" loading="lazy" />
-                    {/if}
-                    <span class="truncate">{section.label}</span>
-                  </Tabs.Trigger>
-                {/each}
-                <Tabs.Trigger value={infoTabId} class="bcx-section-tab">
-                  <Info size={16} class="shrink-0" aria-hidden="true" />
-                  <span class="truncate">Extension Info</span>
-                </Tabs.Trigger>
-              </Tabs.List>
+              <BcxSectionTabs
+                tabs={[...sections, { id: infoTabId, label: 'Extension Info', image: ICON_INFO }]}
+                bind:value={selectedSectionId}
+              />
               {#each sections as section (section.id)}
                 <Tabs.Content value={section.id}>
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
@@ -354,43 +342,6 @@ $effect(() => {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
-  }
-
-  :global(.bcx-section-tabs) {
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-    padding: 4px 8px 8px;
-    border-bottom: 1px solid #4b5563;
-  }
-
-  :global(.bcx-section-tab) {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    border-radius: 6px;
-    padding: 8px 12px;
-    color: #d1d5db;
-    cursor: pointer;
-  }
-
-  :global(.bcx-section-tab:hover) {
-    background: #374151;
-  }
-
-  :global(.bcx-section-tab[data-state='active']) {
-    background: #374151;
-    color: #04b1fe;
-  }
-
-  :global(.bcx-section-tab:focus-visible) {
-    outline: 2px solid #04b1fe;
-    outline-offset: -2px;
   }
 
   :global(.bcx-section-tree-browser .bcx-tree-view) {
