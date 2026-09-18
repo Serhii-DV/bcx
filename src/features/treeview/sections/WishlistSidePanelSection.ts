@@ -16,6 +16,7 @@ export class WishlistSidePanelSection {
       id: `wishlist-${userKeyPart}`,
       itemCountPath: 'wishlist_data',
       label: 'Wishlist',
+      rootNavigation: 'tabs',
       ttl: SIDE_PANEL_SECTION_CACHE_TTL.WISHLIST,
       createTreeItem: (username) => WishlistTreeItem.create(username),
     });

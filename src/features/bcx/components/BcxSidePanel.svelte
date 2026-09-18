@@ -12,6 +12,7 @@ import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
 import { ICON_INFO } from 'src/features/treeview/utils/icon';
 import { untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
+import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
@@ -224,32 +225,38 @@ $effect(() => {
               {#each sections as section (section.id)}
                 <Tabs.Content value={section.id}>
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
-                    <BcxTreeBrowserFilter
-                      bind:value={sectionFilterQueryById[section.id]}
-                      suggestions={getTreeDataForSection(section).filterSuggestions}
-                      onArrowDown={handleSectionFilterArrowDown}
-                    />
-                    <div class="bcx-section-tree-browser">
-                      {#if shouldShowBreadcrumb(section)}
-                        <BcxTreeBreadcrumb
-                          items={getBreadcrumbItemsForSection(section)}
-                          currentPath={getRootPathForSection(section)}
-                          onNavigate={(path) => setRootPathForSection(section, path)}
-                        />
-                      {/if}
-                      {#if sectionErrorById[section.id]}
-                        <p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>
-                      {:else}
-                        <BcxTreeBrowser
-                          treeData={getTreeDataForSection(section)}
-                          isLoading={isSectionLoading(section)}
-                          filterQuery={sectionFilterQueryById[section.id] ?? ''}
-                          bind:rootPath={sectionRootPathById[section.id]}
-                          showBreadcrumb={false}
-                          showFilter={false}
-                        />
-                      {/if}
-                    </div>
+                    {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
+                      {#key sectionTreeDataById[section.id]}
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} />
+                      {/key}
+                    {:else}
+                      <BcxTreeBrowserFilter
+                        bind:value={sectionFilterQueryById[section.id]}
+                        suggestions={getTreeDataForSection(section).filterSuggestions}
+                        onArrowDown={handleSectionFilterArrowDown}
+                      />
+                      <div class="bcx-section-tree-browser">
+                        {#if shouldShowBreadcrumb(section)}
+                          <BcxTreeBreadcrumb
+                            items={getBreadcrumbItemsForSection(section)}
+                            currentPath={getRootPathForSection(section)}
+                            onNavigate={(path) => setRootPathForSection(section, path)}
+                          />
+                        {/if}
+                        {#if sectionErrorById[section.id]}
+                          <p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>
+                        {:else}
+                          <BcxTreeBrowser
+                            treeData={getTreeDataForSection(section)}
+                            isLoading={isSectionLoading(section)}
+                            filterQuery={sectionFilterQueryById[section.id] ?? ''}
+                            bind:rootPath={sectionRootPathById[section.id]}
+                            showBreadcrumb={false}
+                            showFilter={false}
+                          />
+                        {/if}
+                      </div>
+                    {/if}
                   {/if}
                 </Tabs.Content>
               {/each}

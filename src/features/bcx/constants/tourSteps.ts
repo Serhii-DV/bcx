@@ -44,7 +44,7 @@ export const sidePanelTourSteps = [
   {
     id: 'tree-browser-filter',
     targetElement:
-      '[role="tabpanel"]:not([hidden]) input[id^="bcx-tree-browser-filter-"]',
+      '[role="tabpanel"]:not([hidden]) input[id^="bcx-tree-browser-filter-"]:not([hidden] *)',
     title: 'Quick Filtering',
     message:
       'Type here to narrow the current level of the navigator. The list updates as you search, and the arrow keys let you move through matching items quickly.',

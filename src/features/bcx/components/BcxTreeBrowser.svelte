@@ -86,7 +86,7 @@ let currentRootItem = $derived.by(() => {
 });
 let currentLevelItems = $derived.by(() => {
   treeVersion;
-  return currentRootItem?.children || treeData.items;
+  return currentRootItem ? (currentRootItem.children ?? []) : treeData.items;
 });
 let breadcrumbItems = $derived.by(() => {
   treeVersion;

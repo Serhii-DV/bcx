@@ -31,6 +31,7 @@ export class BandSidePanelSection {
       label: band.name,
       image: bandTreeItem.image,
       childrenCount: bandTreeItem.childrenCount,
+      rootNavigation: 'tabs',
       createTreeData: async () =>
         createTreeDataFromTreeItemChildren(
           await TreeItemCache.getOrCreate(
@@ -62,6 +63,7 @@ function createCurrentBandPageSection(
     image: bandTreeItem.image,
     childrenCount: bandTreeItem.childrenCount,
     defaultOpen: true,
+    rootNavigation: 'tabs',
     createTreeData: async () =>
       createTreeDataFromTreeItemChildren(bandTreeItem),
   };

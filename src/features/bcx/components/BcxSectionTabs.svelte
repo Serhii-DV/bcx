@@ -11,8 +11,15 @@ interface SectionTab {
   image?: string;
 }
 
-let { tabs, value = $bindable() }: { tabs: SectionTab[]; value: string } =
-  $props();
+let {
+  tabs,
+  value = $bindable(),
+  label = 'Music Explorer sections',
+}: {
+  tabs: SectionTab[];
+  value: string;
+  label?: string;
+} = $props();
 let bar = $state<HTMLDivElement>();
 let measurements: HTMLDivElement;
 let moreMeasurement: HTMLSpanElement;
@@ -73,7 +80,7 @@ async function handleCloseAutoFocus(event: Event) {
 {/snippet}
 
 <div bind:this={bar} class="bcx-section-tabs">
-  <Tabs.List class="bcx-visible-tabs" aria-label="Music Explorer sections">
+  <Tabs.List class="bcx-visible-tabs" aria-label={label}>
     {#each visibleTabs as tab (tab.id)}
       <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tab.label}>
         {@render tabLabel(tab)}
