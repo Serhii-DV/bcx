@@ -19,6 +19,7 @@ import { MessageType } from 'src/core/message';
 import { Url } from 'src/core/url';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
+import type { PageDataContext } from 'src/features/treeview/sections/types';
 
 export interface ActiveBandcampTab {
   id: number;
@@ -58,6 +59,7 @@ interface ActiveMusicBandData {
 }
 
 const pageDataByHostname = new Map<string, ActiveBandcampPageData>();
+let lastFanPageContext: PageDataContext | null = null;
 
 export async function getActiveBandcampTab(): Promise<ActiveBandcampTab | null> {
   const response = (await chrome.runtime.sendMessage({
@@ -78,9 +80,16 @@ export async function createActiveTabSidePanelSections(
   const pageData = await getActiveBandcampPageData(currentPageUrl);
   const page = await createBandPage(currentPageUrl, pageData);
 
+  // Fan sections belong to the user, whereas album/band data belongs to the page.
+  // Keep the former available while a new hostname's content script starts.
+  if (pageData) {
+    lastFanPageContext = { data: pageData.data, fanData: pageData.fanData };
+  }
+  const fanPageContext = pageData ?? lastFanPageContext;
+
   return MainSidePanelSections.create(currentPageUrl, page, {
-    includePageData: !!pageData,
-    pageData,
+    includePageData: !!fanPageContext,
+    pageData: fanPageContext,
   });
 }
 

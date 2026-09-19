@@ -9,6 +9,8 @@ interface Props {
 
 let { value = $bindable(''), suggestions, onArrowDown }: Props = $props();
 let filterInput: BcxTreeFilterInput;
+const instanceId = $props.id();
+const id = `bcx-tree-browser-filter-${instanceId}`;
 
 export function focus() {
   filterInput?.focus();
@@ -17,7 +19,7 @@ export function focus() {
 
 <BcxTreeFilterInput
   bind:this={filterInput}
-  id="bcx-tree-browser-filter"
+  {id}
   bind:value
   {suggestions}
   placeholder="Filter browser items..."

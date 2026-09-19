@@ -13,6 +13,7 @@ export function createFanDataSubtreeSection(
     id: string;
     itemCountPath?: string;
     label: string;
+    rootNavigation?: SidePanelSection['rootNavigation'];
     ttl: number;
     createTreeItem: (username: string) => Promise<TreeItem>;
     getChildrenCount?: (
@@ -30,6 +31,7 @@ export function createFanDataSubtreeSection(
   return {
     id: options.id,
     label: options.label,
+    rootNavigation: options.rootNavigation,
     image: options.icon,
     childrenCount:
       options.getChildrenCount?.(pageData) ??

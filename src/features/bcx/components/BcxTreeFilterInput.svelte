@@ -39,7 +39,7 @@ function clearFilter() {
 }
 </script>
 
-<div class="relative w-full flex items-center">
+<div class="relative w-full flex shrink-0 items-center">
   <input
     bind:this={filterInput}
     {id}

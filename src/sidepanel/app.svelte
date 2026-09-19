@@ -13,6 +13,7 @@ import {
   createActiveTabSidePanelSections,
   getActiveBandcampTab,
 } from './services/activeTabTreeData';
+import { shouldReloadActiveTab } from './services/activeTabUpdates';
 
 let sidePanelSections: SidePanelSection[] | null = $state(null);
 let activeTab: ActiveBandcampTab | null = $state(null);
@@ -22,6 +23,7 @@ let hasCompletedSidePanelTour = $state(true);
 let sidePanelTourStateLoaded = $state(false);
 let sidePanelTourCompleted = $state(false);
 let sidePanelTourVersion = $state(0);
+let sectionLoadGeneration = 0;
 
 onMount(() => {
   loadSidePanelSections();
@@ -30,12 +32,11 @@ onMount(() => {
   const handleActivated = () => {
     void loadSidePanelSections();
   };
-  const handleUpdated = (tabId: number, changeInfo: { url?: string }) => {
-    if (
-      tabId === activeTab?.id &&
-      changeInfo.url &&
-      shouldReloadForUrlChange(activeTab.url, changeInfo.url)
-    ) {
+  const handleUpdated = (
+    tabId: number,
+    changeInfo: chrome.tabs.TabChangeInfo,
+  ) => {
+    if (shouldReloadActiveTab(activeTab, tabId, changeInfo)) {
       void loadSidePanelSections();
     }
   };
@@ -45,6 +46,7 @@ onMount(() => {
   chrome.storage.onChanged.addListener(handleStorageChanged);
 
   return () => {
+    sectionLoadGeneration += 1;
     chrome.tabs.onActivated.removeListener(handleActivated);
     chrome.tabs.onUpdated.removeListener(handleUpdated);
     chrome.storage.onChanged.removeListener(handleStorageChanged);
@@ -52,11 +54,13 @@ onMount(() => {
 });
 
 async function loadSidePanelSections() {
+  const generation = ++sectionLoadGeneration;
   isLoading = true;
   errorMessage = '';
 
   try {
     const tab = await getActiveBandcampTab();
+    if (generation !== sectionLoadGeneration) return;
     activeTab = tab;
 
     if (!tab) {
@@ -64,13 +68,16 @@ async function loadSidePanelSections() {
       return;
     }
 
-    sidePanelSections = await createActiveTabSidePanelSections(tab);
+    const sections = await createActiveTabSidePanelSections(tab);
+    if (generation !== sectionLoadGeneration) return;
+    sidePanelSections = sections;
   } catch (error) {
+    if (generation !== sectionLoadGeneration) return;
     errorMessage =
       error instanceof Error ? error.message : 'Failed to load Music Explorer';
     sidePanelSections = null;
   } finally {
-    isLoading = false;
+    if (generation === sectionLoadGeneration) isLoading = false;
   }
 }
 
@@ -116,21 +123,6 @@ async function toggleBrowserSidePanel() {
     type: MessageType.TOGGLE_SIDE_PANEL,
     tabId: activeTab?.id,
   });
-}
-
-function shouldReloadForUrlChange(previousUrl: string, nextUrl: string) {
-  try {
-    const previous = new URL(previousUrl);
-    const next = new URL(nextUrl);
-
-    return (
-      previous.origin !== next.origin ||
-      previous.pathname !== next.pathname ||
-      previous.hash !== next.hash
-    );
-  } catch {
-    return previousUrl !== nextUrl;
-  }
 }
 </script>
 

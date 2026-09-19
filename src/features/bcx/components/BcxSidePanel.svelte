@@ -1,5 +1,6 @@
 <script lang="ts">
 import { X } from '@lucide/svelte';
+import { Tabs } from 'bits-ui';
 import iconUrl from 'src/assets/icons/icon-48.png';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { TreeData } from 'src/features/treeview/TreeData';
@@ -9,8 +10,10 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
 import { ICON_INFO } from 'src/features/treeview/utils/icon';
+import { untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
-import BcxSection from './BcxSection.svelte';
+import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
+import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
@@ -33,21 +36,13 @@ let {
 let sectionsContainer: HTMLDivElement;
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let sectionLoadingById: Record<string, boolean> = $state({});
+let sectionErrorById: Record<string, string> = $state({});
 let sectionRootPathById: Record<string, string | null> = $state({});
-let globalFilterQuery = $state('');
+const infoTabId = '__extension-info__';
+let selectedSectionId = $state('');
+let sectionFilterQueryById: Record<string, string> = $state({});
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
-let globalFilterSuggestions = $derived.by(() => {
-  const suggestions = new Set<string>(sections.map((section) => section.label));
-
-  Object.values(sectionTreeDataById).forEach((sectionTreeData) => {
-    sectionTreeData.filterSuggestions.forEach((suggestion) =>
-      suggestions.add(suggestion),
-    );
-  });
-
-  return Array.from(suggestions).sort();
-});
 
 function handleClose() {
   onClose();
@@ -70,16 +65,6 @@ function setRootPathForSection(section: SidePanelSection, path: string | null) {
 
 function isSectionLoading(section: SidePanelSection): boolean {
   return sectionLoadingById[section.id] ?? false;
-}
-
-function getSectionIcon(section: SidePanelSection): string | undefined {
-  const image = section.image;
-  return image && !image.includes('/') ? image : undefined;
-}
-
-function getSectionImage(section: SidePanelSection): string | undefined {
-  const image = section.image;
-  return image && image.includes('/') ? image : undefined;
 }
 
 function getBreadcrumbItemsForSection(section: SidePanelSection): TreeItem[] {
@@ -109,6 +94,7 @@ async function loadSectionTreeData(section: SidePanelSection) {
     return;
   }
 
+  sectionErrorById = { ...sectionErrorById, [section.id]: '' };
   const loadGeneration = sectionLoadGeneration;
   sectionLoadingById = {
     ...sectionLoadingById,
@@ -126,6 +112,14 @@ async function loadSectionTreeData(section: SidePanelSection) {
       ...sectionTreeDataById,
       [section.id]: sectionTreeData,
     };
+  } catch (error) {
+    if (loadGeneration === sectionLoadGeneration) {
+      sectionErrorById = {
+        ...sectionErrorById,
+        [section.id]:
+          error instanceof Error ? error.message : 'Failed to load section',
+      };
+    }
   } finally {
     if (loadGeneration === sectionLoadGeneration) {
       sectionLoadingById = {
@@ -136,23 +130,16 @@ async function loadSectionTreeData(section: SidePanelSection) {
   }
 }
 
-async function handleSectionOpenChange(
-  section: SidePanelSection,
-  open: boolean,
-) {
-  if (!open) {
-    return;
-  }
-
-  await loadSectionTreeData(section);
+function handleSectionFilterArrowDown() {
+  sectionsContainer
+    ?.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden]) .tree-item')
+    ?.focus();
 }
 
-function handleGlobalFilterArrowDown() {
-  focusFirstSectionHeader();
-}
-
-function focusFirstSectionHeader() {
-  sectionsContainer?.querySelector<HTMLElement>('.bcx-section-header')?.focus();
+function focusSelectedTab() {
+  sectionsContainer
+    ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+    ?.focus();
 }
 
 $effect(() => {
@@ -161,39 +148,38 @@ $effect(() => {
   }
 
   currentSections = sections;
+  if (
+    selectedSectionId !== infoTabId &&
+    !sections.some((section) => section.id === selectedSectionId)
+  ) {
+    selectedSectionId =
+      sections.find((section) => section.defaultOpen)?.id ??
+      sections[0]?.id ??
+      infoTabId;
+  }
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
   sectionLoadingById = {};
+  sectionErrorById = {};
   sectionRootPathById = {};
+  sectionFilterQueryById = Object.fromEntries(
+    sections.map((section) => [section.id, '']),
+  );
 });
 
 $effect(() => {
-  sections.forEach((section) => {
-    if (section.defaultOpen && !sectionTreeDataById[section.id]) {
-      void loadSectionTreeData(section);
-    }
-  });
-});
-
-$effect(() => {
-  if (!globalFilterQuery.trim()) {
-    return;
+  const section = sections.find((section) => section.id === selectedSectionId);
+  if (section) {
+    untrack(() => void loadSectionTreeData(section));
   }
-
-  sections.forEach((section) => {
-    if (!sectionTreeDataById[section.id]) {
-      void loadSectionTreeData(section);
-    }
-  });
 });
 
-// Focus first item when panel opens
+// Focus the selected tab when the panel opens
 $effect(() => {
   if (open) {
     // Use setTimeout to ensure DOM is ready
-    setTimeout(() => {
-      focusFirstSectionHeader();
-    }, 100);
+    const timeout = setTimeout(focusSelectedTab, 100);
+    return () => clearTimeout(timeout);
   }
 });
 </script>
@@ -205,7 +191,7 @@ $effect(() => {
   <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white transition-opacity duration-400">
     <div class="flex h-full flex-col">
       <!-- Header -->
-      <div class="p-4">
+      <div class="shrink-0 p-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <img src={iconUrl} alt="BCX" class="w-12 h-12" />
@@ -227,55 +213,66 @@ $effect(() => {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-y-auto">
-        <div class="space-y-4">
+      <div class="bcx-panel-body">
+        <div class="bcx-panel-body">
 
           <div bind:this={sectionsContainer} class="bcx-sections">
-            <BcxTreeBrowserFilter
-              bind:value={globalFilterQuery}
-              suggestions={globalFilterSuggestions}
-              onArrowDown={handleGlobalFilterArrowDown}
-            />
-
-            {#each sections as section}
-              <BcxSection
-                title={section.label}
-                icon={getSectionIcon(section)}
-                image={getSectionImage(section)}
-                defaultOpen={section.defaultOpen}
-                onOpenChange={(open) => handleSectionOpenChange(section, open)}
-              >
-                <div class="bcx-section-tree-browser">
-                  {#if shouldShowBreadcrumb(section)}
-                    <BcxTreeBreadcrumb
-                      items={getBreadcrumbItemsForSection(section)}
-                      currentPath={getRootPathForSection(section)}
-                      onNavigate={(path) => setRootPathForSection(section, path)}
-                    />
+            <Tabs.Root bind:value={selectedSectionId} class="bcx-panel-body">
+              <BcxSectionTabs
+                tabs={[...sections, { id: infoTabId, label: 'Extension Info', image: ICON_INFO }]}
+                bind:value={selectedSectionId}
+              />
+              {#each sections as section (section.id)}
+                <Tabs.Content value={section.id} class="bcx-tab-content">
+                  {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
+                    {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
+                      {#key sectionTreeDataById[section.id]}
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} />
+                      {/key}
+                    {:else}
+                      <BcxTreeBrowserFilter
+                        bind:value={sectionFilterQueryById[section.id]}
+                        suggestions={getTreeDataForSection(section).filterSuggestions}
+                        onArrowDown={handleSectionFilterArrowDown}
+                      />
+                      <div class="bcx-section-tree-browser">
+                        {#if shouldShowBreadcrumb(section)}
+                          <BcxTreeBreadcrumb
+                            items={getBreadcrumbItemsForSection(section)}
+                            currentPath={getRootPathForSection(section)}
+                            onNavigate={(path) => setRootPathForSection(section, path)}
+                          />
+                        {/if}
+                        {#if sectionErrorById[section.id]}
+                          <p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>
+                        {:else}
+                          <BcxTreeBrowser
+                            treeData={getTreeDataForSection(section)}
+                            isLoading={isSectionLoading(section)}
+                            filterQuery={sectionFilterQueryById[section.id] ?? ''}
+                            bind:rootPath={sectionRootPathById[section.id]}
+                            showBreadcrumb={false}
+                            showFilter={false}
+                          />
+                        {/if}
+                      </div>
+                    {/if}
                   {/if}
-                  <BcxTreeBrowser
-                    treeData={getTreeDataForSection(section)}
-                    isLoading={isSectionLoading(section)}
-                    filterQuery={globalFilterQuery}
-                    bind:rootPath={sectionRootPathById[section.id]}
-                    showBreadcrumb={false}
-                    showFilter={false}
-                  />
-                </div>
-              </BcxSection>
-            {/each}
+                </Tabs.Content>
+              {/each}
 
-            <BcxSection title="Extension Info" icon={ICON_INFO} height="10rem">
-              <div class="bcx-section-content">
-                <p>
-                  BCX enhances your Bandcamp experience with powerful search and filtering tools.
-                </p>
-                <div class="bcx-keyboard-shortcuts">
-                  <h3>Keyboard Shortcuts</h3>
-                  <div><kbd class="kbd">Ctrl+Shift+X</kbd> Toggle panel</div>
+              <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">
+                <div class="bcx-section-content">
+                  <p>
+                    BCX enhances your Bandcamp experience with powerful search and filtering tools.
+                  </p>
+                  <div class="bcx-keyboard-shortcuts">
+                    <h3>Keyboard Shortcuts</h3>
+                    <div><kbd class="kbd">Ctrl+Shift+X</kbd> Toggle panel</div>
+                  </div>
                 </div>
-              </div>
-            </BcxSection>
+              </Tabs.Content>
+            </Tabs.Root>
           </div>
         </div>
       </div>
@@ -348,10 +345,28 @@ $effect(() => {
     outline: none;
   }
 
-  :global(.bcx-sections) {
+  :global(.bcx-side-panel-shell .bcx-panel-body),
+  :global(.bcx-side-panel-shell .bcx-sections),
+  :global(.bcx-side-panel-shell .bcx-tab-content:not([hidden])),
+  :global(.bcx-side-panel-shell .bcx-section-tree-browser) {
     display: flex;
+    flex: 1 1 0%;
     flex-direction: column;
-    gap: 0.125rem;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  :global(.bcx-side-panel-shell .bcx-tab-content[hidden]) {
+    display: none;
+  }
+
+  :global(.bcx-side-panel-shell .bcx-tab-content.bcx-info-scroll:not([hidden])) {
+    overflow-y: auto;
+  }
+
+  :global(.bcx-side-panel-shell .bcx-tree-breadcrumb) {
+    flex-shrink: 0;
   }
 
   :global(.bcx-section-tree-browser .bcx-tree-view) {

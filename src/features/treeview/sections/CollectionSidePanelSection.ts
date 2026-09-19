@@ -15,6 +15,7 @@ export class CollectionSidePanelSection {
       icon: ICON_LIBRARY,
       id: `collection-${userKeyPart}`,
       label: 'Collection',
+      rootNavigation: 'tabs',
       ttl: SIDE_PANEL_SECTION_CACHE_TTL.COLLECTION,
       getChildrenCount: (pageData) =>
         pageData?.collection_data?.item_count ??
