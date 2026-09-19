@@ -142,6 +142,7 @@ export async function activateTreeItem({
       showItemFeedback?.(item, 'Opening...', 0);
       await waitForActionFeedbackPaint();
       if (await openUrlInActiveTab(item.href)) {
+        showItemFeedback?.(item, 'Opened', 1200);
         return;
       }
       window.open(item.href, '_self');

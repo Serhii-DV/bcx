@@ -36,7 +36,8 @@ describe('Artist/Label release browser', () => {
       'band-1',
       'history',
     ]);
-    expect(sections[0].selectOnPageChange).toBe(true);
+    expect(sections[0].defaultOpen).toBe(true);
+    expect(sections[0].navigationUrls).toContain(album.url.toString());
     const data = await sections[0].createTreeData();
     const releases = data.items.find((item) => item.label === 'Releases');
     expect(releases?.children?.[0].href).toBe(album.url.toString());

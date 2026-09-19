@@ -1,9 +1,6 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
-import {
-  isBandcampAlbumUrl,
-  isBandcampMusicUrl,
-} from 'src/bandcamp/domain/url/helper';
+import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { BandTreeItem } from '../items/BandTreeItem';
@@ -36,7 +33,7 @@ export class BandSidePanelSection {
       image: bandTreeItem.image,
       childrenCount: bandTreeItem.childrenCount,
       defaultOpen: true,
-      selectOnPageChange: isBandcampAlbumUrl(currentPageUrl),
+      navigationUrls: getNavigationUrls(band, currentPageUrl),
       rootNavigation: 'tabs',
       createTreeData: async () =>
         createTreeDataFromTreeItemChildren(
@@ -80,6 +77,7 @@ function createCurrentBandPageSection(
     image: bandTreeItem.image,
     childrenCount: bandTreeItem.childrenCount,
     defaultOpen: true,
+    navigationUrls: getNavigationUrls(band, currentPageUrl),
     rootNavigation: 'tabs',
     createTreeData: async () =>
       createTreeDataFromTreeItemChildren(bandTreeItem),
@@ -99,4 +97,13 @@ function withReleasePreviews(item: TreeItem, band: Band): TreeItem {
       ? children.map((child) => (child.label === 'Releases' ? releases : child))
       : [...children, releases],
   };
+}
+
+function getNavigationUrls(band: Band, currentPageUrl: Url): string[] {
+  return [
+    currentPageUrl.toString(),
+    band.url.toString(),
+    new URL('/music', band.url).toString(),
+    ...band.metadata.albums.map((album) => album.url.toString()),
+  ];
 }

@@ -148,10 +148,6 @@ $effect(() => {
   }
 
   currentSections = sections;
-  const preferredSection = sections.find(
-    (section) => section.selectOnPageChange,
-  );
-  if (preferredSection) selectedSectionId = preferredSection.id;
   if (
     selectedSectionId !== infoTabId &&
     !sections.some((section) => section.id === selectedSectionId)

@@ -29,15 +29,20 @@ onMount(() => {
   loadSidePanelSections();
   loadSidePanelTourState();
 
-  const handleActivated = () => {
-    void loadSidePanelSections();
+  const handleActivated = (info: chrome.tabs.OnActivatedInfo) => {
+    if (info.tabId !== activeTab?.id) void loadSidePanelSections();
   };
   const handleUpdated = (
     tabId: number,
-    changeInfo: chrome.tabs.TabChangeInfo,
+    changeInfo: chrome.tabs.OnUpdatedInfo,
   ) => {
-    if (shouldReloadActiveTab(activeTab, tabId, changeInfo)) {
+    const navigationUrls =
+      sidePanelSections?.flatMap((section) => section.navigationUrls ?? []) ??
+      [];
+    if (shouldReloadActiveTab(activeTab, tabId, changeInfo, navigationUrls)) {
       void loadSidePanelSections();
+    } else if (activeTab?.id === tabId && changeInfo.url) {
+      activeTab = { ...activeTab, url: changeInfo.url };
     }
   };
 
