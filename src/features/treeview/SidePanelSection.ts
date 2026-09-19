@@ -6,6 +6,7 @@ export interface SidePanelSection {
   image?: string;
   childrenCount?: number;
   defaultOpen?: boolean;
+  selectOnPageChange?: boolean;
   rootNavigation?: 'tabs';
   createTreeData: () => Promise<TreeData>;
 }

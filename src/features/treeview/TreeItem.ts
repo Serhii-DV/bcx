@@ -41,5 +41,6 @@ export interface TreeItem {
   buttons?: TreeItemButton[];
   onClick?: (context: TreeItemClickContext) => void | Promise<void>;
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
+  loadPreview?: () => Promise<import('./TreeData').TreeData>;
   actionIcon?: string; // action icon name
 }

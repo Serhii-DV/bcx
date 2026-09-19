@@ -148,6 +148,10 @@ $effect(() => {
   }
 
   currentSections = sections;
+  const preferredSection = sections.find(
+    (section) => section.selectOnPageChange,
+  );
+  if (preferredSection) selectedSectionId = preferredSection.id;
   if (
     selectedSectionId !== infoTabId &&
     !sections.some((section) => section.id === selectedSectionId)
@@ -227,7 +231,7 @@ $effect(() => {
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#key sectionTreeDataById[section.id]}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} releasePreview={section.id.startsWith('band-')} />
                       {/key}
                     {:else}
                       <BcxTreeBrowserFilter

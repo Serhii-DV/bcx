@@ -1,9 +1,13 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
-import type { AlbumDetails } from 'src/bandcamp/domain/album/details';
+import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
+import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { openUrlInActiveTab } from 'src/core/extensionActions';
 import { arrayUnique } from 'src/utils/array';
+import { TreeItemButtonFactory } from '../buttons/factory';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
-import { type TreeItem } from '../TreeItem';
+import { createTreeDataFromTreeItemChildren } from '../sections/treeDataFactory';
+import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import {
   builder,
   copyable,
@@ -36,6 +40,36 @@ export class AlbumTreeItemFactory {
       .withImage(album.artwork.tinySizeUrl)
       .withKeywords(album.artistNames)
       .build();
+  }
+
+  static createWithPreview(album: Album): TreeItem {
+    return {
+      ...this.create(album),
+      actionIcon: undefined,
+      buttons: [
+        {
+          ...TreeItemButtonFactory.createExternalLink(
+            `Open\n${album.url}`,
+            album.url.toString(),
+          ),
+          onClick: () => {
+            void openUrlInActiveTab(album.url.toString()).then((opened) => {
+              if (!opened) window.location.assign(album.url.toString());
+            });
+          },
+        },
+      ],
+      loadPreview: async () => {
+        const saved = await BandcampStorage.getAlbumsRawDataByIds([album.id]);
+        const [stored] = saved.length
+          ? await BandcampStorage.getAlbums([album])
+          : [];
+        const item = stored
+          ? await this.createWithDetails(AlbumDetails.fromAlbum(stored))
+          : this.createWithSummary(album);
+        return createTreeDataFromTreeItemChildren(item, TREE_ITEM_LAYOUT.TREE);
+      },
+    };
   }
 
   static createWithSummary(album: Album): TreeItem {
@@ -175,11 +209,13 @@ export class AlbumTreeItemFactory {
       );
     }
 
-    builder.add(
-      items(`Publisher: ${details.publisher}`, [
-        text(details.publisher).makeCopyable(),
-      ]).withImage(ICON_BUILDING),
-    );
+    if (details.publisher) {
+      builder.add(
+        items(`Publisher: ${details.publisher}`, [
+          text(details.publisher).makeCopyable(),
+        ]).withImage(ICON_BUILDING),
+      );
+    }
 
     const year = details.year;
 

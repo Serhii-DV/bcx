@@ -45,6 +45,8 @@ import {
 
 interface Props {
   treeData: TreeData;
+  nativeTabNavigation?: boolean;
+  onSelect?: (item: TreeItem | null) => void;
   filterQuery?: string | null;
   initialRootPath?: string | null;
   lockInitialRoot?: boolean;
@@ -59,6 +61,8 @@ const DRILL_UP_PATH = '__bcx_tree_drill_up__';
 
 let {
   treeData,
+  onSelect,
+  nativeTabNavigation = false,
   filterQuery: externalFilterQuery = null,
   initialRootPath = null,
   lockInitialRoot = false,
@@ -138,6 +142,18 @@ let emptyStateMessage = $derived.by(() => {
   return debouncedFilterQuery.trim()
     ? 'No items match your filter'
     : 'No items here';
+});
+
+$effect(() => {
+  if (onSelect) {
+    const selected =
+      browserItems.find((item) => item.path === focusedPath) ??
+      browserItems.find((item) => item.loadPreview) ??
+      null;
+    onSelect(selected);
+    if (selected?.loadPreview && !focusedPath)
+      focusedPath = selected.path ?? null;
+  }
 });
 
 export function focusFirstItem() {
@@ -239,6 +255,7 @@ async function handleKeyDown(event: KeyboardEvent) {
     return;
   }
 
+  if (event.key === 'Tab' && nativeTabNavigation) return;
   event.preventDefault();
 
   const currentIndex = visibleItemIndex(focusedPath);
@@ -272,6 +289,8 @@ async function handleKeyDown(event: KeyboardEvent) {
         if (!currentItem) {
           break;
         }
+
+        if (currentItem.loadPreview) break;
 
         if (isTreeLayout && !isDrillUpItem(currentItem)) {
           if (!isNode(currentItem)) {
@@ -439,6 +458,7 @@ function focusTreeItem(item?: TreeItem | null) {
   }
 
   focusedPath = item.path;
+  onSelect?.(item);
   focusTreeItemElement(treeContainer, item);
 }
 
@@ -649,7 +669,27 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 
 {#snippet browserTreeItem(item: TreeItem)}
   {@const hasChildren = isNode(item)}
-  {#if hasChildren}
+  {#if item.loadPreview}
+    <div
+      role="button"
+      class="tree-item bcx-browser-row"
+      class:focused={focusedPath === item.path}
+      data-level={item.level}
+      data-path={item.path}
+      tabindex={focusedPath === item.path ? 0 : -1}
+      onfocus={() => { focusedPath = item.path ?? null; onSelect?.(item); }}
+      onclick={() => focusTreeItem(item)}
+      onkeydown={(event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          event.stopPropagation();
+          void handleItemClick(item, event);
+        }
+      }}
+    >
+      <BcxTreeItem item={withBrowserChildCount(item)} />
+    </div>
+  {:else if hasChildren}
     <div
       role="button"
       class="tree-item bcx-browser-row"
