@@ -729,7 +729,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   </ol>
 {/snippet}
 
-<div class="flex flex-col h-full gap-2">
+<div class="flex min-h-0 flex-1 flex-col h-full gap-2">
   {#if showFilter}
     <BcxTreeBrowserFilter
       bind:this={filterRef}
@@ -766,6 +766,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 <style>
 .bcx-tree-view {
   flex: 1 1 0%;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
 }

@@ -19,10 +19,10 @@ $effect(() => {
 </script>
 
 {#if tabs.length}
-  <Tabs.Root bind:value={selectedRoot}>
+  <Tabs.Root bind:value={selectedRoot} class="bcx-panel-body">
     <BcxSectionTabs {tabs} bind:value={selectedRoot} {label} />
     {#each tabs as tab (tab.id)}
-      <Tabs.Content value={tab.id}>
+      <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
             <BcxTreeBrowser

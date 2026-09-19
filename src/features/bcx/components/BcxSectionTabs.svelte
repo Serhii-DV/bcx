@@ -115,6 +115,7 @@ async function handleCloseAutoFocus(event: Event) {
 
 <style>
   .bcx-section-tabs {
+    flex-shrink: 0;
     position: relative;
     display: flex;
     align-items: center;

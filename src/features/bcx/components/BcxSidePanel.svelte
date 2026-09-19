@@ -191,7 +191,7 @@ $effect(() => {
   <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white transition-opacity duration-400">
     <div class="flex h-full flex-col">
       <!-- Header -->
-      <div class="p-4">
+      <div class="shrink-0 p-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <img src={iconUrl} alt="BCX" class="w-12 h-12" />
@@ -213,17 +213,17 @@ $effect(() => {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-y-auto">
-        <div class="space-y-4">
+      <div class="bcx-panel-body">
+        <div class="bcx-panel-body">
 
           <div bind:this={sectionsContainer} class="bcx-sections">
-            <Tabs.Root bind:value={selectedSectionId}>
+            <Tabs.Root bind:value={selectedSectionId} class="bcx-panel-body">
               <BcxSectionTabs
                 tabs={[...sections, { id: infoTabId, label: 'Extension Info', image: ICON_INFO }]}
                 bind:value={selectedSectionId}
               />
               {#each sections as section (section.id)}
-                <Tabs.Content value={section.id}>
+                <Tabs.Content value={section.id} class="bcx-tab-content">
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#key sectionTreeDataById[section.id]}
@@ -261,7 +261,7 @@ $effect(() => {
                 </Tabs.Content>
               {/each}
 
-              <Tabs.Content value={infoTabId}>
+              <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">
                 <div class="bcx-section-content">
                   <p>
                     BCX enhances your Bandcamp experience with powerful search and filtering tools.
@@ -345,10 +345,28 @@ $effect(() => {
     outline: none;
   }
 
-  :global(.bcx-sections) {
+  :global(.bcx-side-panel-shell .bcx-panel-body),
+  :global(.bcx-side-panel-shell .bcx-sections),
+  :global(.bcx-side-panel-shell .bcx-tab-content:not([hidden])),
+  :global(.bcx-side-panel-shell .bcx-section-tree-browser) {
     display: flex;
+    flex: 1 1 0%;
     flex-direction: column;
-    gap: 0.125rem;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  :global(.bcx-side-panel-shell .bcx-tab-content[hidden]) {
+    display: none;
+  }
+
+  :global(.bcx-side-panel-shell .bcx-tab-content.bcx-info-scroll:not([hidden])) {
+    overflow-y: auto;
+  }
+
+  :global(.bcx-side-panel-shell .bcx-tree-breadcrumb) {
+    flex-shrink: 0;
   }
 
   :global(.bcx-section-tree-browser .bcx-tree-view) {
