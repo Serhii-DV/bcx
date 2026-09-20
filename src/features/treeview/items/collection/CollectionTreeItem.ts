@@ -1,4 +1,3 @@
-import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import {
   type BandcampItem,
@@ -8,12 +7,11 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
 import { currentPageUrl } from 'src/core/shared';
 import { TreeItemButtonFactory } from '../../buttons/factory';
-import { AlbumTreeItemFactory } from '../../factories/AlbumTreeItemFactory';
 import type { TreeItem } from '../../TreeItem';
 import { item } from '../../TreeItemBuilder';
 import type { TreeItemButton } from '../../TreeItemButton';
 import { createLoadHandler } from '../../utils';
-import { createPagedReleasesTreeItem } from '../pagedReleasesTreeItem';
+import { withReleaseCatalog } from '../releaseCatalog';
 import {
   loadCollectionItemsFromStorage,
   saveCollectionItemsToStorage,
@@ -26,25 +24,13 @@ export class CollectionTreeItem {
     const albums = collectionItems.map((item) =>
       AlbumFactory.fromBandcampItem(item),
     );
-    builder.add(
-      AlbumTreeItemFactory.createArtistsTreeItem(albums),
-      this.createReleasesTreeItem(albums),
-    );
-
     if (isBandcampFanUrl(currentPageUrl, username)) {
       builder.addButton(createCollectionRefreshTreeItemButton());
     }
 
     builder.addButton(createCollectionOpenTreeItemButton(username));
 
-    return builder.build();
-  }
-
-  private static createReleasesTreeItem(albums: Album[]): TreeItem {
-    return createPagedReleasesTreeItem({
-      albums,
-      errorContext: '[CollectionTreeItem.createLoadMoreReleasesTreeItem]',
-    });
+    return withReleaseCatalog(builder.build(), albums);
   }
 }
 

@@ -6,11 +6,7 @@ import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import { createRootSectionTabs } from './rootSectionTabs';
 
-let {
-  treeData,
-  label,
-  releasePreview = false,
-}: { treeData: TreeData; label: string; releasePreview?: boolean } = $props();
+let { treeData, label }: { treeData: TreeData; label: string } = $props();
 const tabs = $derived(createRootSectionTabs(treeData.items));
 let selectedRoot = $state('');
 let visitedRoots: Record<string, boolean> = $state({});
@@ -30,7 +26,7 @@ $effect(() => {
       <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
-            {#if releasePreview && treeData.items.find((item) => item.path === tab.id)?.label === 'Releases'}
+            {#if treeData.items.find((item) => item.path === tab.id)?.releasePreview}
               <BcxReleaseBrowser {treeData} rootPath={tab.id} />
             {:else}
             <BcxTreeBrowser

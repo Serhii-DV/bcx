@@ -1,3 +1,4 @@
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { TreeItemCache } from '../items/TreeItemCache';
 import type { SidePanelSection } from '../SidePanelSection';
 import type { TreeItem } from '../TreeItem';
@@ -28,7 +29,7 @@ export function createFanDataSubtreeSection(
   const fanData = pageDataContext.fanData;
   const pageData = pageDataContext.data;
 
-  return {
+  const section: SidePanelSection = {
     id: options.id,
     label: options.label,
     rootNavigation: options.rootNavigation,
@@ -38,13 +39,21 @@ export function createFanDataSubtreeSection(
       (options.itemCountPath
         ? pageData?.[options.itemCountPath]?.item_count
         : undefined),
-    createTreeData: async () =>
-      createTreeDataFromTreeItemChildren(
-        await TreeItemCache.getOrCreate(
-          TreeItemCache.subtreeKey(userKeyPart, options.cacheKey),
-          () => options.createTreeItem(fanData.username || ''),
-          options.ttl,
-        ),
-      ),
+    createTreeData: async () => {
+      const item = await TreeItemCache.getOrCreate(
+        TreeItemCache.subtreeKey(userKeyPart, options.cacheKey),
+        () => options.createTreeItem(fanData.username || ''),
+        options.ttl,
+      );
+      if (item.releaseCatalog) {
+        section.navigationUrls = [
+          BandcampUrlFactory.generateFanUrl(fanData.username || ''),
+          BandcampUrlFactory.generateWishlistUrl(fanData.username || ''),
+          ...item.releaseCatalog.albums.map((album) => album.url),
+        ];
+      }
+      return createTreeDataFromTreeItemChildren(item);
+    },
   };
+  return section;
 }

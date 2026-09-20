@@ -227,7 +227,7 @@ $effect(() => {
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#key sectionTreeDataById[section.id]}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} releasePreview={section.id.startsWith('band-')} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} />
                       {/key}
                     {:else}
                       <BcxTreeBrowserFilter

@@ -4,7 +4,7 @@ import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { BandTreeItem } from '../items/BandTreeItem';
-import { createPagedReleasesTreeItem } from '../items/pagedReleasesTreeItem';
+import { withReleaseCatalog } from '../items/releaseCatalog';
 import { TreeItemCache } from '../items/TreeItemCache';
 import type { SidePanelSection } from '../SidePanelSection';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
@@ -60,7 +60,7 @@ function createCurrentBandPageSection(
   );
   const children = deferDescendants(bandTreeItemFromStorage.children || []).map(
     (child) =>
-      child.label === 'Releases'
+      child.releasePreview
         ? { ...child, layout: TREE_ITEM_LAYOUT.BROWSER }
         : child,
   );
@@ -85,18 +85,7 @@ function createCurrentBandPageSection(
 }
 
 function withReleasePreviews(item: TreeItem, band: Band): TreeItem {
-  const releases = createPagedReleasesTreeItem({
-    albums: band.metadata.albums,
-    errorContext: '[Band releases]',
-    withPreview: true,
-  });
-  const children = item.children ?? [];
-  return {
-    ...item,
-    children: children.some((child) => child.label === 'Releases')
-      ? children.map((child) => (child.label === 'Releases' ? releases : child))
-      : [...children, releases],
-  };
+  return withReleaseCatalog(item, band.metadata.albums, { groupByYear: true });
 }
 
 function getNavigationUrls(band: Band, currentPageUrl: Url): string[] {

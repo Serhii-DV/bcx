@@ -2,8 +2,9 @@ import { sessionStorage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
+import { type ReleaseCatalog, restoreReleaseCatalog } from './releaseCatalog';
 
-const CACHE_VERSION = 7;
+const CACHE_VERSION = 8;
 const CACHE_KEY_PREFIX = '/cache/tree-item';
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 
@@ -13,6 +14,7 @@ interface TreeItemButtonSnapshot {
 }
 
 interface TreeItemSnapshot {
+  releaseCatalog?: ReleaseCatalog;
   id?: string;
   label?: string;
   children?: TreeItemSnapshot[];
@@ -140,6 +142,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
     }));
 
   return {
+    releaseCatalog: item.releaseCatalog,
     id: item.id,
     label: item.label,
     childrenCount: item.childrenCount ?? item.children?.length,
@@ -154,7 +157,11 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
     includeInFilterSuggestions: item.includeInFilterSuggestions,
     actionIcon: item.actionIcon,
     buttons: buttons.length > 0 ? buttons : undefined,
-    children: item.children?.map(serializeTreeItem),
+    children: item.children?.map((child) =>
+      item.releaseCatalog && child.releasePreview
+        ? { label: child.label }
+        : serializeTreeItem(child),
+    ),
   };
 }
 
@@ -165,7 +172,8 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
     href: button.href,
   }));
 
-  return {
+  return restoreReleaseCatalog({
+    releaseCatalog: item.releaseCatalog,
     id: item.id,
     label: item.label,
     childrenCount: item.childrenCount ?? item.children?.length,
@@ -181,5 +189,5 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
     actionIcon: item.actionIcon,
     buttons,
     children: item.children?.map(deserializeTreeItem),
-  };
+  });
 }
