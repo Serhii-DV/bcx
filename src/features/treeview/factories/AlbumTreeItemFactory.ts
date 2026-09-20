@@ -45,6 +45,7 @@ export class AlbumTreeItemFactory {
   static createWithPreview(album: Album): TreeItem {
     return {
       ...this.create(album),
+      previewImage: album.artwork.mediumSizeUrl,
       actionIcon: undefined,
       buttons: [
         {

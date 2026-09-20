@@ -30,6 +30,8 @@ describe('release previews', () => {
     expect(item.children).toBeUndefined();
     expect(item.actionIcon).toBeUndefined();
     expect(item.loadPreview).toBeDefined();
+    expect(item.image).toBe(album.artwork.tinySizeUrl);
+    expect(item.previewImage).toBe(album.artwork.mediumSizeUrl);
   });
 
   it('shows the existing summary when the release is not stored', async () => {

@@ -44,7 +44,19 @@ $effect(() => {
   <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={true} showBreadcrumb={false} initialSelectedHref={treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} nativeTabNavigation={true} />
 </div>
 <section class="release-preview" aria-label="Selected release details">
-  <h3>{selectedItem?.label ?? 'Release details'}</h3>
+  <header class="release-header">
+    {#if selectedItem?.previewImage}
+      {#key selectedItem.previewImage}
+        <img
+          class="release-cover"
+          src={selectedItem.previewImage}
+          alt={`Cover art for ${selectedItem.label ?? 'selected release'}`}
+          onerror={(event) => { event.currentTarget.setAttribute('hidden', ''); }}
+        />
+      {/key}
+    {/if}
+    <h3>{selectedItem?.label ?? 'Release details'}</h3>
+  </header>
   {#if error}
     <p role="alert">{error}</p>
   {:else if loading}
@@ -61,6 +73,8 @@ $effect(() => {
 <style>
 .release-list { display: flex; flex-direction: column; flex: 1 1 55%; min-height: 0; overflow: hidden; }
 .release-preview { display: flex; flex-direction: column; flex: 1 1 45%; min-height: 0; overflow: hidden; border-top: 1px solid #4b5563; }
-h3 { margin: 0; padding: 0.5rem 1rem; font-size: 0.875rem; flex-shrink: 0; }
+.release-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; flex-shrink: 0; }
+.release-cover { width: 6rem; height: 6rem; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
+h3 { margin: 0; min-width: 0; overflow-wrap: anywhere; font-size: 0.875rem; }
 p { padding: 0.5rem 1rem; font-size: 0.875rem; color: #d1d5db; }
 </style>
