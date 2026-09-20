@@ -125,7 +125,7 @@ export class BandTreeItem {
   static createBandAbout(band: Band): TreeItem {
     const metadata = band.metadata;
     const years = metadata.years.filter(Number.isFinite).sort((a, b) => a - b);
-    const about = items('About ' + band.name, [
+    const about = items('About', [
       linkOpenPage('Open Bandcamp catalog', band.url.toString()),
       copyable('Copy Bandcamp URL', band.url.toString()),
       text(
