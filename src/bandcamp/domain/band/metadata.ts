@@ -17,6 +17,9 @@ export class BandMetadata implements StorableObject, Compressable {
     public currency: string,
     public albums: Album[],
     public tracks: Track[],
+    public location?: string,
+    public biography?: string,
+    public links: { label: string; url: string }[] = [],
   ) {}
 
   get trackReleases(): Track[] {
@@ -107,12 +110,18 @@ export class BandMetadata implements StorableObject, Compressable {
     currency: string,
     albums: Album[] = [],
     tracks: Track[] = [],
+    location?: string,
+    biography?: string,
+    links: BandMetadata['links'] = [],
   ): BandMetadata {
     return new BandMetadata(
       created instanceof Date ? created : new Date(created),
       currency,
       albums,
       tracks,
+      location,
+      biography,
+      links,
     );
   }
 
@@ -124,6 +133,9 @@ export class BandMetadata implements StorableObject, Compressable {
     return {
       created: this.created.toISOString(),
       currency: this.currency,
+      location: this.location,
+      biography: this.biography,
+      links: this.links,
       // Save Album IDs instead of full Album objects to avoid redundancy
       albumIds: this.albums.map((album) => album.id),
       // Save Track IDs instead of full Track objects to avoid redundancy
@@ -137,6 +149,9 @@ export class BandMetadata implements StorableObject, Compressable {
       rawData.currency,
       [], // Albums should be populated elsewhere
       [], // Tracks should be populated elsewhere
+      rawData.location ?? rawData.profile?.location,
+      rawData.biography ?? rawData.profile?.biography,
+      rawData.links ?? rawData.profile?.links ?? [],
     );
   }
 
@@ -147,6 +162,6 @@ export class BandMetadata implements StorableObject, Compressable {
       data as CompressedBandMetadata,
       bandMetadataCompressor,
     ) as RawBandMetadata;
-    return BandMetadata.create(metadata.created, metadata.currency, [], []);
+    return BandMetadata.fromRawData(metadata);
   }
 }

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
+import { Band } from 'src/bandcamp/domain/band/band';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
 import { createActiveTabSidePanelSections } from './activeTabTreeData';
@@ -57,5 +58,82 @@ describe('active tab fan sections during navigation', () => {
     expect(refreshed.map((section) => section.id)).not.toContain(
       'collection-listener',
     );
+  });
+});
+
+describe('active tab public profile', () => {
+  it('passes the content-script profile into the actual About panel', async () => {
+    const profile = {
+      location: 'Copenhagen, Denmark',
+      biography: 'Independent label.',
+      links: [{ label: 'Instagram', url: 'https://instagram.com/example' }],
+    };
+    rs.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async () => ({
+      pageData: {
+        data: {},
+        fanData: {},
+        bandProfile: profile,
+        musicBand: {
+          id: 901,
+          name: 'Example',
+          url: 'https://profile-test.bandcamp.com',
+          artworkId: 0,
+          metadata: { created: '2020-01-01', currency: 'EUR' },
+          albums: [],
+          tracks: [],
+        },
+      },
+    }));
+    const sections = await createActiveTabSidePanelSections({
+      id: 1,
+      windowId: 1,
+      url: 'https://profile-test.bandcamp.com/music',
+    });
+    const tree = await sections
+      .find((section) => section.id === 'band-901')
+      ?.createTreeData();
+    const about = tree?.items.find((item) => item.label === 'About');
+    expect(about?.children?.map((item) => item.label)).toContain(
+      'Location: Copenhagen, Denmark',
+    );
+    expect(about?.children?.map((item) => item.label)).toContain(
+      'Independent label.',
+    );
+    expect(
+      about?.children?.find((item) => item.label === 'Websites & social links')
+        ?.children?.[0].href,
+    ).toBe(profile.links[0].url);
+  });
+
+  it('refreshes an older stored profile when live catalog data is unavailable', async () => {
+    const band = Band.create(
+      902,
+      'Example',
+      'https://profile-stored.bandcamp.com',
+      0,
+    );
+    band.metadata.location = 'Old location';
+    rs.spyOn(BandcampStorage, 'getByUuids').mockResolvedValue([band]);
+    rs.spyOn(BandcampStorage, 'getBands').mockResolvedValue([band]);
+    rs.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async () => ({
+      pageData: {
+        data: {},
+        fanData: {},
+        bandProfile: { location: 'Paris, France', links: [] },
+      },
+    }));
+    const sections = await createActiveTabSidePanelSections({
+      id: 1,
+      windowId: 1,
+      url: 'https://profile-stored.bandcamp.com/music',
+    });
+    const tree = await sections
+      .find((section) => section.id === 'band-902')
+      ?.createTreeData();
+    expect(
+      tree?.items
+        .find((item) => item.label === 'About')
+        ?.children?.map((item) => item.label),
+    ).toContain('Location: Paris, France');
   });
 });

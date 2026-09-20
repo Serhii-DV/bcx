@@ -9,7 +9,6 @@ import {
   copyable,
   items,
   linkOpenPage,
-  list,
   searchQuery,
   TreeItemBuilder,
   text,
@@ -126,6 +125,16 @@ export class BandTreeItem {
     const metadata = band.metadata;
     const years = metadata.years.filter(Number.isFinite).sort((a, b) => a - b);
     const about = items('About', [
+      ...(metadata.location ? [text(`Location: ${metadata.location}`)] : []),
+      ...(metadata.biography ? [text(metadata.biography)] : []),
+      ...(metadata.links.length
+        ? [
+            items(
+              'Websites & social links',
+              metadata.links.map((link) => linkOpenPage(link.label, link.url)),
+            ).withOpen(true),
+          ]
+        : []),
       linkOpenPage('Open Bandcamp catalog', band.url.toString()),
       copyable('Copy Bandcamp URL', band.url.toString()),
       text(
@@ -140,17 +149,18 @@ export class BandTreeItem {
         : []),
       ...(Number.isFinite(metadata.created.getTime())
         ? [
-            list('Bandcamp account created', [
-              metadata.created.toLocaleDateString(),
-            ]).withImage(ICON_CALENDAR_DAYS),
+            text(
+              `Bandcamp account created: ${metadata.created.toLocaleDateString()}`,
+            ).withImage(ICON_CALENDAR_DAYS),
           ]
         : []),
       ...(band.metadata.currency
-        ? [list('Currency', [band.metadata.currency]).withImage(ICON_BANKNOTE)]
+        ? [text(`Currency: ${band.metadata.currency}`).withImage(ICON_BANKNOTE)]
         : []),
     ])
       .asTree()
       .withImage(ICON_INFO)
+      .withoutChildrenCount()
       .build();
     return {
       ...about,

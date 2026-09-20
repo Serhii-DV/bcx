@@ -39,6 +39,7 @@ interface ActiveBandcampPageDataResponse {
 }
 
 interface ActiveBandcampPageData {
+  bandProfile?: Pick<BandMetadata, 'location' | 'biography' | 'links'>;
   data: any;
   fanData: FanData;
   albumSchema?: MusicAlbumSchema | null;
@@ -79,6 +80,9 @@ export async function createActiveTabSidePanelSections(
   const currentPageUrl = Url.create(tab.url);
   const pageData = await getActiveBandcampPageData(currentPageUrl);
   const page = await createBandPage(currentPageUrl, pageData);
+  if (page?.band && pageData?.bandProfile) {
+    Object.assign(page.band.metadata, pageData.bandProfile);
+  }
 
   // Fan sections belong to the user, whereas album/band data belongs to the page.
   // Keep the former available while a new hostname's content script starts.

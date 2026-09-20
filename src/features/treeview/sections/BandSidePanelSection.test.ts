@@ -29,6 +29,32 @@ const album = AlbumFactory.fromBandcampItem({
 });
 
 describe('Artist/Label release browser', () => {
+  it('shows public profile details on catalog and release pages', async () => {
+    const band = Band.create(9, 'Label', 'https://label.bandcamp.com', 1);
+    Object.assign(band.metadata, {
+      location: 'Paris, France',
+      biography: 'Independent label.',
+      links: [{ label: 'Website', url: 'https://example.com/' }],
+    });
+    for (const url of [band.url, album.url]) {
+      const data = await BandSidePanelSection.create(
+        band,
+        url,
+      )?.createTreeData();
+      const about = data?.items.find((item) => item.label === 'About');
+      expect(about?.children?.map((item) => item.label)).toContain(
+        'Location: Paris, France',
+      );
+      expect(about?.children?.map((item) => item.label)).toContain(
+        'Independent label.',
+      );
+      expect(
+        about?.children?.find(
+          (item) => item.label === 'Websites & social links',
+        )?.children?.[0].href,
+      ).toBe('https://example.com/');
+    }
+  });
   it('filters artist and year groups while preserving releases after cache restoration', async () => {
     const band = Band.create(9, 'Label', 'https://label.bandcamp.com', 1);
     const release = AlbumFactory.fromRawData(album.toRawData());
