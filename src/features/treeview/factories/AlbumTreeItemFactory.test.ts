@@ -32,7 +32,7 @@ describe('release previews', () => {
     expect(item.actionIcon).toBeUndefined();
     expect(item.loadPreview).toBeDefined();
     expect(item.image).toBe(album.artwork.tinySizeUrl);
-    expect(item.previewImage).toBe(album.artwork.mediumSizeUrl);
+    expect(item.previewImage).toBe(album.artwork.largeSizeUrl);
     expect(item.previewInformation?.title).toBe('Release');
   });
 

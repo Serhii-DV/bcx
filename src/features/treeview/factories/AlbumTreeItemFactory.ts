@@ -1,6 +1,7 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
+import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 import { storage } from 'src/core/shared';
@@ -51,7 +52,7 @@ export class AlbumTreeItemFactory {
   static createWithPreview(album: Album): TreeItem {
     return {
       ...this.create(album),
-      previewImage: album.artwork.mediumSizeUrl,
+      previewImage: album.artwork.getUrl(ArtworkSize.LARGE) ?? undefined,
       previewInformation: createReleaseInformation(album),
       actionIcon: undefined,
       buttons: [

@@ -149,7 +149,7 @@ async function copyLink() {
 
 <style>
 .release-header { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; flex-shrink: 0; }
-.release-cover { width: 5rem; height: 5rem; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
+.release-cover { width: 15rem; height: 15rem; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
 .release-heading { min-width: 0; overflow-wrap: anywhere; font-size: 0.75rem; }
 h3 { margin: 0 0 0.25rem; font-size: 0.875rem; }
 h4 { margin: 0.75rem 0 0.25rem; font-size: 0.8125rem; }
