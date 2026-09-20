@@ -35,6 +35,7 @@ export interface TreeItem {
   path?: string;
   href?: string;
   image?: string; // image URL or icon name
+  aboutProfile?: { name: string; image?: string };
   hint?: string;
   query?: string;
   keywords?: string[];

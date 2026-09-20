@@ -91,7 +91,18 @@ function withReleasePreviews(
   band: Band,
   currentPageUrl?: Url,
 ): TreeItem {
-  const catalog = withReleaseCatalog(item, band.metadata.albums, {
+  const refreshedItem = {
+    ...item,
+    children: [
+      ...(item.children ?? []).filter(
+        (child) =>
+          child.label !== `About ${band.name}` && child.label !== 'Tags',
+      ),
+      BandTreeItem.createBandTags(band),
+      BandTreeItem.createBandAbout(band),
+    ],
+  };
+  const catalog = withReleaseCatalog(refreshedItem, band.metadata.albums, {
     groupByYear: true,
   });
   const selectedIndex = band.metadata.albums.findIndex(

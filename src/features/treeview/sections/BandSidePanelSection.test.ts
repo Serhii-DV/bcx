@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from '@rstest/core';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
+import { Metadata } from 'src/bandcamp/domain/metadata';
+import { Price } from 'src/bandcamp/domain/price';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { Url } from 'src/core/url';
+import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import { MainSidePanelSections } from '../items/MainSidePanelSections';
 import { TreeItemCache } from '../items/TreeItemCache';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
@@ -25,6 +29,127 @@ const album = AlbumFactory.fromBandcampItem({
 });
 
 describe('Artist/Label release browser', () => {
+  it('shows sorted unique release tags in their own subtab, including after cache restoration', async () => {
+    const band = Band.create(9, 'Label', 'https://label.bandcamp.com', 1);
+    const release = AlbumFactory.fromRawData(album.toRawData());
+    release.metadata = Metadata.create(
+      Price.create(0, 'USD'),
+      '',
+      '2026-01-01',
+      '2026-01-01',
+      ['techno', 'ambient', 'ambient'],
+    );
+    band.metadata.albums = [release, release];
+    band.metadata.tracks = [
+      TrackFactory.create(
+        2,
+        1,
+        'Artist',
+        'Track',
+        1,
+        undefined,
+        undefined,
+        1,
+        Metadata.create(
+          Price.create(0, 'USD'),
+          '',
+          '2026-01-01',
+          '2026-01-01',
+          ['dub', 'ambient'],
+        ),
+      ),
+    ];
+    for (const url of [
+      Url.create('https://label.bandcamp.com/music'),
+      album.url,
+      album.url,
+    ]) {
+      const data = await BandSidePanelSection.create(
+        band,
+        url,
+      )?.createTreeData();
+      const tags = data?.items.filter((item) => item.label === 'Tags');
+      expect(tags).toHaveLength(1);
+      expect(tags?.[0].image).toBe('tags');
+      expect(tags?.[0].children?.map((item) => item.label)).toEqual([
+        'ambient',
+        'dub',
+        'techno',
+      ]);
+      expect(tags?.[0].children?.map((item) => item.childrenCount)).toEqual([
+        2, 1, 1,
+      ]);
+      expect(
+        tags?.[0].children?.every(
+          (item) => !item.children && !item.hasChildren,
+        ),
+      ).toBe(true);
+      expect(
+        tags?.[0].children?.every(
+          (item) => item.image === 'tag' && item.query === item.label,
+        ),
+      ).toBe(true);
+      expect(
+        createRootSectionTabs(data?.items ?? []).some(
+          (tab) => tab.label === 'Tags (3)',
+        ),
+      ).toBe(true);
+      const about = data?.items.find((item) => item.label === 'About Label');
+      expect(
+        about?.children?.some((item) =>
+          ['Artists in catalog', 'Genres and tags'].includes(item.label ?? ''),
+        ),
+      ).toBe(false);
+    }
+  });
+
+  it('shows an About profile even without releases or artwork', async () => {
+    const band = Band.create(7, 'Label', 'https://label.bandcamp.com', 0);
+    const data = await BandSidePanelSection.create(
+      band,
+      band.url,
+    )?.createTreeData();
+    const about = data?.items.find((item) => item.label === 'About Label');
+    expect(about?.aboutProfile).toEqual({ name: 'Label', image: undefined });
+    expect(
+      createRootSectionTabs(data?.items ?? []).some(
+        (tab) => tab.label === 'Tags',
+      ),
+    ).toBe(true);
+    expect(
+      about?.children?.some(
+        (item) => item.label === 'Loaded catalog: 0 albums, 0 track releases',
+      ),
+    ).toBe(true);
+  });
+
+  it('refreshes About information and artwork after reading an older cached tree', async () => {
+    const band = Band.create(8, 'Label', 'https://label.bandcamp.com', 123);
+    band.metadata.albums = [album];
+    await TreeItemCache.set(TreeItemCache.subtreeKey('band', 8), {
+      children: [
+        { label: 'About Label', children: [{ label: 'Old information' }] },
+      ],
+    });
+    const data = await BandSidePanelSection.create(
+      band,
+      album.url,
+    )?.createTreeData();
+    const about = data?.items.filter((item) => item.label === 'About Label');
+    expect(about).toHaveLength(1);
+    expect(about?.[0].aboutProfile?.image).toBe(band.artwork.mediumSizeUrl);
+    expect(
+      about?.[0].children?.some(
+        (item) => item.label === 'Loaded catalog: 1 albums, 0 track releases',
+      ),
+    ).toBe(true);
+    expect(
+      about?.[0].children?.some((item) =>
+        ['Artists in catalog', 'Genres and tags'].includes(item.label ?? ''),
+      ),
+    ).toBe(false);
+  });
+
   it('replaces the standalone release tab and retains a release missing from the catalog', async () => {
     const band = Band.create(1, 'Artist', 'https://artist.bandcamp.com', 1);
     const sections = await MainSidePanelSections.create(
