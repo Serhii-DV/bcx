@@ -90,7 +90,10 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
               String(year),
               albums
                 .filter((album) => album.metadata?.year === year)
-                .map((album) => AlbumTreeItemFactory.createWithPreview(album)),
+                .map((album) => ({
+                  ...AlbumTreeItemFactory.createWithPreview(album),
+                  includeInFilterSuggestions: false,
+                })),
             )
               .withImage(ICON_CALENDAR_DAYS)
               .build(),

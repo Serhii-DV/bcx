@@ -143,6 +143,67 @@ describe('release catalog previews', () => {
       '2026',
       '2025',
     ]);
+    expect(getTreeItemFilterSuggestions(years?.children)).toEqual([
+      '2025',
+      '2026',
+    ]);
+    expect(new TreeData(years?.children ?? []).filterSuggestions).toEqual([
+      '2025',
+      '2026',
+    ]);
+
+    const key = TreeItemCache.subtreeKey('label', 'Years');
+    await TreeItemCache.set(key, tree);
+    const restored = await TreeItemCache.get(key);
+    const restoredYears = restored?.children?.find(
+      (item) => item.label === 'Years',
+    );
+    expect(getTreeItemFilterSuggestions(restoredYears?.children)).toEqual([
+      '2025',
+      '2026',
+    ]);
+    expect(
+      new TreeData(restoredYears?.children ?? []).filterSuggestions,
+    ).toEqual(['2025', '2026']);
+  });
+
+  it('filters Years at the root while preserving releases inside matching years', () => {
+    const albums = createItems(2).map((item, index) => {
+      const year = 2025 + index;
+      const album = AlbumFactory.fromBandcampItem({
+        ...item,
+        item_title: `Release ${year}`,
+      });
+      album.metadata = Metadata.create(
+        Price.create(0, 'USD'),
+        'Label',
+        `${year}-01-01`,
+        `${year}-01-01`,
+      );
+      return album;
+    });
+    const tree = withReleaseCatalog({ label: 'Label' }, albums, {
+      groupByYear: true,
+    });
+    const years = tree.children?.find((item) => item.label === 'Years');
+    if (!years) throw new Error('Missing Years root');
+
+    const matches = filterTreeBrowserItems(years.children, '2026', years);
+    expect(matches.map((item) => item.label)).toEqual(['2026']);
+    expect(matches[0]).toBe(years.children?.[0]);
+    assertPreview(matches[0].children?.[0]);
+    expect(filterTreeBrowserItems(years.children, '202', years)).toEqual(
+      years.children,
+    );
+    expect(filterTreeBrowserItems(years.children, 'Release', years)).toEqual(
+      [],
+    );
+    expect(filterTreeBrowserItems(years.children, '   ', years)).toBe(
+      years.children,
+    );
+    expect(
+      filterTreeBrowserItems(matches[0].children, 'Release 2026', matches[0]),
+    ).toEqual(matches[0].children);
   });
 
   for (const [label, create] of [

@@ -433,7 +433,10 @@ export function filterTreeBrowserItems(
   query: string,
   root?: TreeItem | null,
 ): TreeItem[] {
-  if (root?.releasePreview && root.label === 'Artists') {
+  if (
+    root?.releasePreview &&
+    (root.label === 'Artists' || root.label === 'Years')
+  ) {
     return query.trim()
       ? (items ?? []).filter((item) => treeItemMatchesQuery(item, query))
       : (items ?? []);
