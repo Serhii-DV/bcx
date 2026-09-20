@@ -1,4 +1,5 @@
 import type { ReleaseCatalog } from './items/releaseCatalog';
+import type { ReleaseInformation, ReleasePreview } from './ReleasePreview';
 import type { TreeItemButton } from './TreeItemButton';
 
 export interface TreeItemClickContext {
@@ -34,6 +35,7 @@ export interface TreeItem {
   path?: string;
   href?: string;
   image?: string; // image URL or icon name
+  aboutProfile?: { name: string; image?: string };
   hint?: string;
   query?: string;
   keywords?: string[];
@@ -44,7 +46,9 @@ export interface TreeItem {
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
   releaseCatalog?: ReleaseCatalog;
   releasePreview?: boolean;
+  previewImage?: string;
+  previewInformation?: ReleaseInformation;
   initialSelectedHref?: string;
-  loadPreview?: () => Promise<import('./TreeData').TreeData>;
+  loadPreview?: () => Promise<ReleasePreview>;
   actionIcon?: string; // action icon name
 }

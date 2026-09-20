@@ -1,4 +1,5 @@
 import type { StorableObject, StorageObject } from 'src/core/storage';
+import type { ReleaseNotes } from './album/releaseNotes';
 import { type Compressable, compress, decompress } from './compressor';
 import {
   type CompressedMetadataData,
@@ -15,6 +16,7 @@ export class Metadata implements StorableObject, Compressable {
     public published: Date,
     public modified: Date,
     public keywords: string[],
+    public release?: ReleaseNotes,
   ) {}
 
   get compressor(): MetadataCompressor {
@@ -39,6 +41,7 @@ export class Metadata implements StorableObject, Compressable {
     published: string,
     modified: string,
     keywords: string[] = [],
+    release?: ReleaseNotes,
   ): Metadata {
     return new Metadata(
       price,
@@ -46,6 +49,7 @@ export class Metadata implements StorableObject, Compressable {
       new Date(published),
       new Date(modified),
       keywords,
+      release,
     );
   }
 
@@ -60,6 +64,7 @@ export class Metadata implements StorableObject, Compressable {
       published: this.published.toISOString(),
       modified: this.modified.toISOString(),
       keywords: this.keywords,
+      release: this.release,
     };
   }
 
@@ -70,6 +75,7 @@ export class Metadata implements StorableObject, Compressable {
       rawData.published,
       rawData.modified,
       rawData.keywords || [],
+      rawData.release,
     );
   }
 
@@ -85,6 +91,7 @@ export class Metadata implements StorableObject, Compressable {
       decompressed.published,
       decompressed.modified,
       decompressed.keywords,
+      decompressed.release,
     );
   }
 }

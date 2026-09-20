@@ -12,6 +12,7 @@ import { BandcampStorage } from '../storage';
 import { TrackFactory } from '../track/factory';
 import { Track } from '../track/track';
 import type { BandPage } from './BandPage';
+import { readBandMetadata } from './bandMetadata';
 import { createMetadataElement, createQueryCountBadgeElement } from './helper';
 
 interface MusicGridClientItem {
@@ -480,13 +481,22 @@ export class PageMusic implements BandPage {
 
     const linkElement = element('link[rel="image_src"]') as HTMLLinkElement;
     const artwork = Artwork.fromUrl(linkElement!.href || '');
+    const profile = readBandMetadata(document, bandData.url);
 
     return Band.create(
       bandData.id,
       bandData.name,
       bandData.url,
       artwork ? artwork.id : 0,
-      BandMetadata.create(bandData.create_date, bandData.currency),
+      BandMetadata.create(
+        bandData.create_date,
+        bandData.currency,
+        [],
+        [],
+        profile?.location,
+        profile?.biography,
+        profile?.links,
+      ),
     );
   }
 }

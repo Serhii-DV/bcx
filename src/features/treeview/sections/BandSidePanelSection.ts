@@ -4,7 +4,6 @@ import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { BandTreeItem } from '../items/BandTreeItem';
-import { createPagedReleasesTreeItem } from '../items/pagedReleasesTreeItem';
 import { withReleaseCatalog } from '../items/releaseCatalog';
 import { TreeItemCache } from '../items/TreeItemCache';
 import type { SidePanelSection } from '../SidePanelSection';
@@ -91,9 +90,38 @@ function withReleasePreviews(
   band: Band,
   currentPageUrl?: Url,
 ): TreeItem {
-  const catalog = withReleaseCatalog(item, band.metadata.albums, {
-    groupByYear: true,
-  });
+  const refreshedItem = {
+    ...item,
+    children: [
+      ...(item.children ?? []).filter(
+        (child) => child.label !== `About` && child.label !== 'Tags',
+      ),
+      BandTreeItem.createBandTags(band),
+      BandTreeItem.createBandAbout(band),
+    ],
+  };
+  const releaseCatalog = withReleaseCatalog(
+    refreshedItem,
+    band.metadata.albums,
+    {
+      groupByYear: true,
+      paginateReleases: false,
+    },
+  );
+  const catalog = {
+    ...releaseCatalog,
+    children: releaseCatalog.children?.map((root) =>
+      root.label === 'Artists' || root.label === 'Years'
+        ? {
+            ...root,
+            children: root.children?.map((group) => ({
+              ...group,
+              query: group.label,
+            })),
+          }
+        : root,
+    ),
+  };
   const selectedIndex = band.metadata.albums.findIndex(
     (album) =>
       album.url.withoutSearchAndHash.toString() ===
@@ -106,14 +134,7 @@ function withReleasePreviews(
     children: catalog.children?.map((child) =>
       child.label === 'Releases'
         ? {
-            ...createPagedReleasesTreeItem({
-              albums: band.metadata.albums,
-              errorContext: '[Band releases]',
-              withPreview: true,
-              initialItemCount: selectedIndex + 1,
-            }),
-            releasePreview: true,
-            layout: TREE_ITEM_LAYOUT.BROWSER,
+            ...child,
             initialSelectedHref: selectedAlbum.url.toString(),
           }
         : child,

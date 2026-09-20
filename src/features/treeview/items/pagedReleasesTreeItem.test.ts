@@ -16,7 +16,7 @@ describe('createPagedReleasesTreeItem', () => {
 
     const loadMoreTreeItem = releasesTreeItem.children?.[20];
 
-    expect(loadMoreTreeItem?.label).toBe('Load more (20 of 25 loaded)');
+    expect(loadMoreTreeItem?.label).toBe('Show more (20 of 25 loaded)');
 
     releasesTreeItem.path = 'wishlist.1';
 

@@ -4,14 +4,18 @@ import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
-import { ICON_CALENDAR, ICON_CALENDAR_DAYS, ICON_MIC } from '../utils/icon';
-import { createPagedTreeItem } from './createPagedTreeItem';
+import {
+  ICON_CALENDAR,
+  ICON_CALENDAR_DAYS,
+  ICON_DISC,
+  ICON_MIC,
+} from '../utils/icon';
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 
 export interface ReleaseCatalog {
   albums: RawAlbumData[];
   groupByYear?: boolean;
-  paginateArtists?: boolean;
+  paginateReleases?: boolean;
 }
 
 export function withReleaseCatalog(
@@ -40,33 +44,33 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     albums,
   ).map((artist) => ({
     ...artist,
+    includeInFilterSuggestions: true,
     children: artist.children?.map((release) => {
       const album = release.href ? albumsByUrl.get(release.href) : undefined;
-      return album ? AlbumTreeItemFactory.createWithPreview(album) : release;
+      return {
+        ...(album ? AlbumTreeItemFactory.createWithPreview(album) : release),
+        includeInFilterSuggestions: false,
+      };
     }),
   }));
-  const artists = catalog.paginateArtists
-    ? createPagedTreeItem({
-        batchSize: 20,
-        errorContext: '[Release catalog artists]',
-        errorMessage: 'Failed to load more artists:',
-        image: ICON_MIC,
-        childrenImage: ICON_MIC,
-        items: artistGroups,
-        label: 'Artists',
-        createChildren: (groups) => groups,
-      })
-    : items('Artists', artistGroups)
-        .withImage(ICON_MIC)
-        .withChildrenImage(ICON_MIC)
-        .build();
+  const artists = items('Artists', artistGroups)
+    .withImage(ICON_MIC)
+    .withChildrenImage(ICON_MIC)
+    .build();
   const roots = [
     artists,
-    createPagedReleasesTreeItem({
-      albums,
-      errorContext: '[Release catalog]',
-      withPreview: true,
-    }),
+    catalog.paginateReleases === false
+      ? items(
+          'Releases',
+          albums.map((album) => AlbumTreeItemFactory.createWithPreview(album)),
+        )
+          .withImage(ICON_DISC)
+          .build()
+      : createPagedReleasesTreeItem({
+          albums,
+          errorContext: '[Release catalog]',
+          withPreview: true,
+        }),
   ];
 
   if (catalog.groupByYear) {
@@ -86,7 +90,10 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
               String(year),
               albums
                 .filter((album) => album.metadata?.year === year)
-                .map((album) => AlbumTreeItemFactory.createWithPreview(album)),
+                .map((album) => ({
+                  ...AlbumTreeItemFactory.createWithPreview(album),
+                  includeInFilterSuggestions: false,
+                })),
             )
               .withImage(ICON_CALENDAR_DAYS)
               .build(),

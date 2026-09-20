@@ -1,3 +1,4 @@
+import type { ReleaseNotes } from './album/releaseNotes';
 import type { CompressedData, RawDataCompressor } from './compressor';
 import {
   type CompressedPriceData,
@@ -11,6 +12,7 @@ export interface RawMetadataData extends CompressedData {
   published: string;
   modified: string;
   keywords: string[];
+  release?: ReleaseNotes;
 }
 
 export interface CompressedMetadataData extends CompressedData {
@@ -19,6 +21,7 @@ export interface CompressedMetadataData extends CompressedData {
   d: string; // published
   m: string; // modified
   k: string[]; // keywords
+  r?: ReleaseNotes; // optional release notes; absent in older saved data
 }
 
 export class MetadataCompressor implements RawDataCompressor {
@@ -31,6 +34,7 @@ export class MetadataCompressor implements RawDataCompressor {
       d: data.published,
       m: data.modified,
       k: data.keywords,
+      r: data.release,
     };
   }
 
@@ -41,6 +45,7 @@ export class MetadataCompressor implements RawDataCompressor {
       published: data.d,
       modified: data.m,
       keywords: data.k,
+      release: data.r,
     };
   }
 }

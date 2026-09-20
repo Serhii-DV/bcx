@@ -5,12 +5,21 @@ import type { Url } from 'src/core/url';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import { items, linkOpenPage, list, TreeItemBuilder } from '../TreeItemBuilder';
+import {
+  copyable,
+  items,
+  linkOpenPage,
+  searchQuery,
+  TreeItemBuilder,
+  text,
+} from '../TreeItemBuilder';
 import {
   ICON_BANKNOTE,
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
   ICON_INFO,
+  ICON_TAG,
+  ICON_TAGS,
 } from '../utils/icon';
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 
@@ -33,9 +42,9 @@ export class BandTreeItem {
           showAlbumsWithSummary,
         ),
         this.createBandYearsTreeItem(band, showAlbumsWithSummary),
-        this.createBandAbout(band),
       );
     }
+    builder.add(this.createBandTags(band), this.createBandAbout(band));
 
     return builder.build();
   }
@@ -77,17 +86,88 @@ export class BandTreeItem {
       .build();
   }
 
-  private static createBandAbout(band: Band): TreeItem {
-    return items('About ' + band.name, [
-      list('Created', [band.metadata.created.toLocaleDateString()]).withImage(
-        ICON_CALENDAR_DAYS,
+  static createBandTags(band: Band): TreeItem {
+    const releasesByTag = new Map<string, Set<string>>();
+    const releases = [
+      ...band.metadata.albums.map((album) => ({
+        key: `album:${album.id}`,
+        tags: album.metadata?.keywords ?? [],
+      })),
+      ...band.metadata.trackReleases.map((track) => ({
+        key: `track:${track.id}`,
+        tags: track.metadata?.keywords ?? [],
+      })),
+    ];
+    for (const release of releases) {
+      for (const tag of release.tags) {
+        const matches = releasesByTag.get(tag) ?? new Set<string>();
+        matches.add(release.key);
+        releasesByTag.set(tag, matches);
+      }
+    }
+    return {
+      ...items(
+        'Tags',
+        [...releasesByTag.keys()].sort().map((tag) => ({
+          ...searchQuery(tag).build(),
+          childrenCount: releasesByTag.get(tag)?.size ?? 0,
+        })),
+      )
+        .withImage(ICON_TAGS)
+        .withChildrenImage(ICON_TAG)
+        .asTree()
+        .build(),
+      hasChildren: true,
+    };
+  }
+
+  static createBandAbout(band: Band): TreeItem {
+    const metadata = band.metadata;
+    const years = metadata.years.filter(Number.isFinite).sort((a, b) => a - b);
+    const about = items('About', [
+      ...(metadata.location ? [text(`Location: ${metadata.location}`)] : []),
+      ...(metadata.biography ? [text(metadata.biography)] : []),
+      ...(metadata.links.length
+        ? [
+            items(
+              'Websites & social links',
+              metadata.links.map((link) => linkOpenPage(link.label, link.url)),
+            ).withOpen(true),
+          ]
+        : []),
+      linkOpenPage('Open Bandcamp catalog', band.url.toString()),
+      copyable('Copy Bandcamp URL', band.url.toString()),
+      text(
+        `Loaded catalog: ${metadata.albums.length} albums, ${metadata.trackReleases.length} track releases`,
       ),
+      ...(years.length
+        ? [
+            text(
+              `Release years: ${years[0]}${years.length > 1 ? `–${years[years.length - 1]}` : ''}`,
+            ),
+          ]
+        : []),
+      ...(Number.isFinite(metadata.created.getTime())
+        ? [
+            text(
+              `Bandcamp account created: ${metadata.created.toLocaleDateString()}`,
+            ).withImage(ICON_CALENDAR_DAYS),
+          ]
+        : []),
       ...(band.metadata.currency
-        ? [list('Currency', [band.metadata.currency]).withImage(ICON_BANKNOTE)]
+        ? [text(`Currency: ${band.metadata.currency}`).withImage(ICON_BANKNOTE)]
         : []),
     ])
       .asTree()
       .withImage(ICON_INFO)
+      .withoutChildrenCount()
       .build();
+    return {
+      ...about,
+      aboutProfile: {
+        name: band.name,
+        image: band.artwork.id > 0 ? band.artwork.mediumSizeUrl : undefined,
+      },
+    };
   }
 }

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { storage } from 'src/core/shared';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
 import { AlbumTreeItemFactory } from './AlbumTreeItemFactory';
 
@@ -30,6 +31,9 @@ describe('release previews', () => {
     expect(item.children).toBeUndefined();
     expect(item.actionIcon).toBeUndefined();
     expect(item.loadPreview).toBeDefined();
+    expect(item.image).toBe(album.artwork.tinySizeUrl);
+    expect(item.previewImage).toBe(album.artwork.largeSizeUrl);
+    expect(item.previewInformation?.title).toBe('Release');
   });
 
   it('shows the existing summary when the release is not stored', async () => {
@@ -37,6 +41,7 @@ describe('release previews', () => {
     const preview =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(preview?.layout).toBe(TREE_ITEM_LAYOUT.TREE);
+    expect(preview?.information.title).toBe('Release');
     expect(preview?.items.map((item) => item.label)).toEqual(
       AlbumTreeItemFactory.createWithSummary(album).children?.map(
         (item) => item.label,
@@ -63,5 +68,18 @@ describe('release previews', () => {
     await expect(
       AlbumTreeItemFactory.createWithPreview(album).loadPreview?.(),
     ).rejects.toThrow('Storage unavailable');
+  });
+
+  it('loads saved collection status alongside the release preview', async () => {
+    rs.spyOn(BandcampStorage, 'getAlbumsRawDataByIds').mockResolvedValue([]);
+    rs.spyOn(storage, 'getByKey').mockResolvedValue([
+      { tralbum_type: 'a', album_id: album.id },
+    ]);
+    const preview =
+      await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
+    expect(preview?.information.collectionStatus).toEqual([
+      'In collection',
+      'Wishlisted',
+    ]);
   });
 });

@@ -13,6 +13,7 @@ import { currentPageUrl } from 'src/core/shared';
 import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
 import { console } from 'src/utils/console';
 import { markAppSetupStart, measureAppMount } from 'src/utils/performance';
+import { readBandMetadata } from '../domain/page/bandMetadata';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
@@ -96,6 +97,7 @@ chrome.runtime.onMessage.addListener(
       try {
         sendResponse({
           pageData: {
+            bandProfile: readBandMetadata(document, currentPageUrl.toString()),
             data: bandcampPageData.data,
             fanData: bandcampPageData.fanData,
             albumSchema: isBandcampAlbumUrl(currentPageUrl)

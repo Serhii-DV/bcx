@@ -28,7 +28,7 @@ import {
   collapseTreeNodeElement,
   createVisibleTreeData,
   expandTreeNode,
-  filterTreeItemsFlat,
+  filterTreeBrowserItems,
   findFirstVisibleChildByPath as findFirstVisibleChildInItemsByPath,
   findVisibleItem as findVisibleItemByIndex,
   findVisibleParentByPath as findVisibleParentInItemsByPath,
@@ -101,7 +101,11 @@ let breadcrumbItems = $derived.by(() => {
 });
 let browserItems = $derived.by(() => {
   treeVersion;
-  return filterTreeItemsFlat(currentLevelItems, debouncedFilterQuery);
+  return filterTreeBrowserItems(
+    currentLevelItems,
+    debouncedFilterQuery,
+    currentRootItem,
+  );
 });
 let filterSuggestions = $derived.by(() => {
   treeVersion;
@@ -602,6 +606,9 @@ async function enterBrowserItem(item: TreeItem) {
     await tick();
   }
 
+  if (item.query) {
+    await handleItemClick(item);
+  }
   navigateToLevel(itemPath);
 }
 

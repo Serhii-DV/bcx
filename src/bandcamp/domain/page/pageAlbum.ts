@@ -7,6 +7,7 @@ import type { Band } from '../band/band';
 import { BandFactory } from '../band/factory';
 import { BandcampStorage } from '../storage';
 import type { BandPage } from './BandPage';
+import { readBandMetadata } from './bandMetadata';
 import { createReleaseYearElement } from './helper';
 import { getMusicAlbumSchema } from './schema';
 
@@ -38,6 +39,9 @@ export class PageAlbum implements BandPage {
     const albumDetails = AlbumDetails.fromMusicAlbumSchema(schema);
     const bands = await BandcampStorage.getBands([album.bandId]);
     const band = bands[0] ?? BandFactory.fromMusicAlbumSchema(schema);
+
+    const profile = readBandMetadata(document, band.url.toString());
+    if (profile) Object.assign(band.metadata, profile);
 
     pageAlbum = new PageAlbum(album, albumDetails, band);
     pageAlbum.appendAlbumYear();

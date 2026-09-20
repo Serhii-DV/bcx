@@ -1,11 +1,18 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
+import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
+import { storage } from 'src/core/shared';
 import { arrayUnique } from 'src/utils/array';
 import { TreeItemButtonFactory } from '../buttons/factory';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
+import {
+  createReleaseInformation,
+  ReleasePreview,
+  releaseCollectionStatus,
+} from '../ReleasePreview';
 import { createTreeDataFromTreeItemChildren } from '../sections/treeDataFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import {
@@ -45,6 +52,8 @@ export class AlbumTreeItemFactory {
   static createWithPreview(album: Album): TreeItem {
     return {
       ...this.create(album),
+      previewImage: album.artwork.getUrl(ArtworkSize.LARGE) ?? undefined,
+      previewInformation: createReleaseInformation(album),
       actionIcon: undefined,
       buttons: [
         {
@@ -67,7 +76,20 @@ export class AlbumTreeItemFactory {
         const item = stored
           ? await this.createWithDetails(AlbumDetails.fromAlbum(stored))
           : this.createWithSummary(album);
-        return createTreeDataFromTreeItemChildren(item, TREE_ITEM_LAYOUT.TREE);
+        const information = createReleaseInformation(stored ?? album);
+        const [collection, wishlist] = await Promise.all([
+          storage.getByKey<unknown>('/collection'),
+          storage.getByKey<unknown>('/wishlist'),
+        ]);
+        information.collectionStatus = releaseCollectionStatus(
+          album,
+          collection,
+          wishlist,
+        );
+        return new ReleasePreview(
+          createTreeDataFromTreeItemChildren(item, TREE_ITEM_LAYOUT.TREE),
+          information,
+        );
       },
     };
   }

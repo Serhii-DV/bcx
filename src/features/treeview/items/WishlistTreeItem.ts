@@ -29,7 +29,7 @@ export class WishlistTreeItem {
     builder.addButton(createWishlistOpenTreeItemButton(username));
 
     return withReleaseCatalog(builder.build(), albums, {
-      paginateArtists: true,
+      paginateReleases: false,
     });
   }
 }

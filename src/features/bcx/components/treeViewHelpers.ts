@@ -428,6 +428,23 @@ export function treeItemMatchesQuery(item: TreeItem, query: string): boolean {
   );
 }
 
+export function filterTreeBrowserItems(
+  items: TreeItem[] | undefined,
+  query: string,
+  root?: TreeItem | null,
+): TreeItem[] {
+  if (
+    root?.releasePreview &&
+    (root.label === 'Artists' || root.label === 'Years')
+  ) {
+    return query.trim()
+      ? (items ?? []).filter((item) => treeItemMatchesQuery(item, query))
+      : (items ?? []);
+  }
+
+  return filterTreeItemsFlat(items, query);
+}
+
 export function filterTreeItemsFlat(
   items: TreeItem[] | undefined,
   query: string,
@@ -463,7 +480,11 @@ export function getTreeItemFilterSuggestions(
     if (!treeItems) return;
 
     for (const item of treeItems) {
-      getTreeItemSearchValues(item).forEach((value) => suggestions.add(value));
+      if (item.includeInFilterSuggestions !== false) {
+        getTreeItemSearchValues(item).forEach((value) =>
+          suggestions.add(value),
+        );
+      }
       collectSuggestions(item.children);
     }
   }
