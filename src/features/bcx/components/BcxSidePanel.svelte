@@ -137,6 +137,11 @@ function handleSectionFilterArrowDown() {
 }
 
 function focusSelectedTab() {
+  if (
+    sectionsContainer?.contains(document.activeElement) &&
+    document.activeElement?.classList.contains('tree-item')
+  )
+    return;
   sectionsContainer
     ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
     ?.focus();

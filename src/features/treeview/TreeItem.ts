@@ -44,6 +44,7 @@ export interface TreeItem {
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
   releaseCatalog?: ReleaseCatalog;
   releasePreview?: boolean;
+  initialSelectedHref?: string;
   loadPreview?: () => Promise<import('./TreeData').TreeData>;
   actionIcon?: string; // action icon name
 }

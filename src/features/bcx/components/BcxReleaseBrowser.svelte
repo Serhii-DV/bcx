@@ -41,7 +41,7 @@ $effect(() => {
 </script>
 
 <div class="release-list">
-  <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={true} showBreadcrumb={false} onSelect={selectItem} nativeTabNavigation={true} />
+  <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={true} showBreadcrumb={false} initialSelectedHref={treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} nativeTabNavigation={true} />
 </div>
 <section class="release-preview" aria-label="Selected release details">
   <h3>{selectedItem?.label ?? 'Release details'}</h3>

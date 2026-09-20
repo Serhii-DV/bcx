@@ -46,6 +46,7 @@ import {
 interface Props {
   treeData: TreeData;
   nativeTabNavigation?: boolean;
+  initialSelectedHref?: string;
   onSelect?: (item: TreeItem | null) => void;
   filterQuery?: string | null;
   initialRootPath?: string | null;
@@ -63,6 +64,7 @@ let {
   treeData,
   onSelect,
   nativeTabNavigation = false,
+  initialSelectedHref,
   filterQuery: externalFilterQuery = null,
   initialRootPath = null,
   lockInitialRoot = false,
@@ -75,6 +77,7 @@ let {
 let treeContainer: HTMLDivElement;
 let filterRef: BcxTreeBrowserFilter | undefined = $state();
 let focusedPath: string | null = $state(null);
+let initialSelectionApplied = $state(false);
 let searchQuery = $state('');
 let localFilterQuery = $state('');
 let debouncedFilterQuery = $state('');
@@ -142,6 +145,19 @@ let emptyStateMessage = $derived.by(() => {
   return debouncedFilterQuery.trim()
     ? 'No items match your filter'
     : 'No items here';
+});
+
+$effect(() => {
+  if (!initialSelectionApplied && initialSelectedHref) {
+    const selected = browserItems.find(
+      (item) => item.href === initialSelectedHref,
+    );
+    if (selected) {
+      initialSelectionApplied = true;
+      focusedPath = selected.path ?? null;
+      void tick().then(() => focusTreeItem(selected));
+    }
+  }
 });
 
 $effect(() => {
