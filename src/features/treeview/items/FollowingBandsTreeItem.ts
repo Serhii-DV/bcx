@@ -4,40 +4,23 @@ import {
   PageCollection,
 } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
-import { isBandcampFanUrl } from 'src/bandcamp/domain/url/helper';
-import { currentPageUrl, storage } from 'src/core/shared';
-import { TreeItemButtonFactory } from '../buttons/factory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
-import type { TreeItemButton } from '../TreeItemButton';
-import { createLoadHandler } from '../utils';
-import { createPagedTreeItem } from './createPagedTreeItem';
+import { createStoredFanListTreeItem } from './createStoredFanListTreeItem';
 
 const FOLLOWING_BANDS_KEY = '/following-bands';
-const FOLLOWING_BANDS_BATCH_SIZE = 20;
 
 export class FollowingBandsTreeItem {
   static async create(username: string): Promise<TreeItem> {
-    const followingBands = await loadFollowingBandsFromStorage();
-
-    const buttons: TreeItemButton[] = [
-      createFollowingBandsOpenTreeItemButton(username),
-    ];
-
-    if (isBandcampFanUrl(currentPageUrl, username)) {
-      buttons.unshift(createFollowingBandsRefreshTreeItemButton());
-    }
-
-    return createPagedTreeItem({
-      batchSize: FOLLOWING_BANDS_BATCH_SIZE,
-      buttons,
-      errorContext:
-        '[FollowingBandsTreeItem.createLoadMoreFollowingBandsTreeItem]',
-      errorMessage: 'Failed to load more following bands:',
-      items: followingBands,
+    return createStoredFanListTreeItem<FollowingBandItem>({
       label: 'Following Bands',
-      createChildren: (followingBands) =>
-        followingBands.map((item) => this.createFollowingBandTreeItem(item)),
+      openButtonLabel: 'Open Following Bands',
+      openUrl: BandcampUrlFactory.generateFollowingBandsUrl(username),
+      refreshButtonLabel: 'Refresh Following Bands',
+      storageKey: FOLLOWING_BANDS_KEY,
+      username,
+      loadItems: loadFollowingBands,
+      createTreeItem: (item) => this.createFollowingBandTreeItem(item),
     });
   }
 
@@ -55,32 +38,9 @@ export class FollowingBandsTreeItem {
   }
 }
 
-function createFollowingBandsOpenTreeItemButton(
-  username: string,
-): TreeItemButton {
-  return TreeItemButtonFactory.createExternalLink(
-    'Open Following Bands',
-    BandcampUrlFactory.generateFollowingBandsUrl(username),
-  );
-}
-
-function createFollowingBandsRefreshTreeItemButton(): TreeItemButton {
-  return TreeItemButtonFactory.createRefreshButton(
-    'Refresh Following Bands',
-    createLoadHandler(loadFollowingBands),
-  );
-}
-
-async function loadFollowingBandsFromStorage(): Promise<FollowingBandItem[]> {
-  return (await storage.getByKey(FOLLOWING_BANDS_KEY)) || [];
-}
-
 async function loadFollowingBands(): Promise<FollowingBandItem[]> {
   const pageCollection = new PageCollection();
-  const followingBands = await pageCollection.loadFollowingBandsItems({
-    includeSummaryFlags: false, // Following bands don't need purchase/wishlist flags
+  return pageCollection.loadFollowingBandsItems({
+    includeSummaryFlags: false,
   });
-  await storage.set({ [FOLLOWING_BANDS_KEY]: followingBands });
-
-  return followingBands;
 }
