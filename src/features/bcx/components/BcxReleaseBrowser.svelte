@@ -10,7 +10,9 @@ let selectedItem: TreeItem | null = $state(null);
 let preview: ReleasePreview | null = $state(null);
 let error = $state('');
 let loading = $state(false);
-let information = $derived(preview?.information ?? selectedItem?.previewInformation);
+let information = $derived.by(
+  () => preview?.information ?? selectedItem?.previewInformation,
+);
 
 function selectItem(item: TreeItem | null) {
   selectedItem = item?.loadPreview ? item : null;
