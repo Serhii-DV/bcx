@@ -3,6 +3,11 @@ import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { storage } from 'src/core/shared';
+import {
+  filterTreeBrowserItems,
+  getTreeItemFilterSuggestions,
+} from 'src/features/bcx/components/treeViewHelpers';
+import { TreeData } from '../TreeData';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { CollectionTreeItem } from './collection/CollectionTreeItem';
 import { withReleaseCatalog } from './releaseCatalog';
@@ -47,7 +52,62 @@ async function loadMore(root: TreeItem) {
   });
 }
 
+function assertArtistSuggestions(artists: TreeItem, count: number) {
+  const expected = createItems(count)
+    .map((item) => item.band_name)
+    .sort();
+  expect(getTreeItemFilterSuggestions(artists.children)).toEqual(expected);
+  expect(new TreeData(artists.children ?? []).filterSuggestions).toEqual(
+    expected,
+  );
+}
+
 describe('release catalog previews', () => {
+  it('suggests only artist names in Artists while retaining release suggestions in Releases', () => {
+    const tree = withReleaseCatalog(
+      { label: 'Label' },
+      createItems(2).map(AlbumFactory.fromBandcampItem),
+    );
+    const artists = tree.children?.find((item) => item.label === 'Artists');
+    const releases = tree.children?.find((item) => item.label === 'Releases');
+    if (!artists || !releases) throw new Error('Missing catalog roots');
+    assertArtistSuggestions(artists, 2);
+    expect(getTreeItemFilterSuggestions(releases.children)).toContain(
+      releases.children?.[0].label,
+    );
+  });
+  it('filters Artists at the root while preserving their nested releases', () => {
+    const albums = createItems(3).map(AlbumFactory.fromBandcampItem);
+    const tree = withReleaseCatalog({ label: 'Label' }, albums);
+    const artists = tree.children?.find((item) => item.label === 'Artists');
+    const releases = tree.children?.find((item) => item.label === 'Releases');
+    if (!artists || !releases) throw new Error('Missing catalog roots');
+
+    const matches = filterTreeBrowserItems(
+      artists.children,
+      'artist 1',
+      artists,
+    );
+    expect(matches).toEqual([artists.children?.[1]]);
+    expect(matches[0]).toBe(artists.children?.[1]);
+    assertPreview(matches[0].children?.[0]);
+    expect(filterTreeBrowserItems(artists.children, 'Artist', artists)).toEqual(
+      artists.children,
+    );
+    expect(
+      filterTreeBrowserItems(artists.children, 'Release 1', artists),
+    ).toEqual([]);
+    expect(filterTreeBrowserItems(artists.children, '   ', artists)).toBe(
+      artists.children,
+    );
+    expect(
+      filterTreeBrowserItems(releases.children, 'artist 1', releases),
+    ).toEqual([releases.children?.[1]]);
+    expect(
+      filterTreeBrowserItems(matches[0].children, 'Release 1', matches[0]),
+    ).toEqual(matches[0].children);
+  });
+
   it('provides artist and year groups with previewable releases, preserving other roots', async () => {
     const albums = createItems(2).map(AlbumFactory.fromBandcampItem);
     albums[0].metadata = Metadata.create(
@@ -121,6 +181,14 @@ describe('release catalog previews', () => {
           .length,
       ).toBeGreaterThan(0);
       if (!artists || !releases) throw new Error('Missing catalog roots');
+      assertArtistSuggestions(artists, 25);
+      const filteredArtists = filterTreeBrowserItems(
+        artists.children,
+        'Artist 24',
+        artists,
+      );
+      expect(filteredArtists.map((item) => item.label)).toEqual(['Artist 24']);
+      assertPreview(filteredArtists[0].children?.[0]);
       if (label === 'Collection') await loadMore(releases);
       expect(releases.children).toHaveLength(25);
       assertPreview(releases.children?.[24]);

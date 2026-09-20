@@ -44,9 +44,13 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     albums,
   ).map((artist) => ({
     ...artist,
+    includeInFilterSuggestions: true,
     children: artist.children?.map((release) => {
       const album = release.href ? albumsByUrl.get(release.href) : undefined;
-      return album ? AlbumTreeItemFactory.createWithPreview(album) : release;
+      return {
+        ...(album ? AlbumTreeItemFactory.createWithPreview(album) : release),
+        includeInFilterSuggestions: false,
+      };
     }),
   }));
   const artists = items('Artists', artistGroups)
