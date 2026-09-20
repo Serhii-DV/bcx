@@ -38,7 +38,7 @@ function assertPreview(release?: TreeItem) {
 
 async function loadMore(root: TreeItem) {
   const action = root.children?.at(-1);
-  expect(action?.label).toContain('Load more');
+  expect(action?.label).toContain('Show more');
   if (!action) throw new Error('Missing pagination action');
   await action.onClick?.({
     element: document.createElement('button'),

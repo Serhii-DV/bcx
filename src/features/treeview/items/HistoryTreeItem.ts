@@ -20,8 +20,8 @@ type VisitedBandcampPage = {
 };
 
 const HISTORY_LABEL = 'History';
-const LATEST_VISITED_BATCH_SIZE = 20;
-const LOAD_MORE_LABEL = 'Load more';
+const LATEST_VISITED_BATCH_SIZE = 50;
+const SHOW_MORE_LABEL = 'Show more';
 
 export class HistoryTreeItem {
   static async createGroupedByDays(): Promise<TreeItem> {
@@ -132,7 +132,7 @@ export class HistoryTreeItem {
     limit: number,
   ): TreeItem {
     const loadMoreTreeItem: TreeItem = {
-      label: LOAD_MORE_LABEL,
+      label: SHOW_MORE_LABEL,
       includeInFilterSuggestions: false,
     };
 
@@ -155,7 +155,8 @@ export class HistoryTreeItem {
         }
 
         const loadMoreIndex = children.findIndex(
-          (child) => child === item || child.path === item.path,
+          (child) =>
+            child === item || (!!item.path && child.path === item.path),
         );
         const nextChildren = await HistoryTreeItem.createLatestVisitedChildren(
           pages,
@@ -183,7 +184,7 @@ export class HistoryTreeItem {
           'Failed to load more history:',
           error,
         );
-        item.label = `${LOAD_MORE_LABEL} (error)`;
+        item.label = `${SHOW_MORE_LABEL} (error)`;
         context.showFeedback?.('Error loading');
       } finally {
         item.isLoadingChildren = false;

@@ -3,7 +3,7 @@ import { items } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { ICON_CHEVRONS_DOWN } from '../utils/icon';
 
-const LOAD_MORE_LABEL = 'Load more';
+const SHOW_MORE_LABEL = 'Show more';
 
 type CreatePagedTreeItemOptions<T> = {
   batchSize: number;
@@ -119,5 +119,5 @@ function createLoadMoreTreeItem<T>(
 }
 
 function createLoadMoreLabel(loadedCount: number, totalCount: number): string {
-  return `${LOAD_MORE_LABEL} (${loadedCount} of ${totalCount} loaded)`;
+  return `${SHOW_MORE_LABEL} (${loadedCount} of ${totalCount} loaded)`;
 }
