@@ -96,3 +96,7 @@ to preserve the mounted side panel during release navigation.
 Following Bands stores every loaded band in its tree snapshot without pagination.
 Snapshot version 9 invalidates older snapshots containing partial following-band
 lists and inert Load more rows. Cache keys, TTLs, and refresh behavior stay the same.
+
+Wishlist Releases and Artists show every stored item immediately. Snapshot version
+10 invalidates older snapshots with paginated Wishlist options. Release previews
+are still rebuilt from raw album data, and Collection release pagination is retained.

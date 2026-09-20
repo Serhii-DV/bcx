@@ -89,12 +89,19 @@ describe('release catalog previews', () => {
     ['Collection', () => CollectionTreeItem.create('listener')],
     ['Wishlist', () => WishlistTreeItem.create('listener')],
   ] as const) {
-    it(`${label} preserves nested previews and pagination after a session cache round trip`, async () => {
+    it(`${label} preserves nested previews and list loading behavior after a session cache round trip`, async () => {
       await storage.set({
         '/collection': createItems(25),
         '/wishlist': createItems(25),
       });
       const original = await create();
+      if (label === 'Wishlist') {
+        for (const name of ['Artists', 'Releases']) {
+          expect(
+            original.children?.find((item) => item.label === name)?.children,
+          ).toHaveLength(25);
+        }
+      }
       const key = TreeItemCache.subtreeKey('listener', label);
       await TreeItemCache.set(key, original);
       const restored = await TreeItemCache.get(key);
@@ -114,10 +121,13 @@ describe('release catalog previews', () => {
           .length,
       ).toBeGreaterThan(0);
       if (!artists || !releases) throw new Error('Missing catalog roots');
-      await loadMore(releases);
+      if (label === 'Collection') await loadMore(releases);
       expect(releases.children).toHaveLength(25);
       assertPreview(releases.children?.[24]);
-      if (label === 'Wishlist') await loadMore(artists);
+      expect(releases.children?.map((item) => item.href)).toEqual(
+        createItems(25).map((item) => item.item_url),
+      );
+
       expect(artists.children).toHaveLength(25);
       assertPreview(artists.children?.[24].children?.[0]);
     });

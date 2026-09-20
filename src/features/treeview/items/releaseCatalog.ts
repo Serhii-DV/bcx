@@ -10,13 +10,11 @@ import {
   ICON_DISC,
   ICON_MIC,
 } from '../utils/icon';
-import { createPagedTreeItem } from './createPagedTreeItem';
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 
 export interface ReleaseCatalog {
   albums: RawAlbumData[];
   groupByYear?: boolean;
-  paginateArtists?: boolean;
   paginateReleases?: boolean;
 }
 
@@ -51,21 +49,10 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
       return album ? AlbumTreeItemFactory.createWithPreview(album) : release;
     }),
   }));
-  const artists = catalog.paginateArtists
-    ? createPagedTreeItem({
-        batchSize: 20,
-        errorContext: '[Release catalog artists]',
-        errorMessage: 'Failed to load more artists:',
-        image: ICON_MIC,
-        childrenImage: ICON_MIC,
-        items: artistGroups,
-        label: 'Artists',
-        createChildren: (groups) => groups,
-      })
-    : items('Artists', artistGroups)
-        .withImage(ICON_MIC)
-        .withChildrenImage(ICON_MIC)
-        .build();
+  const artists = items('Artists', artistGroups)
+    .withImage(ICON_MIC)
+    .withChildrenImage(ICON_MIC)
+    .build();
   const roots = [
     artists,
     catalog.paginateReleases === false
