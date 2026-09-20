@@ -94,7 +94,10 @@ function withReleasePreviews(
     ...item,
     children: [
       ...(item.children ?? []).filter(
-        (child) => child.label !== `About` && child.label !== 'Tags',
+        (child) =>
+          child.label !== 'About' &&
+          child.label !== `About ${band.name}` &&
+          child.label !== 'Tags',
       ),
       BandTreeItem.createBandTags(band),
       BandTreeItem.createBandAbout(band),

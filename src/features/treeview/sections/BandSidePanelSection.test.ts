@@ -150,7 +150,7 @@ describe('Artist/Label release browser', () => {
           (tab) => tab.label === 'Tags (3)',
         ),
       ).toBe(true);
-      const about = data?.items.find((item) => item.label === 'About Label');
+      const about = data?.items.find((item) => item.label === 'About');
       expect(
         about?.children?.some((item) =>
           ['Artists in catalog', 'Genres and tags'].includes(item.label ?? ''),
@@ -165,7 +165,7 @@ describe('Artist/Label release browser', () => {
       band,
       band.url,
     )?.createTreeData();
-    const about = data?.items.find((item) => item.label === 'About Label');
+    const about = data?.items.find((item) => item.label === 'About');
     expect(about?.aboutProfile).toEqual({ name: 'Label', image: undefined });
     expect(
       createRootSectionTabs(data?.items ?? []).some(
@@ -191,8 +191,11 @@ describe('Artist/Label release browser', () => {
       band,
       album.url,
     )?.createTreeData();
-    const about = data?.items.filter((item) => item.label === 'About Label');
+    const about = data?.items.filter((item) => item.label === 'About');
     expect(about).toHaveLength(1);
+    expect(data?.items.some((item) => item.label === 'About Label')).toBe(
+      false,
+    );
     expect(about?.[0].aboutProfile?.image).toBe(band.artwork.mediumSizeUrl);
     expect(
       about?.[0].children?.some(
