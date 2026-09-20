@@ -82,7 +82,9 @@ export class BandTreeItem {
       list('Created', [band.metadata.created.toLocaleDateString()]).withImage(
         ICON_CALENDAR_DAYS,
       ),
-      list('Currency', [band.metadata.currency]).withImage(ICON_BANKNOTE),
+      ...(band.metadata.currency
+        ? [list('Currency', [band.metadata.currency]).withImage(ICON_BANKNOTE)]
+        : []),
     ])
       .asTree()
       .withImage(ICON_INFO)

@@ -1,3 +1,4 @@
+import type { ReleaseCatalog } from './items/releaseCatalog';
 import type { TreeItemButton } from './TreeItemButton';
 
 export interface TreeItemClickContext {
@@ -41,5 +42,9 @@ export interface TreeItem {
   buttons?: TreeItemButton[];
   onClick?: (context: TreeItemClickContext) => void | Promise<void>;
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
+  releaseCatalog?: ReleaseCatalog;
+  releasePreview?: boolean;
+  initialSelectedHref?: string;
+  loadPreview?: () => Promise<import('./TreeData').TreeData>;
   actionIcon?: string; // action icon name
 }

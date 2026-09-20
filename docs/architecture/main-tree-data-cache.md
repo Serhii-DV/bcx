@@ -77,3 +77,18 @@ Explicit loader actions call `TreeItemCache.invalidateAll()` (via `createLoadHan
 
 Cache reads log timing and hit/miss information:
 - `TreeItemCache.get:<key>`
+
+## Release catalog previews
+
+Collection and Wishlist snapshots store the catalog's raw album data and grouping
+options in `releaseCatalog`. Artists and Releases are saved as root placeholders;
+`restoreReleaseCatalog` rebuilds their preview loaders, open-page buttons, and
+pagination callbacks when reading a snapshot. Snapshot version 8 invalidates older
+snapshots that lack this data. Cache keys, TTLs, and explicit invalidation stay the
+same. Artist/Label sections rebuild Artists, Releases, and Years from the current
+band data after reading their cached subtree.
+
+Catalog roots carry `releasePreview` and browser layout at runtime so nested
+artist/year groups share the bottom details panel. Loaded Collection and Wishlist
+sections also expose all catalog URLs, including releases beyond the first page,
+to preserve the mounted side panel during release navigation.

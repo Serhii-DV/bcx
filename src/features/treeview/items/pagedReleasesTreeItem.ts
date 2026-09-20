@@ -10,21 +10,28 @@ type CreatePagedReleasesTreeItemArgs = {
   albums: Album[];
   errorContext: string;
   withAlbumSummary?: boolean;
+  withPreview?: boolean;
+  initialItemCount?: number;
 };
 
 export function createPagedReleasesTreeItem({
   albums,
   errorContext,
   withAlbumSummary = false,
+  withPreview = false,
+  initialItemCount,
 }: CreatePagedReleasesTreeItemArgs): TreeItem {
   return createPagedTreeItem({
     batchSize: RELEASE_BATCH_SIZE,
+    initialItemCount,
     errorContext,
     errorMessage: 'Failed to load more releases:',
     image: ICON_DISC,
     items: albums,
     label: 'Releases',
     createChildren: (albums) =>
-      AlbumTreeItemFactory.fromAlbums(albums, withAlbumSummary),
+      withPreview
+        ? albums.map((album) => AlbumTreeItemFactory.createWithPreview(album))
+        : AlbumTreeItemFactory.fromAlbums(albums, withAlbumSummary),
   });
 }

@@ -12,7 +12,7 @@ export class ArtistTreeItem {
     const bandIds = artist.names
       .filter((name) => bandIndexDataMap.has(name))
       .map((name) => Number(bandIndexDataMap.get(name)));
-    const bands = await BandcampStorage.getBands(bandIds);
+    const bands = bandIds.length ? await BandcampStorage.getBands(bandIds) : [];
 
     return artist.names.map((name) => {
       if (bandIndexDataMap.has(name)) {

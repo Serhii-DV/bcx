@@ -11,6 +11,7 @@ interface Props {
   visiblePaths: Set<string>;
   visibleChildCounts: Map<string, number>;
   onItemClick: (item: TreeItem, event: MouseEvent) => void | Promise<void>;
+  onItemDoubleClick?: (item: TreeItem, event: MouseEvent) => void;
   onNodeClick: (item: TreeItem, event: MouseEvent) => void;
 }
 
@@ -21,6 +22,7 @@ let {
   visiblePaths,
   visibleChildCounts,
   onItemClick,
+  onItemDoubleClick,
   onNodeClick,
 }: Props = $props();
 
@@ -73,12 +75,13 @@ function getItemIndentStyle(item: TreeItem): string {
               data-path="{item.path}"
             >
               <summary
-                class="tree-item tree-node-summary cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20"
+                class="tree-item tree-node-summary cursor-pointer select-none px-0 transition-colors"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
                 style={getItemIndentStyle(item)}
                 title={item.hint}
                 onclick={(event) => onNodeClick(item, event)}
+                ondblclick={(event) => onItemDoubleClick?.(item, event)}
               >
                 <span class="tree-item-content">
                   <BcxTreeItem item={withVisibleChildCount(item)} />
@@ -92,13 +95,14 @@ function getItemIndentStyle(item: TreeItem): string {
             </details>
           {:else}
             <a
-              class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20"
+              class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 transition-colors"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
               tabindex={focusedPath === item.path ? 0 : -1}
               style={getItemIndentStyle(item)}
               onclick={(event) => onItemClick(item, event)}
+              ondblclick={(event) => onItemDoubleClick?.(item, event)}
               href={item.href}
               title={item.hint}
             >

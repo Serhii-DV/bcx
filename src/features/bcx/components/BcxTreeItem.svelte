@@ -171,13 +171,28 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   min-width: 0;
 }
 
-:global(.tree-item:hover),
-:global(.tree-item:focus),
-:global(.tree-item.focused) {
-  background-color: rgb(255 255 255 / 0.1);
+:global(.bcx-tree-view .tree-item:hover) {
+  background-color: #293548;
+  color: #e5e7eb;
 }
 
-:global(.tree-item:focus) {
+:global(.bcx-tree-view .tree-item.focused) {
+  background-color: #374151;
+  color: #d1d5db;
+}
+
+:global(.bcx-tree-view:focus-within .tree-item.focused),
+:global(.bcx-tree-view .tree-item:focus-within) {
+  background-color: #075985;
+  color: #ffffff;
+}
+
+:global(.bcx-tree-view .tree-item:focus:not(:focus-visible)) {
   outline: none;
+}
+
+:global(.bcx-tree-view .tree-item:focus-visible) {
+  outline: 1px solid #38bdf8;
+  outline-offset: -1px;
 }
 </style>

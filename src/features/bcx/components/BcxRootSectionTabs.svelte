@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
+import BcxReleaseBrowser from './BcxReleaseBrowser.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import { createRootSectionTabs } from './rootSectionTabs';
@@ -25,12 +26,16 @@ $effect(() => {
       <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
+            {#if treeData.items.find((item) => item.path === tab.id)?.releasePreview}
+              <BcxReleaseBrowser {treeData} rootPath={tab.id} />
+            {:else}
             <BcxTreeBrowser
               {treeData}
               initialRootPath={tab.id}
               lockInitialRoot={true}
               showBreadcrumb={false}
             />
+            {/if}
           </div>
         {/if}
       </Tabs.Content>

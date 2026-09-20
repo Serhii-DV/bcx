@@ -4,9 +4,11 @@ import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { BandTreeItem } from '../items/BandTreeItem';
+import { createPagedReleasesTreeItem } from '../items/pagedReleasesTreeItem';
+import { withReleaseCatalog } from '../items/releaseCatalog';
 import { TreeItemCache } from '../items/TreeItemCache';
 import type { SidePanelSection } from '../SidePanelSection';
-import type { TreeItem } from '../TreeItem';
+import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { deferDescendants } from '../utils';
 import { SIDE_PANEL_SECTION_CACHE_TTL } from './cacheTtl';
 import { createTreeDataFromTreeItemChildren } from './treeDataFactory';
@@ -31,13 +33,19 @@ export class BandSidePanelSection {
       label: band.name,
       image: bandTreeItem.image,
       childrenCount: bandTreeItem.childrenCount,
+      defaultOpen: true,
+      navigationUrls: getNavigationUrls(band, currentPageUrl),
       rootNavigation: 'tabs',
       createTreeData: async () =>
         createTreeDataFromTreeItemChildren(
-          await TreeItemCache.getOrCreate(
-            TreeItemCache.subtreeKey('band', band.id),
-            async () => BandTreeItem.create(band, currentPageUrl),
-            SIDE_PANEL_SECTION_CACHE_TTL.BAND,
+          withReleasePreviews(
+            await TreeItemCache.getOrCreate(
+              TreeItemCache.subtreeKey('band', band.id),
+              async () => BandTreeItem.create(band, currentPageUrl),
+              SIDE_PANEL_SECTION_CACHE_TTL.BAND,
+            ),
+            band,
+            currentPageUrl,
           ),
         ),
     };
@@ -48,8 +56,16 @@ function createCurrentBandPageSection(
   band: NonNullable<BandPage['band']>,
   currentPageUrl: Url,
 ): SidePanelSection {
-  const bandTreeItemFromStorage = BandTreeItem.create(band, currentPageUrl);
-  const children = deferDescendants(bandTreeItemFromStorage.children || []);
+  const bandTreeItemFromStorage = withReleasePreviews(
+    BandTreeItem.create(band, currentPageUrl),
+    band,
+  );
+  const children = deferDescendants(bandTreeItemFromStorage.children || []).map(
+    (child) =>
+      child.releasePreview
+        ? { ...child, layout: TREE_ITEM_LAYOUT.BROWSER }
+        : child,
+  );
   const bandTreeItem: TreeItem = {
     ...bandTreeItemFromStorage,
     children,
@@ -63,8 +79,53 @@ function createCurrentBandPageSection(
     image: bandTreeItem.image,
     childrenCount: bandTreeItem.childrenCount,
     defaultOpen: true,
+    navigationUrls: getNavigationUrls(band, currentPageUrl),
     rootNavigation: 'tabs',
     createTreeData: async () =>
       createTreeDataFromTreeItemChildren(bandTreeItem),
   };
+}
+
+function withReleasePreviews(
+  item: TreeItem,
+  band: Band,
+  currentPageUrl?: Url,
+): TreeItem {
+  const catalog = withReleaseCatalog(item, band.metadata.albums, {
+    groupByYear: true,
+  });
+  const selectedIndex = band.metadata.albums.findIndex(
+    (album) =>
+      album.url.withoutSearchAndHash.toString() ===
+      currentPageUrl?.withoutSearchAndHash.toString(),
+  );
+  if (selectedIndex < 0) return catalog;
+  const selectedAlbum = band.metadata.albums[selectedIndex];
+  return {
+    ...catalog,
+    children: catalog.children?.map((child) =>
+      child.label === 'Releases'
+        ? {
+            ...createPagedReleasesTreeItem({
+              albums: band.metadata.albums,
+              errorContext: '[Band releases]',
+              withPreview: true,
+              initialItemCount: selectedIndex + 1,
+            }),
+            releasePreview: true,
+            layout: TREE_ITEM_LAYOUT.BROWSER,
+            initialSelectedHref: selectedAlbum.url.toString(),
+          }
+        : child,
+    ),
+  };
+}
+
+function getNavigationUrls(band: Band, currentPageUrl: Url): string[] {
+  return [
+    currentPageUrl.toString(),
+    band.url.toString(),
+    new URL('/music', band.url).toString(),
+    ...band.metadata.albums.map((album) => album.url.toString()),
+  ];
 }
