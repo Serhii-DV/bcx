@@ -43,6 +43,7 @@ $effect(() => {
               initialRootPath={tab.id}
               lockInitialRoot={true}
               showBreadcrumb={false}
+              showFilter={!profile}
             />
             {/if}
           </div>
