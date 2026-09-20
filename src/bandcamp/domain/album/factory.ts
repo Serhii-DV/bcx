@@ -13,6 +13,7 @@ import { albumDataCompressor } from '../shared';
 import { TrackFactory } from '../track/factory';
 import { Album } from './album';
 import { type CompressedAlbumData, type RawAlbumData } from './compressor';
+import { releaseNotesFromSchema } from './releaseNotes';
 export class AlbumFactory {
   static fromBandcampItem(item: BandcampItem): Album {
     return Album.create(
@@ -84,8 +85,8 @@ export class AlbumFactory {
       )?.value as number) || 0;
 
     const price = new Price(
-      (digitalRelease?.offers.price as number) || 0,
-      digitalRelease?.offers.priceCurrency || 'USD',
+      (digitalRelease?.offers?.price as number) || 0,
+      digitalRelease?.offers?.priceCurrency || 'USD',
     );
 
     const metadata = Metadata.create(
@@ -94,6 +95,7 @@ export class AlbumFactory {
       schema.datePublished,
       schema.dateModified,
       schema.keywords,
+      releaseNotesFromSchema(schema),
     );
 
     return Album.create(
