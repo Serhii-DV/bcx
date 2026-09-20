@@ -11,6 +11,7 @@ interface Props {
   visiblePaths: Set<string>;
   visibleChildCounts: Map<string, number>;
   onItemClick: (item: TreeItem, event: MouseEvent) => void | Promise<void>;
+  onItemDoubleClick?: (item: TreeItem, event: MouseEvent) => void;
   onNodeClick: (item: TreeItem, event: MouseEvent) => void;
 }
 
@@ -21,6 +22,7 @@ let {
   visiblePaths,
   visibleChildCounts,
   onItemClick,
+  onItemDoubleClick,
   onNodeClick,
 }: Props = $props();
 
@@ -79,6 +81,7 @@ function getItemIndentStyle(item: TreeItem): string {
                 style={getItemIndentStyle(item)}
                 title={item.hint}
                 onclick={(event) => onNodeClick(item, event)}
+                ondblclick={(event) => onItemDoubleClick?.(item, event)}
               >
                 <span class="tree-item-content">
                   <BcxTreeItem item={withVisibleChildCount(item)} />
@@ -99,6 +102,7 @@ function getItemIndentStyle(item: TreeItem): string {
               tabindex={focusedPath === item.path ? 0 : -1}
               style={getItemIndentStyle(item)}
               onclick={(event) => onItemClick(item, event)}
+              ondblclick={(event) => onItemDoubleClick?.(item, event)}
               href={item.href}
               title={item.hint}
             >

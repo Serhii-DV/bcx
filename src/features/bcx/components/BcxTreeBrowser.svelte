@@ -250,6 +250,18 @@ async function handleItemClick(
 ) {
   if (!item) return;
 
+  if (
+    item.href &&
+    !item.onClick &&
+    !item.query &&
+    event instanceof MouseEvent &&
+    event.type === 'click'
+  ) {
+    event.preventDefault();
+    focusTreeItem(item);
+    return;
+  }
+
   focusedPath = item.path ?? null;
   await activateTreeItem({
     item,
@@ -262,6 +274,15 @@ async function handleItemClick(
     showItemFeedback,
     logLabel: '[BcxTreeBrowser]',
   });
+}
+
+function handleItemDoubleClick(item: TreeItem, event: MouseEvent) {
+  if (!item.href || item.onClick || item.query) return;
+  if (event.target instanceof Element && event.target.closest('.item-button'))
+    return;
+  event.preventDefault();
+  event.stopPropagation();
+  void handleItemClick(item, event);
 }
 
 async function handleKeyDown(event: KeyboardEvent) {
@@ -695,6 +716,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       tabindex={focusedPath === item.path ? 0 : -1}
       onfocus={() => { focusedPath = item.path ?? null; onSelect?.(item); }}
       onclick={() => focusTreeItem(item)}
+      ondblclick={(event) => handleItemDoubleClick(item, event)}
       onkeydown={(event) => {
         if (event.key === 'Enter') {
           event.preventDefault();
@@ -715,6 +737,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       tabindex={focusedPath === item.path ? 0 : -1}
       title={item.hint}
       onclick={(e) => handleBrowserItemClick(item, e)}
+      ondblclick={(event) => handleItemDoubleClick(item, event)}
       onkeydown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -733,6 +756,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       data-path="{item.path}"
       tabindex={focusedPath === item.path ? 0 : -1}
       onclick={(e) => handleItemClick(item, e)}
+      ondblclick={(event) => handleItemDoubleClick(item, event)}
       href={item.href}
       title={item.hint}
     >
@@ -767,6 +791,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
             visiblePaths={treeLayoutVisiblePaths}
             visibleChildCounts={treeLayoutVisibleChildCounts}
             onItemClick={handleItemClick}
+            onItemDoubleClick={handleItemDoubleClick}
             onNodeClick={handleTreeLayoutNodeClick}
           />
         </li>
