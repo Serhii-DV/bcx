@@ -75,7 +75,7 @@ function getItemIndentStyle(item: TreeItem): string {
               data-path="{item.path}"
             >
               <summary
-                class="tree-item tree-node-summary cursor-pointer select-none px-0 hover:bg-white/10 transition-colors focus:bg-white/20"
+                class="tree-item tree-node-summary cursor-pointer select-none px-0 transition-colors"
                 class:focused={focusedPath === item.path}
                 tabindex={focusedPath === item.path ? 0 : -1}
                 style={getItemIndentStyle(item)}
@@ -95,7 +95,7 @@ function getItemIndentStyle(item: TreeItem): string {
             </details>
           {:else}
             <a
-              class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 hover:bg-white/10 transition-colors focus:bg-white/20"
+              class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 transition-colors"
               class:focused={focusedPath === item.path}
               data-level="{item.level}"
               data-path="{item.path}"
