@@ -602,6 +602,9 @@ async function enterBrowserItem(item: TreeItem) {
     await tick();
   }
 
+  if (item.query) {
+    await handleItemClick(item);
+  }
   navigateToLevel(itemPath);
 }
 

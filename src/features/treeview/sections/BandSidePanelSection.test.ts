@@ -29,6 +29,36 @@ const album = AlbumFactory.fromBandcampItem({
 });
 
 describe('Artist/Label release browser', () => {
+  it('filters artist and year groups while preserving releases after cache restoration', async () => {
+    const band = Band.create(9, 'Label', 'https://label.bandcamp.com', 1);
+    const release = AlbumFactory.fromRawData(album.toRawData());
+    release.metadata = Metadata.create(
+      Price.create(0, 'USD'),
+      '',
+      '2026-01-01',
+      '2026-01-01',
+      [],
+    );
+    band.metadata.albums = [release];
+
+    for (const url of [band.url, album.url, album.url]) {
+      const data = await BandSidePanelSection.create(
+        band,
+        url,
+      )?.createTreeData();
+      for (const [rootLabel, query] of [
+        ['Artists', 'Artist'],
+        ['Years', '2026'],
+      ]) {
+        const group = data?.items.find((item) => item.label === rootLabel)
+          ?.children?.[0];
+        expect(group?.query).toBe(query);
+        expect(group?.children?.[0].href).toBe(album.url.toString());
+        expect(group?.children?.[0].loadPreview).toBeDefined();
+      }
+    }
+  });
+
   it('shows sorted unique release tags in their own subtab, including after cache restoration', async () => {
     const band = Band.create(9, 'Label', 'https://label.bandcamp.com', 1);
     const release = AlbumFactory.fromRawData(album.toRawData());

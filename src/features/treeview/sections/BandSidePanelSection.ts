@@ -101,9 +101,27 @@ function withReleasePreviews(
       BandTreeItem.createBandAbout(band),
     ],
   };
-  const catalog = withReleaseCatalog(refreshedItem, band.metadata.albums, {
-    groupByYear: true,
-  });
+  const releaseCatalog = withReleaseCatalog(
+    refreshedItem,
+    band.metadata.albums,
+    {
+      groupByYear: true,
+    },
+  );
+  const catalog = {
+    ...releaseCatalog,
+    children: releaseCatalog.children?.map((root) =>
+      root.label === 'Artists' || root.label === 'Years'
+        ? {
+            ...root,
+            children: root.children?.map((group) => ({
+              ...group,
+              query: group.label,
+            })),
+          }
+        : root,
+    ),
+  };
   const selectedIndex = band.metadata.albums.findIndex(
     (album) =>
       album.url.withoutSearchAndHash.toString() ===
