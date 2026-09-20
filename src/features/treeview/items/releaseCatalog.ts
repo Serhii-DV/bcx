@@ -4,7 +4,12 @@ import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
-import { ICON_CALENDAR, ICON_CALENDAR_DAYS, ICON_MIC } from '../utils/icon';
+import {
+  ICON_CALENDAR,
+  ICON_CALENDAR_DAYS,
+  ICON_DISC,
+  ICON_MIC,
+} from '../utils/icon';
 import { createPagedTreeItem } from './createPagedTreeItem';
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 
@@ -12,6 +17,7 @@ export interface ReleaseCatalog {
   albums: RawAlbumData[];
   groupByYear?: boolean;
   paginateArtists?: boolean;
+  paginateReleases?: boolean;
 }
 
 export function withReleaseCatalog(
@@ -62,11 +68,18 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         .build();
   const roots = [
     artists,
-    createPagedReleasesTreeItem({
-      albums,
-      errorContext: '[Release catalog]',
-      withPreview: true,
-    }),
+    catalog.paginateReleases === false
+      ? items(
+          'Releases',
+          albums.map((album) => AlbumTreeItemFactory.createWithPreview(album)),
+        )
+          .withImage(ICON_DISC)
+          .build()
+      : createPagedReleasesTreeItem({
+          albums,
+          errorContext: '[Release catalog]',
+          withPreview: true,
+        }),
   ];
 
   if (catalog.groupByYear) {

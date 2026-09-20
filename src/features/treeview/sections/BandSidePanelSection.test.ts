@@ -255,7 +255,7 @@ describe('Artist/Label release browser', () => {
   });
 });
 
-it('selects the current release beyond the first page without reordering the catalog', async () => {
+it('shows the full catalog and selects the current release without reordering', async () => {
   const band = Band.create(1, 'Artist', 'https://artist.bandcamp.com', 1);
   band.metadata.albums = Array.from({ length: 45 }, (_, index) =>
     AlbumFactory.fromRawData({
@@ -277,13 +277,18 @@ it('selects the current release beyond the first page without reordering the cat
   expect(releases?.children?.[0].href).toBe(
     band.metadata.albums[0].url.toString(),
   );
-  const more = releases?.children?.at(-1);
-  expect(more?.label).toBe('Load more (31 of 45 loaded)');
-  if (!more || !releases) throw new Error('Missing releases');
-  await more.onClick?.({
-    element: document.createElement('button'),
-    item: more,
-    parent: releases,
-  });
-  expect(releases.children).toHaveLength(45);
+  expect(releases?.children).toHaveLength(45);
+  for (const url of [band.url, Url.create(`${band.url}/music`), current.url]) {
+    const catalog = await BandSidePanelSection.create(
+      band,
+      url,
+    )?.createTreeData();
+    const root = catalog?.items.find((item) => item.label === 'Releases');
+    expect(root?.children?.map((item) => item.href)).toEqual(
+      band.metadata.albums.map((album) => album.url.toString()),
+    );
+    expect(
+      root?.children?.every((item) => typeof item.loadPreview === 'function'),
+    ).toBe(true);
+  }
 });

@@ -4,7 +4,6 @@ import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { BandTreeItem } from '../items/BandTreeItem';
-import { createPagedReleasesTreeItem } from '../items/pagedReleasesTreeItem';
 import { withReleaseCatalog } from '../items/releaseCatalog';
 import { TreeItemCache } from '../items/TreeItemCache';
 import type { SidePanelSection } from '../SidePanelSection';
@@ -106,6 +105,7 @@ function withReleasePreviews(
     band.metadata.albums,
     {
       groupByYear: true,
+      paginateReleases: false,
     },
   );
   const catalog = {
@@ -134,14 +134,7 @@ function withReleasePreviews(
     children: catalog.children?.map((child) =>
       child.label === 'Releases'
         ? {
-            ...createPagedReleasesTreeItem({
-              albums: band.metadata.albums,
-              errorContext: '[Band releases]',
-              withPreview: true,
-              initialItemCount: selectedIndex + 1,
-            }),
-            releasePreview: true,
-            layout: TREE_ITEM_LAYOUT.BROWSER,
+            ...child,
             initialSelectedHref: selectedAlbum.url.toString(),
           }
         : child,

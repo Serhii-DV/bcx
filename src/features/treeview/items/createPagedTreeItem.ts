@@ -7,7 +7,6 @@ const LOAD_MORE_LABEL = 'Load more';
 
 type CreatePagedTreeItemOptions<T> = {
   batchSize: number;
-  initialItemCount?: number;
   errorContext: string;
   errorMessage: string;
   items: T[];
@@ -22,10 +21,7 @@ type CreatePagedTreeItemOptions<T> = {
 export function createPagedTreeItem<T>(
   options: CreatePagedTreeItemOptions<T>,
 ): TreeItem {
-  const treeItemBuilder = items(
-    options.label,
-    createChildrenPage(options, 0, options.initialItemCount),
-  );
+  const treeItemBuilder = items(options.label, createChildrenPage(options, 0));
 
   if (options.image) {
     treeItemBuilder.withImage(options.image);
@@ -49,9 +45,8 @@ export function createPagedTreeItem<T>(
 function createChildrenPage<T>(
   options: CreatePagedTreeItemOptions<T>,
   offset: number,
-  count = options.batchSize,
 ): TreeItem[] {
-  const nextOffset = offset + Math.max(options.batchSize, count);
+  const nextOffset = offset + options.batchSize;
   const children = options.createChildren(
     options.items.slice(offset, nextOffset),
   );
