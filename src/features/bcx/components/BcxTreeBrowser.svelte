@@ -10,6 +10,7 @@ import {
   buildBreadcrumbItems,
   createFilteredTreeItems,
   findItemByPath,
+  generateTreeHierarchy,
   getVisibleItems,
   hydrateTreeItemChildren,
   isNode,
@@ -86,6 +87,15 @@ let lockedRootPath = $derived(lockInitialRoot ? initialRootPath : null);
 let treeVersion = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
 let filterDebounceTimer: number | null = null;
+let filterSearchBaseline: {
+  rootPath: string;
+  children: TreeItem[];
+  childrenCount?: number;
+} | null = null;
+let filterSearchLoading = $state(false);
+let filterSearchError = $state('');
+let activeFilterSearchQuery = $state('');
+let filterSearchGeneration = 0;
 const feedbackTimers = new Map<string, number>();
 
 let currentRootItem = $derived.by(() => {
@@ -96,6 +106,12 @@ let currentLevelItems = $derived.by(() => {
   treeVersion;
   return currentRootItem ? (currentRootItem.children ?? []) : treeData.items;
 });
+let itemFilterQuery = $derived(
+  debouncedFilterQuery.trim().toLocaleLowerCase() ===
+    activeFilterSearchQuery.toLocaleLowerCase()
+    ? ''
+    : debouncedFilterQuery,
+);
 let breadcrumbItems = $derived.by(() => {
   treeVersion;
   return rootPath ? buildBreadcrumbItems(treeData.items, rootPath) : [];
@@ -104,7 +120,7 @@ let browserItems = $derived.by(() => {
   treeVersion;
   return filterTreeBrowserItems(
     currentLevelItems,
-    debouncedFilterQuery,
+    itemFilterQuery,
     currentRootItem,
   );
 });
@@ -121,11 +137,11 @@ let treeLayoutItems = $derived.by(() => {
     return currentLevelItems;
   }
 
-  if (!debouncedFilterQuery.trim()) {
+  if (!itemFilterQuery.trim()) {
     return currentLevelItems;
   }
 
-  return createFilteredTreeItems(currentLevelItems || [], debouncedFilterQuery);
+  return createFilteredTreeItems(currentLevelItems || [], itemFilterQuery);
 });
 let treeLayoutVisibleData = $derived.by(() => {
   treeVersion;
@@ -143,8 +159,12 @@ let treeLayoutVisiblePaths = $derived(treeLayoutVisibleData.paths);
 let treeLayoutVisibleChildCounts = $derived(treeLayoutVisibleData.childCounts);
 let effectiveFilterQuery = $derived(externalFilterQuery ?? localFilterQuery);
 let emptyStateMessage = $derived.by(() => {
-  if (isLoading) {
+  if (isLoading || filterSearchLoading) {
     return loadingMessage;
+  }
+
+  if (filterSearchError) {
+    return filterSearchError;
   }
 
   return debouncedFilterQuery.trim()
@@ -195,6 +215,7 @@ $effect(() => {
   }
 
   if (!currentQuery.trim()) {
+    restoreFilterSearchBaseline();
     debouncedFilterQuery = '';
     filterDebounceTimer = null;
   } else {
@@ -481,7 +502,7 @@ function visiblePrevLoop(index: number): TreeItem | null {
 function getTreeLayoutNavigableItems(): TreeItem[] {
   return getNavigableTreeItems(
     getVisibleItems(currentLevelItems || []),
-    debouncedFilterQuery,
+    itemFilterQuery,
     treeLayoutVisiblePaths,
   );
 }
@@ -644,6 +665,73 @@ function handleFilterArrowDown() {
   focusTreeItem(getNavigableItems()[0]);
 }
 
+async function handleUnmatchedFilterSubmit(query: string) {
+  const rootItem = currentRootItem;
+  const normalizedQuery = query.trim();
+
+  if (!rootItem?.path || !rootItem.filterSearch || !normalizedQuery) {
+    return;
+  }
+
+  applyFilterImmediately();
+  filterSearchBaseline ??= {
+    rootPath: rootItem.path,
+    children: rootItem.children ?? [],
+    childrenCount: rootItem.childrenCount,
+  };
+
+  const generation = ++filterSearchGeneration;
+  filterSearchLoading = true;
+  filterSearchError = '';
+
+  try {
+    const result = await rootItem.filterSearch(normalizedQuery);
+    if (
+      generation !== filterSearchGeneration ||
+      currentRootItem !== rootItem ||
+      effectiveFilterQuery.trim() !== normalizedQuery
+    ) {
+      return;
+    }
+
+    rootItem.children = result.items;
+    rootItem.childrenCount = result.total;
+    activeFilterSearchQuery = normalizedQuery;
+    focusedPath = null;
+    treeData.treeItems = generateTreeHierarchy(treeData.items);
+    refreshTreeRendering();
+  } catch (error) {
+    console.error('[BcxTreeBrowser]', 'History filter search failed:', error);
+    if (generation === filterSearchGeneration) {
+      filterSearchError = 'Could not search history';
+    }
+  } finally {
+    if (generation === filterSearchGeneration) {
+      filterSearchLoading = false;
+    }
+  }
+}
+
+function restoreFilterSearchBaseline() {
+  if (!filterSearchBaseline) {
+    return;
+  }
+
+  const rootItem = findTreeItemByPath(filterSearchBaseline.rootPath);
+  if (rootItem) {
+    rootItem.children = filterSearchBaseline.children;
+    rootItem.childrenCount = filterSearchBaseline.childrenCount;
+    treeData.treeItems = generateTreeHierarchy(treeData.items);
+    refreshTreeRendering();
+  }
+
+  filterSearchGeneration += 1;
+  filterSearchBaseline = null;
+  filterSearchLoading = false;
+  filterSearchError = '';
+  activeFilterSearchQuery = '';
+}
+
 function getItemVisibleChildCount(item: TreeItem): number {
   if (item.showChildrenCount === false) {
     return 0;
@@ -775,7 +863,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 
 {#snippet browserEmptyState()}
   <li class="bcx-browser-empty-state" aria-live="polite">
-    {#if isLoading}
+    {#if isLoading || filterSearchLoading}
       <span class="bcx-browser-loading-icon" aria-hidden="true"></span>
     {/if}
     <span>{emptyStateMessage}</span>
@@ -825,6 +913,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       bind:value={localFilterQuery}
       suggestions={filterSuggestions}
       onArrowDown={handleFilterArrowDown}
+      onUnmatchedSubmit={handleUnmatchedFilterSubmit}
     />
   {/if}
   {#if showBreadcrumb}

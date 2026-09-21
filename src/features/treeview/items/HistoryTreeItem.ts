@@ -127,6 +127,7 @@ export class HistoryTreeItem {
       const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages();
       const tabPages = HISTORY_TABS.map(({ label, type }) => ({
         label,
+        type,
         pages: type ? pages.filter((page) => page.type === type) : pages,
       }));
       const initialPages = tabPages.flatMap(({ pages }) =>
@@ -138,19 +139,23 @@ export class HistoryTreeItem {
       const initialItems =
         await HistoryTreeItem.createUuidTreeItemsMap(uniqueInitialPages);
       const children = await Promise.all(
-        tabPages.map(async ({ label, pages: pagesForTab }) => ({
-          label,
-          childrenCount: pagesForTab.length,
-          hasChildren: true,
-          children: await HistoryTreeItem.createLatestVisitedChildren(
-            pagesForTab,
-            0,
-            limit,
-            initialItems,
-          ),
-          itemPreview: true,
-          layout: TREE_ITEM_LAYOUT.BROWSER,
-        })),
+        tabPages.map(async ({ label, type, pages: pagesForTab }) => {
+          return {
+            label,
+            childrenCount: pagesForTab.length,
+            hasChildren: true,
+            children: await HistoryTreeItem.createLatestVisitedChildren(
+              pagesForTab,
+              0,
+              limit,
+              initialItems,
+            ),
+            filterSearch: (query: string) =>
+              HistoryTreeItem.searchLatestVisited(query, type, limit),
+            itemPreview: true,
+            layout: TREE_ITEM_LAYOUT.BROWSER,
+          };
+        }),
       );
 
       return { label: HISTORY_LABEL, children };
@@ -162,6 +167,26 @@ export class HistoryTreeItem {
       );
       return { label: `${HISTORY_LABEL} (error)` };
     }
+  }
+
+  private static async searchLatestVisited(
+    query: string,
+    type: HistoryPageType | undefined,
+    limit: number,
+  ) {
+    const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages(query);
+    const matchingPages = type
+      ? pages.filter((page) => page.type === type)
+      : pages;
+
+    return {
+      items: await HistoryTreeItem.createLatestVisitedChildren(
+        matchingPages,
+        0,
+        limit,
+      ),
+      total: matchingPages.length,
+    };
   }
 
   private static async createLatestVisitedChildren(
@@ -267,11 +292,11 @@ export class HistoryTreeItem {
       : HistoryEntryTreeItemFactory.create(historyItem);
   }
 
-  private static async getUniqueVisitedBandcampPages(): Promise<
-    VisitedBandcampPage[]
-  > {
+  private static async getUniqueVisitedBandcampPages(
+    text = 'bandcamp.com',
+  ): Promise<VisitedBandcampPage[]> {
     const historyItems = await History.search({
-      text: 'bandcamp.com',
+      text,
       maxResults: 1000,
       startTime: 0,
     });

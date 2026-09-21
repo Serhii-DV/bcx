@@ -128,5 +128,18 @@ describe('History pagination', () => {
       releaseType: 'Track',
       duration: '3:15',
     });
+
+    const bands = tree.children?.[1];
+    const searchResult = await bands?.filterSearch?.('dream pop');
+    expect(History.search).toHaveBeenLastCalledWith({
+      text: 'dream pop',
+      maxResults: 1000,
+      startTime: 0,
+    });
+    expect(searchResult?.total).toBe(2);
+    expect(searchResult?.items).toHaveLength(2);
+    expect(
+      searchResult?.items.every((item) => item.href?.endsWith('bandcamp.com/')),
+    ).toBe(true);
   });
 });

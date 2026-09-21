@@ -5,9 +5,15 @@ interface Props {
   value: string;
   suggestions: string[];
   onArrowDown?: () => void;
+  onUnmatchedSubmit?: (value: string) => void | Promise<void>;
 }
 
-let { value = $bindable(''), suggestions, onArrowDown }: Props = $props();
+let {
+  value = $bindable(''),
+  suggestions,
+  onArrowDown,
+  onUnmatchedSubmit,
+}: Props = $props();
 let filterInput: BcxTreeFilterInput;
 const instanceId = $props.id();
 const id = `bcx-tree-browser-filter-${instanceId}`;
@@ -24,4 +30,5 @@ export function focus() {
   {suggestions}
   placeholder="Filter browser items..."
   {onArrowDown}
+  {onUnmatchedSubmit}
 />
