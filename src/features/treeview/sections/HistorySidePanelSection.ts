@@ -9,9 +9,10 @@ export class HistorySidePanelSection {
       id: 'history',
       label: 'History',
       image: ICON_HISTORY,
+      rootNavigation: 'tabs',
       createTreeData: async () =>
         createTreeDataFromTreeItemChildren(
-          await HistoryTreeItem.createLatestVisited(),
+          await HistoryTreeItem.createLatestVisitedSections(),
         ),
     };
   }

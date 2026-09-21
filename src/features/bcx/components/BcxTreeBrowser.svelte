@@ -2,6 +2,7 @@
 import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import {
+  hasItemPreview,
   TREE_ITEM_LAYOUT,
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
@@ -168,10 +169,10 @@ $effect(() => {
   if (onSelect) {
     const selected =
       browserItems.find((item) => item.path === focusedPath) ??
-      browserItems.find((item) => item.loadPreview) ??
+      browserItems.find(hasItemPreview) ??
       null;
     onSelect(selected);
-    if (selected?.loadPreview && !focusedPath)
+    if (selected && hasItemPreview(selected) && !focusedPath)
       focusedPath = selected.path ?? null;
   }
 });
@@ -331,7 +332,7 @@ async function handleKeyDown(event: KeyboardEvent) {
           break;
         }
 
-        if (currentItem.loadPreview) break;
+        if (hasItemPreview(currentItem)) break;
 
         if (isTreeLayout && !isDrillUpItem(currentItem)) {
           if (!isNode(currentItem)) {
@@ -713,7 +714,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 
 {#snippet browserTreeItem(item: TreeItem)}
   {@const hasChildren = isNode(item)}
-  {#if item.loadPreview}
+  {#if hasItemPreview(item)}
     <div
       role="button"
       class="tree-item bcx-browser-row"

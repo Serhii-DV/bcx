@@ -6,10 +6,14 @@ import { Band } from 'src/bandcamp/domain/band/band';
 import { BandFactory } from 'src/bandcamp/domain/band/factory';
 import { BandMetadata } from 'src/bandcamp/domain/band/metadata';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
-import type { MusicAlbumSchema } from 'src/bandcamp/domain/page/schema';
+import type {
+  MusicAlbumSchema,
+  MusicRecordingSchema,
+} from 'src/bandcamp/domain/page/schema';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
+import { Track } from 'src/bandcamp/domain/track/track';
 import type { FanData } from 'src/bandcamp/domain/types/FanData';
 import {
   isBandcampAlbumUrl,
@@ -17,6 +21,10 @@ import {
 } from 'src/bandcamp/domain/url/helper';
 import { MessageType } from 'src/core/message';
 import { Url } from 'src/core/url';
+import {
+  createSidePanelHeader,
+  type SidePanelHeader,
+} from 'src/features/bcx/sidePanelHeader';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import type { PageDataContext } from 'src/features/treeview/sections/types';
@@ -43,6 +51,7 @@ interface ActiveBandcampPageData {
   data: any;
   fanData: FanData;
   albumSchema?: MusicAlbumSchema | null;
+  trackSchema?: MusicRecordingSchema | null;
   musicBand?: ActiveMusicBandData | null;
 }
 
@@ -74,9 +83,9 @@ export async function getActiveBandcampTab(): Promise<ActiveBandcampTab | null> 
   return response?.tab ?? null;
 }
 
-export async function createActiveTabSidePanelSections(
+export async function createActiveTabSidePanelData(
   tab: ActiveBandcampTab,
-): Promise<SidePanelSection[]> {
+): Promise<{ sections: SidePanelSection[]; header: SidePanelHeader | null }> {
   const currentPageUrl = Url.create(tab.url);
   const pageData = await getActiveBandcampPageData(currentPageUrl);
   const page = await createBandPage(currentPageUrl, pageData);
@@ -91,10 +100,25 @@ export async function createActiveTabSidePanelSections(
   }
   const fanPageContext = pageData ?? lastFanPageContext;
 
-  return MainSidePanelSections.create(currentPageUrl, page, {
-    includePageData: !!fanPageContext,
-    pageData: fanPageContext,
-  });
+  return {
+    sections: await MainSidePanelSections.create(currentPageUrl, page, {
+      includePageData: !!fanPageContext,
+      pageData: fanPageContext,
+    }),
+    header: createSidePanelHeader(currentPageUrl, page, pageData?.trackSchema),
+  };
+}
+
+export async function getActiveTabHeader(
+  tab: ActiveBandcampTab,
+): Promise<SidePanelHeader | null> {
+  const url = Url.create(tab.url);
+  const pageData = await getActiveBandcampPageData(url);
+  return createSidePanelHeader(
+    url,
+    await createBandPage(url, pageData),
+    pageData?.trackSchema,
+  );
 }
 
 async function getActiveBandcampPageData(
@@ -203,10 +227,10 @@ function getStoredEntityUrlUuids(currentPageUrl: Url): string[] {
 
 async function findBandForUrl(
   currentPageUrl: Url,
-  entities: Array<Band | Album>,
+  entities: Array<Band | Album | Track>,
 ): Promise<Band | null> {
   const entityBand = entities.find(
-    (entity): entity is Band => !(entity instanceof Album),
+    (entity): entity is Band => entity instanceof Band,
   );
 
   if (entityBand) {

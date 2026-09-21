@@ -1,3 +1,4 @@
+import type { BandPreview } from './BandPreview';
 import type { ReleaseCatalog } from './items/releaseCatalog';
 import type { ReleaseInformation, ReleasePreview } from './ReleasePreview';
 import type { TreeItemButton } from './TreeItemButton';
@@ -46,9 +47,15 @@ export interface TreeItem {
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
   releaseCatalog?: ReleaseCatalog;
   releasePreview?: boolean;
+  itemPreview?: boolean;
+  bandPreview?: BandPreview;
   previewImage?: string;
   previewInformation?: ReleaseInformation;
   initialSelectedHref?: string;
   loadPreview?: () => Promise<ReleasePreview>;
   actionIcon?: string; // action icon name
+}
+
+export function hasItemPreview(item?: TreeItem | null): boolean {
+  return !!(item?.loadPreview || item?.previewInformation || item?.bandPreview);
 }

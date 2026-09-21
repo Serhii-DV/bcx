@@ -34,7 +34,10 @@ export class FollowingBandsTreeItem {
       item.image_id as number,
     );
 
-    return BandTreeItemFactory.create(band);
+    return BandTreeItemFactory.createWithPreview(band, {
+      following: true,
+      location: item.location ?? undefined,
+    });
   }
 }
 

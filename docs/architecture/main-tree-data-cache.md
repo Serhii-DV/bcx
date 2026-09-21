@@ -100,3 +100,29 @@ lists and inert Load more rows. Cache keys, TTLs, and refresh behavior stay the 
 Wishlist Releases and Artists show every stored item immediately. Snapshot version
 10 invalidates older snapshots with paginated Wishlist options. Release previews
 are still rebuilt from raw album data, and Collection release pagination is retained.
+
+## Shared item preview
+
+`BcxItemPreviewBrowser` owns the shared selection, asynchronous loading, and
+resizable details area for releases and followed bands. Release details retain
+their existing renderer; band details read `BandcampStorage` only on selection.
+Following-list identity, artwork, and location provide the fallback when no band
+is saved. Saved catalog counts describe locally available releases.
+
+Following Bands snapshots include serializable `bandPreview` identities rather
+than callbacks or copies of full cached catalogs. Snapshot version 11 invalidates
+older trees without these identities. Cache keys, TTLs, and invalidation remain
+unchanged. The shared `itemPreviewSize` store retains the original persistent key
+so existing divider positions carry over across release and band tabs.
+
+History uses the same item preview browser for saved bands and releases, including
+entries appended by Show more. Pages without saved metadata expose basic preview
+information from their history title and URL. History is constructed directly,
+so its preview loaders and pagination actions do not pass through TreeItemCache.
+The Following badge is explicit in band preview data; version 12 refreshes older
+Following Bands snapshots to include it without labeling visited bands as followed.
+
+History is exposed as All, Bands, Releases, and Tracks root tabs. Each tab owns its
+filtered page list and pagination offset, while the initial cached-entity lookup is
+shared across the visible first batches. Saved tracks use the same item preview
+panel with track metadata; unsaved tracks retain the URL-derived fallback preview.

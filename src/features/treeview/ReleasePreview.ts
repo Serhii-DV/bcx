@@ -2,6 +2,7 @@ import type { Album } from 'src/bandcamp/domain/album/album';
 import { getReleaseMetadataFromAlbum } from 'src/bandcamp/domain/album/helper';
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
 import { TrackTime } from 'src/bandcamp/domain/track/time';
+import type { Track } from 'src/bandcamp/domain/track/track';
 import { TreeData } from './TreeData';
 
 export interface ReleaseInformation {
@@ -91,6 +92,34 @@ export function createReleaseInformation(album: Album): ReleaseInformation {
       : undefined,
     description: notes?.description,
     credits: notes?.credits,
+  };
+}
+
+export function createTrackInformation(track: Track): ReleaseInformation {
+  const metadata = track.metadata;
+  const price = metadata?.price;
+  const artistUrl = track.url
+    ? `${track.url.protocol}//${track.url.hostname}/`
+    : undefined;
+
+  return {
+    title: track.title,
+    artist: track.artist.toString(),
+    artistUrl,
+    publisher: metadata?.publisher || undefined,
+    date:
+      metadata && Number.isFinite(metadata.published.getTime())
+        ? metadata.publishedDate
+        : undefined,
+    releaseType: 'Track',
+    price:
+      price && Number.isFinite(price.amount) && price.amount >= 0
+        ? `${price.amount} ${price.currency}`
+        : undefined,
+    collectionStatus: [],
+    tags: [...new Set(metadata?.keywords ?? [])],
+    tracks: [],
+    duration: track.time?.toReadableString(),
   };
 }
 

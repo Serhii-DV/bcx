@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
-import { createActiveTabSidePanelSections } from './activeTabTreeData';
+import {
+  createActiveTabSidePanelData,
+  getActiveTabHeader,
+} from './activeTabTreeData';
 
 afterEach(() => {
   rs.restoreAllMocks();
@@ -19,7 +22,7 @@ describe('active tab fan sections during navigation', () => {
     };
     const sendMessage = rs.spyOn(chrome.runtime, 'sendMessage');
     sendMessage.mockImplementationOnce(async () => ({ pageData: fanContext }));
-    const first = await createActiveTabSidePanelSections({
+    const { sections: first } = await createActiveTabSidePanelData({
       id: 1,
       windowId: 1,
       url: 'https://first-test.bandcamp.com/music',
@@ -30,7 +33,7 @@ describe('active tab fan sections during navigation', () => {
       pageData: null,
       error: 'Content script not ready',
     }));
-    const next = await createActiveTabSidePanelSections({
+    const { sections: next } = await createActiveTabSidePanelData({
       id: 1,
       windowId: 1,
       url: 'https://second-test.bandcamp.com/music',
@@ -47,7 +50,7 @@ describe('active tab fan sections during navigation', () => {
     sendMessage.mockImplementationOnce(async () => ({
       pageData: updatedContext,
     }));
-    const refreshed = await createActiveTabSidePanelSections({
+    const { sections: refreshed } = await createActiveTabSidePanelData({
       id: 1,
       windowId: 1,
       url: 'https://second-test.bandcamp.com/music',
@@ -84,7 +87,7 @@ describe('active tab public profile', () => {
         },
       },
     }));
-    const sections = await createActiveTabSidePanelSections({
+    const { sections } = await createActiveTabSidePanelData({
       id: 1,
       windowId: 1,
       url: 'https://profile-test.bandcamp.com/music',
@@ -122,7 +125,7 @@ describe('active tab public profile', () => {
         bandProfile: { location: 'Paris, France', links: [] },
       },
     }));
-    const sections = await createActiveTabSidePanelSections({
+    const { sections } = await createActiveTabSidePanelData({
       id: 1,
       windowId: 1,
       url: 'https://profile-stored.bandcamp.com/music',
@@ -135,5 +138,32 @@ describe('active tab public profile', () => {
         .find((item) => item.label === 'About')
         ?.children?.map((item) => item.label),
     ).toContain('Location: Paris, France');
+  });
+});
+
+describe('active tab header refresh', () => {
+  it('refreshes the header without rebuilding catalog sections', async () => {
+    const band = Band.create(
+      903,
+      'Current Artist',
+      'https://header-test.bandcamp.com',
+      123,
+    );
+    rs.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async () => ({
+      pageData: null,
+    }));
+    rs.spyOn(BandcampStorage, 'getByUuids').mockResolvedValue([band]);
+    rs.spyOn(BandcampStorage, 'getBands').mockResolvedValue([band]);
+    const createSections = rs.spyOn(MainSidePanelSections, 'create');
+    const header = await getActiveTabHeader({
+      id: 1,
+      windowId: 1,
+      url: 'https://header-test.bandcamp.com/music',
+    });
+    expect(header).toEqual({
+      title: band.name,
+      imageUrl: band.artwork.smallSizeUrl,
+    });
+    expect(createSections).not.toHaveBeenCalled();
   });
 });

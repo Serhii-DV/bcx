@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
-import BcxReleaseBrowser from './BcxReleaseBrowser.svelte';
+import BcxItemPreviewBrowser from './BcxItemPreviewBrowser.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import { createRootSectionTabs } from './rootSectionTabs';
@@ -17,6 +17,11 @@ $effect(() => {
   }
   if (selectedRoot) visitedRoots[selectedRoot] = true;
 });
+
+function usesItemPreview(path: string): boolean {
+  const root = treeData.items.find((item) => item.path === path);
+  return !!(root?.itemPreview || root?.releasePreview);
+}
 </script>
 
 {#if tabs.length}
@@ -26,8 +31,8 @@ $effect(() => {
       <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
-            {#if treeData.items.find((item) => item.path === tab.id)?.releasePreview}
-              <BcxReleaseBrowser {treeData} rootPath={tab.id} />
+            {#if usesItemPreview(tab.id)}
+              <BcxItemPreviewBrowser {treeData} rootPath={tab.id} />
             {:else}
             {@const profile = treeData.items.find((item) => item.path === tab.id)?.aboutProfile}
             {#if profile}

@@ -7,6 +7,7 @@ export const BANDS_KEY = '/bands';
 export const TOUR_COMPLETE_KEY = '/ui/tour-complete';
 export const SIDE_PANEL_TOUR_COMPLETE_KEY = '/ui/side-panel-tour-complete';
 export const SIDE_PANEL_OPEN_KEY = '/ui/side-panel-open';
+export const RELEASE_PREVIEW_SIZE_KEY = '/ui/release-preview-size';
 
 export class StorageKey {
   static bandKey(bandId: number): string {
