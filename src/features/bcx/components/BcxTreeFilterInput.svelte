@@ -6,6 +6,7 @@ interface Props {
   placeholder: string;
   clearLabel?: string;
   onArrowDown?: () => void;
+  onUnmatchedSubmit?: (value: string) => void | Promise<void>;
 }
 
 let {
@@ -15,6 +16,7 @@ let {
   placeholder,
   clearLabel = 'Clear filter',
   onArrowDown,
+  onUnmatchedSubmit,
 }: Props = $props();
 
 let filterInput: HTMLInputElement;
@@ -25,6 +27,19 @@ export function focus() {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    const normalizedValue = value.trim().toLocaleLowerCase();
+    const matchesSuggestion = suggestions.some(
+      (suggestion) => suggestion.trim().toLocaleLowerCase() === normalizedValue,
+    );
+
+    if (normalizedValue && !matchesSuggestion && onUnmatchedSubmit) {
+      event.preventDefault();
+      void onUnmatchedSubmit(value.trim());
+    }
+    return;
+  }
+
   if (event.key !== 'ArrowDown') {
     return;
   }

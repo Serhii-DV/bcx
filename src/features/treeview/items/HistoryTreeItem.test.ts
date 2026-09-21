@@ -48,6 +48,9 @@ describe('History pagination', () => {
     expect(tree.children?.map((item) => item.href)).toEqual(
       entries.map((item) => item.url),
     );
+    expect(tree.children?.map((item) => item.visitedAt)).toEqual(
+      entries.map((item) => new Date(item.lastVisitTime).toISOString()),
+    );
     expect(tree.children?.every(hasItemPreview)).toBe(true);
     expect(tree.children?.[119].previewInformation?.title).toBe('Release 119');
     expect(tree.children?.some((item) => item.label === 'Show more')).toBe(
@@ -125,5 +128,18 @@ describe('History pagination', () => {
       releaseType: 'Track',
       duration: '3:15',
     });
+
+    const bands = tree.children?.[1];
+    const searchResult = await bands?.filterSearch?.('dream pop');
+    expect(History.search).toHaveBeenLastCalledWith({
+      text: 'dream pop',
+      maxResults: 1000,
+      startTime: 0,
+    });
+    expect(searchResult?.total).toBe(2);
+    expect(searchResult?.items).toHaveLength(2);
+    expect(
+      searchResult?.items.every((item) => item.href?.endsWith('bandcamp.com/')),
+    ).toBe(true);
   });
 });

@@ -47,9 +47,11 @@ export class HistoryTreeItem {
       const children: TreeItem[] = [];
 
       pages.forEach(({ item, uuid }) => {
-        const historyItem =
-          uuidTreeItemsMap.get(uuid) ||
-          HistoryEntryTreeItemFactory.create(item);
+        const historyItem = HistoryTreeItem.createHistoryTreeItem(
+          uuidTreeItemsMap,
+          uuid,
+          item,
+        );
         const dateItem = DateTreeItemFactory.create(
           new Date(item.lastVisitTime as number),
         );
@@ -125,6 +127,7 @@ export class HistoryTreeItem {
       const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages();
       const tabPages = HISTORY_TABS.map(({ label, type }) => ({
         label,
+        type,
         pages: type ? pages.filter((page) => page.type === type) : pages,
       }));
       const initialPages = tabPages.flatMap(({ pages }) =>
@@ -136,19 +139,23 @@ export class HistoryTreeItem {
       const initialItems =
         await HistoryTreeItem.createUuidTreeItemsMap(uniqueInitialPages);
       const children = await Promise.all(
-        tabPages.map(async ({ label, pages: pagesForTab }) => ({
-          label,
-          childrenCount: pagesForTab.length,
-          hasChildren: true,
-          children: await HistoryTreeItem.createLatestVisitedChildren(
-            pagesForTab,
-            0,
-            limit,
-            initialItems,
-          ),
-          itemPreview: true,
-          layout: TREE_ITEM_LAYOUT.BROWSER,
-        })),
+        tabPages.map(async ({ label, type, pages: pagesForTab }) => {
+          return {
+            label,
+            childrenCount: pagesForTab.length,
+            hasChildren: true,
+            children: await HistoryTreeItem.createLatestVisitedChildren(
+              pagesForTab,
+              0,
+              limit,
+              initialItems,
+            ),
+            filterSearch: (query: string) =>
+              HistoryTreeItem.searchLatestVisited(query, type, limit),
+            itemPreview: true,
+            layout: TREE_ITEM_LAYOUT.BROWSER,
+          };
+        }),
       );
 
       return { label: HISTORY_LABEL, children };
@@ -162,6 +169,26 @@ export class HistoryTreeItem {
     }
   }
 
+  private static async searchLatestVisited(
+    query: string,
+    type: HistoryPageType | undefined,
+    limit: number,
+  ) {
+    const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages(query);
+    const matchingPages = type
+      ? pages.filter((page) => page.type === type)
+      : pages;
+
+    return {
+      items: await HistoryTreeItem.createLatestVisitedChildren(
+        matchingPages,
+        0,
+        limit,
+      ),
+      total: matchingPages.length,
+    };
+  }
+
   private static async createLatestVisitedChildren(
     pages: VisitedBandcampPage[],
     offset: number,
@@ -172,9 +199,8 @@ export class HistoryTreeItem {
     const pageBatch = pages.slice(offset, nextOffset);
     const uuidTreeItemsMap =
       knownItems ?? (await HistoryTreeItem.createUuidTreeItemsMap(pageBatch));
-    const children = pageBatch.map(
-      ({ item, uuid }) =>
-        uuidTreeItemsMap.get(uuid) || HistoryEntryTreeItemFactory.create(item),
+    const children = pageBatch.map(({ item, uuid }) =>
+      HistoryTreeItem.createHistoryTreeItem(uuidTreeItemsMap, uuid, item),
     );
 
     if (nextOffset < pages.length) {
@@ -254,11 +280,23 @@ export class HistoryTreeItem {
     return loadMoreTreeItem;
   }
 
-  private static async getUniqueVisitedBandcampPages(): Promise<
-    VisitedBandcampPage[]
-  > {
+  private static createHistoryTreeItem(
+    treeItems: Map<string, TreeItem>,
+    uuid: string,
+    historyItem: chrome.history.HistoryItem,
+  ): TreeItem {
+    const storedTreeItem = treeItems.get(uuid);
+
+    return storedTreeItem
+      ? HistoryEntryTreeItemFactory.withVisitTime(storedTreeItem, historyItem)
+      : HistoryEntryTreeItemFactory.create(historyItem);
+  }
+
+  private static async getUniqueVisitedBandcampPages(
+    text = 'bandcamp.com',
+  ): Promise<VisitedBandcampPage[]> {
     const historyItems = await History.search({
-      text: 'bandcamp.com',
+      text,
       maxResults: 1000,
       startTime: 0,
     });

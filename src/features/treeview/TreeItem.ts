@@ -22,6 +22,11 @@ export const TREE_ITEM_LAYOUT = {
 export type TreeItemLayout =
   (typeof TREE_ITEM_LAYOUT)[keyof typeof TREE_ITEM_LAYOUT];
 
+export interface TreeItemFilterSearchResult {
+  items: TreeItem[];
+  total: number;
+}
+
 export interface TreeItem {
   id?: string;
   label?: string;
@@ -45,6 +50,7 @@ export interface TreeItem {
   buttons?: TreeItemButton[];
   onClick?: (context: TreeItemClickContext) => void | Promise<void>;
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
+  filterSearch?: (query: string) => Promise<TreeItemFilterSearchResult>;
   releaseCatalog?: ReleaseCatalog;
   releasePreview?: boolean;
   itemPreview?: boolean;
@@ -54,6 +60,7 @@ export interface TreeItem {
   initialSelectedHref?: string;
   loadPreview?: () => Promise<ReleasePreview>;
   actionIcon?: string; // action icon name
+  visitedAt?: string;
 }
 
 export function hasItemPreview(item?: TreeItem | null): boolean {
