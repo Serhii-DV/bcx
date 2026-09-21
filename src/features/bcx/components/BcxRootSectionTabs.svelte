@@ -17,6 +17,11 @@ $effect(() => {
   }
   if (selectedRoot) visitedRoots[selectedRoot] = true;
 });
+
+function usesItemPreview(path: string): boolean {
+  const root = treeData.items.find((item) => item.path === path);
+  return !!(root?.itemPreview || root?.releasePreview);
+}
 </script>
 
 {#if tabs.length}
@@ -26,7 +31,7 @@ $effect(() => {
       <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
-            {#if treeData.items.find((item) => item.path === tab.id)?.releasePreview}
+            {#if usesItemPreview(tab.id)}
               <BcxItemPreviewBrowser {treeData} rootPath={tab.id} />
             {:else}
             {@const profile = treeData.items.find((item) => item.path === tab.id)?.aboutProfile}

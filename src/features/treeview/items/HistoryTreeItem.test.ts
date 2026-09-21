@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { History } from 'src/core/history';
 import { hasItemPreview, type TreeItem } from '../TreeItem';
 import { HistoryTreeItem } from './HistoryTreeItem';
@@ -54,7 +55,7 @@ describe('History pagination', () => {
     );
   });
 
-  it('omits Show more when all 50 entries fit in the first batch', async () => {
+  it('builds All, Bands, Releases, and Tracks tabs with previewable items', async () => {
     rs.spyOn(History, 'search').mockResolvedValue(
       Array.from({ length: 50 }, (_, index) => ({
         id: String(index),
@@ -63,7 +64,9 @@ describe('History pagination', () => {
             ? 'https://artist.bandcamp.com/'
             : index === 1
               ? 'https://uncached.bandcamp.com/'
-              : `https://artist.bandcamp.com/album/release-${index}`,
+              : index === 3
+                ? 'https://artist.bandcamp.com/track/saved-track'
+                : `https://artist.bandcamp.com/album/release-${index}`,
       })),
     );
     rs.spyOn(BandcampStorage, 'getByUuids').mockResolvedValue([
@@ -76,21 +79,51 @@ describe('History pagination', () => {
         1,
         1,
       ),
+      TrackFactory.create(
+        3,
+        1,
+        'Saved band',
+        'Saved track',
+        1,
+        'https://artist.bandcamp.com/track/saved-track',
+        '00:03:15',
+      ),
     ]);
-    const tree = await HistoryTreeItem.createLatestVisited();
-    expect(tree.children).toHaveLength(50);
-    expect(tree.children?.every((item) => !item.onClick)).toBe(true);
-    expect(tree.children?.every(hasItemPreview)).toBe(true);
-    expect(tree.children?.[0].bandPreview).toMatchObject({
+    const tree = await HistoryTreeItem.createLatestVisitedSections();
+    expect(tree.children?.map((item) => item.label)).toEqual([
+      'All',
+      'Bands',
+      'Releases',
+      'Tracks',
+    ]);
+    expect(tree.children?.map((item) => item.childrenCount)).toEqual([
+      50, 2, 47, 1,
+    ]);
+    expect(
+      tree.children?.every(
+        (item) =>
+          item.hasChildren &&
+          item.itemPreview &&
+          item.children?.every(hasItemPreview),
+      ),
+    ).toBe(true);
+
+    const all = tree.children?.[0].children;
+    expect(all?.[0].bandPreview).toMatchObject({
       id: 1,
       name: 'Saved Band',
     });
-    expect(tree.children?.[0].bandPreview?.following).toBeUndefined();
-    expect(tree.children?.[1].bandPreview).toMatchObject({
+    expect(all?.[0].bandPreview?.following).toBeUndefined();
+    expect(all?.[1].bandPreview).toMatchObject({
       cached: false,
       url: 'https://uncached.bandcamp.com/',
     });
-    expect(tree.children?.[2].loadPreview).toBeTypeOf('function');
-    expect(tree.children?.[2].previewInformation?.title).toBe('Saved release');
+    expect(all?.[2].loadPreview).toBeTypeOf('function');
+    expect(all?.[2].previewInformation?.title).toBe('Saved release');
+    expect(all?.[3].previewInformation).toMatchObject({
+      title: 'Saved track',
+      releaseType: 'Track',
+      duration: '3:15',
+    });
   });
 });

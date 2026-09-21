@@ -1,9 +1,13 @@
-import type { Album } from 'src/bandcamp/domain/album/album';
+import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { Track } from 'src/bandcamp/domain/track/track';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
+  isBandcampAlbumUrl,
+  isBandcampMusicUrl,
   isBandcampRegularUrl,
+  isBandcampTrackUrl,
   isBandcampUrl,
 } from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
@@ -12,16 +16,27 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { DateTreeItemFactory } from '../factories/DateTreeItemFactory';
 import { HistoryEntryTreeItemFactory } from '../factories/HistoryEntryTreeItemFactory';
-import type { TreeItem } from '../TreeItem';
+import { TrackTreeItemFactory } from '../factories/TrackTreeItemFactory';
+import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
+
+type HistoryPageType = 'band' | 'release' | 'track' | 'other';
 
 type VisitedBandcampPage = {
   item: chrome.history.HistoryItem;
   uuid: string;
+  type: HistoryPageType;
 };
 
 const HISTORY_LABEL = 'History';
 const LATEST_VISITED_BATCH_SIZE = 50;
 const SHOW_MORE_LABEL = 'Show more';
+
+const HISTORY_TABS: { label: string; type?: HistoryPageType }[] = [
+  { label: 'All' },
+  { label: 'Bands', type: 'band' },
+  { label: 'Releases', type: 'release' },
+  { label: 'Tracks', type: 'track' },
+];
 
 export class HistoryTreeItem {
   static async createGroupedByDays(): Promise<TreeItem> {
@@ -103,15 +118,60 @@ export class HistoryTreeItem {
     }
   }
 
+  static async createLatestVisitedSections(
+    limit = LATEST_VISITED_BATCH_SIZE,
+  ): Promise<TreeItem> {
+    try {
+      const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages();
+      const tabPages = HISTORY_TABS.map(({ label, type }) => ({
+        label,
+        pages: type ? pages.filter((page) => page.type === type) : pages,
+      }));
+      const initialPages = tabPages.flatMap(({ pages }) =>
+        pages.slice(0, limit),
+      );
+      const uniqueInitialPages = [
+        ...new Map(initialPages.map((page) => [page.uuid, page])).values(),
+      ];
+      const initialItems =
+        await HistoryTreeItem.createUuidTreeItemsMap(uniqueInitialPages);
+      const children = await Promise.all(
+        tabPages.map(async ({ label, pages: pagesForTab }) => ({
+          label,
+          childrenCount: pagesForTab.length,
+          hasChildren: true,
+          children: await HistoryTreeItem.createLatestVisitedChildren(
+            pagesForTab,
+            0,
+            limit,
+            initialItems,
+          ),
+          itemPreview: true,
+          layout: TREE_ITEM_LAYOUT.BROWSER,
+        })),
+      );
+
+      return { label: HISTORY_LABEL, children };
+    } catch (error) {
+      console.error(
+        '[HistoryTreeItem.createLatestVisitedSections]',
+        'Failed to load history:',
+        error,
+      );
+      return { label: `${HISTORY_LABEL} (error)` };
+    }
+  }
+
   private static async createLatestVisitedChildren(
     pages: VisitedBandcampPage[],
     offset: number,
     limit: number,
+    knownItems?: Map<string, TreeItem>,
   ): Promise<TreeItem[]> {
     const nextOffset = offset + limit;
     const pageBatch = pages.slice(offset, nextOffset);
     const uuidTreeItemsMap =
-      await HistoryTreeItem.createUuidTreeItemsMap(pageBatch);
+      knownItems ?? (await HistoryTreeItem.createUuidTreeItemsMap(pageBatch));
     const children = pageBatch.map(
       ({ item, uuid }) =>
         uuidTreeItemsMap.get(uuid) || HistoryEntryTreeItemFactory.create(item),
@@ -217,10 +277,25 @@ export class HistoryTreeItem {
         }
 
         uuids.add(uuid);
-        pages.push({ item, uuid });
+        pages.push({
+          item,
+          uuid,
+          type: HistoryTreeItem.getHistoryPageType(item),
+        });
 
         return pages;
       }, []);
+  }
+
+  private static getHistoryPageType(
+    item: chrome.history.HistoryItem,
+  ): HistoryPageType {
+    const url = Url.fromHistoryItem(item);
+    if (!url) return 'other';
+    if (isBandcampMusicUrl(url)) return 'band';
+    if (isBandcampAlbumUrl(url)) return 'release';
+    if (isBandcampTrackUrl(url)) return 'track';
+    return 'other';
   }
 
   private static getBandcampPageUuid(
@@ -238,18 +313,20 @@ export class HistoryTreeItem {
   private static async createUuidTreeItemsMap(
     pages: VisitedBandcampPage[],
   ): Promise<Map<string, TreeItem>> {
-    const bandsAndAlbums: (Band | Album)[] = await BandcampStorage.getByUuids(
+    const entities: (Band | Album | Track)[] = await BandcampStorage.getByUuids(
       pages.map((page) => page.uuid),
     );
     const uuidTreeItemsMap = new Map<string, TreeItem>();
 
-    bandsAndAlbums.forEach((entity) => {
+    entities.forEach((entity) => {
       const treeItem =
         entity instanceof Band
           ? BandTreeItemFactory.createWithPreview(entity)
-          : AlbumTreeItemFactory.createWithPreview(entity);
+          : entity instanceof Album
+            ? AlbumTreeItemFactory.createWithPreview(entity)
+            : TrackTreeItemFactory.createWithPreview(entity);
 
-      uuidTreeItemsMap.set(entity.url.uuid!, treeItem);
+      if (entity.url) uuidTreeItemsMap.set(entity.url.uuid, treeItem);
     });
 
     return uuidTreeItemsMap;

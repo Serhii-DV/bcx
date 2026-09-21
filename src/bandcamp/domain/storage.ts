@@ -98,7 +98,7 @@ export class BandcampStorage {
     return bands;
   }
 
-  static async getByUuids(uuids: string[]): Promise<(Band | Album)[]> {
+  static async getByUuids(uuids: string[]): Promise<(Band | Album | Track)[]> {
     const uuidMap = await storage.get(uuids);
     const keys: string[] = [];
 
@@ -109,14 +109,17 @@ export class BandcampStorage {
         continue;
       }
 
-      // Only consider band and album keys for now
-      if (StorageKey.isBandKey(value) || StorageKey.isAlbumKey(value)) {
+      if (
+        StorageKey.isBandKey(value) ||
+        StorageKey.isAlbumKey(value) ||
+        StorageKey.isTrackKey(value)
+      ) {
         keys.push(value);
       }
     }
 
     const storableData = await storage.get(keys);
-    const objects: (Band | Album)[] = [];
+    const objects: (Band | Album | Track)[] = [];
 
     for (const key in storableData) {
       if (StorageKey.isBandKey(key)) {
@@ -131,6 +134,11 @@ export class BandcampStorage {
         const album = AlbumFactory.fromStorage(storableData[key]);
         if (album) {
           objects.push(album);
+        }
+      } else if (StorageKey.isTrackKey(key)) {
+        const track = TrackFactory.fromStorage(storableData[key]);
+        if (track) {
+          objects.push(track);
         }
       }
     }

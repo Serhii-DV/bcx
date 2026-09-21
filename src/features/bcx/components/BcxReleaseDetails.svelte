@@ -34,6 +34,9 @@ let publisherHref = $derived(
     `https://bandcamp.com/search?q=${encodeURIComponent(information.publisher ?? '')}&item_type=b`,
 );
 let description = $derived(information.description ?? '');
+let itemType = $derived(
+  information.releaseType === 'Track' ? 'track' : 'release',
+);
 
 async function openLink(event: MouseEvent) {
   if (
@@ -61,7 +64,7 @@ async function copyLink() {
   actionError = '';
   try {
     await copyToClipboard(item.href);
-    feedback = 'Release link copied.';
+    feedback = `${itemType === 'track' ? 'Track' : 'Release'} link copied.`;
   } catch {
     actionError = 'Could not copy the release link. Please try again.';
   }
@@ -78,10 +81,11 @@ async function copyLink() {
     {#if information.publisher}
       <div class="muted">Label: <a href={publisherHref} onclick={openLink}>{information.publisher}</a></div>
     {/if}
-    {#if information.date || information.releaseType}
+    {#if information.date || information.releaseType || information.duration}
       <div class="muted">
         {#if information.date}<time datetime={information.date}>{information.date}</time>{/if}
         {#if information.date && information.releaseType} · {/if}{information.releaseType ?? ''}
+        {#if information.duration && information.releaseType === 'Track'} · {information.duration}{/if}
       </div>
     {/if}
   </div>
@@ -93,7 +97,7 @@ async function copyLink() {
       {#if information.price}<span class="price">{information.price}</span>{/if}
     </div>
   {/if}
-  <nav class="quick-actions" aria-label="Release actions">
+  <nav class="quick-actions" aria-label={`${itemType === 'track' ? 'Track' : 'Release'} actions`}>
     {#if item.href}
       <a href={item.href} onclick={openLink}>Open on Bandcamp</a>
       <button type="button" onclick={copyLink}>Copy link</button>
@@ -109,7 +113,7 @@ async function copyLink() {
       {/each}
     </div>
   {/if}
-  {#if loading}<p role="status" class="muted">Loading release details…</p>{/if}
+  {#if loading}<p role="status" class="muted">Loading {itemType} details…</p>{/if}
   {#if error}<p role="alert">{error}</p>{/if}
   {#if information.tracks.length}
     <details>
@@ -126,8 +130,8 @@ async function copyLink() {
     </details>
   {/if}
   {#if description}
-    <section aria-label="Release description">
-      <h4>About this release</h4>
+    <section aria-label={`${itemType === 'track' ? 'Track' : 'Release'} description`}>
+      <h4>About this {itemType}</h4>
       <p class="release-notes">{expandedDescription || description.length <= 240 ? description : `${description.slice(0, 240).trimEnd()}…`}</p>
       {#if description.length > 240}
         <button type="button" aria-expanded={expandedDescription} onclick={() => { expandedDescription = !expandedDescription; }}>{expandedDescription ? 'Show less' : 'Show more'}</button>

@@ -47,6 +47,7 @@ export interface TreeItem {
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
   releaseCatalog?: ReleaseCatalog;
   releasePreview?: boolean;
+  itemPreview?: boolean;
   bandPreview?: BandPreview;
   previewImage?: string;
   previewInformation?: ReleaseInformation;

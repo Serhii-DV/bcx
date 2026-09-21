@@ -15,6 +15,7 @@ interface TreeItemButtonSnapshot {
 
 interface TreeItemSnapshot {
   releaseCatalog?: ReleaseCatalog;
+  itemPreview?: boolean;
   bandPreview?: TreeItem['bandPreview'];
   id?: string;
   label?: string;
@@ -144,6 +145,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
 
   return {
     releaseCatalog: item.releaseCatalog,
+    itemPreview: item.itemPreview,
     bandPreview: item.bandPreview,
     id: item.id,
     label: item.label,
@@ -176,6 +178,7 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
 
   return restoreReleaseCatalog({
     releaseCatalog: item.releaseCatalog,
+    itemPreview: item.itemPreview,
     bandPreview: item.bandPreview,
     id: item.id,
     label: item.label,

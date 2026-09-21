@@ -121,3 +121,8 @@ information from their history title and URL. History is constructed directly,
 so its preview loaders and pagination actions do not pass through TreeItemCache.
 The Following badge is explicit in band preview data; version 12 refreshes older
 Following Bands snapshots to include it without labeling visited bands as followed.
+
+History is exposed as All, Bands, Releases, and Tracks root tabs. Each tab owns its
+filtered page list and pagination offset, while the initial cached-entity lookup is
+shared across the visible first batches. Saved tracks use the same item preview
+panel with track metadata; unsaved tracks retain the URL-derived fallback preview.

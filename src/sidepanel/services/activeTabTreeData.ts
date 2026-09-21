@@ -13,6 +13,7 @@ import type {
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
+import { Track } from 'src/bandcamp/domain/track/track';
 import type { FanData } from 'src/bandcamp/domain/types/FanData';
 import {
   isBandcampAlbumUrl,
@@ -226,10 +227,10 @@ function getStoredEntityUrlUuids(currentPageUrl: Url): string[] {
 
 async function findBandForUrl(
   currentPageUrl: Url,
-  entities: Array<Band | Album>,
+  entities: Array<Band | Album | Track>,
 ): Promise<Band | null> {
   const entityBand = entities.find(
-    (entity): entity is Band => !(entity instanceof Album),
+    (entity): entity is Band => entity instanceof Band,
   );
 
   if (entityBand) {
