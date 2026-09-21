@@ -2,11 +2,15 @@
 import type { ReleasePreview } from 'src/features/treeview/ReleasePreview';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
+import { onMount } from 'svelte';
 import {
   DEFAULT_RELEASE_PREVIEW_SIZE,
   MAX_RELEASE_PREVIEW_SIZE,
   MIN_RELEASE_PREVIEW_SIZE,
   releasePreviewSize,
+  restoreReleasePreviewSize,
+  saveReleasePreviewSize,
+  updateReleasePreviewSize,
 } from '../stores/releasePreviewSize';
 import BcxReleaseDetails from './BcxReleaseDetails.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
@@ -33,12 +37,9 @@ function selectItem(item: TreeItem | null) {
   selectedItem = item?.loadPreview ? item : null;
 }
 
-function clampPreviewSize(size: number) {
-  return Math.min(
-    MAX_RELEASE_PREVIEW_SIZE,
-    Math.max(MIN_RELEASE_PREVIEW_SIZE, size),
-  );
-}
+onMount(() => {
+  void restoreReleasePreviewSize();
+});
 
 function startResize(event: PointerEvent) {
   if (!event.isPrimary || event.button !== 0) return;
@@ -60,10 +61,11 @@ function resize(event: PointerEvent) {
   if (!availableHeight) return;
 
   const sizeChange = ((resizeStartY - event.clientY) / availableHeight) * 100;
-  releasePreviewSize.set(clampPreviewSize(resizeStartSize + sizeChange));
+  updateReleasePreviewSize(resizeStartSize + sizeChange);
 }
 
 function stopResize(event: PointerEvent) {
+  if (isResizing) saveReleasePreviewSize($releasePreviewSize);
   isResizing = false;
   if (
     event.currentTarget instanceof HTMLElement &&
@@ -96,7 +98,12 @@ function handleResizeKeydown(event: KeyboardEvent) {
   if (nextSize === null) return;
 
   event.preventDefault();
-  releasePreviewSize.set(clampPreviewSize(nextSize));
+  saveReleasePreviewSize(nextSize);
+}
+
+function handleLostPointerCapture() {
+  if (isResizing) saveReleasePreviewSize($releasePreviewSize);
+  isResizing = false;
 }
 
 $effect(() => {
@@ -152,9 +159,9 @@ $effect(() => {
     onpointermove={resize}
     onpointerup={stopResize}
     onpointercancel={stopResize}
-    onlostpointercapture={() => (isResizing = false)}
+    onlostpointercapture={handleLostPointerCapture}
     onkeydown={handleResizeKeydown}
-    ondblclick={() => releasePreviewSize.set(DEFAULT_RELEASE_PREVIEW_SIZE)}
+    ondblclick={() => saveReleasePreviewSize(DEFAULT_RELEASE_PREVIEW_SIZE)}
   >
     <span aria-hidden="true"></span>
   </div>
