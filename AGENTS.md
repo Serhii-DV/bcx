@@ -86,10 +86,10 @@ pnpm fix           # Fix linting and formatting issues (writes changes)
 
 ## Validation
 
-- Add or update focused regression tests for changed behavior, particularly domain rules, serialization, caching, and error handling.
+- Create new tests only when the user explicitly requests them. Feature work, bug fixes, and refactoring do not imply a request to add tests. Existing tests may be updated when necessary to reflect intentionally changed behavior.
 - Keep tests alongside implementation as `*.test.ts`, following existing RSTest conventions. The active setup is `rstest.config.ts` and `src/test/setup.ts`; do not infer the runner from legacy Jest files.
 - Keep tests deterministic. Mock browser APIs and network boundaries, and reset shared storage or mocks between tests as needed.
-- For implementation changes, run relevant tests using `make test`, `pnpm check`, and `pnpm svelte-check`. Run `make build` for changes affecting extension integration, assets, entry points, or build configuration.
+- For implementation changes, run relevant existing tests using `make test`, and run `pnpm check` and `pnpm svelte-check`. Run `make build` for changes affecting extension integration, assets, entry points, or build configuration.
 - For browser-facing changes, verify the affected flow in the unpacked extension when possible. A dev-server preview alone does not validate extension APIs or content script behavior.
 - Documentation-only changes need a content and diff review rather than an application test run.
 - Report what changed, which checks ran, and any remaining limitations. Distinguish pre-existing failures from regressions; never claim a check passed if it was not run.
