@@ -65,7 +65,9 @@ export class MainSidePanelSections {
         : band;
     addSection(BandSidePanelSection.create(sectionBand, currentPageUrl));
     if (includePageData && pageDataContext) {
-      addSections(createPageDataSections(pageDataContext));
+      addSections(
+        createPageDataSections(pageDataContext, band?.url.toString()),
+      );
     }
     addSection(HistorySidePanelSection.create());
 
@@ -77,11 +79,16 @@ export class MainSidePanelSections {
 
 function createPageDataSections(
   pageDataContext: PageDataContext,
+  currentBandHref?: string,
 ): SidePanelSection[] {
   const userKeyPart = getUserKeyPart(pageDataContext);
   return [
     FanSidePanelSection.create(pageDataContext, userKeyPart),
-    FollowingBandsSidePanelSection.create(pageDataContext, userKeyPart),
+    FollowingBandsSidePanelSection.create(
+      pageDataContext,
+      userKeyPart,
+      currentBandHref,
+    ),
     FollowingGenresSidePanelSection.create(pageDataContext, userKeyPart),
     CollectionSidePanelSection.create(pageDataContext, userKeyPart),
     WishlistSidePanelSection.create(pageDataContext, userKeyPart),

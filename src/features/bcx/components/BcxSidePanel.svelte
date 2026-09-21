@@ -232,7 +232,7 @@ $effect(() => {
                           <p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>
                         {:else}
                           {#if getTreeDataForSection(section).items.some(hasItemPreview)}
-                            <BcxItemPreviewBrowser treeData={getTreeDataForSection(section)} filterQuery={sectionFilterQueryById[section.id] ?? ''} showFilter={false} isLoading={isSectionLoading(section)} />
+                            <BcxItemPreviewBrowser treeData={getTreeDataForSection(section)} initialSelectedHref={section.initialSelectedHref} filterQuery={sectionFilterQueryById[section.id] ?? ''} showFilter={false} isLoading={isSectionLoading(section)} />
                           {:else}
                           <BcxTreeBrowser
                             treeData={getTreeDataForSection(section)}
@@ -241,6 +241,7 @@ $effect(() => {
                             bind:rootPath={sectionRootPathById[section.id]}
                             showBreadcrumb={false}
                             showFilter={false}
+                            initialSelectedHref={section.initialSelectedHref}
                           />
                           {/if}
                         {/if}

@@ -12,6 +12,7 @@ export function createFanDataSubtreeSection(
     cacheKey: string;
     icon: string;
     id: string;
+    initialSelectedHref?: string;
     itemCountPath?: string;
     label: string;
     rootNavigation?: SidePanelSection['rootNavigation'];
@@ -31,6 +32,7 @@ export function createFanDataSubtreeSection(
 
   const section: SidePanelSection = {
     id: options.id,
+    initialSelectedHref: options.initialSelectedHref,
     label: options.label,
     rootNavigation: options.rootNavigation,
     image: options.icon,
