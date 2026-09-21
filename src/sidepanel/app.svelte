@@ -4,14 +4,16 @@ import { MessageType } from 'src/core/message';
 import { storage } from 'src/core/shared';
 import { BcxSidePanel, BcxTour } from 'src/features/bcx/components';
 import { sidePanelTourSteps } from 'src/features/bcx/constants/tourSteps';
+import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { console } from 'src/utils/console';
 import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
 import {
   type ActiveBandcampTab,
-  createActiveTabSidePanelSections,
+  createActiveTabSidePanelData,
   getActiveBandcampTab,
+  getActiveTabHeader,
 } from './services/activeTabTreeData';
 import { shouldReloadActiveTab } from './services/activeTabUpdates';
 
@@ -24,6 +26,8 @@ let sidePanelTourStateLoaded = $state(false);
 let sidePanelTourCompleted = $state(false);
 let sidePanelTourVersion = $state(0);
 let sectionLoadGeneration = 0;
+let headerGeneration = 0;
+let header: SidePanelHeader | null = $state(null);
 
 onMount(() => {
   loadSidePanelSections();
@@ -41,8 +45,11 @@ onMount(() => {
       [];
     if (shouldReloadActiveTab(activeTab, tabId, changeInfo, navigationUrls)) {
       void loadSidePanelSections();
-    } else if (activeTab?.id === tabId && changeInfo.url) {
-      activeTab = { ...activeTab, url: changeInfo.url };
+    } else if (activeTab?.id === tabId) {
+      if (changeInfo.url) activeTab = { ...activeTab, url: changeInfo.url };
+      if (changeInfo.url || changeInfo.status === 'complete') {
+        void refreshHeader(activeTab);
+      }
     }
   };
 
@@ -52,14 +59,28 @@ onMount(() => {
 
   return () => {
     sectionLoadGeneration += 1;
+    headerGeneration += 1;
     chrome.tabs.onActivated.removeListener(handleActivated);
     chrome.tabs.onUpdated.removeListener(handleUpdated);
     chrome.storage.onChanged.removeListener(handleStorageChanged);
   };
 });
 
+async function refreshHeader(tab: ActiveBandcampTab) {
+  const generation = ++headerGeneration;
+  header = null;
+  try {
+    const nextHeader = await getActiveTabHeader(tab);
+    if (generation === headerGeneration) header = nextHeader;
+  } catch (error) {
+    console.warn('BCX: Failed to load page header:', error);
+  }
+}
+
 async function loadSidePanelSections() {
   const generation = ++sectionLoadGeneration;
+  const currentHeaderGeneration = ++headerGeneration;
+  header = null;
   isLoading = true;
   errorMessage = '';
 
@@ -73,9 +94,10 @@ async function loadSidePanelSections() {
       return;
     }
 
-    const sections = await createActiveTabSidePanelSections(tab);
+    const data = await createActiveTabSidePanelData(tab);
     if (generation !== sectionLoadGeneration) return;
-    sidePanelSections = sections;
+    sidePanelSections = data.sections;
+    if (currentHeaderGeneration === headerGeneration) header = data.header;
   } catch (error) {
     if (generation !== sectionLoadGeneration) return;
     errorMessage =
@@ -134,7 +156,7 @@ async function toggleBrowserSidePanel() {
 <svelte:document onkeydown={handleKeydown} />
 
 {#if sidePanelSections}
-  <BcxSidePanel sections={sidePanelSections} open={true} browserPanel={true} />
+  <BcxSidePanel {header} sections={sidePanelSections} open={true} browserPanel={true} />
   {#if sidePanelTourStateLoaded}
     {#key sidePanelTourVersion}
       <BcxTour

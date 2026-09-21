@@ -17,7 +17,10 @@ import { readBandMetadata } from '../domain/page/bandMetadata';
 import { PageAlbum } from '../domain/page/pageAlbum';
 import { PageMusic } from '../domain/page/pageMusic';
 import { PageTrack } from '../domain/page/pageTrack';
-import { getMusicAlbumSchema } from '../domain/page/schema';
+import {
+  getMusicAlbumSchema,
+  getMusicRecordingSchema,
+} from '../domain/page/schema';
 import { BandcampStorage } from '../domain/storage';
 import {
   isBandcampAlbumUrl,
@@ -102,6 +105,9 @@ chrome.runtime.onMessage.addListener(
             fanData: bandcampPageData.fanData,
             albumSchema: isBandcampAlbumUrl(currentPageUrl)
               ? getMusicAlbumSchema()
+              : null,
+            trackSchema: isBandcampTrackUrl(currentPageUrl)
+              ? getMusicRecordingSchema()
               : null,
             musicBand: isBandcampMusicUrl(currentPageUrl)
               ? createActiveMusicBandData()

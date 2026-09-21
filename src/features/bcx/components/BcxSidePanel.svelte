@@ -2,6 +2,7 @@
 import { X } from '@lucide/svelte';
 import { Tabs } from 'bits-ui';
 import iconUrl from 'src/assets/icons/icon-48.png';
+import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { TreeData } from 'src/features/treeview/TreeData';
 import {
@@ -20,6 +21,7 @@ import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 
 interface Props {
   sections: SidePanelSection[];
+  header?: SidePanelHeader | null;
   open?: boolean;
   browserPanel?: boolean;
   onToggle?: () => void;
@@ -28,11 +30,18 @@ interface Props {
 
 let {
   sections,
+  header = null,
   open = false,
   browserPanel = false,
   onToggle = () => {},
   onClose = () => {},
 }: Props = $props();
+let failedImageUrl = $state<string | undefined>();
+const headerImageUrl = $derived(
+  header?.imageUrl && header.imageUrl !== failedImageUrl
+    ? header.imageUrl
+    : iconUrl,
+);
 let sectionsContainer: HTMLDivElement;
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let sectionLoadingById: Record<string, boolean> = $state({});
@@ -198,9 +207,19 @@ $effect(() => {
       <!-- Header -->
       <div class="shrink-0 p-4">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <img src={iconUrl} alt="BCX" class="w-10 h-10" />
-            <h2 class="text-lg font-semibold">Music Explorer</h2>
+          <div class="flex min-w-0 items-center gap-2">
+            <img
+              src={headerImageUrl}
+              alt={headerImageUrl === iconUrl ? 'BCX' : ''}
+              class="w-10 h-10 shrink-0 rounded object-cover"
+              onerror={() => { failedImageUrl = header?.imageUrl; }}
+            />
+            <div class="min-w-0">
+              <h2 class="truncate text-lg font-semibold" title={header?.title ?? 'Music Explorer'}>{header?.title ?? 'Music Explorer'}</h2>
+              {#if header?.subtitle}
+                <p class="truncate text-sm text-gray-300" title={header.subtitle}>{header.subtitle}</p>
+              {/if}
+            </div>
           </div>
 
           {#if !browserPanel}
@@ -334,6 +353,7 @@ $effect(() => {
     color: #f9fafb;
     cursor: pointer;
     display: inline-flex;
+    flex-shrink: 0;
     height: 32px;
     justify-content: center;
     padding: 0;
