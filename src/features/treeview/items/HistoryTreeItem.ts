@@ -246,8 +246,8 @@ export class HistoryTreeItem {
     bandsAndAlbums.forEach((entity) => {
       const treeItem =
         entity instanceof Band
-          ? BandTreeItemFactory.create(entity)
-          : AlbumTreeItemFactory.create(entity);
+          ? BandTreeItemFactory.createWithPreview(entity)
+          : AlbumTreeItemFactory.createWithPreview(entity);
 
       uuidTreeItemsMap.set(entity.url.uuid!, treeItem);
     });

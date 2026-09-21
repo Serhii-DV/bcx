@@ -2,7 +2,8 @@ import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 
 export interface BandPreview {
-  id: number;
+  id?: number;
+  following?: boolean;
   name: string;
   url: string;
   image?: string;
@@ -18,6 +19,7 @@ export interface BandPreview {
 export async function loadBandPreview(
   fallback: BandPreview,
 ): Promise<BandPreview> {
+  if (fallback.id === undefined) return fallback;
   const [band] = await BandcampStorage.getBands([fallback.id]);
   if (!band) return fallback;
   const metadata = band.metadata;

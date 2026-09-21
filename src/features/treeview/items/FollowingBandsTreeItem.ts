@@ -34,17 +34,10 @@ export class FollowingBandsTreeItem {
       item.image_id as number,
     );
 
-    return {
-      ...BandTreeItemFactory.create(band),
-      bandPreview: {
-        id: band.id,
-        name: band.name,
-        url: band.url.toString(),
-        image: band.artwork.id > 0 ? band.artwork.mediumSizeUrl : undefined,
-        location: item.location ?? undefined,
-        cached: false,
-      },
-    };
+    return BandTreeItemFactory.createWithPreview(band, {
+      following: true,
+      location: item.location ?? undefined,
+    });
   }
 }
 

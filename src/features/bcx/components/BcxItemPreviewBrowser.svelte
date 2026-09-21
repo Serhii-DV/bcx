@@ -5,7 +5,7 @@ import {
 } from 'src/features/treeview/BandPreview';
 import type { ReleasePreview } from 'src/features/treeview/ReleasePreview';
 import type { TreeData } from 'src/features/treeview/TreeData';
-import type { TreeItem } from 'src/features/treeview/TreeItem';
+import { hasItemPreview, type TreeItem } from 'src/features/treeview/TreeItem';
 import { onMount } from 'svelte';
 import {
   DEFAULT_ITEM_PREVIEW_SIZE,
@@ -52,7 +52,7 @@ let information = $derived.by(
 );
 
 function selectItem(item: TreeItem | null) {
-  selectedItem = item?.loadPreview || item?.bandPreview ? item : null;
+  selectedItem = hasItemPreview(item) ? item : null;
 }
 
 onMount(() => {

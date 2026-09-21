@@ -114,3 +114,10 @@ than callbacks or copies of full cached catalogs. Snapshot version 11 invalidate
 older trees without these identities. Cache keys, TTLs, and invalidation remain
 unchanged. The shared `itemPreviewSize` store retains the original persistent key
 so existing divider positions carry over across release and band tabs.
+
+History uses the same item preview browser for saved bands and releases, including
+entries appended by Show more. Pages without saved metadata expose basic preview
+information from their history title and URL. History is constructed directly,
+so its preview loaders and pagination actions do not pass through TreeItemCache.
+The Following badge is explicit in band preview data; version 12 refreshes older
+Following Bands snapshots to include it without labeling visited bands as followed.

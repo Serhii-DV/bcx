@@ -54,3 +54,7 @@ export interface TreeItem {
   loadPreview?: () => Promise<ReleasePreview>;
   actionIcon?: string; // action icon name
 }
+
+export function hasItemPreview(item?: TreeItem | null): boolean {
+  return !!(item?.loadPreview || item?.previewInformation || item?.bandPreview);
+}

@@ -46,7 +46,7 @@ async function copyLink() {
 <div class="band-details">
   <header>
     {#if information.image}<img src={information.image} alt={`${information.name} profile`} onerror={(event) => event.currentTarget.setAttribute('hidden', '')} />{/if}
-    <div><h3>{information.name}</h3>{#if information.location}<p>{information.location}</p>{/if}<span class="badge">Following</span></div>
+    <div><h3>{information.name}</h3>{#if information.location}<p>{information.location}</p>{/if}{#if information.following}<span class="badge">Following</span>{/if}</div>
   </header>
   <nav aria-label="Band actions">
     <a href={information.url} onclick={openLink}>Open on Bandcamp</a>

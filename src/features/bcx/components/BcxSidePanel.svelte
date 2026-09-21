@@ -4,6 +4,7 @@ import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { TreeData } from 'src/features/treeview/TreeData';
 import {
+  hasItemPreview,
   TREE_ITEM_LAYOUT,
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
@@ -230,7 +231,7 @@ $effect(() => {
                         {#if sectionErrorById[section.id]}
                           <p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>
                         {:else}
-                          {#if getTreeDataForSection(section).items.some((item) => item.bandPreview)}
+                          {#if getTreeDataForSection(section).items.some(hasItemPreview)}
                             <BcxItemPreviewBrowser treeData={getTreeDataForSection(section)} filterQuery={sectionFilterQueryById[section.id] ?? ''} showFilter={false} isLoading={isSectionLoading(section)} />
                           {:else}
                           <BcxTreeBrowser

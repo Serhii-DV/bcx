@@ -1,3 +1,8 @@
+import {
+  isBandcampAlbumUrl,
+  isBandcampMusicUrl,
+  isBandcampTrackUrl,
+} from 'src/bandcamp/domain/url/helper';
 import { Url } from 'src/core/url';
 import { TreeItemButtonFactory } from '../buttons/factory';
 import type { TreeItem } from '../TreeItem';
@@ -5,10 +10,32 @@ import type { TreeItemButton } from '../TreeItemButton';
 
 export class HistoryEntryTreeItemFactory {
   static create(item: chrome.history.HistoryItem): TreeItem {
-    const href = Url.fromHistoryItem(item)?.toString();
+    const url = Url.fromHistoryItem(item);
+    const href = url?.toString();
+    const title = item.title || item.url || 'No Title';
 
     return {
-      label: item.title || item.url || 'No Title',
+      label: title,
+      ...(url && isBandcampMusicUrl(url)
+        ? {
+            bandPreview: { name: title, url: url.toString(), cached: false },
+          }
+        : {}),
+      ...(url && (isBandcampAlbumUrl(url) || isBandcampTrackUrl(url))
+        ? {
+            previewInformation: {
+              title,
+              artist: url.subdomain,
+              artistUrl: `https://${url.hostname}/`,
+              releaseType: isBandcampTrackUrl(url) ? 'Track' : 'Album',
+              collectionStatus: [],
+              tags: [],
+              tracks: [],
+              description:
+                'No saved release details yet. Open the Bandcamp page to explore this release.',
+            },
+          }
+        : {}),
       href,
       buttons: this.createExternalLinkButtons(href),
       includeInFilterSuggestions: false,
