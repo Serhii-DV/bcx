@@ -14,31 +14,56 @@ export class HistoryEntryTreeItemFactory {
     const href = url?.toString();
     const title = item.title || item.url || 'No Title';
 
+    return this.withVisitTime(
+      {
+        label: title,
+        ...(url && isBandcampMusicUrl(url)
+          ? {
+              bandPreview: { name: title, url: url.toString(), cached: false },
+            }
+          : {}),
+        ...(url && (isBandcampAlbumUrl(url) || isBandcampTrackUrl(url))
+          ? {
+              previewInformation: {
+                title,
+                artist: url.subdomain,
+                artistUrl: `https://${url.hostname}/`,
+                releaseType: isBandcampTrackUrl(url) ? 'Track' : 'Album',
+                collectionStatus: [],
+                tags: [],
+                tracks: [],
+                description:
+                  'No saved release details yet. Open the Bandcamp page to explore this release.',
+              },
+            }
+          : {}),
+        href,
+        buttons: this.createExternalLinkButtons(href),
+        includeInFilterSuggestions: false,
+      },
+      item,
+    );
+  }
+
+  static withVisitTime(
+    treeItem: TreeItem,
+    historyItem: chrome.history.HistoryItem,
+  ): TreeItem {
+    if (
+      typeof historyItem.lastVisitTime !== 'number' ||
+      !Number.isFinite(historyItem.lastVisitTime)
+    ) {
+      return treeItem;
+    }
+
+    const visitDate = new Date(historyItem.lastVisitTime);
+    if (Number.isNaN(visitDate.getTime())) {
+      return treeItem;
+    }
+
     return {
-      label: title,
-      ...(url && isBandcampMusicUrl(url)
-        ? {
-            bandPreview: { name: title, url: url.toString(), cached: false },
-          }
-        : {}),
-      ...(url && (isBandcampAlbumUrl(url) || isBandcampTrackUrl(url))
-        ? {
-            previewInformation: {
-              title,
-              artist: url.subdomain,
-              artistUrl: `https://${url.hostname}/`,
-              releaseType: isBandcampTrackUrl(url) ? 'Track' : 'Album',
-              collectionStatus: [],
-              tags: [],
-              tracks: [],
-              description:
-                'No saved release details yet. Open the Bandcamp page to explore this release.',
-            },
-          }
-        : {}),
-      href,
-      buttons: this.createExternalLinkButtons(href),
-      includeInFilterSuggestions: false,
+      ...treeItem,
+      visitedAt: visitDate.toISOString(),
     };
   }
 

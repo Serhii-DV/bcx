@@ -1,4 +1,5 @@
 <script lang="ts">
+import '@github/relative-time-element';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';
@@ -85,7 +86,19 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 {/snippet}
 
 {@render treeItemImage(item)}
-<span class="item-label">{item.label}</span>
+<span class="item-label-content">
+  <span class="item-label">{item.label}</span>
+  {#if item.visitedAt}
+    <span class="item-visited-time text-gray-400">
+      Visited
+      <relative-time
+        datetime={item.visitedAt}
+        format="relative"
+        precision="minute"
+      >{new Date(item.visitedAt).toLocaleString()}</relative-time>
+    </span>
+  {/if}
+</span>
 {#if showActions}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
   {@render treeItemButtons(item)}
@@ -117,18 +130,28 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   object-fit: cover;
 }
 
-.item-label,
 .item-count {
   display: inline-flex;
   padding-block: 0.25rem;
   vertical-align: middle;
 }
 
-.item-label {
+.item-label-content {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
   min-width: 0;
+  padding-block: 0.25rem;
+}
+
+.item-label {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.item-visited-time {
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 .item-count {

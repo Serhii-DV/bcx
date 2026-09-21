@@ -47,9 +47,11 @@ export class HistoryTreeItem {
       const children: TreeItem[] = [];
 
       pages.forEach(({ item, uuid }) => {
-        const historyItem =
-          uuidTreeItemsMap.get(uuid) ||
-          HistoryEntryTreeItemFactory.create(item);
+        const historyItem = HistoryTreeItem.createHistoryTreeItem(
+          uuidTreeItemsMap,
+          uuid,
+          item,
+        );
         const dateItem = DateTreeItemFactory.create(
           new Date(item.lastVisitTime as number),
         );
@@ -172,9 +174,8 @@ export class HistoryTreeItem {
     const pageBatch = pages.slice(offset, nextOffset);
     const uuidTreeItemsMap =
       knownItems ?? (await HistoryTreeItem.createUuidTreeItemsMap(pageBatch));
-    const children = pageBatch.map(
-      ({ item, uuid }) =>
-        uuidTreeItemsMap.get(uuid) || HistoryEntryTreeItemFactory.create(item),
+    const children = pageBatch.map(({ item, uuid }) =>
+      HistoryTreeItem.createHistoryTreeItem(uuidTreeItemsMap, uuid, item),
     );
 
     if (nextOffset < pages.length) {
@@ -252,6 +253,18 @@ export class HistoryTreeItem {
     };
 
     return loadMoreTreeItem;
+  }
+
+  private static createHistoryTreeItem(
+    treeItems: Map<string, TreeItem>,
+    uuid: string,
+    historyItem: chrome.history.HistoryItem,
+  ): TreeItem {
+    const storedTreeItem = treeItems.get(uuid);
+
+    return storedTreeItem
+      ? HistoryEntryTreeItemFactory.withVisitTime(storedTreeItem, historyItem)
+      : HistoryEntryTreeItemFactory.create(historyItem);
   }
 
   private static async getUniqueVisitedBandcampPages(): Promise<

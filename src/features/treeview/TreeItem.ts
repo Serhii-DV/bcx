@@ -54,6 +54,7 @@ export interface TreeItem {
   initialSelectedHref?: string;
   loadPreview?: () => Promise<ReleasePreview>;
   actionIcon?: string; // action icon name
+  visitedAt?: string;
 }
 
 export function hasItemPreview(item?: TreeItem | null): boolean {
