@@ -199,7 +199,7 @@ $effect(() => {
       <div class="shrink-0 p-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <img src={iconUrl} alt="BCX" class="w-12 h-12" />
+            <img src={iconUrl} alt="BCX" class="w-10 h-10" />
             <h2 class="text-lg font-semibold">Music Explorer</h2>
           </div>
 
