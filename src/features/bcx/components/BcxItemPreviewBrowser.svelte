@@ -25,12 +25,14 @@ const KEYBOARD_RESIZE_STEP = 5;
 let {
   treeData,
   rootPath,
+  initialSelectedHref,
   filterQuery,
   showFilter = true,
   isLoading = false,
 }: {
   treeData: TreeData;
   rootPath?: string;
+  initialSelectedHref?: string;
   filterQuery?: string;
   showFilter?: boolean;
   isLoading?: boolean;
@@ -171,7 +173,7 @@ $effect(() => {
   style:grid-template-rows={`${100 - $itemPreviewSize}fr auto ${$itemPreviewSize}fr`}
 >
   <div id={itemListId} class="item-list">
-    <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={!!rootPath} {filterQuery} {showFilter} {isLoading} showBreadcrumb={false} initialSelectedHref={treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} nativeTabNavigation={true} />
+    <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={!!rootPath} {filterQuery} {showFilter} {isLoading} showBreadcrumb={false} initialSelectedHref={initialSelectedHref ?? treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} nativeTabNavigation={true} />
   </div>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (ARIA separator is keyboard interactive) -->
   <div

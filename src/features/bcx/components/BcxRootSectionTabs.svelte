@@ -6,7 +6,15 @@ import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import { createRootSectionTabs } from './rootSectionTabs';
 
-let { treeData, label }: { treeData: TreeData; label: string } = $props();
+let {
+  treeData,
+  label,
+  initialSelectedHref,
+}: {
+  treeData: TreeData;
+  label: string;
+  initialSelectedHref?: string;
+} = $props();
 const tabs = $derived(createRootSectionTabs(treeData.items));
 let selectedRoot = $state('');
 let visitedRoots: Record<string, boolean> = $state({});
@@ -32,7 +40,7 @@ function usesItemPreview(path: string): boolean {
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
             {#if usesItemPreview(tab.id)}
-              <BcxItemPreviewBrowser {treeData} rootPath={tab.id} />
+              <BcxItemPreviewBrowser {treeData} rootPath={tab.id} {initialSelectedHref} />
             {:else}
             {@const profile = treeData.items.find((item) => item.path === tab.id)?.aboutProfile}
             {#if profile}
@@ -49,6 +57,7 @@ function usesItemPreview(path: string): boolean {
               lockInitialRoot={true}
               showBreadcrumb={false}
               showFilter={!profile}
+              {initialSelectedHref}
             />
             {/if}
           </div>

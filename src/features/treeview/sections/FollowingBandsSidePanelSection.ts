@@ -9,13 +9,16 @@ export class FollowingBandsSidePanelSection {
   static create(
     pageDataContext: PageDataContext | null,
     userKeyPart: string,
+    initialSelectedHref?: string,
   ): SidePanelSection | null {
     return createFanDataSubtreeSection(pageDataContext, userKeyPart, {
       cacheKey: 'following-bands',
       icon: ICON_HEADPHONES,
       id: `following-bands-${userKeyPart}`,
       itemCountPath: 'following_bands_data',
+      initialSelectedHref,
       label: 'Following Bands',
+      rootNavigation: 'tabs',
       ttl: SIDE_PANEL_SECTION_CACHE_TTL.FOLLOWING_BANDS,
       createTreeItem: (username) => FollowingBandsTreeItem.create(username),
     });

@@ -48,7 +48,7 @@ describe('History pagination', () => {
     expect(tree.children?.map((item) => item.href)).toEqual(
       entries.map((item) => item.url),
     );
-    expect(tree.children?.map((item) => item.visitedAt)).toEqual(
+    expect(tree.children?.map((item) => item.timestamp?.dateTime)).toEqual(
       entries.map((item) => new Date(item.lastVisitTime).toISOString()),
     );
     expect(tree.children?.every(hasItemPreview)).toBe(true);
