@@ -59,11 +59,25 @@ export class FollowingBandsTreeItem {
       item.image_id as number,
     );
 
-    return BandTreeItemFactory.createWithPreview(band, {
+    const treeItem = BandTreeItemFactory.createWithPreview(band, {
       following: true,
       location: item.location ?? undefined,
     });
+    const followedAt = toIsoDate(item.date_followed);
+
+    return followedAt
+      ? {
+          ...treeItem,
+          timestamp: { label: 'Followed', dateTime: followedAt },
+        }
+      : treeItem;
   }
+}
+
+function toIsoDate(value: string): string | null {
+  if (!value.trim()) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
 function createOrderRoot(label: string, items: TreeItem[]): TreeItem {

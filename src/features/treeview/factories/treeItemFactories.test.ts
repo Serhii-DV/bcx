@@ -68,7 +68,10 @@ describe('tree item factories', () => {
       label: 'Album',
       href: 'https://air.bandcamp.com/album/moon-safari',
       includeInFilterSuggestions: false,
-      visitedAt: '2024-02-03T12:34:56.000Z',
+      timestamp: {
+        label: 'Visited',
+        dateTime: '2024-02-03T12:34:56.000Z',
+      },
       buttons: [
         {
           title: 'Open\nhttps://air.bandcamp.com/album/moon-safari',

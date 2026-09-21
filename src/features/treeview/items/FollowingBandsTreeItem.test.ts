@@ -26,7 +26,7 @@ describe('Following Bands', () => {
         is_following: true,
         is_subscribed: false,
         location: null,
-        date_followed: '',
+        date_followed: index === 0 ? '2024-01-02T03:04:05Z' : '',
         token: `token-${index}`,
       }),
     );
@@ -59,6 +59,11 @@ describe('Following Bands', () => {
         url: 'https://artist0.bandcamp.com/',
         cached: false,
       });
+      expect(latest?.children?.[0].timestamp).toEqual({
+        label: 'Followed',
+        dateTime: '2024-01-02T03:04:05.000Z',
+      });
+      expect(latest?.children?.[1].timestamp).toBeUndefined();
       expect(latest?.children?.map((item) => item.label)).toEqual(
         bands.map((band) => band.name),
       );

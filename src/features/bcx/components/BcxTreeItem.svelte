@@ -88,14 +88,14 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 {@render treeItemImage(item)}
 <span class="item-label-content">
   <span class="item-label">{item.label}</span>
-  {#if item.visitedAt}
-    <span class="item-visited-time text-gray-400">
-      Visited
+  {#if item.timestamp}
+    <span class="item-timestamp text-gray-400">
+      {item.timestamp.label}
       <relative-time
-        datetime={item.visitedAt}
+        datetime={item.timestamp.dateTime}
         format="relative"
         precision="minute"
-      >{new Date(item.visitedAt).toLocaleString()}</relative-time>
+      >{new Date(item.timestamp.dateTime).toLocaleString()}</relative-time>
     </span>
   {/if}
 </span>
@@ -149,7 +149,7 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   word-break: break-word;
 }
 
-.item-visited-time {
+.item-timestamp {
   font-size: 0.75rem;
   line-height: 1rem;
 }

@@ -63,7 +63,10 @@ export class HistoryEntryTreeItemFactory {
 
     return {
       ...treeItem,
-      visitedAt: visitDate.toISOString(),
+      timestamp: {
+        label: 'Visited',
+        dateTime: visitDate.toISOString(),
+      },
     };
   }
 
