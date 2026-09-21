@@ -1,3 +1,4 @@
+import type { BandPreview } from './BandPreview';
 import type { ReleaseCatalog } from './items/releaseCatalog';
 import type { ReleaseInformation, ReleasePreview } from './ReleasePreview';
 import type { TreeItemButton } from './TreeItemButton';
@@ -46,6 +47,7 @@ export interface TreeItem {
   loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
   releaseCatalog?: ReleaseCatalog;
   releasePreview?: boolean;
+  bandPreview?: BandPreview;
   previewImage?: string;
   previewInformation?: ReleaseInformation;
   initialSelectedHref?: string;

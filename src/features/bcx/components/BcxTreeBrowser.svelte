@@ -168,10 +168,10 @@ $effect(() => {
   if (onSelect) {
     const selected =
       browserItems.find((item) => item.path === focusedPath) ??
-      browserItems.find((item) => item.loadPreview) ??
+      browserItems.find((item) => item.loadPreview || item.bandPreview) ??
       null;
     onSelect(selected);
-    if (selected?.loadPreview && !focusedPath)
+    if ((selected?.loadPreview || selected?.bandPreview) && !focusedPath)
       focusedPath = selected.path ?? null;
   }
 });
@@ -331,7 +331,7 @@ async function handleKeyDown(event: KeyboardEvent) {
           break;
         }
 
-        if (currentItem.loadPreview) break;
+        if (currentItem.loadPreview || currentItem.bandPreview) break;
 
         if (isTreeLayout && !isDrillUpItem(currentItem)) {
           if (!isNode(currentItem)) {
@@ -713,7 +713,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 
 {#snippet browserTreeItem(item: TreeItem)}
   {@const hasChildren = isNode(item)}
-  {#if item.loadPreview}
+  {#if item.loadPreview || item.bandPreview}
     <div
       role="button"
       class="tree-item bcx-browser-row"

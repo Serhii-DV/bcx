@@ -11,6 +11,7 @@ import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
 import { ICON_INFO } from 'src/features/treeview/utils/icon';
 import { untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
+import BcxItemPreviewBrowser from './BcxItemPreviewBrowser.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxSidePanelHeader from './BcxSidePanelHeader.svelte';
@@ -229,6 +230,9 @@ $effect(() => {
                         {#if sectionErrorById[section.id]}
                           <p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>
                         {:else}
+                          {#if getTreeDataForSection(section).items.some((item) => item.bandPreview)}
+                            <BcxItemPreviewBrowser treeData={getTreeDataForSection(section)} filterQuery={sectionFilterQueryById[section.id] ?? ''} showFilter={false} isLoading={isSectionLoading(section)} />
+                          {:else}
                           <BcxTreeBrowser
                             treeData={getTreeDataForSection(section)}
                             isLoading={isSectionLoading(section)}
@@ -237,6 +241,7 @@ $effect(() => {
                             showBreadcrumb={false}
                             showFilter={false}
                           />
+                          {/if}
                         {/if}
                       </div>
                     {/if}

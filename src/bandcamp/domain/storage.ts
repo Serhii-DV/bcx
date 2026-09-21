@@ -53,8 +53,12 @@ export class BandcampStorage {
     // Collect release keys from loaded band data
     const releaseKeys: string[] = [];
     for (const key in bandsStorableData) {
-      if (typeof bandsStorableData[key] !== 'object') {
+      if (
+        !bandsStorableData[key] ||
+        typeof bandsStorableData[key] !== 'object'
+      ) {
         delete bandsStorableData[key];
+        continue;
       }
 
       const band = bandDataCompressor.decompress(bandsStorableData[key]);
