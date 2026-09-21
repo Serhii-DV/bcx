@@ -11,15 +11,20 @@ export interface SidePanelHeader {
   title: string;
   subtitle?: string;
   imageUrl?: string;
+  band?: { name: string; href: string; imageUrl?: string };
 }
 
 export function createSidePanelHeader(
   url: Url,
   page: BandPage | null,
-  track?: Pick<
-    MusicRecordingSchema,
-    'mainEntityOfPage' | 'name' | 'byArtist' | 'image'
-  > | null,
+  track?:
+    | (Pick<
+        MusicRecordingSchema,
+        'mainEntityOfPage' | 'name' | 'byArtist' | 'image'
+      > & {
+        publisher?: Pick<MusicRecordingSchema['publisher'], 'name' | 'image'>;
+      })
+    | null,
 ): SidePanelHeader | null {
   if (
     isBandcampTrackUrl(url) &&
@@ -29,6 +34,13 @@ export function createSidePanelHeader(
       title: track.name,
       subtitle: track.byArtist.name,
       imageUrl: track.image || undefined,
+      band: track.publisher
+        ? {
+            name: track.publisher.name,
+            href: url.withoutPathAndSearchAndHash.toString(),
+            imageUrl: track.publisher.image || undefined,
+          }
+        : undefined,
     };
   }
   const album = page?.album;
@@ -41,6 +53,16 @@ export function createSidePanelHeader(
       title: album.title,
       subtitle: album.artist.toString(),
       imageUrl: album.artwork.id > 0 ? album.artwork.smallSizeUrl : undefined,
+      band: page?.band
+        ? {
+            name: page.band.name,
+            href: url.withoutPathAndSearchAndHash.toString(),
+            imageUrl:
+              page.band.artwork.id > 0
+                ? page.band.artwork.smallSizeUrl
+                : undefined,
+          }
+        : undefined,
     };
   }
   const band = page?.band;

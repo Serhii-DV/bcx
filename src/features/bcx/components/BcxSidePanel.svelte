@@ -1,7 +1,5 @@
 <script lang="ts">
-import { X } from '@lucide/svelte';
 import { Tabs } from 'bits-ui';
-import iconUrl from 'src/assets/icons/icon-48.png';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { TreeData } from 'src/features/treeview/TreeData';
@@ -15,6 +13,7 @@ import { untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
+import BcxSidePanelHeader from './BcxSidePanelHeader.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
@@ -36,12 +35,6 @@ let {
   onToggle = () => {},
   onClose = () => {},
 }: Props = $props();
-let failedImageUrl = $state<string | undefined>();
-const headerImageUrl = $derived(
-  header?.imageUrl && header.imageUrl !== failedImageUrl
-    ? header.imageUrl
-    : iconUrl,
-);
 let sectionsContainer: HTMLDivElement;
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let sectionLoadingById: Record<string, boolean> = $state({});
@@ -52,10 +45,6 @@ let selectedSectionId = $state('');
 let sectionFilterQueryById: Record<string, string> = $state({});
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
-
-function handleClose() {
-  onClose();
-}
 
 function getTreeDataForSection(section: SidePanelSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
@@ -204,37 +193,7 @@ $effect(() => {
 >
   <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white transition-opacity duration-400">
     <div class="flex h-full flex-col">
-      <!-- Header -->
-      <div class="shrink-0 p-4">
-        <div class="flex items-center justify-between">
-          <div class="flex min-w-0 items-center gap-2">
-            <img
-              src={headerImageUrl}
-              alt={headerImageUrl === iconUrl ? 'BCX' : ''}
-              class="w-10 h-10 shrink-0 rounded object-cover"
-              onerror={() => { failedImageUrl = header?.imageUrl; }}
-            />
-            <div class="min-w-0">
-              <h2 class="truncate text-lg font-semibold" title={header?.title ?? 'Music Explorer'}>{header?.title ?? 'Music Explorer'}</h2>
-              {#if header?.subtitle}
-                <p class="truncate text-sm text-gray-300" title={header.subtitle}>{header.subtitle}</p>
-              {/if}
-            </div>
-          </div>
-
-          {#if !browserPanel}
-            <button
-              type="button"
-              class="bcx-side-panel-close-button"
-              aria-label="Close BCX side panel"
-              title="Close side panel"
-              onclick={handleClose}
-            >
-              <X size="20" />
-            </button>
-          {/if}
-        </div>
-      </div>
+      <BcxSidePanelHeader {header} showCloseButton={!browserPanel} {onClose} />
 
       <!-- Content -->
       <div class="bcx-panel-body">
@@ -345,31 +304,6 @@ $effect(() => {
     width: 100vw;
   }
 
-  :global(.bcx-side-panel-close-button) {
-    align-items: center;
-    background: transparent;
-    border: 0;
-    border-radius: 6px;
-    color: #f9fafb;
-    cursor: pointer;
-    display: inline-flex;
-    flex-shrink: 0;
-    height: 32px;
-    justify-content: center;
-    padding: 0;
-    transition:
-      background-color 160ms ease,
-      color 160ms ease;
-    width: 32px;
-  }
-
-  :global(.bcx-side-panel-close-button:hover),
-  :global(.bcx-side-panel-close-button:focus-visible) {
-    background: rgb(255 255 255 / 12%);
-    color: #04b1fe;
-    outline: none;
-  }
-
   :global(.bcx-side-panel-shell .bcx-panel-body),
   :global(.bcx-side-panel-shell .bcx-sections),
   :global(.bcx-side-panel-shell .bcx-tab-content:not([hidden])),
@@ -428,10 +362,6 @@ $effect(() => {
 
   @media (prefers-reduced-motion: reduce) {
     :global(.bcx-side-panel-shell) {
-      transition: none;
-    }
-
-    :global(.bcx-side-panel-close-button) {
       transition: none;
     }
   }

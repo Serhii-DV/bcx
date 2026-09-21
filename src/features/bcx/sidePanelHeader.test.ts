@@ -31,6 +31,11 @@ describe('side panel header', () => {
       title: 'Release',
       subtitle: 'Artist',
       imageUrl: album.artwork.smallSizeUrl,
+      band: {
+        name: band.name,
+        href: band.url.toString(),
+        imageUrl: band.artwork.smallSizeUrl,
+      },
     });
   });
 
@@ -71,11 +76,20 @@ describe('side panel header', () => {
       name: 'Single',
       byArtist: { '@type': 'MusicGroup', name: 'Artist' },
       image: 'https://f4.bcbits.com/img/a123_7.jpg',
+      publisher: {
+        name: 'Track Label',
+        image: 'https://f4.bcbits.com/img/789_7.jpg',
+      },
     };
     expect(createSidePanelHeader(url, null, track)).toEqual({
       title: 'Single',
       subtitle: 'Artist',
       imageUrl: track.image,
+      band: {
+        name: track.publisher.name,
+        href: band.url.toString(),
+        imageUrl: track.publisher.image,
+      },
     });
     expect(
       createSidePanelHeader(
@@ -84,6 +98,23 @@ describe('side panel header', () => {
         track,
       ),
     ).toBeNull();
+  });
+
+  it('keeps the band link when its profile image is missing', () => {
+    const bandWithoutImage = Band.create(
+      1,
+      'Example Label',
+      band.url.toString(),
+      0,
+    );
+    expect(
+      createSidePanelHeader(album.url, { ...page, band: bandWithoutImage })
+        ?.band,
+    ).toEqual({
+      name: band.name,
+      href: band.url.toString(),
+      imageUrl: undefined,
+    });
   });
 
   it('keeps the title when artwork is missing', () => {
