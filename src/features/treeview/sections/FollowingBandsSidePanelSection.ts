@@ -18,6 +18,7 @@ export class FollowingBandsSidePanelSection {
       itemCountPath: 'following_bands_data',
       initialSelectedHref,
       label: 'Following Bands',
+      rootNavigation: 'tabs',
       ttl: SIDE_PANEL_SECTION_CACHE_TTL.FOLLOWING_BANDS,
       createTreeItem: (username) => FollowingBandsTreeItem.create(username),
     });

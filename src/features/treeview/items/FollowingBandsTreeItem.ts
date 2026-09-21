@@ -12,7 +12,7 @@ const FOLLOWING_BANDS_KEY = '/following-bands';
 
 export class FollowingBandsTreeItem {
   static async create(username: string): Promise<TreeItem> {
-    return createStoredFanListTreeItem<FollowingBandItem>({
+    const item = await createStoredFanListTreeItem<FollowingBandItem>({
       label: 'Following Bands',
       openButtonLabel: 'Open Following Bands',
       openUrl: BandcampUrlFactory.generateFollowingBandsUrl(username),
@@ -22,6 +22,31 @@ export class FollowingBandsTreeItem {
       loadItems: loadFollowingBands,
       createTreeItem: (item) => this.createFollowingBandTreeItem(item),
     });
+    const latestItems = item.children ?? [];
+    const collator = new Intl.Collator(undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    });
+
+    return {
+      ...item,
+      children: [
+        createOrderRoot('Latest added', latestItems),
+        createOrderRoot(
+          'A–Z',
+          [...latestItems].sort((a, b) =>
+            collator.compare(a.label ?? '', b.label ?? ''),
+          ),
+        ),
+        createOrderRoot(
+          'Z–A',
+          [...latestItems].sort((a, b) =>
+            collator.compare(b.label ?? '', a.label ?? ''),
+          ),
+        ),
+      ],
+      childrenCount: 3,
+    };
   }
 
   private static createFollowingBandTreeItem(
@@ -39,6 +64,15 @@ export class FollowingBandsTreeItem {
       location: item.location ?? undefined,
     });
   }
+}
+
+function createOrderRoot(label: string, items: TreeItem[]): TreeItem {
+  return {
+    label,
+    children: items.map((item) => ({ ...item })),
+    childrenCount: items.length,
+    itemPreview: true,
+  };
 }
 
 async function loadFollowingBands(): Promise<FollowingBandItem[]> {

@@ -43,20 +43,43 @@ describe('Following Bands', () => {
     );
     const restored = await TreeItemCache.get(key);
     for (const tree of [original, restored]) {
-      expect(tree?.childrenCount).toBe(45);
-      expect(tree?.children?.[0].bandPreview).toMatchObject({
+      expect(tree?.childrenCount).toBe(3);
+      expect(tree?.children?.map((item) => item.label)).toEqual([
+        'Latest added',
+        'A–Z',
+        'Z–A',
+      ]);
+      const latest = tree?.children?.[0];
+      const ascending = tree?.children?.[1];
+      const descending = tree?.children?.[2];
+      expect(latest?.childrenCount).toBe(45);
+      expect(latest?.children?.[0].bandPreview).toMatchObject({
         id: 1,
         name: 'Artist 0',
         url: 'https://artist0.bandcamp.com/',
         cached: false,
       });
-      expect(tree?.children?.map((item) => item.label)).toEqual(
+      expect(latest?.children?.map((item) => item.label)).toEqual(
         bands.map((band) => band.name),
       );
-      expect(tree?.children?.map((item) => item.href)).toEqual(
+      expect(latest?.children?.map((item) => item.href)).toEqual(
         bands.map(
           (band) => `https://${band.url_hints.subdomain}.bandcamp.com/`,
         ),
+      );
+      expect(ascending?.children?.map((item) => item.label)).toEqual(
+        [...bands]
+          .sort((a, b) =>
+            a.name.localeCompare(b.name, undefined, { numeric: true }),
+          )
+          .map((band) => band.name),
+      );
+      expect(descending?.children?.map((item) => item.label)).toEqual(
+        [...bands]
+          .sort((a, b) =>
+            b.name.localeCompare(a.name, undefined, { numeric: true }),
+          )
+          .map((band) => band.name),
       );
       expect(
         tree?.buttons?.some(
@@ -64,7 +87,7 @@ describe('Following Bands', () => {
         ),
       ).toBe(true);
     }
-    const preview = restored?.children?.[0].bandPreview;
+    const preview = restored?.children?.[0].children?.[0].bandPreview;
     if (!preview)
       throw new Error('Missing band preview after cache restoration');
     expect(await loadBandPreview(preview)).toEqual(preview);
@@ -99,7 +122,12 @@ describe('Following Bands', () => {
 
   it('handles an empty stored list', async () => {
     const tree = await FollowingBandsTreeItem.create('listener');
-    expect(tree.children).toEqual([]);
-    expect(tree.childrenCount).toBe(0);
+    expect(tree.children?.map((item) => item.label)).toEqual([
+      'Latest added',
+      'A–Z',
+      'Z–A',
+    ]);
+    expect(tree.children?.every((item) => item.childrenCount === 0)).toBe(true);
+    expect(tree.childrenCount).toBe(3);
   });
 });
