@@ -1,5 +1,4 @@
 <script lang="ts">
-import '@github/relative-time-element';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';

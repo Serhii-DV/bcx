@@ -1,3 +1,4 @@
+import '@github/relative-time-element';
 import { mount } from 'svelte';
 import 'src/utils/console';
 import App from './app.svelte';
