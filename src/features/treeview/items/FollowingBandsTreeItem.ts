@@ -5,7 +5,8 @@ import {
 } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
-import type { TreeItem } from '../TreeItem';
+import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
+import { ICON_CALENDAR, ICON_CALENDAR_DAYS } from '../utils/icon';
 import { createStoredFanListTreeItem } from './createStoredFanListTreeItem';
 
 const FOLLOWING_BANDS_KEY = '/following-bands';
@@ -28,24 +29,28 @@ export class FollowingBandsTreeItem {
       sensitivity: 'base',
     });
 
+    const roots = [
+      createOrderRoot('Latest added', latestItems),
+      createOrderRoot(
+        'A–Z',
+        [...latestItems].sort((a, b) =>
+          collator.compare(a.label ?? '', b.label ?? ''),
+        ),
+      ),
+      createOrderRoot(
+        'Z–A',
+        [...latestItems].sort((a, b) =>
+          collator.compare(b.label ?? '', a.label ?? ''),
+        ),
+      ),
+    ];
+    const yearsRoot = createYearsRoot(latestItems);
+    if (yearsRoot) roots.push(yearsRoot);
+
     return {
       ...item,
-      children: [
-        createOrderRoot('Latest added', latestItems),
-        createOrderRoot(
-          'A–Z',
-          [...latestItems].sort((a, b) =>
-            collator.compare(a.label ?? '', b.label ?? ''),
-          ),
-        ),
-        createOrderRoot(
-          'Z–A',
-          [...latestItems].sort((a, b) =>
-            collator.compare(b.label ?? '', a.label ?? ''),
-          ),
-        ),
-      ],
-      childrenCount: 3,
+      children: roots,
+      childrenCount: roots.length,
     };
   }
 
@@ -86,6 +91,36 @@ function createOrderRoot(label: string, items: TreeItem[]): TreeItem {
     children: items.map((item) => ({ ...item })),
     childrenCount: items.length,
     itemPreview: true,
+  };
+}
+
+function createYearsRoot(items: TreeItem[]): TreeItem | null {
+  const itemsByYear = new Map<number, TreeItem[]>();
+
+  for (const item of items) {
+    if (!item.timestamp) continue;
+    const year = new Date(item.timestamp.dateTime).getUTCFullYear();
+    if (!Number.isFinite(year)) continue;
+    const yearItems = itemsByYear.get(year) ?? [];
+    yearItems.push({ ...item, includeInFilterSuggestions: false });
+    itemsByYear.set(year, yearItems);
+  }
+
+  const years = [...itemsByYear.keys()].sort((a, b) => b - a);
+  if (!years.length) return null;
+
+  return {
+    label: 'Years',
+    image: ICON_CALENDAR,
+    children: years.map((year) => ({
+      label: String(year),
+      image: ICON_CALENDAR_DAYS,
+      children: itemsByYear.get(year),
+      childrenCount: itemsByYear.get(year)?.length,
+    })),
+    childrenCount: years.length,
+    itemPreview: true,
+    layout: TREE_ITEM_LAYOUT.BROWSER,
   };
 }
 

@@ -26,7 +26,14 @@ describe('Following Bands', () => {
         is_following: true,
         is_subscribed: false,
         location: null,
-        date_followed: index === 0 ? '2024-01-02T03:04:05Z' : '',
+        date_followed:
+          index === 0
+            ? '2024-01-02T03:04:05Z'
+            : index === 1
+              ? '2025-02-03T04:05:06Z'
+              : index === 2
+                ? '2024-03-04T05:06:07Z'
+                : '',
         token: `token-${index}`,
       }),
     );
@@ -43,15 +50,17 @@ describe('Following Bands', () => {
     );
     const restored = await TreeItemCache.get(key);
     for (const tree of [original, restored]) {
-      expect(tree?.childrenCount).toBe(3);
+      expect(tree?.childrenCount).toBe(4);
       expect(tree?.children?.map((item) => item.label)).toEqual([
         'Latest added',
         'A–Z',
         'Z–A',
+        'Years',
       ]);
       const latest = tree?.children?.[0];
       const ascending = tree?.children?.[1];
       const descending = tree?.children?.[2];
+      const years = tree?.children?.[3];
       expect(latest?.childrenCount).toBe(45);
       expect(latest?.children?.[0].bandPreview).toMatchObject({
         id: 1,
@@ -63,7 +72,7 @@ describe('Following Bands', () => {
         label: 'Followed',
         dateTime: '2024-01-02T03:04:05.000Z',
       });
-      expect(latest?.children?.[1].timestamp).toBeUndefined();
+      expect(latest?.children?.[3].timestamp).toBeUndefined();
       expect(latest?.children?.map((item) => item.label)).toEqual(
         bands.map((band) => band.name),
       );
@@ -86,6 +95,21 @@ describe('Following Bands', () => {
           )
           .map((band) => band.name),
       );
+      expect(years?.children?.map((item) => item.label)).toEqual([
+        '2025',
+        '2024',
+      ]);
+      expect(years?.children?.map((item) => item.image)).toEqual([
+        'calendar-days',
+        'calendar-days',
+      ]);
+      expect(years?.children?.[0].children?.map((item) => item.label)).toEqual([
+        'Artist 1',
+      ]);
+      expect(years?.children?.[1].children?.map((item) => item.label)).toEqual([
+        'Artist 0',
+        'Artist 2',
+      ]);
       expect(
         tree?.buttons?.some(
           (button) => button.title === 'Open Following Bands',
