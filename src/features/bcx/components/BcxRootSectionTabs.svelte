@@ -15,7 +15,11 @@ let {
   label: string;
   initialSelectedHref?: string;
 } = $props();
-const tabs = $derived(createRootSectionTabs(treeData.items));
+let rootVersion = $state(0);
+const tabs = $derived.by(() => {
+  rootVersion;
+  return createRootSectionTabs(treeData.items);
+});
 let selectedRoot = $state('');
 let visitedRoots: Record<string, boolean> = $state({});
 
@@ -30,6 +34,10 @@ function usesItemPreview(path: string): boolean {
   const root = treeData.items.find((item) => item.path === path);
   return !!(root?.itemPreview || root?.releasePreview);
 }
+
+function refreshTabs() {
+  rootVersion += 1;
+}
 </script>
 
 {#if tabs.length}
@@ -40,7 +48,7 @@ function usesItemPreview(path: string): boolean {
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
             {#if usesItemPreview(tab.id)}
-              <BcxItemPreviewBrowser {treeData} rootPath={tab.id} {initialSelectedHref} />
+              <BcxItemPreviewBrowser {treeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
             {:else}
             {@const profile = treeData.items.find((item) => item.path === tab.id)?.aboutProfile}
             {#if profile}
@@ -58,6 +66,7 @@ function usesItemPreview(path: string): boolean {
               showBreadcrumb={false}
               showFilter={!profile}
               {initialSelectedHref}
+              onRootLoaded={refreshTabs}
             />
             {/if}
           </div>

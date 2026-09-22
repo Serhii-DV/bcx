@@ -50,6 +50,7 @@ interface Props {
   nativeTabNavigation?: boolean;
   initialSelectedHref?: string;
   onSelect?: (item: TreeItem | null) => void;
+  onRootLoaded?: () => void;
   filterQuery?: string | null;
   initialRootPath?: string | null;
   lockInitialRoot?: boolean;
@@ -65,6 +66,7 @@ const DRILL_UP_PATH = '__bcx_tree_drill_up__';
 let {
   treeData,
   onSelect,
+  onRootLoaded,
   nativeTabNavigation = false,
   initialSelectedHref,
   filterQuery: externalFilterQuery = null,
@@ -641,6 +643,7 @@ async function loadCurrentRootItem(item: TreeItem) {
   showItemFeedback(item, 'Loading...', 0);
   await hydrateTreeItemChildren(item, true);
   refreshTreeRendering();
+  if (item.childrenLoaded) onRootLoaded?.();
   await tick();
 }
 

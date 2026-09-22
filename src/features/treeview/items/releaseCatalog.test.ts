@@ -4,13 +4,14 @@ import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { storage } from 'src/core/shared';
+import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import {
   filterTreeBrowserItems,
   getTreeItemFilterSuggestions,
 } from 'src/features/bcx/components/treeViewHelpers';
 import { TreeData } from '../TreeData';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
-import { hydrateTreeItemChildren } from '../utils';
+import { generateTreeHierarchy, hydrateTreeItemChildren } from '../utils';
 import { CollectionTreeItem } from './collection/CollectionTreeItem';
 import { withReleaseCatalog } from './releaseCatalog';
 import { TreeItemCache } from './TreeItemCache';
@@ -303,6 +304,11 @@ describe('release catalog previews', () => {
         await hydrateTreeItemChildren(releaseYears);
         const groups = releaseYears.children;
         expect(releaseYears.childrenLoaded).toBe(true);
+        expect(
+          createRootSectionTabs(
+            generateTreeHierarchy(restored?.children ?? []),
+          ).find((tab) => tab.id === '2')?.label,
+        ).toBe('Release years (4)');
         expect(groups?.map((item) => item.label)).toEqual([
           '2021',
           '2020',
