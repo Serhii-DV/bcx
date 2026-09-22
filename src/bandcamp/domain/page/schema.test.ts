@@ -6,8 +6,8 @@ describe('schema helpers', () => {
     expect(
       getPropertyValueByName(
         [
-          { name: 'art_id', value: 123 },
-          { name: 'item_id', value: 456 },
+          { '@type': 'PropertyValue', name: 'art_id', value: 123 },
+          { '@type': 'PropertyValue', name: 'item_id', value: 456 },
         ],
         'item_id',
       ),

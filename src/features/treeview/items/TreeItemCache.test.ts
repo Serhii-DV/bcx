@@ -51,8 +51,8 @@ describe('TreeItemCache', () => {
         label: 'Collection',
         onClick: rstest.fn(),
         buttons: [
-          { title: 'Open', href: 'https://bandcamp.com' },
-          { title: 'Refresh', onClick: rstest.fn() },
+          { title: 'Open', icon: undefined, href: 'https://bandcamp.com' },
+          { title: 'Refresh', icon: undefined, onClick: rstest.fn() },
         ],
         children: [{ label: 'Moon Safari' }],
       }),

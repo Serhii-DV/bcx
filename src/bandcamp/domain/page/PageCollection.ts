@@ -145,14 +145,12 @@ export class PageCollection {
   static readonly FOLLOWING_GENRES_ITEMS_URL =
     'https://bandcamp.com/api/fancollection/1/following_genres_items';
 
-  private readonly doc: Document;
   private readonly transport: BandcampTransport;
 
   private pageData?: CollectionPageData;
   private summary?: CollectionSummary | null;
 
   constructor(args?: { doc?: Document; transport?: BandcampTransport }) {
-    this.doc = args?.doc ?? document;
     this.transport = args?.transport ?? new FetchBandcampTransport();
   }
 

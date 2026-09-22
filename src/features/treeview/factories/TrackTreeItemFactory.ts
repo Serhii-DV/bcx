@@ -4,6 +4,10 @@ import { createTrackInformation } from '../ReleasePreview';
 import type { TreeItem } from '../TreeItem';
 import { linkOrText } from '../TreeItemBuilder';
 
+type TreeItemTrack = Pick<Track, 'toAlbumTrackString'> & {
+  url?: URL;
+};
+
 export class TrackTreeItemFactory {
   static createWithPreview(track: Track): TreeItem {
     return {
@@ -13,14 +17,14 @@ export class TrackTreeItemFactory {
     };
   }
 
-  static create(track: Track): TreeItem {
+  static create(track: TreeItemTrack): TreeItem {
     return linkOrText(
       track.toAlbumTrackString(),
       track.url?.toString(),
     ).build();
   }
 
-  static createMany(tracks: Track[]): TreeItem[] {
+  static createMany(tracks: TreeItemTrack[]): TreeItem[] {
     return tracks.map((track) => this.create(track));
   }
 }

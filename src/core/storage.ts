@@ -225,7 +225,7 @@ export class Storage {
     return new Promise((resolve, reject) => {
       if (typeof storage.getBytesInUse === 'function') {
         // Chrome supports getBytesInUse
-        storage.getBytesInUse(null, (bytesInUse) => {
+        storage.getBytesInUse(null, (bytesInUse: number) => {
           if (chrome.runtime.lastError) {
             return reject(chrome.runtime.lastError);
           }
@@ -238,14 +238,14 @@ export class Storage {
       } else {
         // Fallback for Firefox
         storage.get(null, (items) => {
-          const bytesInUse = Object.values(items).reduce((total, item) => {
-            return (
-              total +
-              (typeof item === 'string'
-                ? item.length
-                : JSON.stringify(item).length)
-            );
-          }, 0);
+          const bytesInUse = Object.values(items).reduce<number>(
+            (total, item) => {
+              const serializedItem =
+                typeof item === 'string' ? item : JSON.stringify(item);
+              return total + (serializedItem?.length ?? 0);
+            },
+            0,
+          );
 
           if (this.debug) {
             console.log('[Storage.getSize]', bytesInUse);

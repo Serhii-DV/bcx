@@ -37,6 +37,6 @@
       "$lib/*": ["./src/lib/*"]
     }
   },
-  "include": ["src", "jest.setup.ts"],
+  "include": ["src"],
   "exclude": ["dist", "build"]
 }

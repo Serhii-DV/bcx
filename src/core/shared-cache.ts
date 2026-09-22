@@ -5,7 +5,7 @@ export class SharedCache<K extends string, V> {
     try {
       const storageKey = `${this.prefix}:${key}`;
       const result = await chrome.storage.session.get(storageKey);
-      return result[storageKey];
+      return result[storageKey] as V | undefined;
     } catch (error) {
       console.warn(`SharedCache.get failed for ${key}:`, error);
       return undefined;

@@ -3,7 +3,6 @@ import { TREE_ITEM_LAYOUT } from './TreeItem';
 import {
   builder,
   item,
-  items,
   link,
   linkOpenPage,
   linkOrText,

@@ -1,4 +1,4 @@
-import type { FanData } from '../../types/FanData';
+import type { FanData } from 'src/bandcamp/domain/types/FanData';
 
 export interface PageDataContext {
   data: any;
