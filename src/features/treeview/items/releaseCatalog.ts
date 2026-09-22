@@ -1,10 +1,11 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
+import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { console } from 'src/utils/console';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
-import { deferDescendants, generateTreeHierarchy } from '../utils';
 import {
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
@@ -12,16 +13,11 @@ import {
   ICON_MIC,
 } from '../utils/icon';
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
-import {
-  loadKnownReleaseYears,
-  loadReleaseYears,
-  type ReleaseYearSource,
-} from './releaseYears';
 
 export interface ReleaseCatalog {
   albums: RawAlbumData[];
   addedAt?: Array<string | null>;
-  addedYearSource?: ReleaseYearSource;
+  addedYearSource?: 'collection' | 'wishlist';
   groupByYear?: boolean;
   paginateReleases?: boolean;
 }
@@ -89,14 +85,8 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         }),
   ];
 
-  const yearSource: ReleaseYearSource | undefined = catalog.groupByYear
-    ? 'band'
-    : catalog.addedYearSource;
-  if (yearSource && albums.length > 0) {
+  if ((catalog.groupByYear || catalog.addedYearSource) && albums.length > 0) {
     const createReleaseYears = (years: Map<string, number>): TreeItem => {
-      const missingCount = albums.filter(
-        (album) => !years.has(album.url.toString()),
-      ).length;
       const root = createYearsRoot(
         'Release years',
         albums,
@@ -105,54 +95,16 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         true,
       );
       if (!root) throw new Error('Release year groups are missing.');
-      if (yearSource === 'band') {
+      if (catalog.groupByYear) {
         root.children = root.children?.map((group) =>
           group.label?.startsWith('Unknown year')
             ? group
             : { ...group, query: group.label },
         );
       }
-      const groupCount = root.children?.length ?? 0;
-      if (missingCount > 0) {
-        root.children?.push({
-          label: `Find release years for ${missingCount} release${missingCount === 1 ? '' : 's'}`,
-          image: ICON_CALENDAR,
-          pathKey: 'find-release-years',
-          includeInFilterSuggestions: false,
-          onClick: async (context) => {
-            const { parent, showFeedback } = context;
-            if (!parent || parent.isLoadingChildren) return;
-            parent.isLoadingChildren = true;
-            showFeedback?.('Finding release years…', 0);
-            try {
-              const knownYears = await loadKnownReleaseYears(
-                albums,
-                yearSource,
-              );
-              const foundYears = await loadReleaseYears(albums, yearSource, {
-                initialYears: knownYears,
-              });
-              const updated = createReleaseYears(foundYears);
-              parent.children = generateTreeHierarchy(
-                deferDescendants(updated.children ?? []),
-                (parent.level ?? 0) + 1,
-                parent.path ?? '',
-              );
-              parent.childrenCount = updated.childrenCount;
-              context.focusPath = parent.children[0]?.path;
-              showFeedback?.('Release years updated');
-            } catch (error) {
-              console.error('[Release years] Lookup failed:', error);
-              showFeedback?.('Could not find release years');
-            } finally {
-              parent.isLoadingChildren = false;
-            }
-          },
-        });
-      }
       return {
         ...root,
-        childrenCount: groupCount,
+        childrenCount: root.children?.length ?? 0,
       };
     };
     const immediateYears = new Map(
@@ -167,7 +119,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     if (albums.some((album) => !immediateYears.has(album.url.toString()))) {
       initial.childrenLoaded = false;
       initial.loadChildren = async () => {
-        const knownYears = await loadKnownReleaseYears(albums, yearSource);
+        const knownYears = await loadStoredReleaseYears(albums);
         return createReleaseYears(knownYears);
       };
     } else {
@@ -219,6 +171,37 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     }
   }
   return { ...item, children: restoredChildren };
+}
+
+async function loadStoredReleaseYears(
+  albums: Album[],
+): Promise<Map<string, number>> {
+  const storedAlbums = await BandcampStorage.getAlbumsRawDataByIds(
+    albums.map((album) => album.id),
+  ).catch((error) => {
+    console.warn('[Release years] Stored album lookup failed:', error);
+    return [];
+  });
+  const storedYears = new Map(
+    storedAlbums.map((album) => [
+      album.url,
+      album.metadata?.published
+        ? new Date(album.metadata.published).getUTCFullYear()
+        : undefined,
+    ]),
+  );
+  const years = new Map<string, number>();
+  for (const album of albums) {
+    const metadataYear = album.metadata?.year;
+    const year =
+      typeof metadataYear === 'number' && Number.isFinite(metadataYear)
+        ? metadataYear
+        : storedYears.get(album.url.toString());
+    if (typeof year === 'number' && Number.isFinite(year)) {
+      years.set(album.url.toString(), year);
+    }
+  }
+  return years;
 }
 
 function createYearsRoot(

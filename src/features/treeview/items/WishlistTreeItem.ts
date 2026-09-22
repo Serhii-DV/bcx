@@ -12,7 +12,6 @@ import { item } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
 import { withReleaseCatalog } from './releaseCatalog';
-import { clearReleaseYears } from './releaseYears';
 
 const WISHLIST_KEY = '/wishlist';
 
@@ -65,7 +64,6 @@ async function loadWishlistItems(): Promise<BandcampItem[]> {
     includeSummaryFlags: true,
   });
   await storage.set({ [WISHLIST_KEY]: wishlist });
-  await clearReleaseYears('wishlist');
 
   return wishlist;
 }

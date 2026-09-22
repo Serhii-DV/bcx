@@ -12,7 +12,6 @@ import { item } from '../../TreeItemBuilder';
 import type { TreeItemButton } from '../../TreeItemButton';
 import { createLoadHandler } from '../../utils';
 import { withReleaseCatalog } from '../releaseCatalog';
-import { clearReleaseYears } from '../releaseYears';
 import {
   loadCollectionItemsFromStorage,
   saveCollectionItemsToStorage,
@@ -62,7 +61,6 @@ async function loadCollectionItems(): Promise<BandcampItem[]> {
     includeSummaryFlags: true,
   });
   await saveCollectionItemsToStorage(collection);
-  await clearReleaseYears('collection');
 
   return collection;
 }
