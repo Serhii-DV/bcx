@@ -23,6 +23,7 @@ export type BandcampItem = {
   item_title: string;
   item_url: string;
   price: number;
+  purchased?: string;
 
   isFree?: boolean;
   isPurchased?: boolean;

@@ -12,6 +12,7 @@ import { item } from '../../TreeItemBuilder';
 import type { TreeItemButton } from '../../TreeItemButton';
 import { createLoadHandler } from '../../utils';
 import { withReleaseCatalog } from '../releaseCatalog';
+import { clearCollectionReleaseYears } from './releaseYears';
 import {
   loadCollectionItemsFromStorage,
   saveCollectionItemsToStorage,
@@ -30,7 +31,13 @@ export class CollectionTreeItem {
 
     builder.addButton(createCollectionOpenTreeItemButton(username));
 
-    return withReleaseCatalog(builder.build(), albums);
+    return withReleaseCatalog(builder.build(), albums, {
+      collectionAddedAt: collectionItems.map((item) => {
+        if (!item.purchased?.trim()) return null;
+        const date = new Date(item.purchased);
+        return Number.isNaN(date.getTime()) ? null : date.toISOString();
+      }),
+    });
   }
 }
 
@@ -54,6 +61,7 @@ async function loadCollectionItems(): Promise<BandcampItem[]> {
     includeSummaryFlags: true,
   });
   await saveCollectionItemsToStorage(collection);
+  await clearCollectionReleaseYears();
 
   return collection;
 }

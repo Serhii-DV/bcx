@@ -11,6 +11,7 @@ type CreatePagedReleasesTreeItemArgs = {
   errorContext: string;
   withAlbumSummary?: boolean;
   withPreview?: boolean;
+  createPreviewItem?: (album: Album) => TreeItem;
 };
 
 export function createPagedReleasesTreeItem({
@@ -18,6 +19,7 @@ export function createPagedReleasesTreeItem({
   errorContext,
   withAlbumSummary = false,
   withPreview = false,
+  createPreviewItem = (album) => AlbumTreeItemFactory.createWithPreview(album),
 }: CreatePagedReleasesTreeItemArgs): TreeItem {
   return createPagedTreeItem({
     batchSize: RELEASE_BATCH_SIZE,
@@ -28,7 +30,7 @@ export function createPagedReleasesTreeItem({
     label: 'Releases',
     createChildren: (albums) =>
       withPreview
-        ? albums.map((album) => AlbumTreeItemFactory.createWithPreview(album))
+        ? albums.map(createPreviewItem)
         : AlbumTreeItemFactory.fromAlbums(albums, withAlbumSummary),
   });
 }

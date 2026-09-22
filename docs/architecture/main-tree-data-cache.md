@@ -116,6 +116,14 @@ older trees without these identities. Cache keys, TTLs, and invalidation remain
 unchanged. The shared `itemPreviewSize` store retains the original persistent key
 so existing divider positions carry over across release and band tabs.
 
+Collection catalog snapshots also retain each item's collection-added timestamp.
+Artists, paginated Releases, and Added years rebuild timestamped release items
+from this data. Release years loads on first selection, using saved album metadata
+and then fetching missing publication dates from Bandcamp release pages in bounded
+batches. Releases without a known year remain in an Unknown year group. Successfully
+fetched years are stored locally until Collection is refreshed. Snapshot version
+17 invalidates older catalog roots and rebuilds both named year tabs.
+
 History uses the same item preview browser for saved bands and releases, including
 entries appended by Show more. Pages without saved metadata expose basic preview
 information from their history title and URL. History is constructed directly,
