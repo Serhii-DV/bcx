@@ -30,7 +30,14 @@ export class CollectionTreeItem {
 
     builder.addButton(createCollectionOpenTreeItemButton(username));
 
-    return withReleaseCatalog(builder.build(), albums);
+    return withReleaseCatalog(builder.build(), albums, {
+      addedAt: collectionItems.map((item) => {
+        if (!item.purchased?.trim()) return null;
+        const date = new Date(item.purchased);
+        return Number.isNaN(date.getTime()) ? null : date.toISOString();
+      }),
+      addedYearSource: 'collection',
+    });
   }
 }
 

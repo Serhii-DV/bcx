@@ -72,9 +72,17 @@ describe('Artist/Label release browser', () => {
         band,
         url,
       )?.createTreeData();
+      const labels = data?.items.map((item) => item.label) ?? [];
+      expect(labels.indexOf('Release years')).toBeGreaterThanOrEqual(0);
+      expect(labels.indexOf('Release years')).toBeLessThan(
+        labels.indexOf('Tags'),
+      );
+      expect(labels.indexOf('Release years')).toBeLessThan(
+        labels.indexOf('About'),
+      );
       for (const [rootLabel, query] of [
         ['Artists', 'Artist'],
-        ['Years', '2026'],
+        ['Release years', '2026'],
       ]) {
         const group = data?.items.find((item) => item.label === rootLabel)
           ?.children?.[0];

@@ -28,7 +28,8 @@ export function generateTreeHierarchy(
   parentPath: string = '',
 ): TreeItem[] {
   return items.map((item, index) => {
-    const currentPath = parentPath ? `${parentPath}.${index}` : `${index}`;
+    const segment = item.pathKey ?? String(index);
+    const currentPath = parentPath ? `${parentPath}.${segment}` : segment;
     const enhancedItem: TreeItem = {
       ...item,
       level,
@@ -51,6 +52,8 @@ export function generateTreeHierarchy(
 export async function hydrateTreeItemChildren(
   item: TreeItem,
   isLoadingStarted: boolean = false,
+  onChildrenUpdated?: () => void,
+  onBeforeChildrenUpdate?: () => void,
 ): Promise<void> {
   if (!item.loadChildren || item.childrenLoaded) {
     return;
@@ -65,39 +68,21 @@ export async function hydrateTreeItemChildren(
   }
 
   try {
-    const loadedItemOrChildren = await item.loadChildren();
-    const loadedItem = Array.isArray(loadedItemOrChildren)
-      ? ({ children: loadedItemOrChildren } satisfies TreeItem)
-      : loadedItemOrChildren;
-
-    if (!loadedItem) {
-      item.children = [];
-      item.hasChildren = false;
-      return;
-    }
-
-    const { path, level, open } = item;
-    const childrenCount =
-      loadedItem.childrenCount ??
-      item.childrenCount ??
-      loadedItem.children?.length ??
-      0;
-    Object.assign(item, loadedItem, {
-      path,
-      level,
-      open,
-      childrenCount,
-      childrenLoaded: true,
-      isLoadingChildren: false,
-      loadChildren: undefined,
+    let pendingUpdate: TreeItem[] | TreeItem | null | undefined;
+    const applyUpdate = (value: TreeItem[] | TreeItem | null) => {
+      onBeforeChildrenUpdate?.();
+      applyLoadedChildren(item, value);
+      onChildrenUpdated?.();
+    };
+    const loadedItemOrChildren = await item.loadChildren((value) => {
+      if (!item.childrenLoaded) {
+        pendingUpdate = value;
+      } else {
+        applyUpdate(value);
+      }
     });
-
-    item.children = generateTreeHierarchy(
-      deferDescendants(loadedItem.children || []),
-      (item.level || 0) + 1,
-      item.path || '',
-    );
-    item.hasChildren = item.children.length > 0;
+    applyLoadedChildren(item, loadedItemOrChildren);
+    if (pendingUpdate !== undefined) applyUpdate(pendingUpdate);
   } catch (error) {
     console.error(
       '[hydrateTreeItemChildren]',
@@ -107,6 +92,44 @@ export async function hydrateTreeItemChildren(
   } finally {
     item.isLoadingChildren = false;
   }
+}
+
+function applyLoadedChildren(
+  item: TreeItem,
+  loadedItemOrChildren: TreeItem[] | TreeItem | null,
+): void {
+  const loadedItem = Array.isArray(loadedItemOrChildren)
+    ? ({ children: loadedItemOrChildren } satisfies TreeItem)
+    : loadedItemOrChildren;
+
+  if (!loadedItem) {
+    item.children = [];
+    item.hasChildren = false;
+    return;
+  }
+
+  const { path, level, open } = item;
+  const childrenCount =
+    loadedItem.childrenCount ??
+    item.childrenCount ??
+    loadedItem.children?.length ??
+    0;
+  Object.assign(item, loadedItem, {
+    path,
+    level,
+    open,
+    childrenCount,
+    childrenLoaded: true,
+    isLoadingChildren: false,
+    loadChildren: undefined,
+  });
+
+  item.children = generateTreeHierarchy(
+    deferDescendants(loadedItem.children || []),
+    (item.level || 0) + 1,
+    item.path || '',
+  );
+  item.hasChildren = item.children.length > 0;
 }
 
 export function deferDescendants(items: TreeItem[]): TreeItem[] {

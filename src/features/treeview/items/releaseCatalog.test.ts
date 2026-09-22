@@ -1,14 +1,17 @@
-import { beforeEach, describe, expect, it } from '@rstest/core';
+import { afterEach, beforeEach, describe, expect, it, rs } from '@rstest/core';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
+import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { storage } from 'src/core/shared';
+import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import {
   filterTreeBrowserItems,
   getTreeItemFilterSuggestions,
 } from 'src/features/bcx/components/treeViewHelpers';
 import { TreeData } from '../TreeData';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
+import { generateTreeHierarchy, hydrateTreeItemChildren } from '../utils';
 import { CollectionTreeItem } from './collection/CollectionTreeItem';
 import { withReleaseCatalog } from './releaseCatalog';
 import { TreeItemCache } from './TreeItemCache';
@@ -17,6 +20,10 @@ import { WishlistTreeItem } from './WishlistTreeItem';
 beforeEach(async () => {
   await chrome.storage.local.clear();
   await chrome.storage.session.clear();
+});
+
+afterEach(() => {
+  rs.restoreAllMocks();
 });
 
 function createItems(count: number) {
@@ -127,8 +134,11 @@ describe('release catalog previews', () => {
       albums,
       { groupByYear: true },
     );
-    expect(tree.children?.[0].label).toBe('About');
-    for (const name of ['Artists', 'Releases', 'Years']) {
+    const rootLabels = tree.children?.map((item) => item.label) ?? [];
+    expect(rootLabels.indexOf('Release years')).toBeLessThan(
+      rootLabels.indexOf('About'),
+    );
+    for (const name of ['Artists', 'Releases', 'Release years']) {
       const root = tree.children?.find((item) => item.label === name);
       expect(root?.releasePreview).toBe(true);
       expect(root?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
@@ -138,7 +148,7 @@ describe('release catalog previews', () => {
           : root?.children?.[0].children?.[0],
       );
     }
-    const years = tree.children?.find((item) => item.label === 'Years');
+    const years = tree.children?.find((item) => item.label === 'Release years');
     expect(years?.children?.map((item) => item.label)).toEqual([
       '2026',
       '2025',
@@ -156,7 +166,7 @@ describe('release catalog previews', () => {
     await TreeItemCache.set(key, tree);
     const restored = await TreeItemCache.get(key);
     const restoredYears = restored?.children?.find(
-      (item) => item.label === 'Years',
+      (item) => item.label === 'Release years',
     );
     expect(getTreeItemFilterSuggestions(restoredYears?.children)).toEqual([
       '2025',
@@ -167,7 +177,7 @@ describe('release catalog previews', () => {
     ).toEqual(['2025', '2026']);
   });
 
-  it('filters Years at the root while preserving releases inside matching years', () => {
+  it('filters Release years at the root while preserving releases inside matching years', async () => {
     const albums = createItems(2).map((item, index) => {
       const year = 2025 + index;
       const album = AlbumFactory.fromBandcampItem({
@@ -185,8 +195,8 @@ describe('release catalog previews', () => {
     const tree = withReleaseCatalog({ label: 'Label' }, albums, {
       groupByYear: true,
     });
-    const years = tree.children?.find((item) => item.label === 'Years');
-    if (!years) throw new Error('Missing Years root');
+    const years = tree.children?.find((item) => item.label === 'Release years');
+    if (!years) throw new Error('Missing Release years root');
 
     const matches = filterTreeBrowserItems(years.children, '2026', years);
     expect(matches.map((item) => item.label)).toEqual(['2026']);
@@ -204,6 +214,29 @@ describe('release catalog previews', () => {
     expect(
       filterTreeBrowserItems(matches[0].children, 'Release 2026', matches[0]),
     ).toEqual(matches[0].children);
+
+    const unknownAlbum = AlbumFactory.fromBandcampItem(createItems(3)[2]);
+    const unknownYears = withReleaseCatalog(
+      { label: 'Label' },
+      [...albums, unknownAlbum],
+      { groupByYear: true },
+    ).children?.find((item) => item.label === 'Release years');
+    expect(unknownYears?.children?.map((item) => item.label)).toEqual([
+      '2026',
+      '2025',
+      'Unknown year',
+    ]);
+    const fetchMock = rs
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new Error('Unexpected release-page request'));
+    if (!unknownYears) throw new Error('Missing Release years root');
+    await hydrateTreeItemChildren(unknownYears);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(unknownYears.children?.map((item) => item.label)).toEqual([
+      '2026',
+      '2025',
+      'Unknown year',
+    ]);
   });
 
   for (const [label, create] of [
@@ -211,10 +244,33 @@ describe('release catalog previews', () => {
     ['Wishlist', () => WishlistTreeItem.create('listener')],
   ] as const) {
     it(`${label} preserves nested previews and list loading behavior after a session cache round trip`, async () => {
+      const collectionItems = createItems(25).map((item, index) => ({
+        ...item,
+        purchased:
+          index < 20 ? '02 Jan 2025 03:04:05 GMT' : '03 Feb 2024 04:05:06 GMT',
+      }));
       await storage.set({
-        '/collection': createItems(25),
-        '/wishlist': createItems(25),
+        '/collection': collectionItems,
+        '/wishlist': createItems(25).map((item, index) => ({
+          ...item,
+          added:
+            index === 24
+              ? undefined
+              : index < 20
+                ? '02 Jan 2025 03:04:05 GMT'
+                : '03 Feb 2024 04:05:06 GMT',
+        })),
       });
+      if (label === 'Collection') {
+        const storedAlbum = AlbumFactory.fromBandcampItem(collectionItems[0]);
+        storedAlbum.metadata = Metadata.create(
+          Price.create(0, 'USD'),
+          'Artist 0',
+          '1999-01-01',
+          '1999-01-01',
+        );
+        await BandcampStorage.saveAlbum(storedAlbum);
+      }
       const original = await create();
       if (label === 'Wishlist') {
         for (const name of ['Artists', 'Releases']) {
@@ -222,6 +278,12 @@ describe('release catalog previews', () => {
             original.children?.find((item) => item.label === name)?.children,
           ).toHaveLength(25);
         }
+        expect(original.children?.map((item) => item.label)).toEqual([
+          'Artists',
+          'Releases',
+          'Release years',
+          'Added years',
+        ]);
       }
       const key = TreeItemCache.subtreeKey('listener', label);
       await TreeItemCache.set(key, original);
@@ -233,6 +295,114 @@ describe('release catalog previews', () => {
       const releases = restored?.children?.find(
         (item) => item.label === 'Releases',
       );
+      if (label === 'Collection') {
+        const addedYears = restored?.children?.find(
+          (item) => item.label === 'Added years',
+        );
+        const releaseYears = restored?.children?.find(
+          (item) => item.label === 'Release years',
+        );
+        expect(restored?.children?.map((item) => item.label)).toEqual([
+          'Artists',
+          'Releases',
+          'Release years',
+          'Added years',
+        ]);
+        expect(addedYears?.children?.map((item) => item.label)).toEqual([
+          '2025',
+          '2024',
+        ]);
+        expect(addedYears?.releasePreview).toBe(true);
+        expect(addedYears?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
+        expect(addedYears?.children?.[0].children).toHaveLength(20);
+        expect(addedYears?.children?.[1].children).toHaveLength(5);
+        expect(addedYears?.children?.[1].children?.[0].timestamp).toEqual({
+          label: 'Added',
+          dateTime: '2024-02-03T04:05:06.000Z',
+        });
+        assertPreview(addedYears?.children?.[1].children?.[0]);
+        expect(releaseYears?.releasePreview).toBe(true);
+        expect(releaseYears?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
+        expect(releaseYears?.children?.map((item) => item.label)).toEqual([
+          'Unknown year',
+        ]);
+        expect(releaseYears?.childrenCount).toBe(1);
+        expect(
+          createRootSectionTabs(
+            generateTreeHierarchy(restored?.children ?? []),
+          ).find((tab) => tab.id === '2')?.label,
+        ).toBe('Release years (1)');
+
+        const fetchMock = rs
+          .spyOn(globalThis, 'fetch')
+          .mockRejectedValue(new Error('Unexpected release-page request'));
+        if (!releaseYears) throw new Error('Missing Release years root');
+        await hydrateTreeItemChildren(releaseYears);
+        expect(releaseYears.children?.map((item) => item.label)).toEqual([
+          '1999',
+          'Unknown year',
+        ]);
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(
+          createRootSectionTabs(
+            generateTreeHierarchy(restored?.children ?? []),
+          ).find((tab) => tab.id === '2')?.label,
+        ).toBe('Release years (2)');
+        const groups = releaseYears.children;
+        expect(releaseYears.childrenLoaded).toBe(true);
+        expect(
+          createRootSectionTabs(
+            generateTreeHierarchy(restored?.children ?? []),
+          ).find((tab) => tab.id === '2')?.label,
+        ).toBe('Release years (2)');
+        expect(groups?.map((item) => item.label)).toEqual([
+          '1999',
+          'Unknown year',
+        ]);
+        expect(groups?.map((item) => item.children?.length)).toEqual([1, 24]);
+        expect(groups?.[0].children?.[0].href).toBe(
+          collectionItems[0].item_url,
+        );
+        expect(groups?.[1].children?.at(-1)?.href).toBe(
+          collectionItems[24].item_url,
+        );
+        expect(groups?.[0].children?.[0].timestamp?.label).toBe('Added');
+        expect(fetchMock).not.toHaveBeenCalled();
+      } else {
+        const releaseYears = restored?.children?.find(
+          (item) => item.label === 'Release years',
+        );
+        const addedYears = restored?.children?.find(
+          (item) => item.label === 'Added years',
+        );
+        expect(releaseYears?.loadChildren).toBeTypeOf('function');
+        expect(addedYears?.children?.map((item) => item.label)).toEqual([
+          '2025',
+          '2024',
+          'Unknown year',
+        ]);
+        expect(
+          addedYears?.children?.[2].children?.[0].timestamp,
+        ).toBeUndefined();
+        expect(addedYears?.children?.[0].children?.[0].timestamp).toEqual({
+          label: 'Added',
+          dateTime: '2025-01-02T03:04:05.000Z',
+        });
+        const fetchMock = rs
+          .spyOn(globalThis, 'fetch')
+          .mockRejectedValue(new Error('Unexpected release-page request'));
+        if (!releaseYears) throw new Error('Missing Release years root');
+        expect(releaseYears.children?.map((item) => item.label)).toEqual([
+          'Unknown year',
+        ]);
+        await hydrateTreeItemChildren(releaseYears);
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(releaseYears.children?.map((item) => item.label)).toEqual([
+          'Unknown year',
+        ]);
+        expect(releaseYears.children?.[0].children).toHaveLength(25);
+        expect(fetchMock).not.toHaveBeenCalled();
+      }
       expect(artists?.releasePreview).toBe(true);
       expect(releases?.releasePreview).toBe(true);
       assertPreview(artists?.children?.[0].children?.[0]);
@@ -242,6 +412,21 @@ describe('release catalog previews', () => {
           .length,
       ).toBeGreaterThan(0);
       if (!artists || !releases) throw new Error('Missing catalog roots');
+      if (label === 'Collection') {
+        expect(artists.children?.[0].children?.[0].timestamp).toEqual({
+          label: 'Added',
+          dateTime: '2025-01-02T03:04:05.000Z',
+        });
+        expect(releases.children?.[0].timestamp).toEqual({
+          label: 'Added',
+          dateTime: '2025-01-02T03:04:05.000Z',
+        });
+      } else {
+        expect(releases.children?.[0].timestamp).toEqual({
+          label: 'Added',
+          dateTime: '2025-01-02T03:04:05.000Z',
+        });
+      }
       assertArtistSuggestions(artists, 25);
       const filteredArtists = filterTreeBrowserItems(
         artists.children,
@@ -253,6 +438,12 @@ describe('release catalog previews', () => {
       if (label === 'Collection') await loadMore(releases);
       expect(releases.children).toHaveLength(25);
       assertPreview(releases.children?.[24]);
+      if (label === 'Collection') {
+        expect(releases.children?.[24].timestamp).toEqual({
+          label: 'Added',
+          dateTime: '2024-02-03T04:05:06.000Z',
+        });
+      }
       expect(releases.children?.map((item) => item.href)).toEqual(
         createItems(25).map((item) => item.item_url),
       );

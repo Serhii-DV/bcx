@@ -29,6 +29,7 @@ let {
   filterQuery,
   showFilter = true,
   isLoading = false,
+  onRootLoaded,
 }: {
   treeData: TreeData;
   rootPath?: string;
@@ -36,6 +37,7 @@ let {
   filterQuery?: string;
   showFilter?: boolean;
   isLoading?: boolean;
+  onRootLoaded?: () => void;
 } = $props();
 let bandPreview: BandPreview | null = $state(null);
 const componentId = $props.id();
@@ -173,7 +175,7 @@ $effect(() => {
   style:grid-template-rows={`${100 - $itemPreviewSize}fr auto ${$itemPreviewSize}fr`}
 >
   <div id={itemListId} class="item-list">
-    <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={!!rootPath} {filterQuery} {showFilter} {isLoading} showBreadcrumb={false} initialSelectedHref={initialSelectedHref ?? treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} nativeTabNavigation={true} />
+    <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={!!rootPath} {filterQuery} {showFilter} {isLoading} showBreadcrumb={false} initialSelectedHref={initialSelectedHref ?? treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} {onRootLoaded} nativeTabNavigation={true} />
   </div>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (ARIA separator is keyboard interactive) -->
   <div

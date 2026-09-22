@@ -435,7 +435,7 @@ export function filterTreeBrowserItems(
 ): TreeItem[] {
   if (
     root?.releasePreview &&
-    (root.label === 'Artists' || root.label === 'Years')
+    (root.label === 'Artists' || root.label === 'Release years')
   ) {
     return query.trim()
       ? (items ?? []).filter((item) => treeItemMatchesQuery(item, query))

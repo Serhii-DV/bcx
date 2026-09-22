@@ -30,6 +30,12 @@ export class WishlistTreeItem {
 
     return withReleaseCatalog(builder.build(), albums, {
       paginateReleases: false,
+      addedAt: wishlistItems.map((item) => {
+        if (!item.added?.trim()) return null;
+        const date = new Date(item.added);
+        return Number.isNaN(date.getTime()) ? null : date.toISOString();
+      }),
+      addedYearSource: 'wishlist',
     });
   }
 }
