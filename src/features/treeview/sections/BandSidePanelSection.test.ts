@@ -75,6 +75,9 @@ describe('Artist/Label release browser', () => {
       const labels = data?.items.map((item) => item.label) ?? [];
       expect(labels.indexOf('Release years')).toBeGreaterThanOrEqual(0);
       expect(labels.indexOf('Release years')).toBeLessThan(
+        labels.indexOf('Tags'),
+      );
+      expect(labels.indexOf('Release years')).toBeLessThan(
         labels.indexOf('About'),
       );
       for (const [rootLabel, query] of [

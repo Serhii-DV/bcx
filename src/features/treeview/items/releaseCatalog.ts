@@ -162,12 +162,16 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     const yearsIndex = restoredChildren.findIndex(
       (child) => child.label === 'Release years',
     );
+    const tagsIndex = restoredChildren.findIndex(
+      (child) => child.label === 'Tags',
+    );
     const aboutIndex = restoredChildren.findIndex(
       (child) => child.label === 'About' || child.label?.startsWith('About '),
     );
-    if (yearsIndex > aboutIndex && aboutIndex >= 0) {
+    const insertionIndex = tagsIndex >= 0 ? tagsIndex : aboutIndex;
+    if (yearsIndex > insertionIndex && insertionIndex >= 0) {
       const [years] = restoredChildren.splice(yearsIndex, 1);
-      restoredChildren.splice(aboutIndex, 0, years);
+      restoredChildren.splice(insertionIndex, 0, years);
     }
   }
   return { ...item, children: restoredChildren };
