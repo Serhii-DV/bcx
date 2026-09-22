@@ -85,7 +85,7 @@ options in `releaseCatalog`. Artists and Releases are saved as root placeholders
 `restoreReleaseCatalog` rebuilds their preview loaders, open-page buttons, and
 pagination callbacks when reading a snapshot. Snapshot version 8 invalidates older
 snapshots that lack this data. Cache keys, TTLs, and explicit invalidation stay the
-same. Artist/Label sections rebuild Artists, Releases, and Years from the current
+same. Artist/Label sections rebuild Artists, Releases, and Release years from the current
 band data after reading their cached subtree.
 
 Catalog roots carry `releasePreview` and browser layout at runtime so nested
@@ -118,22 +118,28 @@ so existing divider positions carry over across release and band tabs.
 
 Collection catalog snapshots also retain each item's collection-added timestamp.
 Artists, paginated Releases, and Added years rebuild timestamped release items
-from this data. Release years loads on first selection, using saved album metadata
-and then fetching missing publication dates from Bandcamp release pages in bounded
-batches. Releases without a known year remain in an Unknown year group. Successfully
-fetched years are stored locally until Collection is refreshed. Snapshot version
+from this data. Release years immediately groups releases from available metadata,
+placing unresolved releases in Unknown year. On selection, locally stored years
+are merged without release-page requests. A Find release years action in that
+subtab fetches missing publication dates only when clicked or activated with Enter;
+successful years are stored locally until Collection is refreshed. Snapshot version
 17 invalidates older catalog roots and rebuilds both named year tabs.
 
 Wishlist catalog snapshots retain each item's Wishlist-added timestamp from
 Bandcamp's `added` field. Artists, Releases, and Added years rebuild timestamped
-release items from it. Release years shows locally known years immediately,
-with unresolved releases under Unknown year. A Find release years action fetches
-missing dates on request; results are stored under a separate Wishlist cache key
-that is cleared on Wishlist refresh. Items without a usable added date appear under
+release items from it. Release years uses the same immediate grouping and
+on-demand lookup as Collection, with a separate Wishlist cache key cleared on
+Wishlist refresh. Items without a usable added date appear under
 Unknown year in the Wishlist Added years tab. Snapshot version 18 rebuilds these Wishlist tabs
 and keeps Collection's existing release-year cache separate.
 Snapshot version 19 refreshes cached Wishlist roots with the shared Release years
 label used by Collection.
+Snapshot version 20 rebuilds Artist/Label, Collection, and Wishlist year roots
+with shared Release years behavior and stable year-group paths. Artist/Label
+uses its own publication-year cache namespace.
+Snapshot version 21 makes publication-year requests explicit for all three
+catalogs, renames the Artist/Label cache source to Band, and places Band's
+Release years before About.
 
 History uses the same item preview browser for saved bands and releases, including
 entries appended by Show more. Pages without saved metadata expose basic preview

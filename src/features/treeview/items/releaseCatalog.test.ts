@@ -60,9 +60,10 @@ async function loadMore(root: TreeItem) {
 }
 
 async function findReleaseYears(root: TreeItem) {
-  const action = root.children?.at(-1);
-  expect(action?.label).toContain('Find release years');
-  if (!action) throw new Error('Missing release-year lookup action');
+  const action = root.children?.find((item) =>
+    item.label?.startsWith('Find release years'),
+  );
+  if (!action) throw new Error('Missing Find release years action');
   await action.onClick?.({
     element: document.createElement('button'),
     item: action,
@@ -145,8 +146,11 @@ describe('release catalog previews', () => {
       albums,
       { groupByYear: true },
     );
-    expect(tree.children?.[0].label).toBe('About');
-    for (const name of ['Artists', 'Releases', 'Years']) {
+    const rootLabels = tree.children?.map((item) => item.label) ?? [];
+    expect(rootLabels.indexOf('Release years')).toBeLessThan(
+      rootLabels.indexOf('About'),
+    );
+    for (const name of ['Artists', 'Releases', 'Release years']) {
       const root = tree.children?.find((item) => item.label === name);
       expect(root?.releasePreview).toBe(true);
       expect(root?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
@@ -156,7 +160,7 @@ describe('release catalog previews', () => {
           : root?.children?.[0].children?.[0],
       );
     }
-    const years = tree.children?.find((item) => item.label === 'Years');
+    const years = tree.children?.find((item) => item.label === 'Release years');
     expect(years?.children?.map((item) => item.label)).toEqual([
       '2026',
       '2025',
@@ -174,7 +178,7 @@ describe('release catalog previews', () => {
     await TreeItemCache.set(key, tree);
     const restored = await TreeItemCache.get(key);
     const restoredYears = restored?.children?.find(
-      (item) => item.label === 'Years',
+      (item) => item.label === 'Release years',
     );
     expect(getTreeItemFilterSuggestions(restoredYears?.children)).toEqual([
       '2025',
@@ -185,7 +189,7 @@ describe('release catalog previews', () => {
     ).toEqual(['2025', '2026']);
   });
 
-  it('filters Years at the root while preserving releases inside matching years', () => {
+  it('filters Release years at the root while preserving releases inside matching years', async () => {
     const albums = createItems(2).map((item, index) => {
       const year = 2025 + index;
       const album = AlbumFactory.fromBandcampItem({
@@ -203,8 +207,8 @@ describe('release catalog previews', () => {
     const tree = withReleaseCatalog({ label: 'Label' }, albums, {
       groupByYear: true,
     });
-    const years = tree.children?.find((item) => item.label === 'Years');
-    if (!years) throw new Error('Missing Years root');
+    const years = tree.children?.find((item) => item.label === 'Release years');
+    if (!years) throw new Error('Missing Release years root');
 
     const matches = filterTreeBrowserItems(years.children, '2026', years);
     expect(matches.map((item) => item.label)).toEqual(['2026']);
@@ -222,6 +226,37 @@ describe('release catalog previews', () => {
     expect(
       filterTreeBrowserItems(matches[0].children, 'Release 2026', matches[0]),
     ).toEqual(matches[0].children);
+
+    const unknownAlbum = AlbumFactory.fromBandcampItem(createItems(3)[2]);
+    const progressive = withReleaseCatalog(
+      { label: 'Label' },
+      [...albums, unknownAlbum],
+      { groupByYear: true },
+    ).children?.find((item) => item.label === 'Release years');
+    expect(progressive?.children?.map((item) => item.label)).toEqual([
+      '2026',
+      '2025',
+      'Unknown year',
+      'Find release years for 1 release',
+    ]);
+    const fetchMock = rs
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(
+        async () =>
+          new Response(
+            '<script type="application/ld+json">{"@type":"MusicAlbum","datePublished":"2027-01-01"}</script>',
+          ),
+      );
+    if (!progressive) throw new Error('Missing Release years root');
+    await hydrateTreeItemChildren(progressive);
+    expect(fetchMock).not.toHaveBeenCalled();
+    await findReleaseYears(progressive);
+    expect(progressive.children?.map((item) => item.label)).toEqual([
+      '2027',
+      '2026',
+      '2025',
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   for (const [label, create] of [
@@ -308,7 +343,16 @@ describe('release catalog previews', () => {
         assertPreview(addedYears?.children?.[1].children?.[0]);
         expect(releaseYears?.releasePreview).toBe(true);
         expect(releaseYears?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
-        expect(releaseYears?.children).toBeUndefined();
+        expect(releaseYears?.children?.map((item) => item.label)).toEqual([
+          'Unknown year',
+          'Find release years for 25 releases',
+        ]);
+        expect(releaseYears?.childrenCount).toBe(1);
+        expect(
+          createRootSectionTabs(
+            generateTreeHierarchy(restored?.children ?? []),
+          ).find((tab) => tab.id === '2')?.label,
+        ).toBe('Release years (1)');
 
         const fetchMock = rs
           .spyOn(globalThis, 'fetch')
@@ -327,6 +371,18 @@ describe('release catalog previews', () => {
           });
         if (!releaseYears) throw new Error('Missing Release years root');
         await hydrateTreeItemChildren(releaseYears);
+        expect(releaseYears.children?.map((item) => item.label)).toEqual([
+          '1999',
+          'Unknown year',
+          'Find release years for 24 releases',
+        ]);
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(
+          createRootSectionTabs(
+            generateTreeHierarchy(restored?.children ?? []),
+          ).find((tab) => tab.id === '2')?.label,
+        ).toBe('Release years (2)');
+        await findReleaseYears(releaseYears);
         const groups = releaseYears.children;
         expect(releaseYears.childrenLoaded).toBe(true);
         expect(
@@ -339,10 +395,11 @@ describe('release catalog previews', () => {
           '2020',
           '1999',
           'Unknown year',
+          'Find release years for 1 release',
         ]);
-        expect(groups?.map((item) => item.children?.length)).toEqual([
-          11, 12, 1, 1,
-        ]);
+        expect(
+          groups?.slice(0, 4).map((item) => item.children?.length),
+        ).toEqual([11, 12, 1, 1]);
         expect(groups?.[2].children?.[0].href).toBe(
           collectionItems[0].item_url,
         );
@@ -380,11 +437,11 @@ describe('release catalog previews', () => {
               ),
           );
         if (!releaseYears) throw new Error('Missing Release years root');
-        await hydrateTreeItemChildren(releaseYears);
         expect(releaseYears.children?.map((item) => item.label)).toEqual([
           'Unknown year',
           'Find release years for 25 releases',
         ]);
+        await hydrateTreeItemChildren(releaseYears);
         expect(fetchMock).not.toHaveBeenCalled();
         await findReleaseYears(releaseYears);
         expect(releaseYears.children?.map((item) => item.label)).toEqual([

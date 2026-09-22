@@ -21,7 +21,7 @@ describe('createRootSectionTabs', () => {
       },
       {
         path: '3',
-        label: 'Years',
+        label: 'Release years',
         children: [{ label: '2026' }, { label: '2025' }],
       },
       { path: '4', label: 'About', children: [{ label: 'Created' }] },
@@ -29,7 +29,7 @@ describe('createRootSectionTabs', () => {
     expect(createRootSectionTabs(items)).toEqual([
       { id: '1', label: 'Artists (91)', image: 'mic' },
       { id: '2', label: 'Releases (322)', image: undefined },
-      { id: '3', label: 'Years (2)', image: undefined },
+      { id: '3', label: 'Release years (2)', image: undefined },
       { id: '4', label: 'About (1)', image: undefined },
     ]);
   });
@@ -38,11 +38,11 @@ describe('createRootSectionTabs', () => {
     const loadChildren = rs.fn(async () => []);
     const item: TreeItem = {
       path: '0',
-      label: 'Artists',
+      label: 'Release years',
       childrenCount: 91,
       loadChildren,
     };
-    expect(createRootSectionTabs([item])[0].label).toBe('Artists (91)');
+    expect(createRootSectionTabs([item])[0].label).toBe('Release years (91)');
     expect(loadChildren).not.toHaveBeenCalled();
     expect(item.children).toBeUndefined();
   });

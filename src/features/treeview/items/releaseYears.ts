@@ -3,15 +3,19 @@ import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 
-export type ReleaseYearSource = 'collection' | 'wishlist';
+export type ReleaseYearSource = 'collection' | 'wishlist' | 'band';
 const FETCH_BATCH_SIZE = 6;
 const LOOKUP_TIMEOUT_MS = 45_000;
 
 export async function loadReleaseYears(
   albums: Album[],
   source: ReleaseYearSource,
+  options: {
+    initialYears?: Map<string, number>;
+  } = {},
 ): Promise<Map<string, number>> {
-  const years = await loadKnownReleaseYears(albums, source);
+  const years =
+    options.initialYears ?? (await loadKnownReleaseYears(albums, source));
   const missing = albums.filter((album) => !years.has(album.url.toString()));
   const cacheKey = `/${source}-release-years`;
   const fetched: Record<string, number> = {};
@@ -76,8 +80,11 @@ export async function loadKnownReleaseYears(
 
   for (const album of albums) {
     const url = album.url.toString();
+    const metadataYear = album.metadata?.year;
     const year =
-      (album.metadata && yearFromDate(album.metadata.published)) ||
+      (typeof metadataYear === 'number' && Number.isFinite(metadataYear)
+        ? metadataYear
+        : null) ||
       storedYears.get(url) ||
       cached?.[url];
     if (typeof year === 'number' && Number.isFinite(year)) {

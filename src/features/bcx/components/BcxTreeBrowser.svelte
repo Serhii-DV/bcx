@@ -642,10 +642,51 @@ async function loadCurrentRootItem(item: TreeItem) {
   refreshTreeRendering();
   await waitForLoadingStatePaint(item, focusTreeItem);
   showItemFeedback(item, 'Loading...', 0);
-  await hydrateTreeItemChildren(item, true);
+  let selectedHref: string | undefined;
+  await hydrateTreeItemChildren(
+    item,
+    true,
+    () => {
+      if (selectedHref) {
+        const selected = findDescendantByHref(
+          item.children ?? [],
+          selectedHref,
+        );
+        focusedPath = selected?.path ?? null;
+        if (
+          selected?.path &&
+          rootPath?.startsWith(`${item.path}.`) &&
+          !selected.path.startsWith(`${rootPath}.`)
+        ) {
+          rootPath = selected.path.slice(0, selected.path.lastIndexOf('.'));
+        }
+      } else if (focusedPath && !findTreeItemByPath(focusedPath)) {
+        focusedPath = null;
+      }
+      refreshTreeRendering();
+      onRootLoaded?.();
+    },
+    () => {
+      selectedHref = focusedPath
+        ? findTreeItemByPath(focusedPath)?.href
+        : undefined;
+    },
+  );
   refreshTreeRendering();
   if (item.childrenLoaded) onRootLoaded?.();
   await tick();
+}
+
+function findDescendantByHref(
+  items: TreeItem[],
+  href: string,
+): TreeItem | null {
+  for (const item of items) {
+    if (item.href === href) return item;
+    const descendant = findDescendantByHref(item.children ?? [], href);
+    if (descendant) return descendant;
+  }
+  return null;
 }
 
 async function handleBrowserItemClick(

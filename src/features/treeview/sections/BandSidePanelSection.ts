@@ -114,7 +114,7 @@ function withReleasePreviews(
   const catalog = {
     ...releaseCatalog,
     children: releaseCatalog.children?.map((root) =>
-      root.label === 'Artists' || root.label === 'Years'
+      root.label === 'Artists' || root.label === 'Release years'
         ? {
             ...root,
             children: root.children?.map((group) => ({

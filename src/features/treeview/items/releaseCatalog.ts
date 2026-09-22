@@ -4,7 +4,7 @@ import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
-import { deferDescendants } from '../utils';
+import { deferDescendants, generateTreeHierarchy } from '../utils';
 import {
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
@@ -89,81 +89,93 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         }),
   ];
 
-  if (catalog.groupByYear) {
-    const years = createYearsRoot(
-      'Years',
-      albums,
-      (album) => album.metadata?.year,
-      createReleaseItem,
+  const yearSource: ReleaseYearSource | undefined = catalog.groupByYear
+    ? 'band'
+    : catalog.addedYearSource;
+  if (yearSource && albums.length > 0) {
+    const createReleaseYears = (years: Map<string, number>): TreeItem => {
+      const missingCount = albums.filter(
+        (album) => !years.has(album.url.toString()),
+      ).length;
+      const root = createYearsRoot(
+        'Release years',
+        albums,
+        (album) => years.get(album.url.toString()),
+        createReleaseItem,
+        true,
+      );
+      if (!root) throw new Error('Release year groups are missing.');
+      if (yearSource === 'band') {
+        root.children = root.children?.map((group) =>
+          group.label?.startsWith('Unknown year')
+            ? group
+            : { ...group, query: group.label },
+        );
+      }
+      const groupCount = root.children?.length ?? 0;
+      if (missingCount > 0) {
+        root.children?.push({
+          label: `Find release years for ${missingCount} release${missingCount === 1 ? '' : 's'}`,
+          image: ICON_CALENDAR,
+          pathKey: 'find-release-years',
+          includeInFilterSuggestions: false,
+          onClick: async (context) => {
+            const { parent, showFeedback } = context;
+            if (!parent || parent.isLoadingChildren) return;
+            parent.isLoadingChildren = true;
+            showFeedback?.('Finding release years…', 0);
+            try {
+              const knownYears = await loadKnownReleaseYears(
+                albums,
+                yearSource,
+              );
+              const foundYears = await loadReleaseYears(albums, yearSource, {
+                initialYears: knownYears,
+              });
+              const updated = createReleaseYears(foundYears);
+              parent.children = generateTreeHierarchy(
+                deferDescendants(updated.children ?? []),
+                (parent.level ?? 0) + 1,
+                parent.path ?? '',
+              );
+              parent.childrenCount = updated.childrenCount;
+              context.focusPath = parent.children[0]?.path;
+              showFeedback?.('Release years updated');
+            } catch (error) {
+              console.error('[Release years] Lookup failed:', error);
+              showFeedback?.('Could not find release years');
+            } finally {
+              parent.isLoadingChildren = false;
+            }
+          },
+        });
+      }
+      return {
+        ...root,
+        childrenCount: groupCount,
+      };
+    };
+    const immediateYears = new Map(
+      albums.flatMap((album) => {
+        const year = album.metadata?.year;
+        return typeof year === 'number' && Number.isFinite(year)
+          ? [[album.url.toString(), year] as const]
+          : [];
+      }),
     );
-    if (years) roots.push(years);
+    const initial = createReleaseYears(immediateYears);
+    if (albums.some((album) => !immediateYears.has(album.url.toString()))) {
+      initial.childrenLoaded = false;
+      initial.loadChildren = async () => {
+        const knownYears = await loadKnownReleaseYears(albums, yearSource);
+        return createReleaseYears(knownYears);
+      };
+    } else {
+      initial.childrenLoaded = true;
+    }
+    roots.push(initial);
   }
   if (catalog.addedAt && catalog.addedYearSource) {
-    const yearSource = catalog.addedYearSource;
-    const releaseYearsLabel = 'Release years';
-    if (albums.length > 0) {
-      const createReleaseYears = (years: Map<string, number>): TreeItem => {
-        const root = createYearsRoot(
-          releaseYearsLabel,
-          albums,
-          (album) => years.get(album.url.toString()),
-          createReleaseItem,
-          true,
-        );
-        if (!root) throw new Error('Release year groups are missing.');
-        root.childrenCount = root.children?.length ?? 0;
-        const missingCount = albums.filter(
-          (album) => !years.has(album.url.toString()),
-        ).length;
-        if (missingCount > 0) {
-          root.children?.push({
-            label: `Find release years for ${missingCount} ${missingCount === 1 ? 'release' : 'releases'}`,
-            image: ICON_CALENDAR,
-            includeInFilterSuggestions: false,
-            onClick: async (context) => {
-              const parent = context.parent;
-              if (!parent || context.item.isLoadingChildren) return;
-              context.item.isLoadingChildren = true;
-              context.showFeedback?.('Looking up release years...', 0);
-              try {
-                const resolvedYears = await loadReleaseYears(
-                  albums,
-                  yearSource,
-                );
-                const updated = createReleaseYears(resolvedYears);
-                parent.children = deferDescendants(updated.children ?? []);
-                parent.childrenCount = updated.childrenCount;
-                context.focusPath = parent.path
-                  ? `${parent.path}.0`
-                  : undefined;
-              } finally {
-                context.item.isLoadingChildren = false;
-              }
-            },
-          });
-        }
-        return root;
-      };
-      roots.push({
-        label: releaseYearsLabel,
-        image: ICON_CALENDAR,
-        hasChildren: true,
-        loadChildren: async () => {
-          if (yearSource === 'collection') {
-            const years = await loadReleaseYears(albums, yearSource);
-            return createYearsRoot(
-              releaseYearsLabel,
-              albums,
-              (album) => years.get(album.url.toString()),
-              createReleaseItem,
-              true,
-            );
-          }
-          const knownYears = await loadKnownReleaseYears(albums, yearSource);
-          return createReleaseYears(knownYears);
-        },
-      });
-    }
     const addedYears = createYearsRoot(
       'Added years',
       albums,
@@ -172,7 +184,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         return addedAt ? new Date(addedAt).getUTCFullYear() : undefined;
       },
       createReleaseItem,
-      yearSource === 'wishlist',
+      catalog.addedYearSource === 'wishlist',
     );
     if (addedYears) roots.push(addedYears);
   }
@@ -186,12 +198,27 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
       },
     ]),
   );
-  const children = (item.children ?? []).map((child) => {
-    const replacement = remaining.get(child.label);
-    remaining.delete(child.label);
-    return replacement ?? child;
-  });
-  return { ...item, children: [...children, ...remaining.values()] };
+  const children = (item.children ?? [])
+    .filter((child) => !(catalog.groupByYear && child.label === 'Years'))
+    .map((child) => {
+      const replacement = remaining.get(child.label);
+      remaining.delete(child.label);
+      return replacement ?? child;
+    });
+  const restoredChildren = [...children, ...remaining.values()];
+  if (catalog.groupByYear) {
+    const yearsIndex = restoredChildren.findIndex(
+      (child) => child.label === 'Release years',
+    );
+    const aboutIndex = restoredChildren.findIndex(
+      (child) => child.label === 'About' || child.label?.startsWith('About '),
+    );
+    if (yearsIndex > aboutIndex && aboutIndex >= 0) {
+      const [years] = restoredChildren.splice(yearsIndex, 1);
+      restoredChildren.splice(aboutIndex, 0, years);
+    }
+  }
+  return { ...item, children: restoredChildren };
 }
 
 function createYearsRoot(
@@ -225,6 +252,9 @@ function createYearsRoot(
         })),
       )
         .withImage(ICON_CALENDAR_DAYS)
+        .apply((group) => {
+          group.pathKey = `year-${year}`;
+        })
         .build(),
     );
   if (includeUnknown && unknown.length > 0) {
@@ -237,6 +267,9 @@ function createYearsRoot(
         })),
       )
         .withImage(ICON_CALENDAR_DAYS)
+        .apply((group) => {
+          group.pathKey = 'unknown-year';
+        })
         .build(),
     );
   }

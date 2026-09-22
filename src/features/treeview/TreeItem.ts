@@ -39,6 +39,7 @@ export interface TreeItem {
   open?: boolean;
   level?: number;
   path?: string;
+  pathKey?: string;
   href?: string;
   image?: string; // image URL or icon name
   aboutProfile?: { name: string; image?: string };
@@ -49,7 +50,9 @@ export interface TreeItem {
   layout?: TreeItemLayout;
   buttons?: TreeItemButton[];
   onClick?: (context: TreeItemClickContext) => void | Promise<void>;
-  loadChildren?: () => Promise<TreeItem[] | TreeItem | null>;
+  loadChildren?: (
+    onUpdate?: (value: TreeItem[] | TreeItem | null) => void,
+  ) => Promise<TreeItem[] | TreeItem | null>;
   filterSearch?: (query: string) => Promise<TreeItemFilterSearchResult>;
   releaseCatalog?: ReleaseCatalog;
   releasePreview?: boolean;
