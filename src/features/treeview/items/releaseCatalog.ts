@@ -4,18 +4,24 @@ import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
+import { deferDescendants } from '../utils';
 import {
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
   ICON_DISC,
   ICON_MIC,
 } from '../utils/icon';
-import { loadCollectionReleaseYears } from './collection/releaseYears';
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
+import {
+  loadKnownReleaseYears,
+  loadReleaseYears,
+  type ReleaseYearSource,
+} from './releaseYears';
 
 export interface ReleaseCatalog {
   albums: RawAlbumData[];
-  collectionAddedAt?: Array<string | null>;
+  addedAt?: Array<string | null>;
+  addedYearSource?: ReleaseYearSource;
   groupByYear?: boolean;
   paginateReleases?: boolean;
 }
@@ -43,7 +49,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     albums.map((album) => [album.url.toString(), album]),
   );
   const addedAtByAlbum = new Map(
-    albums.map((album, index) => [album, catalog.collectionAddedAt?.[index]]),
+    albums.map((album, index) => [album, catalog.addedAt?.[index]]),
   );
   const createReleaseItem = (album: Album): TreeItem => {
     const release = AlbumTreeItemFactory.createWithPreview(album);
@@ -92,21 +98,69 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     );
     if (years) roots.push(years);
   }
-  if (catalog.collectionAddedAt) {
+  if (catalog.addedAt && catalog.addedYearSource) {
+    const yearSource = catalog.addedYearSource;
+    const releaseYearsLabel = 'Release years';
     if (albums.length > 0) {
+      const createReleaseYears = (years: Map<string, number>): TreeItem => {
+        const root = createYearsRoot(
+          releaseYearsLabel,
+          albums,
+          (album) => years.get(album.url.toString()),
+          createReleaseItem,
+          true,
+        );
+        if (!root) throw new Error('Release year groups are missing.');
+        root.childrenCount = root.children?.length ?? 0;
+        const missingCount = albums.filter(
+          (album) => !years.has(album.url.toString()),
+        ).length;
+        if (missingCount > 0) {
+          root.children?.push({
+            label: `Find release years for ${missingCount} ${missingCount === 1 ? 'release' : 'releases'}`,
+            image: ICON_CALENDAR,
+            includeInFilterSuggestions: false,
+            onClick: async (context) => {
+              const parent = context.parent;
+              if (!parent || context.item.isLoadingChildren) return;
+              context.item.isLoadingChildren = true;
+              context.showFeedback?.('Looking up release years...', 0);
+              try {
+                const resolvedYears = await loadReleaseYears(
+                  albums,
+                  yearSource,
+                );
+                const updated = createReleaseYears(resolvedYears);
+                parent.children = deferDescendants(updated.children ?? []);
+                parent.childrenCount = updated.childrenCount;
+                context.focusPath = parent.path
+                  ? `${parent.path}.0`
+                  : undefined;
+              } finally {
+                context.item.isLoadingChildren = false;
+              }
+            },
+          });
+        }
+        return root;
+      };
       roots.push({
-        label: 'Release years',
+        label: releaseYearsLabel,
         image: ICON_CALENDAR,
         hasChildren: true,
         loadChildren: async () => {
-          const releaseYears = await loadCollectionReleaseYears(albums);
-          return createYearsRoot(
-            'Release years',
-            albums,
-            (album) => releaseYears.get(album.url.toString()),
-            createReleaseItem,
-            true,
-          );
+          if (yearSource === 'collection') {
+            const years = await loadReleaseYears(albums, yearSource);
+            return createYearsRoot(
+              releaseYearsLabel,
+              albums,
+              (album) => years.get(album.url.toString()),
+              createReleaseItem,
+              true,
+            );
+          }
+          const knownYears = await loadKnownReleaseYears(albums, yearSource);
+          return createReleaseYears(knownYears);
         },
       });
     }
@@ -118,6 +172,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         return addedAt ? new Date(addedAt).getUTCFullYear() : undefined;
       },
       createReleaseItem,
+      yearSource === 'wishlist',
     );
     if (addedYears) roots.push(addedYears);
   }

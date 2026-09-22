@@ -12,6 +12,7 @@ import { item } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
 import { createLoadHandler } from '../utils';
 import { withReleaseCatalog } from './releaseCatalog';
+import { clearReleaseYears } from './releaseYears';
 
 const WISHLIST_KEY = '/wishlist';
 
@@ -30,6 +31,12 @@ export class WishlistTreeItem {
 
     return withReleaseCatalog(builder.build(), albums, {
       paginateReleases: false,
+      addedAt: wishlistItems.map((item) => {
+        if (!item.added?.trim()) return null;
+        const date = new Date(item.added);
+        return Number.isNaN(date.getTime()) ? null : date.toISOString();
+      }),
+      addedYearSource: 'wishlist',
     });
   }
 }
@@ -58,6 +65,7 @@ async function loadWishlistItems(): Promise<BandcampItem[]> {
     includeSummaryFlags: true,
   });
   await storage.set({ [WISHLIST_KEY]: wishlist });
+  await clearReleaseYears('wishlist');
 
   return wishlist;
 }

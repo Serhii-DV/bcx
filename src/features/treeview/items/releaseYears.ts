@@ -3,47 +3,17 @@ import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { storage } from 'src/core/shared';
 import { console } from 'src/utils/console';
 
-const RELEASE_YEARS_KEY = '/collection-release-years';
+export type ReleaseYearSource = 'collection' | 'wishlist';
 const FETCH_BATCH_SIZE = 6;
 const LOOKUP_TIMEOUT_MS = 45_000;
 
-export async function loadCollectionReleaseYears(
+export async function loadReleaseYears(
   albums: Album[],
+  source: ReleaseYearSource,
 ): Promise<Map<string, number>> {
-  const cached = await storage
-    .getByKey<Record<string, number>>(RELEASE_YEARS_KEY)
-    .catch((error) => {
-      console.warn('[Collection release years] Cache read failed:', error);
-      return undefined;
-    });
-  const storedAlbums = await BandcampStorage.getAlbumsRawDataByIds(
-    albums.map((album) => album.id),
-  ).catch((error) => {
-    console.warn('[Collection release years] Album lookup failed:', error);
-    return [];
-  });
-  const storedYears = new Map(
-    storedAlbums.map((album) => [
-      album.url,
-      album.metadata?.published ? yearFromDate(album.metadata.published) : null,
-    ]),
-  );
-  const years = new Map<string, number>();
-  const missing: Album[] = [];
-
-  for (const album of albums) {
-    const url = album.url.toString();
-    const year =
-      (album.metadata && yearFromDate(album.metadata.published)) ||
-      storedYears.get(url) ||
-      cached?.[url];
-    if (typeof year === 'number' && Number.isFinite(year)) {
-      years.set(url, year);
-    } else {
-      missing.push(album);
-    }
-  }
-
+  const years = await loadKnownReleaseYears(albums, source);
+  const missing = albums.filter((album) => !years.has(album.url.toString()));
+  const cacheKey = `/${source}-release-years`;
   const fetched: Record<string, number> = {};
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), LOOKUP_TIMEOUT_MS);
@@ -65,19 +35,64 @@ export async function loadCollectionReleaseYears(
   }
 
   if (Object.keys(fetched).length > 0) {
+    const cached =
+      (await storage
+        .getByKey<Record<string, number>>(cacheKey)
+        .catch(() => undefined)) ?? {};
     await storage
-      .set({ [RELEASE_YEARS_KEY]: { ...cached, ...fetched } })
+      .set({ [cacheKey]: { ...cached, ...fetched } })
       .catch((error) => {
-        console.warn('[Collection release years] Cache write failed:', error);
+        console.warn(`[${source} release years] Cache write failed:`, error);
       });
   }
 
   return years;
 }
 
-export async function clearCollectionReleaseYears(): Promise<void> {
-  await storage.remove(RELEASE_YEARS_KEY).catch((error) => {
-    console.warn('[Collection release years] Cache removal failed:', error);
+export async function loadKnownReleaseYears(
+  albums: Album[],
+  source: ReleaseYearSource,
+): Promise<Map<string, number>> {
+  const cacheKey = `/${source}-release-years`;
+  const cached = await storage
+    .getByKey<Record<string, number>>(cacheKey)
+    .catch((error) => {
+      console.warn(`[${source} release years] Cache read failed:`, error);
+      return undefined;
+    });
+  const storedAlbums = await BandcampStorage.getAlbumsRawDataByIds(
+    albums.map((album) => album.id),
+  ).catch((error) => {
+    console.warn(`[${source} release years] Album lookup failed:`, error);
+    return [];
+  });
+  const storedYears = new Map(
+    storedAlbums.map((album) => [
+      album.url,
+      album.metadata?.published ? yearFromDate(album.metadata.published) : null,
+    ]),
+  );
+  const years = new Map<string, number>();
+
+  for (const album of albums) {
+    const url = album.url.toString();
+    const year =
+      (album.metadata && yearFromDate(album.metadata.published)) ||
+      storedYears.get(url) ||
+      cached?.[url];
+    if (typeof year === 'number' && Number.isFinite(year)) {
+      years.set(url, year);
+    }
+  }
+
+  return years;
+}
+
+export async function clearReleaseYears(
+  source: ReleaseYearSource,
+): Promise<void> {
+  await storage.remove(`/${source}-release-years`).catch((error) => {
+    console.warn(`[${source} release years] Cache removal failed:`, error);
   });
 }
 

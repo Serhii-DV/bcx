@@ -59,6 +59,17 @@ async function loadMore(root: TreeItem) {
   });
 }
 
+async function findReleaseYears(root: TreeItem) {
+  const action = root.children?.at(-1);
+  expect(action?.label).toContain('Find release years');
+  if (!action) throw new Error('Missing release-year lookup action');
+  await action.onClick?.({
+    element: document.createElement('button'),
+    item: action,
+    parent: root,
+  });
+}
+
 function assertArtistSuggestions(artists: TreeItem, count: number) {
   const expected = createItems(count)
     .map((item) => item.band_name)
@@ -225,7 +236,15 @@ describe('release catalog previews', () => {
       }));
       await storage.set({
         '/collection': collectionItems,
-        '/wishlist': createItems(25),
+        '/wishlist': createItems(25).map((item, index) => ({
+          ...item,
+          added:
+            index === 24
+              ? undefined
+              : index < 20
+                ? '02 Jan 2025 03:04:05 GMT'
+                : '03 Feb 2024 04:05:06 GMT',
+        })),
       });
       if (label === 'Collection') {
         const storedAlbum = AlbumFactory.fromBandcampItem(collectionItems[0]);
@@ -244,6 +263,12 @@ describe('release catalog previews', () => {
             original.children?.find((item) => item.label === name)?.children,
           ).toHaveLength(25);
         }
+        expect(original.children?.map((item) => item.label)).toEqual([
+          'Artists',
+          'Releases',
+          'Release years',
+          'Added years',
+        ]);
       }
       const key = TreeItemCache.subtreeKey('listener', label);
       await TreeItemCache.set(key, original);
@@ -326,6 +351,47 @@ describe('release catalog previews', () => {
         );
         expect(groups?.[0].children?.[0].timestamp?.label).toBe('Added');
         expect(fetchMock).toHaveBeenCalledTimes(24);
+      } else {
+        const releaseYears = restored?.children?.find(
+          (item) => item.label === 'Release years',
+        );
+        const addedYears = restored?.children?.find(
+          (item) => item.label === 'Added years',
+        );
+        expect(releaseYears?.loadChildren).toBeTypeOf('function');
+        expect(addedYears?.children?.map((item) => item.label)).toEqual([
+          '2025',
+          '2024',
+          'Unknown year',
+        ]);
+        expect(
+          addedYears?.children?.[2].children?.[0].timestamp,
+        ).toBeUndefined();
+        expect(addedYears?.children?.[0].children?.[0].timestamp).toEqual({
+          label: 'Added',
+          dateTime: '2025-01-02T03:04:05.000Z',
+        });
+        const fetchMock = rs
+          .spyOn(globalThis, 'fetch')
+          .mockImplementation(
+            async () =>
+              new Response(
+                '<script type="application/ld+json">{"@type":"MusicAlbum","datePublished":"2022-06-01"}</script>',
+              ),
+          );
+        if (!releaseYears) throw new Error('Missing Release years root');
+        await hydrateTreeItemChildren(releaseYears);
+        expect(releaseYears.children?.map((item) => item.label)).toEqual([
+          'Unknown year',
+          'Find release years for 25 releases',
+        ]);
+        expect(fetchMock).not.toHaveBeenCalled();
+        await findReleaseYears(releaseYears);
+        expect(releaseYears.children?.map((item) => item.label)).toEqual([
+          '2022',
+        ]);
+        expect(releaseYears.children?.[0].children).toHaveLength(25);
+        expect(fetchMock).toHaveBeenCalledTimes(25);
       }
       expect(artists?.releasePreview).toBe(true);
       expect(releases?.releasePreview).toBe(true);
@@ -341,6 +407,11 @@ describe('release catalog previews', () => {
           label: 'Added',
           dateTime: '2025-01-02T03:04:05.000Z',
         });
+        expect(releases.children?.[0].timestamp).toEqual({
+          label: 'Added',
+          dateTime: '2025-01-02T03:04:05.000Z',
+        });
+      } else {
         expect(releases.children?.[0].timestamp).toEqual({
           label: 'Added',
           dateTime: '2025-01-02T03:04:05.000Z',

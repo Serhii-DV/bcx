@@ -124,6 +124,17 @@ batches. Releases without a known year remain in an Unknown year group. Successf
 fetched years are stored locally until Collection is refreshed. Snapshot version
 17 invalidates older catalog roots and rebuilds both named year tabs.
 
+Wishlist catalog snapshots retain each item's Wishlist-added timestamp from
+Bandcamp's `added` field. Artists, Releases, and Added years rebuild timestamped
+release items from it. Release years shows locally known years immediately,
+with unresolved releases under Unknown year. A Find release years action fetches
+missing dates on request; results are stored under a separate Wishlist cache key
+that is cleared on Wishlist refresh. Items without a usable added date appear under
+Unknown year in the Wishlist Added years tab. Snapshot version 18 rebuilds these Wishlist tabs
+and keeps Collection's existing release-year cache separate.
+Snapshot version 19 refreshes cached Wishlist roots with the shared Release years
+label used by Collection.
+
 History uses the same item preview browser for saved bands and releases, including
 entries appended by Show more. Pages without saved metadata expose basic preview
 information from their history title and URL. History is constructed directly,

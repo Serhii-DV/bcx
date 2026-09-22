@@ -302,6 +302,7 @@ async function handleItemClick(
     showItemFeedback,
     logLabel: '[BcxTreeBrowser]',
   });
+  if (item.onClick) onRootLoaded?.();
 }
 
 function handleItemDoubleClick(item: TreeItem, event: MouseEvent) {

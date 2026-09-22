@@ -4,7 +4,7 @@ import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 import { type ReleaseCatalog, restoreReleaseCatalog } from './releaseCatalog';
 
-const CACHE_VERSION = 17;
+const CACHE_VERSION = 19;
 const CACHE_KEY_PREFIX = '/cache/tree-item';
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 
