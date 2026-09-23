@@ -1,4 +1,5 @@
 <script lang="ts">
+import 'country-flag-icons/3x2/flags.css';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';
@@ -84,8 +85,10 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 
 {#snippet treeItemImage(item: TreeItem)}
   {@const ImageIcon = makeIcon(item.image)}
-  <span class="bcx-tree-item-img w-6 h-6 flex-shrink-0" aria-hidden={item.image ? undefined : 'true'}>
-    {#if item.image && ImageIcon}
+  <span class="bcx-tree-item-img w-6 h-6 flex-shrink-0" aria-hidden={item.image || item.flagCode ? undefined : 'true'}>
+    {#if item.flagCode}
+      <span class={'flag:' + item.flagCode} aria-hidden="true"></span>
+    {:else if item.image && ImageIcon}
       <span class="bcx-tree-item-image-icon text-gray-300" aria-hidden="true">
         <ImageIcon size="16" />
       </span>

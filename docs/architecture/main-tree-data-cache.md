@@ -97,6 +97,14 @@ Following Bands stores every loaded band in its tree snapshot without pagination
 Snapshot version 15 invalidates older snapshots that predate the Latest added,
 A–Z, Z–A, and Years root tabs and followed timestamps. Cache keys, TTLs, and
 refresh behavior stay the same.
+Snapshot version 24 rebuilds Following Bands with the Followed by Year label and
+a Countries tab. Countries use the last part of each stored location, with
+missing locations grouped under Unknown country. Recognized country names
+display bundled SVG flags from country-flag-icons; unmatched names keep a map-pin
+icon. Snapshot version 26 stores flag codes in the serialized country rows.
+Snapshot version 27 merges recognized country aliases and US state and Canadian
+province or territory names into their countries. Snapshot version 28 also
+recognizes Los Angeles, accented Québec, and Russian Federation as Russia.
 
 Wishlist Releases and Artists show every stored item immediately. Snapshot version
 10 invalidates older snapshots with paginated Wishlist options. Release previews

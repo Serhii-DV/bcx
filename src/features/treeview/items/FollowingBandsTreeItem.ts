@@ -6,7 +6,16 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
-import { ICON_CALENDAR, ICON_CALENDAR_DAYS } from '../utils/icon';
+import {
+  countryFlagCodeFromLocation,
+  countryNameFromLocation,
+} from '../utils/countryFlag';
+import {
+  ICON_CALENDAR,
+  ICON_CALENDAR_DAYS,
+  ICON_GLOBE,
+  ICON_MAP_PIN,
+} from '../utils/icon';
 import { createStoredFanListTreeItem } from './createStoredFanListTreeItem';
 
 const FOLLOWING_BANDS_KEY = '/following-bands';
@@ -46,6 +55,7 @@ export class FollowingBandsTreeItem {
     ];
     const yearsRoot = createYearsRoot(latestItems);
     if (yearsRoot) roots.push(yearsRoot);
+    roots.push(createCountriesRoot(latestItems, collator));
 
     return {
       ...item,
@@ -110,7 +120,7 @@ function createYearsRoot(items: TreeItem[]): TreeItem | null {
   if (!years.length) return null;
 
   return {
-    label: 'Years',
+    label: 'Followed by Year',
     image: ICON_CALENDAR,
     children: years.map((year) => ({
       label: String(year),
@@ -119,6 +129,46 @@ function createYearsRoot(items: TreeItem[]): TreeItem | null {
       childrenCount: itemsByYear.get(year)?.length,
     })),
     childrenCount: years.length,
+    itemPreview: true,
+    layout: TREE_ITEM_LAYOUT.BROWSER,
+  };
+}
+
+function createCountriesRoot(
+  items: TreeItem[],
+  collator: Intl.Collator,
+): TreeItem {
+  const itemsByCountry = new Map<string, TreeItem[]>();
+
+  for (const item of items) {
+    const country = countryNameFromLocation(item.bandPreview?.location);
+    const countryItems = itemsByCountry.get(country) ?? [];
+    countryItems.push({ ...item, includeInFilterSuggestions: false });
+    itemsByCountry.set(country, countryItems);
+  }
+
+  const countries = [...itemsByCountry.keys()].sort((a, b) =>
+    a === 'Unknown country'
+      ? 1
+      : b === 'Unknown country'
+        ? -1
+        : collator.compare(a, b),
+  );
+
+  return {
+    label: 'Countries',
+    image: ICON_GLOBE,
+    children: countries.map((country) => {
+      const flagCode = countryFlagCodeFromLocation(country);
+      return {
+        label: country,
+        flagCode,
+        image: flagCode ? undefined : ICON_MAP_PIN,
+        children: itemsByCountry.get(country),
+        childrenCount: itemsByCountry.get(country)?.length,
+      };
+    }),
+    childrenCount: countries.length,
     itemPreview: true,
     layout: TREE_ITEM_LAYOUT.BROWSER,
   };

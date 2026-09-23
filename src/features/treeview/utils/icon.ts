@@ -14,6 +14,7 @@ import {
   FileText,
   Funnel,
   FunnelPlus,
+  Globe,
   Headphones,
   Heart,
   History,
@@ -21,6 +22,7 @@ import {
   Library,
   Link,
   ListMusic,
+  MapPin,
   Menu,
   Mic,
   Search,
@@ -39,11 +41,13 @@ export const ICON_DISC = 'disc';
 export const ICON_EXTERNAL_LINK = 'external-link';
 export const ICON_FUNNEL = 'funnel';
 export const ICON_FUNNEL_PLUS = 'funnel-plus';
+export const ICON_GLOBE = 'globe';
 export const ICON_HEART = 'heart';
 export const ICON_HISTORY = 'history';
 export const ICON_INFO = 'info';
 export const ICON_LIBRARY = 'library';
 export const ICON_LIST_MUSIC = 'list-music';
+export const ICON_MAP_PIN = 'map-pin';
 export const ICON_MENU = 'menu';
 export const ICON_MIC = 'mic';
 export const ICON_SEARCH = 'search';
@@ -80,6 +84,8 @@ export function makeIcon(iconName?: string): any {
       return Funnel;
     case ICON_FUNNEL_PLUS:
       return FunnelPlus;
+    case ICON_GLOBE:
+      return Globe;
     case ICON_HEART:
       return Heart;
     case ICON_HISTORY:
@@ -90,6 +96,8 @@ export function makeIcon(iconName?: string): any {
       return Library;
     case ICON_LIST_MUSIC:
       return ListMusic;
+    case ICON_MAP_PIN:
+      return MapPin;
     case ICON_MENU:
       return Menu;
     case ICON_MIC:

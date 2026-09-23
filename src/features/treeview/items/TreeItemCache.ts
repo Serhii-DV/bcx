@@ -4,7 +4,7 @@ import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 import { type ReleaseCatalog, restoreReleaseCatalog } from './releaseCatalog';
 
-const CACHE_VERSION = 23;
+const CACHE_VERSION = 28;
 const CACHE_KEY_PREFIX = '/cache/tree-item';
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 
@@ -27,6 +27,7 @@ interface TreeItemSnapshot {
   pathKey?: string;
   href?: string;
   image?: string;
+  flagCode?: string;
   hint?: string;
   query?: string;
   keywords?: string[];
@@ -159,6 +160,7 @@ function serializeTreeItem(item: TreeItem): TreeItemSnapshot {
     pathKey: item.pathKey,
     href: item.href,
     image: item.image,
+    flagCode: item.flagCode,
     hint: item.hint,
     query: item.query,
     keywords: item.keywords,
@@ -195,6 +197,7 @@ function deserializeTreeItem(item: TreeItemSnapshot): TreeItem {
     pathKey: item.pathKey,
     href: item.href,
     image: item.image,
+    flagCode: item.flagCode,
     hint: item.hint,
     query: item.query,
     keywords: item.keywords,
