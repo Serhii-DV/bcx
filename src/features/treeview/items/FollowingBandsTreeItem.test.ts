@@ -25,7 +25,16 @@ describe('Following Bands', () => {
         name: `Artist ${index}`,
         is_following: true,
         is_subscribed: false,
-        location: null,
+        location:
+          index === 0
+            ? 'Copenhagen, Denmark'
+            : index === 1
+              ? 'Stockholm, Sweden'
+              : index === 2
+                ? 'Aarhus, Denmark'
+                : index === 3
+                  ? 'Canada'
+                  : null,
         date_followed:
           index === 0
             ? '2024-01-02T03:04:05Z'
@@ -50,17 +59,19 @@ describe('Following Bands', () => {
     );
     const restored = await TreeItemCache.get(key);
     for (const tree of [original, restored]) {
-      expect(tree?.childrenCount).toBe(4);
+      expect(tree?.childrenCount).toBe(5);
       expect(tree?.children?.map((item) => item.label)).toEqual([
         'Latest added',
         'A–Z',
         'Z–A',
-        'Years',
+        'Followed by Year',
+        'Countries',
       ]);
       const latest = tree?.children?.[0];
       const ascending = tree?.children?.[1];
       const descending = tree?.children?.[2];
       const years = tree?.children?.[3];
+      const countries = tree?.children?.[4];
       expect(latest?.childrenCount).toBe(45);
       expect(latest?.children?.[0].bandPreview).toMatchObject({
         id: 1,
@@ -110,6 +121,21 @@ describe('Following Bands', () => {
         'Artist 0',
         'Artist 2',
       ]);
+      expect(countries?.children?.map((item) => item.label)).toEqual([
+        'Canada',
+        'Denmark',
+        'Sweden',
+        'Unknown country',
+      ]);
+      expect(countries?.children?.map((item) => item.childrenCount)).toEqual([
+        1, 2, 1, 41,
+      ]);
+      expect(
+        countries?.children?.[1].children?.map((item) => item.label),
+      ).toEqual(['Artist 0', 'Artist 2']);
+      expect(
+        countries?.children?.[3].children?.[0].bandPreview?.location,
+      ).toBeUndefined();
       expect(
         tree?.buttons?.some(
           (button) => button.title === 'Open Following Bands',
@@ -155,8 +181,9 @@ describe('Following Bands', () => {
       'Latest added',
       'A–Z',
       'Z–A',
+      'Countries',
     ]);
     expect(tree.children?.every((item) => item.childrenCount === 0)).toBe(true);
-    expect(tree.childrenCount).toBe(3);
+    expect(tree.childrenCount).toBe(4);
   });
 });
