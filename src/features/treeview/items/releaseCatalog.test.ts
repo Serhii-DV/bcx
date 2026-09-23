@@ -320,6 +320,15 @@ describe('release catalog previews', () => {
           label: 'Added',
           dateTime: '2024-02-03T04:05:06.000Z',
         });
+        expect(
+          addedYears?.children?.[1].children?.[0].secondaryTimestamp,
+        ).toBeUndefined();
+        expect(
+          addedYears?.children?.[0].children?.[0].secondaryTimestamp,
+        ).toEqual({
+          label: 'Released',
+          dateTime: '1999-01-01T00:00:00.000Z',
+        });
         assertPreview(addedYears?.children?.[1].children?.[0]);
         expect(releaseYears?.releasePreview).toBe(true);
         expect(releaseYears?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
@@ -367,6 +376,10 @@ describe('release catalog previews', () => {
           collectionItems[24].item_url,
         );
         expect(groups?.[0].children?.[0].timestamp?.label).toBe('Added');
+        expect(groups?.[0].children?.[0].secondaryTimestamp).toEqual({
+          label: 'Released',
+          dateTime: '1999-01-01T00:00:00.000Z',
+        });
         expect(fetchMock).not.toHaveBeenCalled();
       } else {
         const releaseYears = restored?.children?.find(
@@ -421,6 +434,16 @@ describe('release catalog previews', () => {
           label: 'Added',
           dateTime: '2025-01-02T03:04:05.000Z',
         });
+        const releasedTimestamp = {
+          label: 'Released',
+          dateTime: '1999-01-01T00:00:00.000Z',
+        };
+        expect(artists.children?.[0].children?.[0].secondaryTimestamp).toEqual(
+          releasedTimestamp,
+        );
+        expect(releases.children?.[0].secondaryTimestamp).toEqual(
+          releasedTimestamp,
+        );
       } else {
         expect(releases.children?.[0].timestamp).toEqual({
           label: 'Added',
@@ -443,6 +466,7 @@ describe('release catalog previews', () => {
           label: 'Added',
           dateTime: '2024-02-03T04:05:06.000Z',
         });
+        expect(releases.children?.[24].secondaryTimestamp).toBeUndefined();
       }
       expect(releases.children?.map((item) => item.href)).toEqual(
         createItems(25).map((item) => item.item_url),

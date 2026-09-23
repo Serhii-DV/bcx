@@ -71,6 +71,17 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   {/if}
 {/snippet}
 
+{#snippet treeItemTimestamp(timestamp: NonNullable<TreeItem['timestamp']>)}
+  <span class="item-timestamp text-gray-400">
+    {timestamp.label}
+    <relative-time
+      datetime={timestamp.dateTime}
+      format="relative"
+      precision="minute"
+    >{new Date(timestamp.dateTime).toLocaleString()}</relative-time>
+  </span>
+{/snippet}
+
 {#snippet treeItemImage(item: TreeItem)}
   {@const ImageIcon = makeIcon(item.image)}
   <span class="bcx-tree-item-img w-6 h-6 flex-shrink-0" aria-hidden={item.image ? undefined : 'true'}>
@@ -88,14 +99,10 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 <span class="item-label-content">
   <span class="item-label">{item.label}</span>
   {#if item.timestamp}
-    <span class="item-timestamp text-gray-400">
-      {item.timestamp.label}
-      <relative-time
-        datetime={item.timestamp.dateTime}
-        format="relative"
-        precision="minute"
-      >{new Date(item.timestamp.dateTime).toLocaleString()}</relative-time>
-    </span>
+    {@render treeItemTimestamp(item.timestamp)}
+  {/if}
+  {#if item.secondaryTimestamp}
+    {@render treeItemTimestamp(item.secondaryTimestamp)}
   {/if}
 </span>
 {#if showActions}

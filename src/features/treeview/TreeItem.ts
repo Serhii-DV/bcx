@@ -67,6 +67,7 @@ export interface TreeItem {
     label: string;
     dateTime: string;
   };
+  secondaryTimestamp?: TreeItem['timestamp'];
 }
 
 export function hasItemPreview(item?: TreeItem | null): boolean {
