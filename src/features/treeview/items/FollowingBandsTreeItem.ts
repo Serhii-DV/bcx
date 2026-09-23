@@ -6,7 +6,10 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
-import { countryFlagCodeFromLocation } from '../utils/countryFlag';
+import {
+  countryFlagCodeFromLocation,
+  countryNameFromLocation,
+} from '../utils/countryFlag';
 import {
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
@@ -138,8 +141,7 @@ function createCountriesRoot(
   const itemsByCountry = new Map<string, TreeItem[]>();
 
   for (const item of items) {
-    const location = item.bandPreview?.location?.trim();
-    const country = location?.split(',').at(-1)?.trim() || 'Unknown country';
+    const country = countryNameFromLocation(item.bandPreview?.location);
     const countryItems = itemsByCountry.get(country) ?? [];
     countryItems.push({ ...item, includeInFilterSuggestions: false });
     itemsByCountry.set(country, countryItems);

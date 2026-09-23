@@ -15,6 +15,23 @@ beforeEach(async () => {
 
 describe('Following Bands', () => {
   it('shows all stored bands in order, including after cache restoration', async () => {
+    const locations = [
+      'Copenhagen, Denmark',
+      'Stockholm, Sweden',
+      'Aarhus, Denmark',
+      'Canada',
+      'Amsterdam, The Netherlands',
+      'Los Angeles, California',
+      'Toronto, Ontario',
+      'Vancouver, British Columbia',
+      'Atlanta, Georgia',
+      'Georgia',
+      'Unknown, Made Up Region',
+      'Los Angeles',
+      'Montréal, Québec',
+      'Moscow, Russian Federation',
+      'Saint Petersburg, Russia',
+    ];
     const bands: FollowingBandItem[] = Array.from(
       { length: 45 },
       (_, index) => ({
@@ -25,16 +42,7 @@ describe('Following Bands', () => {
         name: `Artist ${index}`,
         is_following: true,
         is_subscribed: false,
-        location:
-          index === 0
-            ? 'Copenhagen, Denmark'
-            : index === 1
-              ? 'Stockholm, Sweden'
-              : index === 2
-                ? 'Aarhus, Denmark'
-                : index === 3
-                  ? 'Canada'
-                  : null,
+        location: locations[index] ?? null,
         date_followed:
           index === 0
             ? '2024-01-02T03:04:05Z'
@@ -124,24 +132,44 @@ describe('Following Bands', () => {
       expect(countries?.children?.map((item) => item.label)).toEqual([
         'Canada',
         'Denmark',
+        'Georgia',
+        'Made Up Region',
+        'Netherlands',
+        'Russia',
         'Sweden',
+        'United States',
         'Unknown country',
       ]);
       expect(countries?.children?.map((item) => item.flagCode)).toEqual([
         'CA',
         'DK',
+        'GE',
+        undefined,
+        'NL',
+        'RU',
         'SE',
+        'US',
         undefined,
       ]);
       expect(countries?.children?.[3].image).toBe('map-pin');
+      expect(countries?.children?.[8].image).toBe('map-pin');
       expect(countries?.children?.map((item) => item.childrenCount)).toEqual([
-        1, 2, 1, 41,
+        4, 2, 1, 1, 1, 2, 1, 3, 30,
       ]);
+      expect(
+        countries?.children?.[0].children?.map((item) => item.label),
+      ).toEqual(['Artist 3', 'Artist 6', 'Artist 7', 'Artist 12']);
       expect(
         countries?.children?.[1].children?.map((item) => item.label),
       ).toEqual(['Artist 0', 'Artist 2']);
       expect(
-        countries?.children?.[3].children?.[0].bandPreview?.location,
+        countries?.children?.[5].children?.map((item) => item.label),
+      ).toEqual(['Artist 13', 'Artist 14']);
+      expect(
+        countries?.children?.[7].children?.map((item) => item.label),
+      ).toEqual(['Artist 5', 'Artist 8', 'Artist 11']);
+      expect(
+        countries?.children?.[8].children?.[0].bandPreview?.location,
       ).toBeUndefined();
       expect(
         tree?.buttons?.some(
