@@ -127,6 +127,13 @@ describe('Following Bands', () => {
         'Sweden',
         'Unknown country',
       ]);
+      expect(countries?.children?.map((item) => item.flagCode)).toEqual([
+        'CA',
+        'DK',
+        'SE',
+        undefined,
+      ]);
+      expect(countries?.children?.[3].image).toBe('map-pin');
       expect(countries?.children?.map((item) => item.childrenCount)).toEqual([
         1, 2, 1, 41,
       ]);

@@ -42,6 +42,7 @@ export interface TreeItem {
   pathKey?: string;
   href?: string;
   image?: string; // image URL or icon name
+  flagCode?: string;
   aboutProfile?: {
     name: string;
     image?: string;
