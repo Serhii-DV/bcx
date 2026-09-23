@@ -12,7 +12,7 @@ import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
 import { ICON_INFO } from 'src/features/treeview/utils/icon';
 import { untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
-import BcxItemPreviewBrowser from './BcxItemPreviewBrowser.svelte';
+import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxSidePanelHeader from './BcxSidePanelHeader.svelte';
@@ -232,7 +232,7 @@ $effect(() => {
                           <p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>
                         {:else}
                           {#if getTreeDataForSection(section).items.some(hasItemPreview)}
-                            <BcxItemPreviewBrowser treeData={getTreeDataForSection(section)} initialSelectedHref={section.initialSelectedHref} filterQuery={sectionFilterQueryById[section.id] ?? ''} showFilter={false} isLoading={isSectionLoading(section)} />
+                            <BcxItemPreviewPanel treeData={getTreeDataForSection(section)} initialSelectedHref={section.initialSelectedHref} filterQuery={sectionFilterQueryById[section.id] ?? ''} showFilter={false} isLoading={isSectionLoading(section)} />
                           {:else}
                           <BcxTreeBrowser
                             treeData={getTreeDataForSection(section)}

@@ -60,6 +60,7 @@ describe('release information', () => {
     const info = createReleaseInformation(release);
     expect(info).toMatchObject({
       date: '2026-01-02',
+      releaseYear: 2026,
       price: 'From 5 EUR',
       publisher: 'Label',
       releaseType: 'EP',

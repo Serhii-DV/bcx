@@ -109,6 +109,7 @@ function withReleasePreviews(
     {
       groupByYear: true,
       paginateReleases: false,
+      showReleaseDate: true,
     },
   );
   const catalog = {

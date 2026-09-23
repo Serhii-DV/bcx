@@ -1,5 +1,8 @@
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { BandTreeItem } from './items/BandTreeItem';
+import type { TreeItem } from './TreeItem';
+import { copyable, items, linkOpenPage, text } from './TreeItemBuilder';
 
 export interface BandPreview {
   id?: number;
@@ -37,5 +40,45 @@ export async function loadBandPreview(
       const url = releaseLink(link.url);
       return url ? [{ label: link.label, url }] : [];
     }),
+  };
+}
+
+export async function loadBandAbout(fallback: BandPreview): Promise<TreeItem> {
+  if (fallback.id !== undefined) {
+    const [band] = await BandcampStorage.getBands([fallback.id]);
+    if (band) {
+      const about = BandTreeItem.createBandAbout(band);
+      return {
+        ...about,
+        aboutProfile: {
+          ...about.aboutProfile,
+          name: band.name,
+          following: fallback.following,
+        },
+      };
+    }
+  }
+
+  return createBandAboutFallback(fallback);
+}
+
+export function createBandAboutFallback(fallback: BandPreview): TreeItem {
+  return {
+    ...items('About', [
+      ...(fallback.location ? [text(`Location: ${fallback.location}`)] : []),
+      linkOpenPage('Open Bandcamp catalog', fallback.url),
+      copyable('Copy Bandcamp URL', fallback.url),
+      text(
+        'No saved band details yet. Open the band’s Bandcamp page to explore its catalog.',
+      ),
+    ])
+      .asTree()
+      .build(),
+    aboutProfile: {
+      name: fallback.name,
+      image: fallback.image,
+      location: fallback.location,
+      following: fallback.following,
+    },
   };
 }

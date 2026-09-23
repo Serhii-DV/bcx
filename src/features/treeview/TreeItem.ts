@@ -42,7 +42,12 @@ export interface TreeItem {
   pathKey?: string;
   href?: string;
   image?: string; // image URL or icon name
-  aboutProfile?: { name: string; image?: string };
+  aboutProfile?: {
+    name: string;
+    image?: string;
+    location?: string;
+    following?: boolean;
+  };
   hint?: string;
   query?: string;
   keywords?: string[];
@@ -67,6 +72,7 @@ export interface TreeItem {
     label: string;
     dateTime: string;
   };
+  secondaryTimestamp?: TreeItem['timestamp'];
 }
 
 export function hasItemPreview(item?: TreeItem | null): boolean {

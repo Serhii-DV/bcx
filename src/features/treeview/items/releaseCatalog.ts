@@ -17,9 +17,11 @@ import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 export interface ReleaseCatalog {
   albums: RawAlbumData[];
   addedAt?: Array<string | null>;
+  releaseDates?: Array<string | null>;
   addedYearSource?: 'collection' | 'wishlist';
   groupByYear?: boolean;
   paginateReleases?: boolean;
+  showReleaseDate?: boolean;
 }
 
 export function withReleaseCatalog(
@@ -47,12 +49,29 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
   const addedAtByAlbum = new Map(
     albums.map((album, index) => [album, catalog.addedAt?.[index]]),
   );
+  const releaseDateByAlbum = new Map(
+    albums.map((album, index) => [album, catalog.releaseDates?.[index]]),
+  );
   const createReleaseItem = (album: Album): TreeItem => {
     const release = AlbumTreeItemFactory.createWithPreview(album);
     const addedAt = addedAtByAlbum.get(album);
-    return addedAt
-      ? { ...release, timestamp: { label: 'Added', dateTime: addedAt } }
-      : release;
+    const published = album.metadata?.published;
+    const releaseDate =
+      releaseDateByAlbum.get(album) ??
+      (published && Number.isFinite(published.getTime())
+        ? published.toISOString()
+        : undefined);
+    const releasedTimestamp =
+      catalog.showReleaseDate && releaseDate
+        ? { label: 'Released', dateTime: releaseDate }
+        : undefined;
+    return {
+      ...release,
+      timestamp: addedAt
+        ? { label: 'Added', dateTime: addedAt }
+        : releasedTimestamp,
+      secondaryTimestamp: addedAt ? releasedTimestamp : undefined,
+    };
   };
   const artistGroups = AlbumTreeItemFactory.fromAlbumsByArtistReleases(
     albums,

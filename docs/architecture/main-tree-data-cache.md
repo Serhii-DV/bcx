@@ -104,7 +104,7 @@ are still rebuilt from raw album data, and Collection release pagination is reta
 
 ## Shared item preview
 
-`BcxItemPreviewBrowser` owns the shared selection, asynchronous loading, and
+`BcxItemPreviewPanel` owns the shared selection, asynchronous loading, and
 resizable details area for releases and followed bands. Release details retain
 their existing renderer; band details read `BandcampStorage` only on selection.
 Following-list identity, artwork, and location provide the fallback when no band
@@ -137,7 +137,9 @@ with shared Release years behavior and stable year-group paths. Snapshot version
 21 makes publication-year requests explicit and places Band's Release years
 before About. Snapshot version 22 removes those requests, their action, and the
 release-year cache; the year tabs now use only catalog and locally stored album
-metadata.
+metadata. Snapshot version 23 rebuilds Collection catalogs with locally saved
+release dates. Each Collection release keeps its Added timestamp and shows a Released
+timestamp beneath it when a valid publication date is available.
 
 History uses the same item preview browser for saved bands and releases, including
 entries appended by Show more. Pages without saved metadata expose basic preview

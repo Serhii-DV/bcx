@@ -25,11 +25,12 @@ import {
 
 interface Props {
   treeData: TreeData;
+  showFilter?: boolean;
 }
 
-let { treeData }: Props = $props();
+let { treeData, showFilter = true }: Props = $props();
 let treeContainer: HTMLDivElement;
-let filterRef: BcxTreeViewFilter;
+let filterRef: BcxTreeViewFilter | undefined = $state();
 let focusedPath: string | null = $state(null);
 let searchQuery = $state('');
 let filterQuery = $state('');
@@ -342,12 +343,14 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
 </script>
 
 <div class="flex flex-col h-full gap-2">
+  {#if showFilter}
   <BcxTreeViewFilter
     bind:this={filterRef}
     bind:value={filterQuery}
     suggestions={filterSuggestions}
     onArrowDown={handleFilterArrowDown}
   />
+  {/if}
   <div
     bind:this={treeContainer}
     class="bcx-tree-view"
