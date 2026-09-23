@@ -20,6 +20,7 @@ export interface ReleaseCatalog {
   addedYearSource?: 'collection' | 'wishlist';
   groupByYear?: boolean;
   paginateReleases?: boolean;
+  showReleaseDate?: boolean;
 }
 
 export function withReleaseCatalog(
@@ -50,8 +51,17 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
   const createReleaseItem = (album: Album): TreeItem => {
     const release = AlbumTreeItemFactory.createWithPreview(album);
     const addedAt = addedAtByAlbum.get(album);
-    return addedAt
-      ? { ...release, timestamp: { label: 'Added', dateTime: addedAt } }
+    if (addedAt) {
+      return { ...release, timestamp: { label: 'Added', dateTime: addedAt } };
+    }
+    const published = album.metadata?.published;
+    return catalog.showReleaseDate &&
+      published &&
+      Number.isFinite(published.getTime())
+      ? {
+          ...release,
+          timestamp: { label: 'Released', dateTime: published.toISOString() },
+        }
       : release;
   };
   const artistGroups = AlbumTreeItemFactory.fromAlbumsByArtistReleases(

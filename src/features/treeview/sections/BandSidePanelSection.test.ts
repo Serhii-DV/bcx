@@ -89,7 +89,18 @@ describe('Artist/Label release browser', () => {
         expect(group?.query).toBe(query);
         expect(group?.children?.[0].href).toBe(album.url.toString());
         expect(group?.children?.[0].loadPreview).toBeDefined();
+        expect(group?.children?.[0].timestamp).toEqual({
+          label: 'Released',
+          dateTime: '2026-01-01T00:00:00.000Z',
+        });
       }
+      expect(
+        data?.items.find((item) => item.label === 'Releases')?.children?.[0]
+          .timestamp,
+      ).toEqual({
+        label: 'Released',
+        dateTime: '2026-01-01T00:00:00.000Z',
+      });
     }
   });
 
