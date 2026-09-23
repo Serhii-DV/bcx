@@ -104,7 +104,7 @@ are still rebuilt from raw album data, and Collection release pagination is reta
 
 ## Shared item preview
 
-`BcxItemPreviewBrowser` owns the shared selection, asynchronous loading, and
+`BcxItemPreviewPanel` owns the shared selection, asynchronous loading, and
 resizable details area for releases and followed bands. Release details retain
 their existing renderer; band details read `BandcampStorage` only on selection.
 Following-list identity, artwork, and location provide the fallback when no band

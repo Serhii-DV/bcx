@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
-import BcxItemPreviewBrowser from './BcxItemPreviewBrowser.svelte';
+import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import { createRootSectionTabs } from './rootSectionTabs';
@@ -48,7 +48,7 @@ function refreshTabs() {
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
             {#if usesItemPreview(tab.id)}
-              <BcxItemPreviewBrowser {treeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
+              <BcxItemPreviewPanel {treeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
             {:else}
             {@const profile = treeData.items.find((item) => item.path === tab.id)?.aboutProfile}
             {#if profile}
