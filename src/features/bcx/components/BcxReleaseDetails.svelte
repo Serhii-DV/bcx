@@ -34,7 +34,7 @@ let treeData = $derived(
     <div class="release-heading">
       <h3 class="release-artist">{information.artist}</h3>
       <h4 class="release-title">{information.title}</h4>
-      {#if information.releaseYear}<div>{information.releaseYear}</div>{/if}
+      {#if information.releaseYear}<div class="release-year">{information.releaseYear}</div>{/if}
       {#if information.date}
         <div class="text-gray-400">
           Released on <relative-time datetime={information.date} format="datetime" month="short" day="numeric" year="numeric" time-zone="UTC">{information.date}</relative-time>
@@ -62,8 +62,10 @@ let treeData = $derived(
 .release-header { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; }
 .release-cover { width: min(15rem, 52%); aspect-ratio: 1; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
 .release-heading { min-width: 0; flex: 1 1 0%; overflow-wrap: anywhere; font-size: 0.8125rem; }
-.release-artist { margin: 0 0 0.25rem; font-size: 1.125rem; font-weight: 600; }
-.release-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 500; }
+.release-artist { margin: 0 0 0.5rem; font-size: 2.2rem; font-weight: 300; line-height: 1.1; letter-spacing: 0.01em; }
+.release-title, .release-year { font-size: 1.75rem; font-weight: 300; line-height: 1.2; letter-spacing: 0.01em; }
+.release-title { margin: 0 0 0.25rem; }
+.release-year { margin-bottom: 0.5rem; }
 .release-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.625rem; }
 .wishlist-badge { border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
 .release-tree { display: flex; flex: 1 1 20rem; flex-direction: column; }
