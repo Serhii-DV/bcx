@@ -1,4 +1,3 @@
-import { hasFlag } from 'country-flag-icons';
 import { Band } from 'src/bandcamp/domain/band/band';
 import {
   type FollowingBandItem,
@@ -7,6 +6,7 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
+import { countryFlagCodeFromLocation } from '../utils/countryFlag';
 import {
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
@@ -16,7 +16,6 @@ import {
 import { createStoredFanListTreeItem } from './createStoredFanListTreeItem';
 
 const FOLLOWING_BANDS_KEY = '/following-bands';
-const countryCodesByName = createCountryCodesByName();
 
 export class FollowingBandsTreeItem {
   static async create(username: string): Promise<TreeItem> {
@@ -158,7 +157,7 @@ function createCountriesRoot(
     label: 'Countries',
     image: ICON_GLOBE,
     children: countries.map((country) => {
-      const flagCode = countryFlagCode(country);
+      const flagCode = countryFlagCodeFromLocation(country);
       return {
         label: country,
         flagCode,
@@ -171,33 +170,6 @@ function createCountriesRoot(
     itemPreview: true,
     layout: TREE_ITEM_LAYOUT.BROWSER,
   };
-}
-
-function createCountryCodesByName(): Map<string, string> {
-  const displayNames = new Intl.DisplayNames(['en'], {
-    type: 'region',
-    fallback: 'none',
-  });
-  const codesByName = new Map<string, string>();
-
-  for (let first = 65; first <= 90; first++) {
-    for (let second = 65; second <= 90; second++) {
-      const code = String.fromCharCode(first, second);
-      const name = displayNames.of(code);
-      if (name && hasFlag(code)) {
-        codesByName.set(name.toLocaleLowerCase('en'), code);
-      }
-    }
-  }
-
-  codesByName.set('usa', 'US');
-  codesByName.set('united states of america', 'US');
-  codesByName.set('uk', 'GB');
-  return codesByName;
-}
-
-function countryFlagCode(country: string): string | undefined {
-  return countryCodesByName.get(country.toLocaleLowerCase('en'));
 }
 
 async function loadFollowingBands(): Promise<FollowingBandItem[]> {
