@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
+import { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
+import { Metadata } from 'src/bandcamp/domain/metadata';
+import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { storage } from 'src/core/shared';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
@@ -42,23 +45,58 @@ describe('release previews', () => {
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(preview?.layout).toBe(TREE_ITEM_LAYOUT.TREE);
     expect(preview?.information.title).toBe('Release');
-    expect(preview?.items.map((item) => item.label)).toEqual(
-      AlbumTreeItemFactory.createWithSummary(album).children?.map(
-        (item) => item.label,
-      ),
-    );
+    expect(preview?.items.map((item) => item.label)).toEqual([
+      ...(AlbumTreeItemFactory.createWithSummary(album)
+        .children?.filter(
+          (item) =>
+            item.label !== 'Filter' && item.href !== album.url.toString(),
+        )
+        .map((item) => item.label) ?? []),
+      'Links',
+    ]);
+    expect(
+      preview?.items.find((item) => item.label === 'Links')?.children?.[0].href,
+    ).toBe(album.url.toString());
   });
 
-  it('uses hydrated stored data for the same tree as the release page', async () => {
+  it('uses hydrated stored data and includes release notes in the tree', async () => {
+    const stored = Album.create(
+      album.url.toString(),
+      album.artist,
+      album.title,
+      album.id,
+      album.artwork.id,
+      album.bandId,
+      [],
+      Metadata.create(
+        Price.create(0, 'EUR'),
+        '',
+        '2024-01-02',
+        '2024-01-02',
+        [],
+        {
+          description: 'About the release',
+          credits: 'Credits text',
+        },
+      ),
+    );
     rs.spyOn(BandcampStorage, 'getAlbumsRawDataByIds').mockResolvedValue([
-      album.toRawData(),
+      stored.toRawData(),
     ]);
-    rs.spyOn(BandcampStorage, 'getAlbums').mockResolvedValue([album]);
+    rs.spyOn(BandcampStorage, 'getAlbums').mockResolvedValue([stored]);
     const details = rs.spyOn(AlbumTreeItemFactory, 'createWithDetails');
     const preview =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
-    expect(details).toHaveBeenCalledWith(AlbumDetails.fromAlbum(album));
+    expect(details).toHaveBeenCalledWith(AlbumDetails.fromAlbum(stored));
     expect(preview?.items.some((item) => item.label === 'Tracks')).toBe(true);
+    expect(
+      preview?.items.find((item) => item.label === 'About this release')
+        ?.children?.[0].label,
+    ).toBe('About the release');
+    expect(
+      preview?.items.find((item) => item.label === 'Credits')?.children?.[0]
+        .label,
+    ).toBe('Credits text');
   });
 
   it('propagates storage failures instead of presenting a missing-data summary', async () => {

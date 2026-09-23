@@ -151,6 +151,7 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 }
 
 .item-label {
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
 }

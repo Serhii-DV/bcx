@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
-  type BandPreview,
-  loadBandPreview,
+  createBandAboutFallback,
+  loadBandAbout,
 } from 'src/features/treeview/BandPreview';
 import type { ReleasePreview } from 'src/features/treeview/ReleasePreview';
 import type { TreeData } from 'src/features/treeview/TreeData';
@@ -39,7 +39,7 @@ let {
   isLoading?: boolean;
   onRootLoaded?: () => void;
 } = $props();
-let bandPreview: BandPreview | null = $state(null);
+let bandAbout: TreeItem | null = $state(null);
 const componentId = $props.id();
 const itemListId = `${componentId}-item-list`;
 const itemPreviewId = `${componentId}-item-preview`;
@@ -132,13 +132,13 @@ $effect(() => {
   const item = selectedItem;
   let cancelled = false;
   preview = null;
-  bandPreview = null;
+  bandAbout = null;
   error = '';
   loading = !!(item?.loadPreview || item?.bandPreview);
   if (item?.bandPreview) {
-    loadBandPreview(item.bandPreview)
+    loadBandAbout(item.bandPreview)
       .then((data) => {
-        if (!cancelled) bandPreview = data;
+        if (!cancelled) bandAbout = data;
       })
       .catch(() => {
         if (!cancelled) error = 'Could not read saved band details.';
@@ -204,7 +204,7 @@ $effect(() => {
     {#if selectedItem?.bandPreview}
       <div class="item-preview-panel-content">
         {#key selectedItem}
-          <BcxBandDetails information={bandPreview ?? selectedItem.bandPreview} {loading} {error} />
+          <BcxBandDetails about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} {loading} {error} />
         {/key}
       </div>
     {:else if selectedItem && information}
@@ -228,7 +228,7 @@ $effect(() => {
 .item-preview-panel-resizer span { width: 2.5rem; height: 0.1875rem; border-radius: 9999px; background: #6b7280; }
 .item-preview-panel-resizer:hover, .item-preview-panel-resizer:focus-visible, .item-preview-panel.resizing .item-preview-panel-resizer { border-color: #38bdf8; background: rgb(56 189 248 / 0.12); outline: none; }
 .item-preview-panel-resizer:hover span, .item-preview-panel-resizer:focus-visible span, .item-preview-panel.resizing .item-preview-panel-resizer span { background: #7dd3fc; }
-.item-preview-panel-content { min-height: 0; overflow-y: auto; scrollbar-color: rgb(156 163 175 / 0.45) transparent; scrollbar-width: thin; }
+.item-preview-panel-content { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; scrollbar-color: rgb(156 163 175 / 0.45) transparent; scrollbar-width: thin; }
 h3 { margin: 0; padding: 0.5rem 1rem; font-size: 0.875rem; }
 p { padding: 0.5rem 1rem; font-size: 0.875rem; color: #d1d5db; }
 </style>

@@ -9,6 +9,7 @@ import { arrayUnique } from 'src/utils/array';
 import { TreeItemButtonFactory } from '../buttons/factory';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import {
+  createReleaseDetailsTree,
   createReleaseInformation,
   ReleasePreview,
   releaseCollectionStatus,
@@ -87,7 +88,11 @@ export class AlbumTreeItemFactory {
           wishlist,
         );
         return new ReleasePreview(
-          createTreeDataFromTreeItemChildren(item, TREE_ITEM_LAYOUT.TREE),
+          createReleaseDetailsTree(
+            createTreeDataFromTreeItemChildren(item, TREE_ITEM_LAYOUT.TREE),
+            information,
+            album.url.toString(),
+          ),
           information,
         );
       },
