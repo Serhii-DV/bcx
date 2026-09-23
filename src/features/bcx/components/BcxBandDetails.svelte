@@ -4,7 +4,7 @@ import {
   TREE_ITEM_LAYOUT,
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
-import BcxTreeBrowser from './BcxTreeBrowser.svelte';
+import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 
 let {
   about,
@@ -15,29 +15,26 @@ let {
   loading?: boolean;
   error?: string;
 } = $props();
+let profile = $derived(about.aboutProfile);
 let treeData = $derived(
   createTreeDataFromTreeItemChildren(about, TREE_ITEM_LAYOUT.TREE),
 );
 </script>
 
-<div class="band-details">
-  {#if about.aboutProfile}
-    <header class="about-profile">
-      {#if about.aboutProfile.image}
-        <img src={about.aboutProfile.image} alt={`${about.aboutProfile.name} profile`} onerror={(event) => event.currentTarget.setAttribute('hidden', '')} />
-      {/if}
-      <h3>{about.aboutProfile.name}</h3>
-    </header>
-  {/if}
-  {#if loading}<p role="status">Loading saved band details…</p>{/if}
-  {#if error}<p role="alert">{error}</p>{/if}
-  <BcxTreeBrowser {treeData} showBreadcrumb={false} showFilter={false} nativeTabNavigation={true} />
-</div>
+<BcxItemDetailsLayout
+  image={profile?.image}
+  imageAlt={`${profile?.name ?? 'Band'} profile`}
+  heading={profile?.name ?? about.label ?? 'Band'}
+  subheading={profile?.location}
+  {treeData}
+  detailsLabel="Detailed band information"
+  {loading}
+  loadingMessage="Loading saved band details…"
+  {error}
+>
+  {#if profile?.following}<span class="following-badge">Following</span>{/if}
+</BcxItemDetailsLayout>
 
 <style>
-.band-details { display: flex; flex-direction: column; flex: 1 1 0%; min-height: 0; }
-.about-profile { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; flex-shrink: 0; }
-.about-profile img { width: 6rem; height: 6rem; object-fit: contain; border-radius: 0.25rem; }
-.about-profile h3 { margin: 0; min-width: 0; font-size: 1rem; overflow-wrap: anywhere; }
-p { margin: 0; padding: 0.5rem 1rem; font-size: 0.8125rem; }
+.following-badge { display: inline-block; margin-top: 0.375rem; border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
 </style>

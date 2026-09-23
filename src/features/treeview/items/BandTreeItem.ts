@@ -167,6 +167,7 @@ export class BandTreeItem {
       aboutProfile: {
         name: band.name,
         image: band.artwork.id > 0 ? band.artwork.mediumSizeUrl : undefined,
+        location: metadata.location || undefined,
       },
     };
   }

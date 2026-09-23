@@ -46,7 +46,17 @@ export async function loadBandPreview(
 export async function loadBandAbout(fallback: BandPreview): Promise<TreeItem> {
   if (fallback.id !== undefined) {
     const [band] = await BandcampStorage.getBands([fallback.id]);
-    if (band) return BandTreeItem.createBandAbout(band);
+    if (band) {
+      const about = BandTreeItem.createBandAbout(band);
+      return {
+        ...about,
+        aboutProfile: {
+          ...about.aboutProfile,
+          name: band.name,
+          following: fallback.following,
+        },
+      };
+    }
   }
 
   return createBandAboutFallback(fallback);
@@ -64,6 +74,11 @@ export function createBandAboutFallback(fallback: BandPreview): TreeItem {
     ])
       .asTree()
       .build(),
-    aboutProfile: { name: fallback.name, image: fallback.image },
+    aboutProfile: {
+      name: fallback.name,
+      image: fallback.image,
+      location: fallback.location,
+      following: fallback.following,
+    },
   };
 }
