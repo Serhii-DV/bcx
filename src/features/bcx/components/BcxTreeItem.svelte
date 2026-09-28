@@ -1,6 +1,8 @@
 <script lang="ts">
 import 'country-flag-icons/3x2/flags.css';
 import { ImageOff } from '@lucide/svelte';
+import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
+import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
@@ -13,6 +15,12 @@ interface Props {
 }
 
 let { item, showActions = true }: Props = $props();
+let isReleaseOrBand = $derived(!!(item.previewInformation || item.bandPreview));
+let itemImage = $derived(
+  isReleaseOrBand && item.image
+    ? (Artwork.fromUrl(item.image)?.getUrl(ArtworkSize.SMALL) ?? item.image)
+    : item.image,
+);
 let displayUrl = $derived.by(() => {
   if (!item.previewInformation && !item.bandPreview) return undefined;
   const url = createItemUrl(item.bandPreview?.url ?? item.href);
@@ -97,17 +105,17 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 
 {#snippet treeItemImage(item: TreeItem)}
   {@const ImageIcon = makeIcon(item.image)}
-  <span class="bcx-tree-item-img w-6 h-6 flex-shrink-0" aria-hidden={item.image || item.flagCode ? undefined : 'true'}>
+  <span class="bcx-tree-item-img flex-shrink-0" class:largeArtwork={isReleaseOrBand} aria-hidden={item.image || item.flagCode ? undefined : 'true'}>
     {#if item.flagCode}
       <span class={'flag:' + item.flagCode} aria-hidden="true"></span>
     {:else if item.image && ImageIcon}
       <span class="bcx-tree-item-image-icon text-gray-300" aria-hidden="true">
         <ImageIcon size="16" />
       </span>
-    {:else if item.image && item.image !== failedImage}
-      <img src={item.image} alt={item.label} class="bcx-tree-item-image" loading="lazy" onerror={() => { failedImage = item.image; }} />
+    {:else if itemImage && itemImage !== failedImage}
+      <img src={itemImage} alt={item.label} class="bcx-tree-item-image" loading="lazy" onerror={() => { failedImage = itemImage; }} />
     {:else}
-      <span class="bcx-tree-item-placeholder" aria-hidden="true"><ImageOff size={16} /></span>
+      <span class="bcx-tree-item-placeholder" aria-hidden="true"><ImageOff size={isReleaseOrBand ? 24 : 16} /></span>
     {/if}
   </span>
 {/snippet}
@@ -137,11 +145,18 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 
 <style>
 .bcx-tree-item-img {
+  width: 25px;
+  height: 25px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-top: 0.125rem;
   margin-right: 0.5rem;
+}
+
+.bcx-tree-item-img.largeArtwork {
+  width: 50px;
+  height: 50px;
 }
 
 .bcx-tree-item-image-icon {
@@ -154,16 +169,16 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 25px;
-  height: 25px;
+  width: 100%;
+  height: 100%;
   border-radius: 0.25rem;
   background: #293548;
   color: #9ca3af;
 }
 
 .bcx-tree-item-image {
-  width: 25px;
-  height: 25px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
