@@ -8,6 +8,7 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
+import BcxPreviewLink from './BcxPreviewLink.svelte';
 import { createItemUrl } from './itemUrl';
 
 let {
@@ -56,9 +57,7 @@ let treeData = $derived(
   loadingMessage="Loading saved band details…"
   {error}
 >
-  {#if previewUrl}
-    <div class="text-gray-400">Band URL: {previewUrl.toString()}</div>
-  {/if}
+  {#if previewUrl}<BcxPreviewLink url={previewUrl} />{/if}
   {#if profile?.following}<span class="following-badge">Following</span>{/if}
 </BcxItemDetailsLayout>
 
