@@ -57,11 +57,11 @@ let treeData = $derived(
   loadingMessage="Loading saved band details…"
   {error}
 >
-  {#if previewUrl}<BcxPreviewLink url={previewUrl} />{/if}
+  {#if previewUrl}<BcxPreviewLink url={previewUrl} image={profile?.image} name={profile?.name ?? about.label ?? 'Band'} />{/if}
   {#if profile?.following}<span class="following-badge">Following</span>{/if}
 </BcxItemDetailsLayout>
 
 <style>
 .location-flag { --CountryFlagIcon-height: 1.25rem; flex-shrink: 0; }
-.following-badge { display: inline-block; margin-top: 0.375rem; border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
+.following-badge { display: block; width: fit-content; margin-top: 0.375rem; border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
 </style>
