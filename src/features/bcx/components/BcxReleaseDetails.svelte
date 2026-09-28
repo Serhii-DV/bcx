@@ -76,8 +76,10 @@ let treeData = $derived(
   {error}
 >
   {#if information.releaseYear}<div class="release-year">{information.releaseYear}</div>{/if}
-  {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name={releaseUrl.withoutProtocol} />{/if}
-  {#if bandUrl}<BcxPreviewLink url={bandUrl} image={bandProfile?.image} name={bandName} />{/if}
+  <div class="release-links">
+    {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name={releaseUrl.withoutProtocol} />{/if}
+    {#if bandUrl}<BcxPreviewLink url={bandUrl} image={bandProfile?.image} name={bandName} />{/if}
+  </div>
   {#if information.date}
     <div class="text-gray-400">
       Released on <relative-time datetime={information.date} format="datetime" month="short" day="numeric" year="numeric" time-zone="UTC">{information.date}</relative-time>
@@ -92,6 +94,7 @@ let treeData = $derived(
 </BcxItemDetailsLayout>
 
 <style>
+.release-links { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem; }
 .release-year { margin-bottom: 0.5rem; font-size: 1.75rem; font-weight: 300; line-height: 1.2; letter-spacing: 0.01em; }
 .release-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.625rem; }
 .wishlist-badge { border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }

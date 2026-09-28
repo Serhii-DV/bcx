@@ -1,4 +1,5 @@
 <script lang="ts">
+import { ImageOff } from '@lucide/svelte';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { Snippet } from 'svelte';
 import BcxTreeView from './BcxTreeView.svelte';
@@ -28,12 +29,17 @@ let {
   error?: string;
   children?: Snippet;
 } = $props();
+let failedImage = $state<string>();
 </script>
 
 <div class="item-details">
   <header class="item-details-header">
-    {#if image}
-      <img class="item-details-image" src={image} alt={imageAlt} onerror={(event) => event.currentTarget.setAttribute('hidden', '')} />
+    {#if image && image !== failedImage}
+      <img class="item-details-image" src={image} alt={imageAlt} onerror={() => { failedImage = image; }} />
+    {:else}
+      <div class="item-details-image item-details-placeholder" role="img" aria-label={`${imageAlt} unavailable`}>
+        <span aria-hidden="true"><ImageOff size={48} /></span>
+      </div>
     {/if}
     <div class="item-details-heading">
       <h3 class="item-details-primary">{heading}</h3>
@@ -54,6 +60,7 @@ let {
 .item-details { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 100%; }
 .item-details-header { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; }
 .item-details-image { width: min(15rem, 52%); aspect-ratio: 1; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
+.item-details-placeholder { display: flex; align-items: center; justify-content: center; border: 1px dashed rgb(156 163 175 / 30%); background: #293548; color: #9ca3af; }
 .item-details-heading { min-width: 0; flex: 1 1 0%; overflow-wrap: anywhere; font-size: 0.8125rem; }
 .item-details-primary { margin: 0 0 0.5rem; font-size: 2.2rem; font-weight: 300; line-height: 1.1; letter-spacing: 0.01em; }
 .item-details-secondary { margin: 0 0 0.25rem; font-size: 1.75rem; font-weight: 300; line-height: 1.2; letter-spacing: 0.01em; }

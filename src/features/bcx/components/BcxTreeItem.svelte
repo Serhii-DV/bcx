@@ -1,5 +1,6 @@
 <script lang="ts">
 import 'country-flag-icons/3x2/flags.css';
+import { ImageOff } from '@lucide/svelte';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
@@ -20,6 +21,7 @@ let displayUrl = $derived.by(() => {
     ? BandcampUrlFactory.createBandUrl(url).hostname
     : url.withoutProtocol;
 });
+let failedImage = $state<string>();
 let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 </script>
 
@@ -102,8 +104,10 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
       <span class="bcx-tree-item-image-icon text-gray-300" aria-hidden="true">
         <ImageIcon size="16" />
       </span>
-    {:else if item.image}
-      <img src={item.image} alt={item.label} class="bcx-tree-item-image" loading="lazy" />
+    {:else if item.image && item.image !== failedImage}
+      <img src={item.image} alt={item.label} class="bcx-tree-item-image" loading="lazy" onerror={() => { failedImage = item.image; }} />
+    {:else}
+      <span class="bcx-tree-item-placeholder" aria-hidden="true"><ImageOff size={16} /></span>
     {/if}
   </span>
 {/snippet}
@@ -144,6 +148,17 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.bcx-tree-item-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 0.25rem;
+  background: #293548;
+  color: #9ca3af;
 }
 
 .bcx-tree-item-image {

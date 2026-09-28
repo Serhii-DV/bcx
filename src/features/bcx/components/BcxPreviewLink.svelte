@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Music } from '@lucide/svelte';
+import { ImageOff } from '@lucide/svelte';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 import type { Url } from 'src/core/url';
 
@@ -33,7 +33,7 @@ async function openPage(event: MouseEvent) {
     {#if image && image !== failedImage}
       <img src={image} alt="" class="band-link-image" onerror={() => { failedImage = image; }} />
     {:else}
-      <span class="band-link-icon" aria-hidden="true"><Music size={10} /></span>
+      <span class="band-link-icon" aria-hidden="true"><ImageOff size={10} /></span>
     {/if}
     <span>{name}</span>
   {:else}
