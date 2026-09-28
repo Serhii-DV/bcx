@@ -12,7 +12,10 @@ export class TrackTreeItemFactory {
   static createWithPreview(track: Track): TreeItem {
     return {
       ...this.create(track),
-      previewImage: track.artwork.getUrl(ArtworkSize.LARGE) ?? undefined,
+      previewImage:
+        track.artwork.id > 0
+          ? (track.artwork.getUrl(ArtworkSize.LARGE) ?? undefined)
+          : undefined,
       previewInformation: createTrackInformation(track),
     };
   }

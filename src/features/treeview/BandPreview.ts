@@ -1,5 +1,9 @@
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
+import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
+import { Band } from 'src/bandcamp/domain/band/band';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
+import type { Url } from 'src/core/url';
 import { BandTreeItem } from './items/BandTreeItem';
 import type { TreeItem } from './TreeItem';
 import { copyable, items, linkOpenPage, text } from './TreeItemBuilder';
@@ -80,5 +84,21 @@ export function createBandAboutFallback(fallback: BandPreview): TreeItem {
       location: fallback.location,
       following: fallback.following,
     },
+  };
+}
+
+export async function loadBandLinkProfile(
+  url: Url,
+): Promise<Pick<BandPreview, 'name' | 'image'> | undefined> {
+  const [band] = await BandcampStorage.getByUuids([
+    BandcampUrlFactory.createBandUrl(url).uuid,
+  ]);
+  if (!(band instanceof Band)) return undefined;
+  return {
+    name: band.name,
+    image:
+      band.artwork.id > 0
+        ? (band.artwork.getUrl(ArtworkSize.SMALL) ?? undefined)
+        : undefined,
   };
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
 import 'country-flag-icons/3x2/flags.css';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { createTreeDataFromTreeItemChildren } from 'src/features/treeview/sections/treeDataFactory';
 import {
   TREE_ITEM_LAYOUT,
@@ -7,18 +8,26 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
+import BcxPreviewLink from './BcxPreviewLink.svelte';
+import { createItemUrl } from './itemUrl';
 
 let {
   about,
   fallbackLocation,
+  bandUrl,
   loading = false,
   error = '',
 }: {
   about: TreeItem;
   fallbackLocation?: string;
+  bandUrl?: string;
   loading?: boolean;
   error?: string;
 } = $props();
+let previewUrl = $derived.by(() => {
+  const url = createItemUrl(bandUrl);
+  return url ? BandcampUrlFactory.createBandUrl(url) : undefined;
+});
 let profile = $derived(about.aboutProfile);
 let location = $derived(profile?.location || fallbackLocation);
 let flagCode = $derived(
@@ -48,10 +57,11 @@ let treeData = $derived(
   loadingMessage="Loading saved band details…"
   {error}
 >
+  {#if previewUrl}<BcxPreviewLink url={previewUrl} image={profile?.image} name={profile?.name ?? about.label ?? 'Band'} />{/if}
   {#if profile?.following}<span class="following-badge">Following</span>{/if}
 </BcxItemDetailsLayout>
 
 <style>
 .location-flag { --CountryFlagIcon-height: 1.25rem; flex-shrink: 0; }
-.following-badge { display: inline-block; margin-top: 0.375rem; border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
+.following-badge { display: block; width: fit-content; margin-top: 0.375rem; border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
 </style>

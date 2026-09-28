@@ -53,7 +53,10 @@ export class AlbumTreeItemFactory {
   static createWithPreview(album: Album): TreeItem {
     return {
       ...this.create(album),
-      previewImage: album.artwork.getUrl(ArtworkSize.LARGE) ?? undefined,
+      previewImage:
+        album.artwork.id > 0
+          ? (album.artwork.getUrl(ArtworkSize.LARGE) ?? undefined)
+          : undefined,
       previewInformation: createReleaseInformation(album),
       actionIcon: undefined,
       buttons: [
