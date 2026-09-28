@@ -204,7 +204,7 @@ $effect(() => {
     {#if selectedItem?.bandPreview}
       <div class="item-preview-panel-content">
         {#key selectedItem}
-          <BcxBandDetails about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} {loading} {error} />
+          <BcxBandDetails about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} bandUrl={selectedItem.bandPreview.url} {loading} {error} />
         {/key}
       </div>
     {:else if selectedItem && information}

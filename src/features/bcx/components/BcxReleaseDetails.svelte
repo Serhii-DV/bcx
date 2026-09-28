@@ -1,4 +1,5 @@
 <script lang="ts">
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
   createReleaseDetailsTree,
   type ReleaseInformation,
@@ -7,6 +8,7 @@ import {
 import { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
+import { createItemUrl } from './itemUrl';
 
 let {
   item,
@@ -21,6 +23,11 @@ let {
   loading: boolean;
   error: string;
 } = $props();
+let releaseUrl = $derived(createItemUrl(item.href));
+let bandUrl = $derived.by(() => {
+  const url = createItemUrl(information.artistUrl) ?? releaseUrl;
+  return url ? BandcampUrlFactory.createBandUrl(url) : undefined;
+});
 let treeData = $derived(
   preview ?? createReleaseDetailsTree(new TreeData(), information, item.href),
 );
@@ -37,6 +44,12 @@ let treeData = $derived(
   loadingMessage="Loading release details…"
   {error}
 >
+  {#if releaseUrl}
+    <div class="text-gray-400">Release URL: {releaseUrl.toString()}</div>
+  {/if}
+  {#if bandUrl}
+    <div class="text-gray-400">Band URL: {bandUrl.toString()}</div>
+  {/if}
   {#if information.releaseYear}<div class="release-year">{information.releaseYear}</div>{/if}
   {#if information.date}
     <div class="text-gray-400">

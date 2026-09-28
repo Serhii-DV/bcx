@@ -1,8 +1,10 @@
 <script lang="ts">
 import 'country-flag-icons/3x2/flags.css';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';
+import { createItemUrl } from './itemUrl';
 
 interface Props {
   item: TreeItem;
@@ -10,6 +12,14 @@ interface Props {
 }
 
 let { item, showActions = true }: Props = $props();
+let displayUrl = $derived.by(() => {
+  if (!item.previewInformation && !item.bandPreview) return undefined;
+  const url = createItemUrl(item.bandPreview?.url ?? item.href);
+  if (!url) return undefined;
+  return item.bandPreview
+    ? BandcampUrlFactory.createBandUrl(url).hostname
+    : url.withoutProtocol;
+});
 let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 </script>
 
@@ -101,8 +111,8 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 {@render treeItemImage(item)}
 <span class="item-label-content">
   <span class="item-label">{item.label}</span>
-  {#if item.previewInformation && item.href}
-    <span class="item-release-url text-gray-400">{item.href.replace(/^https:\/\//, '')}</span>
+  {#if displayUrl}
+    <span class="item-url text-gray-400">{displayUrl}</span>
   {/if}
   {#if item.timestamp}
     {@render treeItemTimestamp(item.timestamp)}
@@ -162,7 +172,7 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   word-break: break-word;
 }
 
-.item-release-url {
+.item-url {
   font-size: 0.75rem;
   line-height: 1rem;
   overflow-wrap: anywhere;

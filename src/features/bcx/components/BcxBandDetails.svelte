@@ -1,5 +1,6 @@
 <script lang="ts">
 import 'country-flag-icons/3x2/flags.css';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { createTreeDataFromTreeItemChildren } from 'src/features/treeview/sections/treeDataFactory';
 import {
   TREE_ITEM_LAYOUT,
@@ -7,18 +8,25 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
+import { createItemUrl } from './itemUrl';
 
 let {
   about,
   fallbackLocation,
+  bandUrl,
   loading = false,
   error = '',
 }: {
   about: TreeItem;
   fallbackLocation?: string;
+  bandUrl?: string;
   loading?: boolean;
   error?: string;
 } = $props();
+let previewUrl = $derived.by(() => {
+  const url = createItemUrl(bandUrl);
+  return url ? BandcampUrlFactory.createBandUrl(url) : undefined;
+});
 let profile = $derived(about.aboutProfile);
 let location = $derived(profile?.location || fallbackLocation);
 let flagCode = $derived(
@@ -48,6 +56,9 @@ let treeData = $derived(
   loadingMessage="Loading saved band details…"
   {error}
 >
+  {#if previewUrl}
+    <div class="text-gray-400">Band URL: {previewUrl.toString()}</div>
+  {/if}
   {#if profile?.following}<span class="following-badge">Following</span>{/if}
 </BcxItemDetailsLayout>
 
