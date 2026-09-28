@@ -105,19 +105,21 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 
 {#snippet treeItemImage(item: TreeItem)}
   {@const ImageIcon = makeIcon(item.image)}
-  <span class="bcx-tree-item-img flex-shrink-0" class:largeArtwork={isReleaseOrBand} aria-hidden={item.image || item.flagCode ? undefined : 'true'}>
-    {#if item.flagCode}
-      <span class={'flag:' + item.flagCode} aria-hidden="true"></span>
-    {:else if item.image && ImageIcon}
-      <span class="bcx-tree-item-image-icon text-gray-300" aria-hidden="true">
-        <ImageIcon size="16" />
-      </span>
-    {:else if itemImage && itemImage !== failedImage}
-      <img src={itemImage} alt={item.label} class="bcx-tree-item-image" loading="lazy" onerror={() => { failedImage = itemImage; }} />
-    {:else}
-      <span class="bcx-tree-item-placeholder" aria-hidden="true"><ImageOff size={isReleaseOrBand ? 24 : 16} /></span>
-    {/if}
-  </span>
+  {#if item.image !== undefined || item.flagCode}
+    <span class="bcx-tree-item-img flex-shrink-0" class:largeArtwork={isReleaseOrBand} aria-hidden={item.image || item.flagCode ? undefined : 'true'}>
+      {#if item.flagCode}
+        <span class={'flag:' + item.flagCode} aria-hidden="true"></span>
+      {:else if item.image && ImageIcon}
+        <span class="bcx-tree-item-image-icon text-gray-300" aria-hidden="true">
+          <ImageIcon size="16" />
+        </span>
+      {:else if itemImage && itemImage !== failedImage}
+        <img src={itemImage} alt={item.label} class="bcx-tree-item-image" loading="lazy" onerror={() => { failedImage = itemImage; }} />
+      {:else}
+        <span class="bcx-tree-item-placeholder" aria-hidden="true"><ImageOff size={isReleaseOrBand ? 24 : 16} /></span>
+      {/if}
+    </span>
+  {/if}
 {/snippet}
 
 {@render treeItemImage(item)}
