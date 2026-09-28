@@ -101,6 +101,9 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 {@render treeItemImage(item)}
 <span class="item-label-content">
   <span class="item-label">{item.label}</span>
+  {#if item.previewInformation && item.href}
+    <span class="item-release-url text-gray-400">{item.href.replace(/^https:\/\//, '')}</span>
+  {/if}
   {#if item.timestamp}
     {@render treeItemTimestamp(item.timestamp)}
   {/if}
@@ -157,6 +160,12 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.item-release-url {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  overflow-wrap: anywhere;
 }
 
 .item-timestamp {
