@@ -105,7 +105,9 @@ export async function appendFanArchive(
     );
   roots.push(
     archiveRoot(
-      'No longer listed',
+      dataset === 'following-genres'
+        ? 'No longer followed'
+        : 'No longer listed',
       makeItems(
         entries.filter(
           ([id]) => list?.syncedAt && !current.has(id) && !unavailable[id],
@@ -113,7 +115,5 @@ export async function appendFanArchive(
       ),
     ),
   );
-  if (dataset === 'following-genres')
-    roots.push(archiveRoot('All saved', makeItems(entries)));
   return { ...tree, children: roots, childrenCount: roots.length };
 }

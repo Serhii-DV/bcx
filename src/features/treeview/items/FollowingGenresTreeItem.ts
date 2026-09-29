@@ -1,4 +1,4 @@
-import { readCurrentItems } from 'src/bandcamp/domain/fanData/library';
+import { readSavedItems } from 'src/bandcamp/domain/fanData/library';
 import type { GenreItem } from 'src/bandcamp/domain/types/CollectionPageData';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { TreeItemButtonFactory } from '../buttons/factory';
@@ -8,7 +8,7 @@ import { ICON_TAG } from '../utils/icon';
 
 export class FollowingGenresTreeItem {
   static async create(username: string, fanId?: number): Promise<TreeItem> {
-    const items = await readCurrentItems<GenreItem>('following-genres', fanId);
+    const items = await readSavedItems<GenreItem>('following-genres', fanId);
     return {
       label: 'Following Genres',
       buttons: [

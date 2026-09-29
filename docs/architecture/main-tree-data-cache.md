@@ -189,3 +189,5 @@ revision. Sync publishes merged arrays at the original storage keys; open panels
 also observe those keys and ownership changes, so signed-out views can refresh.
 Archive roots use the same saved items and retain separate current-membership and
 availability filters.
+Snapshot version 31 rebuilds Following Genres from every saved genre. Its All tab
+includes former follows, while No longer followed filters them separately.

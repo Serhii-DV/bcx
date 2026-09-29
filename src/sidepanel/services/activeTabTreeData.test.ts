@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Band } from 'src/bandcamp/domain/band/band';
+import { libraryKey } from 'src/bandcamp/domain/fanData/library';
 import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { Url } from 'src/core/url';
 import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
+import { TreeItemCache } from 'src/features/treeview/items/TreeItemCache';
 import {
   createActiveTabSidePanelData,
   getActiveTabHeader,
@@ -56,6 +58,44 @@ describe('active tab fan sections during navigation', () => {
       expect(
         createRootSectionTabs(tree.items).map((tab) => tab.label),
       ).toContain('Unavailable');
+    }
+    const currentGenre = { name: 'Metal', tag_page_url: '/tag/metal' };
+    const pastGenre = { name: 'Ambient', tag_page_url: '/tag/ambient' };
+    await chrome.storage.local.set({
+      '/following-genres': [currentGenre, pastGenre],
+      [libraryKey(42)]: {
+        version: 1,
+        account: { fanId: 42, username: 'listener' },
+        revision: 'sync-1',
+        lists: {
+          'following-genres': {
+            records: {
+              'genre:/tag/metal': currentGenre,
+              'genre:/tag/ambient': pastGenre,
+            },
+            current: ['genre:/tag/metal'],
+            syncedAt: '2026-09-29T00:00:00Z',
+          },
+        },
+      },
+    });
+    try {
+      const genres = first.find(
+        (section) => section.fanSync?.dataset === 'following-genres',
+      );
+      const tree = await genres!.createTreeData();
+      expect(createRootSectionTabs(tree.items).map((tab) => tab.label)).toEqual(
+        ['All (2)', 'No longer followed (1)'],
+      );
+      expect(tree.items[0].children?.map((item) => item.label)).toEqual([
+        'Metal',
+        'Ambient',
+      ]);
+    } finally {
+      await chrome.storage.local.remove(['/following-genres', libraryKey(42)]);
+      await chrome.storage.session.remove(
+        TreeItemCache.subtreeKey(42, 'following-genres'),
+      );
     }
     expect(
       first.find((section) => section.id === 'history')?.fanAccount?.fanId,

@@ -68,7 +68,7 @@ export function createFanDataSubtreeSection(
             ...item,
             children: [
               {
-                label: 'Current',
+                label: 'All',
                 children: item.children ?? [],
                 childrenCount: item.children?.length ?? 0,
                 childrenLoaded: true,

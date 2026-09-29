@@ -80,9 +80,9 @@ membership but do not receive page-availability classifications.
 
 Collection, Wishlist, and Following Bands show all saved entries in their first
 catalog tab. Their Unavailable tab appears before No longer listed. Following
-Genres keeps its Current and All saved membership tabs. Following badges use
-current membership, so a saved band missing from the latest list is not shown as
-currently followed.
+Genres shows every saved genre in All and filters former follows in No longer
+followed. Following badges use current membership, so a saved band missing from
+the latest list is not shown as currently followed.
 The Sync toolbar sits above the subtabs in each fan-data panel. Artist and release
 pages identify the signed-in fan through `identities.fan.id` (with a `fan_id`
 fallback). Without a verified account, the toolbar remains visible but disabled
