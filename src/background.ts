@@ -2,6 +2,8 @@ import { console } from 'src/utils/console';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import {
   cancelFanSync,
+  FAN_SYNC_PROTOCOL_VERSION,
+  isFanSyncTabUrl,
   recoverFanSync,
   startFanSync,
 } from './bandcamp/domain/fanData/sync';
@@ -18,6 +20,12 @@ const activeBandcampPageDataByTabId = new Map<
   { hostname: string; pageData: unknown }
 >();
 const openSidePanelTabIds = new Set<number>();
+const sidePanelEnabledByTabId = new Map<number, boolean>();
+chrome.tabs.onRemoved.addListener((tabId) => {
+  sidePanelEnabledByTabId.delete(tabId);
+  openSidePanelTabIds.delete(tabId);
+  activeBandcampPageDataByTabId.delete(tabId);
+});
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed!');
@@ -44,8 +52,11 @@ getSidePanelEvents()?.onClosed?.addListener((info) => {
   }
 });
 
-chrome.tabs.onUpdated.addListener((tabId, _changeInfo, tab) => {
-  updateSidePanelOptions(tabId, tab.url).catch(console.error);
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url || changeInfo.status === 'complete')
+    updateSidePanelOptions(tabId, changeInfo.url ?? tab.url).catch(
+      console.error,
+    );
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {
@@ -63,15 +74,11 @@ async function updateSidePanelOptions(
   tabId: number,
   tabUrl?: string,
 ): Promise<void> {
-  if (!chrome.sidePanel) {
-    return;
-  }
-
-  await chrome.sidePanel.setOptions({
-    tabId,
-    path: SIDEPANEL_PATH,
-    enabled: isBandcampTabUrl(tabUrl),
-  });
+  if (!chrome.sidePanel || !tabUrl || isFanSyncTabUrl(tabUrl)) return;
+  const enabled = isBandcampTabUrl(tabUrl);
+  if (sidePanelEnabledByTabId.get(tabId) === enabled) return;
+  await chrome.sidePanel.setOptions({ tabId, path: SIDEPANEL_PATH, enabled });
+  sidePanelEnabledByTabId.set(tabId, enabled);
 }
 
 function isBandcampTabUrl(tabUrl?: string): boolean {
@@ -103,6 +110,10 @@ async function getActiveBandcampTab(): Promise<chrome.tabs.Tab | null> {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.GET_FAN_SYNC_VERSION) {
+      sendResponse({ protocolVersion: FAN_SYNC_PROTOCOL_VERSION });
+      return;
+    }
     if (message.type === MessageType.START_FAN_SYNC) {
       startFanSync(message.account, message.action).then(
         () => sendResponse({ ok: true }),

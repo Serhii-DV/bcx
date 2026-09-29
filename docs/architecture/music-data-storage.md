@@ -117,3 +117,17 @@ Sync errors include the failing step and any datasets already published, and the
 panel suppresses the initial saved-list notice while a failure is displayed.
 Storage failures are reported as errors rather than successful syncs.
 Saved artwork URLs are retained, but image bytes and audio are not archived.
+
+Sync requests check the background worker's protocol version before starting a
+job. Jobs carry that version so the UI can identify saved errors produced by an
+older worker and explain that BCX must be reloaded in `chrome://extensions`,
+followed by refreshing Bandcamp. Reloading only the web page does not update the
+extension service worker.
+
+Temporary sync tabs are created inactive in the originating tab's window and
+excluded from side-panel configuration. Cleanup closes only a still-owned,
+inactive temporary tab; it preserves activated tabs, navigated tabs, and the
+originating tab. Background side-panel configuration ignores missing URLs and
+unchanged enablement, avoiding redundant reconfiguration during background work.
+Concurrent storage-read timings use elapsed timestamps rather than shared
+console timer labels.

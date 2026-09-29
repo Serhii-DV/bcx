@@ -10,6 +10,7 @@ import {
 } from 'src/bandcamp/domain/fanData/library';
 import {
   FAN_SYNC_JOB_KEY,
+  FAN_SYNC_PROTOCOL_VERSION,
   type FanSyncAction,
   type FanSyncJob,
 } from 'src/bandcamp/domain/fanData/sync';
@@ -82,11 +83,34 @@ async function request(nextAction?: FanSyncAction) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const response = await Promise.race([
-      chrome.runtime.sendMessage(
-        nextAction
-          ? { type: MessageType.START_FAN_SYNC, account, action: nextAction }
-          : { type: MessageType.CANCEL_FAN_SYNC },
-      ),
+      (async () => {
+        if (nextAction) {
+          let worker: unknown;
+          try {
+            worker = await chrome.runtime.sendMessage({
+              type: MessageType.GET_FAN_SYNC_VERSION,
+            });
+          } catch {
+            throw new Error(
+              'BCX could not confirm the background update. Reload BCX in chrome://extensions and refresh this Bandcamp page.',
+            );
+          }
+          if (
+            !worker ||
+            typeof worker !== 'object' ||
+            !('protocolVersion' in worker) ||
+            worker.protocolVersion !== FAN_SYNC_PROTOCOL_VERSION
+          )
+            throw new Error(
+              'BCX background sync is out of date. Reload BCX in chrome://extensions and refresh this Bandcamp page.',
+            );
+        }
+        return chrome.runtime.sendMessage(
+          nextAction
+            ? { type: MessageType.START_FAN_SYNC, account, action: nextAction }
+            : { type: MessageType.CANCEL_FAN_SYNC },
+        );
+      })(),
       new Promise<never>((_, reject) => {
         timer = setTimeout(
           () =>
@@ -120,7 +144,11 @@ async function request(nextAction?: FanSyncAction) {
     {#if running}<button disabled={sending} onclick={() => request()}>Cancel</button>{/if}
   </div>
   <p class="status" role={ownJob?.state === 'error' ? 'alert' : 'status'}>
-    {#if ownJob}{ownJob.message}{:else if running}Another Bandcamp sync is running.{/if}
+    {#if ownJob}
+      {#if ownJob.state === 'error' && ownJob.protocolVersion !== FAN_SYNC_PROTOCOL_VERSION}
+        This saved sync error came from an older BCX version. Reload BCX in chrome://extensions, refresh Bandcamp, then sync again.
+      {:else}{ownJob.message}{/if}
+    {:else if running}Another Bandcamp sync is running.{/if}
     {#if syncedAt}<span>Last synced: {new Date(syncedAt).toLocaleString()}</span>{/if}
   </p>
   {#if account && hasSaved && !syncedAt && !running && ownJob?.state !== 'error' && ownJob?.state !== 'cancelled' && !error}<p>Your saved lists are shown. Sync merges fresh Bandcamp data and keeps missing entries.</p>{/if}

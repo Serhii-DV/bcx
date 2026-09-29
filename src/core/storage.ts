@@ -42,22 +42,25 @@ export class Storage {
     const uniqueKeys = arrayUnique(keys as string[]);
     const logLabel = `[Storage.get(keys: ${uniqueKeys.length})]`;
 
-    if (this.debug) {
-      console.time(logLabel);
-    }
+    const startedAt = performance.now();
 
     try {
       const items = await this.storage.get(uniqueKeys);
 
       if (this.debug) {
-        console.timeEnd(logLabel);
-        console.log(logLabel, ...arrayPreview(uniqueKeys as string[]), items);
+        console.log(
+          logLabel,
+          performance.now() - startedAt,
+          'ms',
+          ...arrayPreview(uniqueKeys as string[]),
+          items,
+        );
       }
 
       return items as Partial<T>;
     } catch (error) {
       if (this.debug) {
-        console.timeEnd(logLabel);
+        console.log(logLabel, performance.now() - startedAt, 'ms (failed)');
       }
 
       throw error;

@@ -61,10 +61,10 @@ type SummaryResponse = {
   collection_summary?: CollectionSummary;
 };
 
-type FollowingBandsResponse = {
+type FollowingItemsResponse<T> = {
   error?: boolean;
   error_message?: string;
-  followeers: FollowingBandItem[]; // Note: API has typo "followeers"
+  followeers: T[]; // Note: API has typo "followeers"
   more_available: boolean;
   last_token?: string;
 };
@@ -314,12 +314,13 @@ export class PageCollection {
       if (options?.signal?.aborted)
         throw new DOMException('Aborted', 'AbortError');
 
-      const parsed =
-        await this.transport.postJsonString<FollowingBandsResponse>(
-          PageCollection.FOLLOWING_BANDS_ITEMS_URL,
-          { fan_id: fanId, older_than_token: olderThanToken, count: pageSize },
-          options?.signal,
-        );
+      const parsed = await this.transport.postJsonString<
+        FollowingItemsResponse<FollowingBandItem>
+      >(
+        PageCollection.FOLLOWING_BANDS_ITEMS_URL,
+        { fan_id: fanId, older_than_token: olderThanToken, count: pageSize },
+        options?.signal,
+      );
 
       if (parsed.error)
         throw new Error(
@@ -360,25 +361,77 @@ export class PageCollection {
       .filter((item): item is FollowingFanItem => Boolean(item));
   }
 
-  async loadFollowingGenresItems(): Promise<GenreItem[]> {
+  async loadFollowingGenresItems(options?: LoadOptions): Promise<GenreItem[]> {
     const pageData = this.getPageData();
     if (pageData.following_genres_data?.item_count === 0) return [];
-    const genreIds = pageData.following_genres_data?.sequence;
+    const genreData = pageData.following_genres_data;
+    const genreIds = genreData?.sequence?.length
+      ? genreData.sequence
+      : genreData?.pending_sequence;
     const cache = pageData.item_cache?.following_genres;
     if (
       !Array.isArray(genreIds) ||
       !cache ||
       genreIds.some((id) => !cache[id]) ||
-      (typeof pageData.following_genres_data.item_count === 'number' &&
-        genreIds.length !== pageData.following_genres_data.item_count)
+      typeof genreData.item_count !== 'number' ||
+      genreIds.length > genreData.item_count
     ) {
       throw new Error(
         'Incomplete following genres data; saved data must be retained.',
       );
     }
 
-    return genreIds
-      .map((id) => cache[id])
-      .filter((item): item is GenreItem => Boolean(item));
+    const all = genreIds.map((id) => cache[id]);
+    if (all.length === genreData.item_count) return all;
+    if (!genreData.last_token)
+      throw new Error(
+        'Incomplete following genres pagination; saved data must be retained.',
+      );
+
+    const seenTokens = new Set([genreData.last_token]);
+    let olderThanToken = genreData.last_token;
+    while (true) {
+      if (options?.signal?.aborted)
+        throw new DOMException('Aborted', 'AbortError');
+
+      const parsed = await this.transport.postJsonString<
+        FollowingItemsResponse<GenreItem>
+      >(
+        PageCollection.FOLLOWING_GENRES_ITEMS_URL,
+        {
+          fan_id: pageData.fan_data.fan_id,
+          older_than_token: olderThanToken,
+          count: options?.pageSize ?? 40,
+        },
+        options?.signal,
+      );
+      if (parsed.error)
+        throw new Error(
+          parsed.error_message ||
+            'Bandcamp API error while loading following genres.',
+        );
+      if (
+        !Array.isArray(parsed.followeers) ||
+        typeof parsed.more_available !== 'boolean'
+      ) {
+        throw new Error('Invalid following genres response.');
+      }
+      all.push(...parsed.followeers);
+      if (!parsed.more_available) break;
+
+      const lastToken = parsed.last_token || parsed.followeers.at(-1)?.token;
+      if (!lastToken || seenTokens.has(lastToken))
+        throw new Error(
+          'Incomplete following genres pagination; saved data must be retained.',
+        );
+      seenTokens.add(lastToken);
+      olderThanToken = lastToken;
+    }
+
+    if (all.length !== genreData.item_count)
+      throw new Error(
+        'Incomplete following genres data; saved data must be retained.',
+      );
+    return all;
   }
 }

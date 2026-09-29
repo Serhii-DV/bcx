@@ -1,8 +1,7 @@
 import type { Logger, RsbuildPlugin, RsbuildPluginAPI } from '@rsbuild/core';
 import { execSync } from 'child_process';
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import baseManifest from '../manifest.json';
 
 export interface ManifestOptions {
   outputDir?: string;
@@ -17,6 +16,9 @@ export interface ManifestOptions {
 }
 
 function createDynamicManifest(options: ManifestOptions) {
+  const baseManifest = JSON.parse(
+    readFileSync(join(process.cwd(), 'src', 'manifest.json'), 'utf8'),
+  );
   let dynamicManifest = {
     ...baseManifest,
     ...options.customFields,

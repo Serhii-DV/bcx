@@ -6,6 +6,7 @@ import {
   it,
   rstest,
 } from '@rstest/core';
+import { console as logger } from 'src/utils/console';
 import { type StorableData, Storage } from './storage';
 
 describe('Storage', () => {
@@ -43,6 +44,29 @@ describe('Storage', () => {
     });
 
     expect(storageArea.get).toHaveBeenCalledWith(['enabled', 'missing']);
+    const debugStorage = new Storage(
+      storageArea as unknown as chrome.storage.StorageArea,
+      true,
+    );
+    const timer = rstest.spyOn(logger, 'time');
+    const timerEnd = rstest.spyOn(logger, 'timeEnd');
+    const log = rstest.spyOn(logger, 'log').mockImplementation(() => {});
+    try {
+      const results = await Promise.all(
+        Array.from({ length: 3 }, () => debugStorage.get(['enabled'])),
+      );
+      expect(results).toEqual([
+        { enabled: true },
+        { enabled: true },
+        { enabled: true },
+      ]);
+      expect(timer).not.toHaveBeenCalled();
+      expect(timerEnd).not.toHaveBeenCalled();
+    } finally {
+      timer.mockRestore();
+      timerEnd.mockRestore();
+      log.mockRestore();
+    }
   });
 
   it('reads typed values by key and normalizes booleans', async () => {

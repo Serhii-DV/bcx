@@ -19,6 +19,21 @@ import {
   unavailableKey,
 } from './library';
 
+export const FAN_SYNC_PROTOCOL_VERSION = 2;
+export function isFanSyncTabUrl(value?: string): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return (
+      url.origin === 'https://bandcamp.com' &&
+      /^\/[a-zA-Z0-9_-]+\/?$/.test(url.pathname) &&
+      /^#bcx-sync=[0-9a-f-]{36}$/.test(url.hash)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export const FAN_SYNC_JOB_KEY = '/fan-data/sync-job';
 export type FanSyncAction = FanDataset | 'all' | 'check' | 'import';
 export interface FanSyncJob {
@@ -31,15 +46,19 @@ export interface FanSyncJob {
   tabId?: number;
   tabUrl?: string;
   completedDatasets?: FanDataset[];
+  protocolVersion?: number;
+  originTabId?: number;
 }
 let controller: AbortController | undefined;
 let starting = false;
 let recovery: Promise<void> | undefined;
 
-async function closeOwnedTab(job: FanSyncJob) {
+export async function closeOwnedTab(job: FanSyncJob): Promise<void> {
   if (job.tabId === undefined || !job.tabUrl) return;
   try {
     const tab = await chrome.tabs.get(job.tabId);
+    // A selected temporary tab belongs to the user now; closing it also hides its panel.
+    if (tab.active || tab.id === job.originTabId) return;
     if (tab.url === job.tabUrl || tab.pendingUrl === job.tabUrl)
       await chrome.tabs.remove(job.tabId);
   } catch {
@@ -90,6 +109,7 @@ export async function startFanSync(
       message: 'Opening your Collection page…',
       startedAt: Date.now(),
       completedDatasets: [],
+      protocolVersion: FAN_SYNC_PROTOCOL_VERSION,
     };
     controller = new AbortController();
     await fanStorage().set({ [FAN_SYNC_JOB_KEY]: job });
@@ -133,8 +153,17 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
   };
   try {
     if (job.action !== 'check') {
+      const [origin] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      job.originTabId = origin?.id;
       job.tabUrl = `https://bandcamp.com/${job.account.username}#bcx-sync=${job.id}`;
-      const tab = await chrome.tabs.create({ url: job.tabUrl, active: false });
+      const tab = await chrome.tabs.create({
+        url: job.tabUrl,
+        active: false,
+        ...(origin ? { windowId: origin.windowId } : {}),
+      });
       if (tab.id === undefined) throw new Error('Could not open the sync tab.');
       job.tabId = tab.id;
       await progress('Waiting for your Collection page…');
