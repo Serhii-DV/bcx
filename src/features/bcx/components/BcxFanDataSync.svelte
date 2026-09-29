@@ -18,6 +18,13 @@ import { MessageType } from 'src/core/message';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount } from 'svelte';
 
+const datasetLabels: Record<FanDataset, string> = {
+  collection: 'Collection',
+  wishlist: 'Wishlist',
+  'following-bands': 'Following Bands',
+  'following-genres': 'Following Genres',
+};
+
 let { account, dataset }: { account?: FanAccount; dataset: FanDataset } =
   $props();
 let job = $state<FanSyncJob>();
@@ -25,7 +32,14 @@ let error = $state('');
 let sending = $state(false);
 let syncedAt = $state<string>();
 let hasSaved = $state(false);
-let action = $state<FanSyncAction>('all');
+let action = $state<FanDataset | 'all' | 'check'>('all');
+const actionButtonLabel = $derived(
+  action === 'all'
+    ? 'Sync all'
+    : action === 'check'
+      ? 'Check availability'
+      : `Sync ${datasetLabels[dataset]}`,
+);
 const running = $derived(job?.state === 'running');
 const ownJob = $derived(
   account && job?.account.fanId === account.fanId ? job : undefined,
@@ -135,12 +149,12 @@ async function request(nextAction?: FanSyncAction) {
 
 <div class="fan-sync">
   <div class="actions">
-    <button disabled={!account || running || sending} onclick={() => request(dataset)} title={`Sync ${dataset} from your Bandcamp Collection page`}>Sync</button>
     <select aria-label="Bandcamp sync action" bind:value={action} disabled={!account || running || sending}>
+      <option value={dataset}>Sync {datasetLabels[dataset]}</option>
       <option value="all">Sync all Bandcamp data</option>
       <option value="check">Check saved pages’ availability</option>
     </select>
-    <button disabled={!account || running || sending} onclick={() => request(action)}>Run</button>
+    <button disabled={!account || running || sending} onclick={() => request(action)}>{actionButtonLabel}</button>
     {#if running}<button disabled={sending} onclick={() => request()}>Cancel</button>{/if}
   </div>
   <p class="status" role={ownJob?.state === 'error' ? 'alert' : 'status'}>
