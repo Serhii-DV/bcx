@@ -1,9 +1,14 @@
 <script lang="ts">
 import { Tabs } from 'bits-ui';
 import {
+  fanStorage,
   libraryKey,
   SAVED_LIST_OWNERS_KEY,
 } from 'src/bandcamp/domain/fanData/library';
+import {
+  FAN_SYNC_JOB_KEY,
+  type FanSyncJob,
+} from 'src/bandcamp/domain/fanData/sync';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { TreeData } from 'src/features/treeview/TreeData';
@@ -13,7 +18,8 @@ import {
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
 import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
-import { ICON_INFO } from 'src/features/treeview/utils/icon';
+import { ICON_INFO, ICON_REFRESH_CCW } from 'src/features/treeview/utils/icon';
+import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
@@ -48,7 +54,19 @@ let sectionLoadingById: Record<string, boolean> = $state({});
 let sectionErrorById: Record<string, string> = $state({});
 let sectionRootPathById: Record<string, string | null> = $state({});
 const infoTabId = '__extension-info__';
+const syncTabId = '__fan-sync__';
 let selectedSectionId = $state('');
+let fanSyncJob = $state<FanSyncJob>();
+let fanSyncError = $state('');
+const hasFanSync = $derived(sections.some((section) => !!section.fanSync));
+const syncAccount = $derived(
+  sections.find((section) => section.fanSync?.account)?.fanSync?.account,
+);
+const accountSyncJob = $derived(
+  syncAccount && fanSyncJob?.account.fanId === syncAccount.fanId
+    ? fanSyncJob
+    : undefined,
+);
 let sectionFilterQueryById: Record<string, string> = $state({});
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
@@ -153,11 +171,27 @@ async function loadSectionTreeData(section: SidePanelSection, force = false) {
 onMount(() => {
   const pending = new Set<string>();
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let jobReadGeneration = 0;
+  const refreshSyncJob = async () => {
+    const generation = ++jobReadGeneration;
+    try {
+      const job = await fanStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY);
+      if (generation === jobReadGeneration) {
+        fanSyncJob = job;
+        fanSyncError = '';
+      }
+    } catch (reason) {
+      if (generation === jobReadGeneration)
+        fanSyncError = getErrorMessage(reason, 'Could not read sync status.');
+    }
+  };
+  void refreshSyncJob();
   const changed = (
     changes: Record<string, chrome.storage.StorageChange>,
     area: string,
   ) => {
     if (area !== 'local') return;
+    if (FAN_SYNC_JOB_KEY in changes) void refreshSyncJob();
     for (const section of sections) {
       const account = section.fanSync?.account ?? section.fanAccount;
       if (
@@ -187,6 +221,7 @@ onMount(() => {
   chrome.storage.onChanged.addListener(changed);
   return () => {
     sectionLoadGeneration++;
+    jobReadGeneration++;
     clearTimeout(timer);
     chrome.storage.onChanged.removeListener(changed);
   };
@@ -217,6 +252,7 @@ $effect(() => {
   currentSections = sections;
   if (
     selectedSectionId !== infoTabId &&
+    !(selectedSectionId === syncTabId && hasFanSync) &&
     !sections.some((section) => section.id === selectedSectionId)
   ) {
     selectedSectionId =
@@ -266,13 +302,18 @@ $effect(() => {
           <div bind:this={sectionsContainer} class="bcx-sections">
             <Tabs.Root bind:value={selectedSectionId} class="bcx-panel-body">
               <BcxSectionTabs
-                tabs={[...sections, { id: infoTabId, label: 'Extension Info', image: ICON_INFO }]}
+                tabs={[...sections, ...(hasFanSync ? [{ id: syncTabId, label: 'Sync', image: ICON_REFRESH_CCW }] : []), { id: infoTabId, label: 'Extension Info', image: ICON_INFO }]}
                 bind:value={selectedSectionId}
               />
               {#each sections as section (section.id)}
                 <Tabs.Content value={section.id} class="bcx-tab-content">
+                  {#if section.fanSync && (fanSyncJob?.state === 'running' || accountSyncJob?.state === 'error')}
+                    <div class="bcx-sync-indicator" role={accountSyncJob?.state === 'error' ? 'alert' : 'status'}>
+                      <span>{accountSyncJob?.state === 'error' ? 'Sync needs attention.' : 'Sync in progress…'}</span>
+                      <button onclick={() => (selectedSectionId = syncTabId)}>View sync</button>
+                    </div>
+                  {/if}
                   {#if section.fanSync}
-                    <BcxFanDataSync account={section.fanSync.account} dataset={section.fanSync.dataset} />
                     {#if sectionErrorById[section.id]}<p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>{/if}
                   {/if}
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
@@ -320,6 +361,12 @@ $effect(() => {
                   {/if}
                 </Tabs.Content>
               {/each}
+
+              {#if hasFanSync}
+                <Tabs.Content value={syncTabId} class="bcx-tab-content bcx-info-scroll">
+                  <BcxFanDataSync account={syncAccount} job={fanSyncJob} jobReadError={fanSyncError} />
+                </Tabs.Content>
+              {/if}
 
               <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">
                 <div class="bcx-section-content">
@@ -403,6 +450,27 @@ $effect(() => {
 
   :global(.bcx-side-panel-shell .bcx-tree-breadcrumb) {
     flex-shrink: 0;
+  }
+
+  .bcx-sync-indicator {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    color: #d1d5db;
+    font-size: 0.75rem;
+  }
+
+  .bcx-sync-indicator button {
+    color: #7dd3fc;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .bcx-sync-indicator button:focus-visible {
+    outline: 2px solid #04b1fe;
   }
 
   :global(.bcx-section-tree-browser .bcx-tree-view) {

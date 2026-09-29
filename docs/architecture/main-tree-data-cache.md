@@ -168,8 +168,8 @@ panel with track metadata; unsaved tracks retain the URL-derived fallback previe
 
 ## Account library sync
 
-Fan sections now expose a fixed Sync toolbar that sends a request to the background
-worker. The worker opens an inactive Collection tab and invokes `PageCollection`
+The top-level Sync tab sends fan-data requests to the background worker. The worker
+opens an inactive Collection tab and invokes `PageCollection`
 through a content-script message. Account identity and complete pagination are
 checked before each dataset is saved. Requests are bounded and cancellable; an
 interrupted job is marked for retry when the worker restarts. Only a tab still

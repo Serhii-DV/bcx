@@ -1,15 +1,14 @@
 <script lang="ts">
 import {
+  FAN_DATASETS,
   type FanAccount,
   type FanDataset,
-  fanStorage,
   libraryKey,
   readLibrary,
   readSavedItems,
   SAVED_LIST_OWNERS_KEY,
 } from 'src/bandcamp/domain/fanData/library';
 import {
-  FAN_SYNC_JOB_KEY,
   FAN_SYNC_PROTOCOL_VERSION,
   type FanSyncAction,
   type FanSyncJob,
@@ -25,12 +24,18 @@ const datasetLabels: Record<FanDataset, string> = {
   'following-genres': 'Following Genres',
 };
 
-let { account, dataset }: { account?: FanAccount; dataset: FanDataset } =
-  $props();
-let job = $state<FanSyncJob>();
+let {
+  account,
+  job,
+  jobReadError = '',
+}: {
+  account?: FanAccount;
+  job?: FanSyncJob;
+  jobReadError?: string;
+} = $props();
 let error = $state('');
 let sending = $state(false);
-let syncedAt = $state<string>();
+let syncedAt = $state<Partial<Record<FanDataset, string>>>({});
 let hasSaved = $state(false);
 let action = $state<FanDataset | 'all' | 'check'>('all');
 const actionButtonLabel = $derived(
@@ -38,7 +43,7 @@ const actionButtonLabel = $derived(
     ? 'Sync all'
     : action === 'check'
       ? 'Check availability'
-      : `Sync ${datasetLabels[dataset]}`,
+      : `Sync ${datasetLabels[action]}`,
 );
 const running = $derived(job?.state === 'running');
 const ownJob = $derived(
@@ -48,15 +53,20 @@ let generation = 0;
 async function refresh() {
   const token = ++generation;
   try {
-    const [nextJob, library, saved] = await Promise.all([
-      fanStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY),
+    const [library, savedLists] = await Promise.all([
       account ? readLibrary(account.fanId) : undefined,
-      readSavedItems(dataset, account?.fanId),
+      Promise.all(
+        FAN_DATASETS.map((dataset) => readSavedItems(dataset, account?.fanId)),
+      ),
     ]);
     if (token !== generation) return;
-    job = nextJob;
-    syncedAt = library?.lists[dataset]?.syncedAt;
-    hasSaved = !!saved?.length;
+    syncedAt = Object.fromEntries(
+      FAN_DATASETS.map((dataset) => [
+        dataset,
+        library?.lists[dataset]?.syncedAt,
+      ]),
+    );
+    hasSaved = savedLists.some((saved) => saved.length > 0);
   } catch (reason) {
     if (token === generation)
       error = getErrorMessage(reason, 'Could not read saved sync status.');
@@ -64,7 +74,6 @@ async function refresh() {
 }
 $effect(() => {
   account;
-  dataset;
   void refresh();
 });
 onMount(() => {
@@ -74,9 +83,8 @@ onMount(() => {
   ) => {
     if (
       area === 'local' &&
-      (FAN_SYNC_JOB_KEY in changes ||
-        SAVED_LIST_OWNERS_KEY in changes ||
-        `/${dataset}` in changes ||
+      (SAVED_LIST_OWNERS_KEY in changes ||
+        FAN_DATASETS.some((dataset) => `/${dataset}` in changes) ||
         (account && libraryKey(account.fanId) in changes))
     )
       void refresh();
@@ -148,10 +156,13 @@ async function request(nextAction?: FanSyncAction) {
 </script>
 
 <div class="fan-sync">
+  <h2>Bandcamp data sync</h2>
   <div class="actions">
     <select aria-label="Bandcamp sync action" bind:value={action} disabled={!account || running || sending}>
-      <option value={dataset}>Sync {datasetLabels[dataset]}</option>
       <option value="all">Sync all Bandcamp data</option>
+      {#each FAN_DATASETS as dataset}
+        <option value={dataset}>Sync {datasetLabels[dataset]}</option>
+      {/each}
       <option value="check">Check saved pages’ availability</option>
     </select>
     <button disabled={!account || running || sending} onclick={() => request(action)}>{actionButtonLabel}</button>
@@ -163,15 +174,25 @@ async function request(nextAction?: FanSyncAction) {
         This saved sync error came from an older BCX version. Reload BCX in chrome://extensions, refresh Bandcamp, then sync again.
       {:else}{ownJob.message}{/if}
     {:else if running}Another Bandcamp sync is running.{/if}
-    {#if syncedAt}<span>Last synced: {new Date(syncedAt).toLocaleString()}</span>{/if}
   </p>
-  {#if account && hasSaved && !syncedAt && !running && ownJob?.state !== 'error' && ownJob?.state !== 'cancelled' && !error}<p>Your saved lists are shown. Sync merges fresh Bandcamp data and keeps missing entries.</p>{/if}
+  {#if account}
+    <div class="last-synced">
+      <h3>Last synced</h3>
+      {#each FAN_DATASETS as dataset}
+        <div><span>{datasetLabels[dataset]}</span><span>{syncedAt[dataset] ? new Date(syncedAt[dataset]).toLocaleString() : 'Never'}</span></div>
+      {/each}
+    </div>
+  {/if}
+  {#if account && hasSaved && !FAN_DATASETS.some((dataset) => syncedAt[dataset]) && !running && ownJob?.state !== 'error' && ownJob?.state !== 'cancelled' && !error}<p>Your saved lists are shown. Sync merges fresh Bandcamp data and keeps missing entries.</p>{/if}
   {#if !account}<p>Sign in to Bandcamp and reload the page to sync saved data.</p>{/if}
+  {#if jobReadError}<p role="alert">{jobReadError}</p>{/if}
   {#if error}<p role="alert">{error}</p>{/if}
 </div>
 
 <style>
-  .fan-sync { flex-shrink: 0; margin: 0 8px 8px; font-size: 0.75rem; color: #d1d5db; }
+  .fan-sync { margin: 8px; font-size: 0.75rem; color: #d1d5db; }
+  h2 { margin-bottom: 8px; color: #f9fafb; font-size: 0.875rem; font-weight: 700; }
+  h3 { margin: 12px 0 4px; color: #f9fafb; font-weight: 700; }
   .actions { display: flex; flex-wrap: wrap; gap: 4px; }
   button, select { background: #374151; color: #f9fafb; border: 1px solid #4b5563; border-radius: 4px; padding: 4px 8px; }
   select { flex: 1; min-width: 0; max-width: 100%; }
@@ -179,5 +200,5 @@ async function request(nextAction?: FanSyncAction) {
   button:disabled, select:disabled { opacity: 0.5; cursor: default; }
   button:focus-visible, select:focus-visible { outline: 2px solid #04b1fe; }
   p { margin-top: 4px; overflow-wrap: anywhere; }
-  .status span { display: block; }
+  .last-synced > div { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
 </style>

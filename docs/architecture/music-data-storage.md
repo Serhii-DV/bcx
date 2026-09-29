@@ -73,7 +73,7 @@ Bandcamp page removes an earlier Unavailable status. List membership is independ
 a missing item can still be accessible (for example, an unfollowed band).
 
 Sync checks missing records and previously unavailable records in the selected
-list. The toolbar also offers a check of all saved release/band pages, including
+list. The Sync tab also offers a check of all saved release/band pages, including
 items still in current lists. Oldest/unattempted checks run first so retries after
 a timeout make progress. Results are saved incrementally. Genres retain historical
 membership but do not receive page-availability classifications.
@@ -83,10 +83,13 @@ catalog tab. Their Unavailable tab appears before No longer listed. Following
 Genres shows every saved genre in All and filters former follows in No longer
 followed. Following badges use current membership, so a saved band missing from
 the latest list is not shown as currently followed.
-The Sync toolbar sits above the subtabs in each fan-data panel. Artist and release
-pages identify the signed-in fan through `identities.fan.id` (with a `fan_id`
-fallback). Without a verified account, the toolbar remains visible but disabled
-with a sign-in message, and empty archive tabs remain visible.
+One top-level Sync tab manages all four fan datasets. It offers full or individual
+list sync, saved-page availability checks, job progress, errors, and each list's
+last sync time. While a job runs or needs attention, fan-data panels show a compact
+status link back to Sync. Artist and release pages identify the signed-in fan
+through `identities.fan.id` (with a `fan_id` fallback). Without a verified account,
+the Sync controls remain visible but disabled with a sign-in message, and empty
+archive tabs remain visible.
 
 History keeps All, Bands, Releases, and Tracks subtabs. Search stays within the
 selected type, and pagination remains in batches of 50.

@@ -25,6 +25,7 @@ import {
   MapPin,
   Menu,
   Mic,
+  RefreshCcw,
   Search,
   SquareArrowRight,
   Tag,
@@ -50,6 +51,7 @@ export const ICON_LIST_MUSIC = 'list-music';
 export const ICON_MAP_PIN = 'map-pin';
 export const ICON_MENU = 'menu';
 export const ICON_MIC = 'mic';
+export const ICON_REFRESH_CCW = 'refresh-ccw';
 export const ICON_SEARCH = 'search';
 export const ICON_SQUARE_ARROW_RIGHT = 'square-arrow-right';
 export const ICON_TAGS = 'tags';
@@ -102,6 +104,8 @@ export function makeIcon(iconName?: string): any {
       return Menu;
     case ICON_MIC:
       return Mic;
+    case ICON_REFRESH_CCW:
+      return RefreshCcw;
     case ICON_SEARCH:
       return Search;
     case ICON_SQUARE_ARROW_RIGHT:
