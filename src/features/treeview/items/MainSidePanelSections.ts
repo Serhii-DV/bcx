@@ -68,12 +68,9 @@ export class MainSidePanelSections {
       addSections(
         createPageDataSections(pageDataContext, band?.url.toString()),
       );
+    } else {
+      addSection(HistorySidePanelSection.create());
     }
-    addSection(
-      HistorySidePanelSection.create(
-        includePageData ? pageDataContext : undefined,
-      ),
-    );
 
     console.timeEnd(logLabel);
 
@@ -88,14 +85,15 @@ function createPageDataSections(
   const userKeyPart = getUserKeyPart(pageDataContext);
   return [
     FanSidePanelSection.create(pageDataContext, userKeyPart),
+    CollectionSidePanelSection.create(pageDataContext, userKeyPart),
+    WishlistSidePanelSection.create(pageDataContext, userKeyPart),
+    HistorySidePanelSection.create(pageDataContext),
     FollowingBandsSidePanelSection.create(
       pageDataContext,
       userKeyPart,
       currentBandHref,
     ),
     FollowingGenresSidePanelSection.create(pageDataContext, userKeyPart),
-    CollectionSidePanelSection.create(pageDataContext, userKeyPart),
-    WishlistSidePanelSection.create(pageDataContext, userKeyPart),
   ].filter((section): section is SidePanelSection => !!section);
 }
 

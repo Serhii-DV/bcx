@@ -228,7 +228,7 @@ $effect(() => {
 .item-preview-panel-resizer span { width: 2.5rem; height: 0.1875rem; border-radius: 9999px; background: #6b7280; }
 .item-preview-panel-resizer:hover, .item-preview-panel-resizer:focus-visible, .item-preview-panel.resizing .item-preview-panel-resizer { border-color: #38bdf8; background: rgb(56 189 248 / 0.12); outline: none; }
 .item-preview-panel-resizer:hover span, .item-preview-panel-resizer:focus-visible span, .item-preview-panel.resizing .item-preview-panel-resizer span { background: #7dd3fc; }
-.item-preview-panel-content { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; scrollbar-color: rgb(156 163 175 / 0.45) transparent; scrollbar-width: thin; }
+.item-preview-panel-content { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
 h3 { margin: 0; padding: 0.5rem 1rem; font-size: 0.875rem; }
 p { padding: 0.5rem 1rem; font-size: 0.875rem; color: #d1d5db; }
 </style>

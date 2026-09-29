@@ -62,6 +62,14 @@ describe('active tab fan sections during navigation', () => {
     expect(
       otherFanSections.find((section) => section.id === 'fan-listener')?.label,
     ).toBe('Fan: Other Fan');
+    expect(otherFanSections.map((section) => section.id)).toEqual([
+      'fan-listener',
+      'collection-listener',
+      'wishlist-listener',
+      'history',
+      'following-bands-listener',
+      'following-genres-listener',
+    ]);
     for (const dataset of ['wishlist', 'following-bands']) {
       const section = first.find(
         (section) => section.fanSync?.dataset === dataset,

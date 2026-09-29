@@ -9,6 +9,7 @@ const RELEASE_BATCH_SIZE = 20;
 type CreatePagedReleasesTreeItemArgs = {
   albums: Album[];
   errorContext: string;
+  label?: string;
   withAlbumSummary?: boolean;
   withPreview?: boolean;
   createPreviewItem?: (album: Album) => TreeItem;
@@ -17,6 +18,7 @@ type CreatePagedReleasesTreeItemArgs = {
 export function createPagedReleasesTreeItem({
   albums,
   errorContext,
+  label = 'Releases',
   withAlbumSummary = false,
   withPreview = false,
   createPreviewItem = (album) => AlbumTreeItemFactory.createWithPreview(album),
@@ -27,7 +29,7 @@ export function createPagedReleasesTreeItem({
     errorMessage: 'Failed to load more releases:',
     image: ICON_DISC,
     items: albums,
-    label: 'Releases',
+    label,
     createChildren: (albums) =>
       withPreview
         ? albums.map(createPreviewItem)

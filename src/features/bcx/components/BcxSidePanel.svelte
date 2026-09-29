@@ -448,6 +448,39 @@ $effect(() => {
     overflow-y: auto;
   }
 
+  :global(.bcx-side-panel-shell :is(.bcx-tree-view, .item-preview-panel-content, .bcx-info-scroll, .bcx-section-overflow)) {
+    scrollbar-color: rgb(156 163 175 / 0.45) transparent;
+    scrollbar-width: thin;
+  }
+
+  :global(.bcx-side-panel-shell :is(.bcx-tree-view, .item-preview-panel-content, .bcx-info-scroll, .bcx-section-overflow)::-webkit-scrollbar) {
+    width: 6px;
+    height: 6px;
+  }
+
+  :global(.bcx-side-panel-shell :is(.bcx-tree-view, .item-preview-panel-content, .bcx-info-scroll, .bcx-section-overflow)::-webkit-scrollbar-track) {
+    background: transparent;
+  }
+
+  :global(.bcx-side-panel-shell :is(.bcx-tree-view, .item-preview-panel-content, .bcx-info-scroll, .bcx-section-overflow)::-webkit-scrollbar-button) {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  :global(.bcx-side-panel-shell :is(.bcx-tree-view, .item-preview-panel-content, .bcx-info-scroll, .bcx-section-overflow)::-webkit-scrollbar-thumb) {
+    border-radius: 9999px;
+    background-color: rgb(156 163 175 / 0.35);
+  }
+
+  :global(.bcx-side-panel-shell :is(.bcx-tree-view, .item-preview-panel-content, .bcx-info-scroll, .bcx-section-overflow)::-webkit-scrollbar-thumb:hover) {
+    background-color: rgb(209 213 219 / 0.55);
+  }
+
+  :global(.bcx-side-panel-shell :is(.bcx-tree-view, .item-preview-panel-content, .bcx-info-scroll, .bcx-section-overflow)::-webkit-scrollbar-corner) {
+    background: transparent;
+  }
+
   :global(.bcx-side-panel-shell .bcx-tree-breadcrumb) {
     flex-shrink: 0;
   }

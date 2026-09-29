@@ -5,12 +5,23 @@ import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
-import { createRootSectionTabs } from './rootSectionTabs';
+import {
+  type CatalogGroupSort,
+  type CatalogYearSort,
+  createRootSectionTabs,
+  type FollowingBandCountrySort,
+  type FollowingBandYearSort,
+  sortCatalogGroups,
+  sortFollowingBandGroups,
+} from './rootSectionTabs';
 
 const tabDescriptions: Record<string, { label?: string; title: string }> = {
   All: { title: 'Browse all items in this section.' },
   Artists: { title: 'Browse releases grouped by artist.' },
   Releases: { title: 'Browse releases in this section.' },
+  'Releases: Reverse': { title: 'Browse releases in reverse catalog order.' },
+  'Releases: Title A–Z': { title: 'Browse releases by title, A to Z.' },
+  'Releases: Title Z–A': { title: 'Browse releases by title, Z to A.' },
   Bands: { title: 'Browse bands in this section.' },
   Tracks: { title: 'Browse tracks in this section.' },
   'Release years': {
@@ -23,6 +34,9 @@ const tabDescriptions: Record<string, { label?: string; title: string }> = {
   },
   'Latest added': {
     title: 'Browse followed bands, most recently followed first.',
+  },
+  'Earliest followed': {
+    title: 'Browse followed bands, earliest followed first.',
   },
   'A–Z': { title: 'Browse followed bands by name, A to Z.' },
   'Z–A': { title: 'Browse followed bands by name, Z to A.' },
@@ -58,17 +72,34 @@ let {
   sortBands?: boolean;
 } = $props();
 let rootVersion = $state(0);
-const tabs = $derived.by(() => {
+let yearSort = $state<FollowingBandYearSort>('newest');
+let countrySort = $state<FollowingBandCountrySort>('az');
+let artistSort = $state<CatalogGroupSort>('az');
+let releaseYearSort = $state<CatalogYearSort>('newest');
+let addedYearSort = $state<CatalogYearSort>('newest');
+const isReleaseCatalog = $derived(
+  treeData.items.some(
+    (item) => item.releasePreview && item.label === 'Releases',
+  ),
+);
+const displayedTreeData = $derived.by(() => {
   rootVersion;
-  return createRootSectionTabs(treeData.items);
+  return sortBands
+    ? sortFollowingBandGroups(treeData, yearSort, countrySort)
+    : isReleaseCatalog
+      ? sortCatalogGroups(treeData, artistSort, releaseYearSort, addedYearSort)
+      : treeData;
+});
+const tabs = $derived.by(() => {
+  return createRootSectionTabs(displayedTreeData.items);
 });
 const displayTabs = $derived.by(() => {
   const labeledTabs = tabs.map((tab) => {
-    const rootLabel = treeData.items.find(
+    const rootLabel = displayedTreeData.items.find(
       (item) => item.path === tab.id,
     )?.label;
     const description = rootLabel ? tabDescriptions[rootLabel] : undefined;
-    return {
+    const labeledTab = {
       ...tab,
       label: description?.label
         ? tab.label.replace(rootLabel ?? '', description.label)
@@ -79,11 +110,171 @@ const displayTabs = $derived.by(() => {
           ? 'View artist or label information and links.'
           : `Open ${rootLabel ?? 'section'}.`),
     };
+    if (isReleaseCatalog && rootLabel === 'Artists') {
+      return {
+        ...labeledTab,
+        sortValue: artistSort,
+        sortLabel: 'Sort artists',
+        onSortChange: setArtistSort,
+        sortOptions: [
+          {
+            id: 'az',
+            label: 'A–Z',
+            title: 'Show artists in alphabetical order.',
+          },
+          {
+            id: 'za',
+            label: 'Z–A',
+            title: 'Show artists in reverse alphabetical order.',
+          },
+          {
+            id: 'most-releases',
+            label: 'Most releases',
+            title: 'Show artists with the most releases first.',
+          },
+          {
+            id: 'fewest-releases',
+            label: 'Fewest releases',
+            title: 'Show artists with the fewest releases first.',
+          },
+        ],
+      };
+    }
+    if (
+      isReleaseCatalog &&
+      (rootLabel === 'Release years' || rootLabel === 'Added years')
+    ) {
+      return {
+        ...labeledTab,
+        sortValue:
+          rootLabel === 'Release years' ? releaseYearSort : addedYearSort,
+        sortLabel:
+          rootLabel === 'Release years'
+            ? 'Sort release years'
+            : 'Sort years added',
+        onSortChange:
+          rootLabel === 'Release years' ? setReleaseYearSort : setAddedYearSort,
+        sortOptions: [
+          {
+            id: 'newest',
+            label: 'Newest first',
+            title: 'Show the newest years first.',
+          },
+          {
+            id: 'oldest',
+            label: 'Oldest first',
+            title: 'Show the oldest years first.',
+          },
+          {
+            id: 'most-releases',
+            label: 'Most releases',
+            title: 'Show years with the most releases first.',
+          },
+          {
+            id: 'fewest-releases',
+            label: 'Fewest releases',
+            title: 'Show years with the fewest releases first.',
+          },
+        ],
+      };
+    }
+    if (!sortBands) return labeledTab;
+    if (rootLabel === 'Followed by Year') {
+      return {
+        ...labeledTab,
+        sortValue: yearSort,
+        sortLabel: 'Sort followed years',
+        onSortChange: setYearSort,
+        sortOptions: [
+          {
+            id: 'newest',
+            label: 'Newest first',
+            title: 'Show the most recently followed years first.',
+          },
+          {
+            id: 'oldest',
+            label: 'Oldest first',
+            title: 'Show the earliest followed years first.',
+          },
+          {
+            id: 'most-bands',
+            label: 'Most bands',
+            title: 'Show years with the most followed bands first.',
+          },
+          {
+            id: 'fewest-bands',
+            label: 'Fewest bands',
+            title: 'Show years with the fewest followed bands first.',
+          },
+        ],
+      };
+    }
+    if (rootLabel === 'Countries') {
+      return {
+        ...labeledTab,
+        sortValue: countrySort,
+        sortLabel: 'Sort countries',
+        onSortChange: setCountrySort,
+        sortOptions: [
+          {
+            id: 'az',
+            label: 'A–Z',
+            title: 'Show countries in alphabetical order.',
+          },
+          {
+            id: 'za',
+            label: 'Z–A',
+            title: 'Show countries in reverse alphabetical order.',
+          },
+          {
+            id: 'most-bands',
+            label: 'Most bands',
+            title: 'Show countries with the most followed bands first.',
+          },
+          {
+            id: 'fewest-bands',
+            label: 'Fewest bands',
+            title: 'Show countries with the fewest followed bands first.',
+          },
+        ],
+      };
+    }
+    return labeledTab;
   });
+  if (isReleaseCatalog) {
+    const sortRoots = [
+      'Releases',
+      'Releases: Reverse',
+      'Releases: Title A–Z',
+      'Releases: Title Z–A',
+    ].map((name) =>
+      displayedTreeData.items.find((item) => item.label === name),
+    );
+    if (sortRoots.some((root) => !root?.path)) return labeledTabs;
+    const optionLabels = [
+      'Catalog order',
+      'Reverse order',
+      'Title A–Z',
+      'Title Z–A',
+    ];
+    const sortOptions = sortRoots.map((root, index) => ({
+      id: root?.path ?? '',
+      label: optionLabels[index],
+      title: root?.label ? tabDescriptions[root.label]?.title : undefined,
+    }));
+    const sortIds = new Set(sortOptions.map((option) => option.id));
+    return labeledTabs.flatMap((tab) =>
+      tab.id === sortOptions[0].id
+        ? [{ ...tab, sortLabel: 'Sort releases', sortOptions }]
+        : sortIds.has(tab.id)
+          ? []
+          : [tab],
+    );
+  }
   if (!sortBands) return labeledTabs;
 
-  const sortRoots = ['Latest added', 'A–Z', 'Z–A'].map((name) =>
-    treeData.items.find((item) => item.label === name),
+  const sortRoots = ['Latest added', 'Earliest followed', 'A–Z', 'Z–A'].map(
+    (name) => displayedTreeData.items.find((item) => item.label === name),
   );
   if (sortRoots.some((root) => !root?.path)) return labeledTabs;
 
@@ -107,6 +298,56 @@ const displayTabs = $derived.by(() => {
 let selectedRoot = $state('');
 let visitedRoots: Record<string, boolean> = $state({});
 
+function setYearSort(id: string) {
+  if (
+    id === 'newest' ||
+    id === 'oldest' ||
+    id === 'most-bands' ||
+    id === 'fewest-bands'
+  )
+    yearSort = id;
+}
+
+function setCountrySort(id: string) {
+  if (
+    id === 'az' ||
+    id === 'za' ||
+    id === 'most-bands' ||
+    id === 'fewest-bands'
+  )
+    countrySort = id;
+}
+
+function isCatalogGroupSort(id: string): id is CatalogGroupSort {
+  return (
+    id === 'az' ||
+    id === 'za' ||
+    id === 'most-releases' ||
+    id === 'fewest-releases'
+  );
+}
+
+function isCatalogYearSort(id: string): id is CatalogYearSort {
+  return (
+    id === 'newest' ||
+    id === 'oldest' ||
+    id === 'most-releases' ||
+    id === 'fewest-releases'
+  );
+}
+
+function setArtistSort(id: string) {
+  if (isCatalogGroupSort(id)) artistSort = id;
+}
+
+function setReleaseYearSort(id: string) {
+  if (isCatalogYearSort(id)) releaseYearSort = id;
+}
+
+function setAddedYearSort(id: string) {
+  if (isCatalogYearSort(id)) addedYearSort = id;
+}
+
 $effect(() => {
   if (!tabs.some((tab) => tab.id === selectedRoot)) {
     selectedRoot = tabs[0]?.id ?? '';
@@ -115,7 +356,7 @@ $effect(() => {
 });
 
 function usesItemPreview(path: string): boolean {
-  const root = treeData.items.find((item) => item.path === path);
+  const root = displayedTreeData.items.find((item) => item.path === path);
   return !!(root?.itemPreview || root?.releasePreview);
 }
 
@@ -132,14 +373,14 @@ function refreshTabs() {
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
             {#if usesItemPreview(tab.id)}
-              <BcxItemPreviewPanel {treeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
+              <BcxItemPreviewPanel treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
             {:else}
-            {@const about = treeData.items.find((item) => item.path === tab.id)}
+            {@const about = displayedTreeData.items.find((item) => item.path === tab.id)}
             {#if about?.aboutProfile}
               <BcxBandDetails {about} />
             {:else}
               <BcxTreeBrowser
-                {treeData}
+                treeData={displayedTreeData}
                 initialRootPath={tab.id}
                 lockInitialRoot={true}
                 showBreadcrumb={false}
