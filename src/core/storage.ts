@@ -1,5 +1,6 @@
 import { arrayUnique } from 'src/utils/array';
 import { arrayPreview, console } from 'src/utils/console';
+import { getErrorMessage } from 'src/utils/getErrorMessage';
 
 export interface StorageObject {
   [key: string]: any;
@@ -41,22 +42,25 @@ export class Storage {
     const uniqueKeys = arrayUnique(keys as string[]);
     const logLabel = `[Storage.get(keys: ${uniqueKeys.length})]`;
 
-    if (this.debug) {
-      console.time(logLabel);
-    }
+    const startedAt = performance.now();
 
     try {
       const items = await this.storage.get(uniqueKeys);
 
       if (this.debug) {
-        console.timeEnd(logLabel);
-        console.log(logLabel, ...arrayPreview(uniqueKeys as string[]), items);
+        console.log(
+          logLabel,
+          performance.now() - startedAt,
+          'ms',
+          ...arrayPreview(uniqueKeys as string[]),
+          items,
+        );
       }
 
       return items as Partial<T>;
     } catch (error) {
       if (this.debug) {
-        console.timeEnd(logLabel);
+        console.log(logLabel, performance.now() - startedAt, 'ms (failed)');
       }
 
       throw error;
@@ -91,7 +95,14 @@ export class Storage {
 
       this.storage.getKeys().then((keys) => {
         if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
+          return reject(
+            new Error(
+              getErrorMessage(
+                chrome.runtime.lastError,
+                'Chrome storage operation failed.',
+              ),
+            ),
+          );
         }
 
         if (this.debug) {
@@ -113,7 +124,14 @@ export class Storage {
 
       this.storage.get(null, (items) => {
         if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
+          return reject(
+            new Error(
+              getErrorMessage(
+                chrome.runtime.lastError,
+                'Chrome storage operation failed.',
+              ),
+            ),
+          );
         }
 
         if (this.debug) {
@@ -151,7 +169,14 @@ export class Storage {
 
       this.storage.set(storableData, () => {
         if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
+          return reject(
+            new Error(
+              getErrorMessage(
+                chrome.runtime.lastError,
+                'Chrome storage operation failed.',
+              ),
+            ),
+          );
         }
 
         if (this.debug) {
@@ -181,7 +206,14 @@ export class Storage {
 
       this.storage.remove(key, () => {
         if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
+          return reject(
+            new Error(
+              getErrorMessage(
+                chrome.runtime.lastError,
+                'Chrome storage operation failed.',
+              ),
+            ),
+          );
         }
 
         if (this.debug) {
@@ -205,7 +237,14 @@ export class Storage {
 
       this.getAll().then((items) => {
         if (chrome.runtime.lastError) {
-          return reject(chrome.runtime.lastError);
+          return reject(
+            new Error(
+              getErrorMessage(
+                chrome.runtime.lastError,
+                'Chrome storage operation failed.',
+              ),
+            ),
+          );
         }
 
         const count = Object.keys(items).length;
@@ -227,7 +266,14 @@ export class Storage {
         // Chrome supports getBytesInUse
         storage.getBytesInUse(null, (bytesInUse: number) => {
           if (chrome.runtime.lastError) {
-            return reject(chrome.runtime.lastError);
+            return reject(
+              new Error(
+                getErrorMessage(
+                  chrome.runtime.lastError,
+                  'Chrome storage operation failed.',
+                ),
+              ),
+            );
           }
 
           if (this.debug) {

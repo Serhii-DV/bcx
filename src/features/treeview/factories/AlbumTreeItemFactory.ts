@@ -2,9 +2,9 @@ import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
 import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
+import { readCurrentItems } from 'src/bandcamp/domain/fanData/library';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
-import { storage } from 'src/core/shared';
 import { arrayUnique } from 'src/utils/array';
 import { TreeItemButtonFactory } from '../buttons/factory';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
@@ -50,7 +50,7 @@ export class AlbumTreeItemFactory {
       .build();
   }
 
-  static createWithPreview(album: Album): TreeItem {
+  static createWithPreview(album: Album, fanId?: number): TreeItem {
     return {
       ...this.create(album),
       previewImage:
@@ -82,8 +82,8 @@ export class AlbumTreeItemFactory {
           : this.createWithSummary(album);
         const information = createReleaseInformation(stored ?? album);
         const [collection, wishlist] = await Promise.all([
-          storage.getByKey<unknown>('/collection'),
-          storage.getByKey<unknown>('/wishlist'),
+          readCurrentItems('collection', fanId),
+          readCurrentItems('wishlist', fanId),
         ]);
         information.collectionStatus = releaseCollectionStatus(
           album,

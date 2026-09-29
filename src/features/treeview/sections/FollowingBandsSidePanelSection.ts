@@ -20,7 +20,8 @@ export class FollowingBandsSidePanelSection {
       label: 'Following Bands',
       rootNavigation: 'tabs',
       ttl: SIDE_PANEL_SECTION_CACHE_TTL.FOLLOWING_BANDS,
-      createTreeItem: (username) => FollowingBandsTreeItem.create(username),
+      createTreeItem: (username, fanId) =>
+        FollowingBandsTreeItem.create(username, fanId),
     });
   }
 }

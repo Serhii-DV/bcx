@@ -1,4 +1,9 @@
-import { describe, expect, it } from '@rstest/core';
+import { describe, expect, it, rs } from '@rstest/core';
+import {
+  closeOwnedTab,
+  type FanSyncJob,
+  isFanSyncTabUrl,
+} from 'src/bandcamp/domain/fanData/sync';
 import { shouldReloadActiveTab } from './activeTabUpdates';
 
 const tab = { id: 1, url: 'https://first.bandcamp.com/music' };
@@ -25,13 +30,70 @@ describe('shouldReloadActiveTab', () => {
     ).toBe(true);
   });
 
-  it('ignores unrelated tabs, loading events, and query-only changes', () => {
+  it('ignores unrelated tabs, loading events, and query-only changes', async () => {
     expect(shouldReloadActiveTab(tab, 2, { status: 'complete' })).toBe(false);
     expect(shouldReloadActiveTab(null, 1, { status: 'complete' })).toBe(false);
     expect(shouldReloadActiveTab(tab, 1, { status: 'loading' })).toBe(false);
     expect(
       shouldReloadActiveTab(tab, 1, { url: `${tab.url}?filter=ambient` }),
     ).toBe(false);
+    const syncUrl =
+      'https://bandcamp.com/listener#bcx-sync=00000000-0000-0000-0000-000000000001';
+    expect(isFanSyncTabUrl(syncUrl)).toBe(true);
+    expect(isFanSyncTabUrl(tab.url)).toBe(false);
+    expect(
+      isFanSyncTabUrl(syncUrl.replace('bandcamp.com', 'example.com')),
+    ).toBe(false);
+    expect(
+      shouldReloadActiveTab(tab, 2, { url: syncUrl, status: 'complete' }),
+    ).toBe(false);
+    const originalTabs = Object.getOwnPropertyDescriptor(chrome, 'tabs');
+    const get = rs.fn(async () => ({ id: 2, active: false, url: syncUrl }));
+    const remove = rs.fn(async () => {});
+    Object.defineProperty(chrome, 'tabs', {
+      value: { get, remove },
+      configurable: true,
+    });
+    const job: FanSyncJob = {
+      id: 'test',
+      account: { fanId: 42, username: 'listener' },
+      action: 'all',
+      state: 'running',
+      message: 'Loading',
+      startedAt: 0,
+      tabId: 2,
+      tabUrl: syncUrl,
+      originTabId: 1,
+    };
+    try {
+      await closeOwnedTab(job);
+      expect(remove).toHaveBeenCalledWith(2);
+      remove.mockClear();
+      get.mockImplementationOnce(async () => ({
+        id: 2,
+        active: true,
+        url: syncUrl,
+      }));
+      await closeOwnedTab(job);
+      expect(remove).not.toHaveBeenCalled();
+      get.mockImplementationOnce(async () => ({
+        id: 2,
+        active: false,
+        url: 'https://bandcamp.com/another-listener',
+      }));
+      await closeOwnedTab(job);
+      expect(remove).not.toHaveBeenCalled();
+      get.mockImplementationOnce(async () => ({
+        id: 1,
+        active: false,
+        url: syncUrl,
+      }));
+      await closeOwnedTab({ ...job, tabId: 1 });
+      expect(remove).not.toHaveBeenCalled();
+    } finally {
+      if (originalTabs) Object.defineProperty(chrome, 'tabs', originalTabs);
+      else Reflect.deleteProperty(chrome, 'tabs');
+    }
   });
 });
 

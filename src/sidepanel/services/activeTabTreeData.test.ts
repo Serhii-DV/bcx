@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Band } from 'src/bandcamp/domain/band/band';
+import { libraryKey } from 'src/bandcamp/domain/fanData/library';
+import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { Url } from 'src/core/url';
+import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
+import { TreeItemCache } from 'src/features/treeview/items/TreeItemCache';
 import {
   createActiveTabSidePanelData,
   getActiveTabHeader,
@@ -16,10 +21,23 @@ describe('active tab fan sections during navigation', () => {
     rs.spyOn(BandcampStorage, 'getByUuids').mockResolvedValue([]);
     rs.spyOn(BandcampStorage, 'getBands').mockResolvedValue([]);
     const createSections = rs.spyOn(MainSidePanelSections, 'create');
-    const fanContext = {
-      data: {},
-      fanData: { username: 'listener', name: 'Listener', fan_id: 42 },
+    const data = {
+      identities: { fan: { id: 42, username: 'listener', name: 'Listener' } },
     };
+    const fanContext = {
+      data,
+      fanData: detectFanDataFromPageData(
+        { data },
+        Url.create('https://first-test.bandcamp.com/music'),
+      ),
+    };
+    expect(fanContext.fanData.fan_id).toBe(42);
+    expect(
+      detectFanDataFromPageData(
+        { data: { identities: { fan: null } } },
+        Url.create('https://first-test.bandcamp.com/music'),
+      ).fan_id,
+    ).toBeUndefined();
     const sendMessage = rs.spyOn(chrome.runtime, 'sendMessage');
     sendMessage.mockImplementationOnce(async () => ({ pageData: fanContext }));
     const { sections: first } = await createActiveTabSidePanelData({
@@ -28,6 +46,76 @@ describe('active tab fan sections during navigation', () => {
       url: 'https://first-test.bandcamp.com/music',
     });
     expect(first.map((section) => section.id)).toContain('wishlist-listener');
+    expect(first.some((section) => section.id === 'fan-listener')).toBe(false);
+    const otherFanSections = await MainSidePanelSections.create(
+      Url.create('https://bandcamp.com/other'),
+      null,
+      {
+        pageData: {
+          data: {
+            fan_data: { fan_id: 99, username: 'other', name: 'Other Fan' },
+          },
+          fanData: fanContext.fanData,
+        },
+      },
+    );
+    expect(
+      otherFanSections.find((section) => section.id === 'fan-listener')?.label,
+    ).toBe('Fan: Other Fan');
+    for (const dataset of ['wishlist', 'following-bands']) {
+      const section = first.find(
+        (section) => section.fanSync?.dataset === dataset,
+      );
+      expect(section?.fanSync?.account).toEqual({
+        fanId: 42,
+        username: 'listener',
+      });
+      const tree = await section!.createTreeData();
+      expect(
+        createRootSectionTabs(tree.items).map((tab) => tab.label),
+      ).toContain('Unavailable');
+    }
+    const currentGenre = { name: 'Metal', tag_page_url: '/tag/metal' };
+    const pastGenre = { name: 'Ambient', tag_page_url: '/tag/ambient' };
+    await chrome.storage.local.set({
+      '/following-genres': [currentGenre, pastGenre],
+      [libraryKey(42)]: {
+        version: 1,
+        account: { fanId: 42, username: 'listener' },
+        revision: 'sync-1',
+        lists: {
+          'following-genres': {
+            records: {
+              'genre:/tag/metal': currentGenre,
+              'genre:/tag/ambient': pastGenre,
+            },
+            current: ['genre:/tag/metal'],
+            syncedAt: '2026-09-29T00:00:00Z',
+          },
+        },
+      },
+    });
+    try {
+      const genres = first.find(
+        (section) => section.fanSync?.dataset === 'following-genres',
+      );
+      const tree = await genres!.createTreeData();
+      expect(createRootSectionTabs(tree.items).map((tab) => tab.label)).toEqual(
+        ['All (2)', 'No longer followed (1)'],
+      );
+      expect(tree.items[0].children?.map((item) => item.label)).toEqual([
+        'Metal',
+        'Ambient',
+      ]);
+    } finally {
+      await chrome.storage.local.remove(['/following-genres', libraryKey(42)]);
+      await chrome.storage.session.remove(
+        TreeItemCache.subtreeKey(42, 'following-genres'),
+      );
+    }
+    expect(
+      first.find((section) => section.id === 'history')?.fanAccount?.fanId,
+    ).toBe(42);
 
     sendMessage.mockImplementationOnce(async () => ({
       pageData: null,
@@ -42,6 +130,31 @@ describe('active tab fan sections during navigation', () => {
     expect(next.map((section) => section.id)).toContain('collection-listener');
     expect(createSections.mock.calls.at(-1)?.[1]).toBeNull();
     expect(createSections.mock.calls.at(-1)?.[2]?.pageData).toEqual(fanContext);
+
+    const anonymous = await MainSidePanelSections.create(
+      Url.create('https://second-test.bandcamp.com/music'),
+      null,
+      {
+        pageData: {
+          data: {},
+          fanData: detectFanDataFromPageData(
+            { data: {} },
+            Url.create('https://second-test.bandcamp.com/music'),
+          ),
+        },
+      },
+    );
+    const anonymousWishlist = anonymous.find(
+      (section) => section.fanSync?.dataset === 'wishlist',
+    );
+    expect(anonymousWishlist?.fanSync).toEqual({
+      account: undefined,
+      dataset: 'wishlist',
+    });
+    const anonymousTree = await anonymousWishlist!.createTreeData();
+    expect(
+      createRootSectionTabs(anonymousTree.items).map((tab) => tab.label),
+    ).toContain('Unavailable');
 
     const updatedContext = {
       data: {},

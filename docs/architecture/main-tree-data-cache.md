@@ -92,11 +92,16 @@ Catalog roots carry `releasePreview` and browser layout at runtime so nested
 artist/year groups share the bottom details panel. Loaded Collection and Wishlist
 sections also expose all catalog URLs, including releases beyond the first page,
 to preserve the mounted side panel during release navigation.
+The tab strip presents Release years as By Release Year and Added years as By
+Year Added. These display labels leave the cached root names and paths intact.
 
 Following Bands stores every loaded band in its tree snapshot without pagination.
 Snapshot version 15 invalidates older snapshots that predate the Latest added,
 A–Z, Z–A, and Years root tabs and followed timestamps. Cache keys, TTLs, and
 refresh behavior stay the same.
+The side panel presents the three order roots as one Bands tab with a sort menu,
+and labels the year and country tabs By Year and By Country. The cached roots
+and their paths remain separate.
 Snapshot version 24 rebuilds Following Bands with the Followed by Year label and
 a Countries tab. Countries use the last part of each stored location, with
 missing locations grouped under Unknown country. Recognized country names
@@ -160,3 +165,34 @@ History is exposed as All, Bands, Releases, and Tracks root tabs. Each tab owns 
 filtered page list and pagination offset, while the initial cached-entity lookup is
 shared across the visible first batches. Saved tracks use the same item preview
 panel with track metadata; unsaved tracks retain the URL-derived fallback preview.
+
+## Account library sync
+
+The top-level Sync tab sends fan-data requests to the background worker. The worker
+opens an inactive Collection tab and invokes `PageCollection`
+through a content-script message. Account identity and complete pagination are
+checked before each dataset is saved. Requests are bounded and cancellable; an
+interrupted job is marked for retry when the worker restarts. Only a tab still
+carrying the job's original URL is closed by cleanup.
+
+Fan subtree keys use the numeric fan ID. Snapshot version 29 stores an optional
+revision (the dataset's last successful sync timestamp), preventing an old cache
+entry from hiding newly saved data without discarding unrelated caches. Existing
+TTLs and other subtree keys are unchanged. Archive roots are appended after cache
+restoration so their preview callbacks and availability state are always current.
+
+Open panel instances listen for account-library changes in local storage, debounce
+updates, and rebuild loaded fan sections with stale-request protection. They retain
+mounted root tabs and use stable paths to preserve filters and selection when the
+selected item remains present. Collection pagination still resets on a rebuild;
+items beyond its first page remain accessible through Show more.
+
+Snapshot version 30 rebuilds Collection, Wishlist, and Following Bands from all
+saved entries, including the original shared arrays before the first sync. Fan
+cache revisions combine the dataset sync timestamp with its shared-array ownership
+revision. Sync publishes merged arrays at the original storage keys; open panels
+also observe those keys and ownership changes, so signed-out views can refresh.
+Archive roots use the same saved items and retain separate current-membership and
+availability filters.
+Snapshot version 31 rebuilds Following Genres from every saved genre. Its All tab
+includes former follows, while No longer followed filters them separately.

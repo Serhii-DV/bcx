@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Ellipsis } from '@lucide/svelte';
+import { Check, ChevronDown, Ellipsis } from '@lucide/svelte';
 import { DropdownMenu, Tabs } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
 import { tick } from 'svelte';
@@ -9,6 +9,8 @@ interface SectionTab {
   id: string;
   label: string;
   image?: string;
+  title?: string;
+  sortOptions?: { id: string; label: string; title?: string }[];
 }
 
 let {
@@ -25,15 +27,27 @@ let measurements: HTMLDivElement;
 let moreMeasurement: HTMLSpanElement;
 let visibleIds = $state<string[]>([]);
 let focusSelectedOnClose = false;
+let lastSortId = $state('');
 const visibleTabs = $derived(tabs.filter((tab) => visibleIds.includes(tab.id)));
 const hiddenTabs = $derived(tabs.filter((tab) => !visibleIds.includes(tab.id)));
+
+$effect(() => {
+  if (
+    tabs.some((tab) => tab.sortOptions?.some((option) => option.id === value))
+  ) {
+    lastSortId = value;
+  }
+});
 
 // Measure all labels independently of which tabs are currently visible.
 $effect(() => {
   const barElement = bar;
   if (!barElement) return;
   const currentTabs = tabs;
-  const activeId = value;
+  const activeId =
+    currentTabs.find((tab) =>
+      tab.sortOptions?.some((option) => option.id === value),
+    )?.id ?? value;
   const measure = () => {
     const widths = Array.from(
       measurements.children,
@@ -58,6 +72,22 @@ function onSelectTab(id: string) {
   value = id;
 }
 
+function selectedSortOption(tab: SectionTab) {
+  return (
+    tab.sortOptions?.find((option) => option.id === value) ??
+    tab.sortOptions?.find((option) => option.id === lastSortId)
+  );
+}
+
+function tabLabelText(tab: SectionTab) {
+  const sort = selectedSortOption(tab) ?? tab.sortOptions?.[0];
+  return sort ? `${tab.label} · ${sort.label}` : tab.label;
+}
+
+function tabTitle(tab: SectionTab) {
+  return selectedSortOption(tab)?.title ?? tab.title ?? tabLabelText(tab);
+}
+
 async function handleCloseAutoFocus(event: Event) {
   if (!focusSelectedOnClose) return;
   event.preventDefault();
@@ -76,15 +106,38 @@ async function handleCloseAutoFocus(event: Event) {
   {:else if tab.image}
     <img src={tab.image} alt="" class="size-4 shrink-0 rounded-sm object-cover" />
   {/if}
-  <span class="bcx-tab-label">{tab.label}</span>
+  <span class="bcx-tab-label">{tabLabelText(tab)}</span>
 {/snippet}
 
 <div bind:this={bar} class="bcx-section-tabs">
   <Tabs.List class="bcx-visible-tabs" aria-label={label}>
     {#each visibleTabs as tab (tab.id)}
-      <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tab.label}>
-        {@render tabLabel(tab)}
-      </Tabs.Trigger>
+      {#if tab.sortOptions}
+        <div class="bcx-sort-tab-group">
+          <Tabs.Trigger value={selectedSortOption(tab)?.id ?? tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
+            {@render tabLabel(tab)}
+          </Tabs.Trigger>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger class="bcx-section-tab bcx-sort-button" aria-label="Sort followed bands" title="Choose how followed bands are ordered">
+              <ChevronDown size={14} aria-hidden="true" />
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal to={bar?.closest('.bcx-side-panel-shell') ?? undefined}>
+              <DropdownMenu.Content class="bcx-section-overflow" align="start" sideOffset={6} strategy="fixed" onCloseAutoFocus={handleCloseAutoFocus}>
+                {#each tab.sortOptions as option (option.id)}
+                  <DropdownMenu.Item class="bcx-section-menu-item" aria-label={`${option.label}${selectedSortOption(tab)?.id === option.id ? ', selected' : ''}`} title={option.title} onSelect={() => onSelectTab(option.id)}>
+                    <span class="bcx-sort-check">{#if selectedSortOption(tab)?.id === option.id}<Check size={14} aria-hidden="true" />{/if}</span>
+                    {option.label}
+                  </DropdownMenu.Item>
+                {/each}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      {:else}
+        <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
+          {@render tabLabel(tab)}
+        </Tabs.Trigger>
+      {/if}
     {/each}
   </Tabs.List>
   {#if hiddenTabs.length}
@@ -95,9 +148,17 @@ async function handleCloseAutoFocus(event: Event) {
       <DropdownMenu.Portal to={bar?.closest('.bcx-side-panel-shell') ?? undefined}>
         <DropdownMenu.Content class="bcx-section-overflow" align="end" sideOffset={6} strategy="fixed" onCloseAutoFocus={handleCloseAutoFocus}>
           {#each hiddenTabs as tab (tab.id)}
-            <DropdownMenu.Item class="bcx-section-menu-item" onSelect={() => onSelectTab(tab.id)}>
-              {@render tabLabel(tab)}
-            </DropdownMenu.Item>
+            {#if tab.sortOptions}
+              {#each tab.sortOptions as option (option.id)}
+                <DropdownMenu.Item class="bcx-section-menu-item" title={option.title} onSelect={() => onSelectTab(option.id)}>
+                  {tab.label} · {option.label}
+                </DropdownMenu.Item>
+              {/each}
+            {:else}
+              <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectTab(tab.id)}>
+                {@render tabLabel(tab)}
+              </DropdownMenu.Item>
+            {/if}
           {/each}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -106,7 +167,14 @@ async function handleCloseAutoFocus(event: Event) {
   <div class="bcx-tab-measurements" aria-hidden="true" inert>
     <div bind:this={measurements} class="bcx-tab-measurement-list">
       {#each tabs as tab (tab.id)}
-        <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
+        {#if tab.sortOptions}
+          <span class="bcx-sort-tab-group">
+            <span class="bcx-section-tab">{tab.label} · {tab.sortOptions[0].label}</span>
+            <span class="bcx-section-tab bcx-sort-button"><ChevronDown size={14} /></span>
+          </span>
+        {:else}
+          <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
+        {/if}
       {/each}
     </div>
     <span bind:this={moreMeasurement} class="bcx-section-tab bcx-more-tabs"><Ellipsis size={16} /></span>
@@ -171,6 +239,23 @@ async function handleCloseAutoFocus(event: Event) {
   :global(.bcx-more-tabs) {
     flex: 0 0 32px;
     justify-content: center;
+  }
+  .bcx-sort-tab-group {
+    display: inline-flex;
+    min-width: 0;
+    max-width: 100%;
+    flex: 0 1 auto;
+    gap: 2px;
+  }
+  :global(.bcx-sort-button) {
+    flex: 0 0 24px;
+    justify-content: center;
+    padding-inline: 4px;
+  }
+  .bcx-sort-check {
+    display: inline-flex;
+    width: 14px;
+    flex: 0 0 14px;
   }
   :global(.bcx-section-overflow) {
     z-index: 1000000;

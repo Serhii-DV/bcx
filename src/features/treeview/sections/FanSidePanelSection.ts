@@ -14,14 +14,21 @@ export class FanSidePanelSection {
 
     const fanData = pageDataContext.fanData;
     const pageData = pageDataContext.data;
+    const pageFan = pageData?.fan_data;
 
-    if (fanData.fan_id === pageData?.fan_data?.fan_id) {
+    if (
+      !Number.isSafeInteger(pageFan?.fan_id) ||
+      pageFan.fan_id <= 0 ||
+      typeof pageFan.username !== 'string' ||
+      !pageFan.username ||
+      fanData.fan_id === pageFan.fan_id
+    ) {
       return null;
     }
 
     return {
       id: `fan-${userKeyPart}`,
-      label: `Fan: ${fanData.name}`,
+      label: `Fan: ${pageFan.name || pageFan.username}`,
       createTreeData: async () =>
         createTreeDataFromTreeItemChildren(
           await FanPageDataTreeItem.create(pageDataContext),

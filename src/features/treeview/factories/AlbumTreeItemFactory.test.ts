@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
+import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
@@ -24,6 +25,7 @@ const album = AlbumFactory.fromBandcampItem({
 
 afterEach(() => {
   rs.restoreAllMocks();
+  return chrome.storage.local.clear();
 });
 
 describe('release previews', () => {
@@ -110,14 +112,27 @@ describe('release previews', () => {
 
   it('loads saved collection status alongside the release preview', async () => {
     rs.spyOn(BandcampStorage, 'getAlbumsRawDataByIds').mockResolvedValue([]);
-    rs.spyOn(storage, 'getByKey').mockResolvedValue([
-      { tralbum_type: 'a', album_id: album.id },
-    ]);
+    const saved = {
+      tralbum_type: 'a' as const,
+      tralbum_id: album.id,
+      album_id: album.id,
+      band_id: album.bandId,
+      band_name: album.artist.toString(),
+      item_art_id: album.artwork.id,
+      item_title: album.title,
+      item_url: album.url.toString(),
+    };
+    await storage.set({ '/collection': [saved], '/wishlist': [saved] });
     const preview =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(preview?.information.collectionStatus).toEqual([
       'In collection',
       'Wishlisted',
     ]);
+    await saveSnapshot({ fanId: 42, username: 'listener' }, 'wishlist', []);
+    const updated =
+      await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
+    expect(updated?.information.collectionStatus).toEqual(['In collection']);
+    expect(await storage.getByKey('/wishlist')).toEqual([saved]);
   });
 });

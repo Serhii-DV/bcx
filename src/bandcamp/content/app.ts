@@ -1,7 +1,9 @@
 import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
 import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
+import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { mount } from 'svelte';
 import App from './app.svelte';
+import { loadFanData } from './fanDataSync';
 import './app.css';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { injectCssFile, injectJSFile, onDOMReady } from 'src/utils/dom';
@@ -96,6 +98,17 @@ onDOMReady(async () => {
 
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.LOAD_FAN_DATA) {
+      loadFanData(message.account, message.dataset)
+        .then(sendResponse)
+        .catch((error) => {
+          sendResponse({
+            ok: false,
+            error: getErrorMessage(error, 'Could not load Bandcamp data'),
+          });
+        });
+      return true;
+    }
     if (message.type === MessageType.GET_ACTIVE_BANDCAMP_PAGE_DATA) {
       try {
         sendResponse({

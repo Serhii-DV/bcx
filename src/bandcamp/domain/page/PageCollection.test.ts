@@ -43,7 +43,11 @@ async function createPageCollection(transport: unknown) {
       collection_data: { last_token: '1000:collection' },
       following_bands_data: { last_token: '1000:bands' },
       following_fans_data: { sequence: ['1', 'missing'] },
-      following_genres_data: { sequence: ['metal'] },
+      following_genres_data: {
+        sequence: ['metal'],
+        item_count: 1,
+        last_token: 'genre-1',
+      },
       item_cache: {
         following_fans: {
           '1': { name: 'Fan One', trackpipe_url: '/fan-one', image_id: 123 },
@@ -54,6 +58,8 @@ async function createPageCollection(transport: unknown) {
       },
     }) as any;
 
+  const pageData = pageCollection.getPageData();
+  pageCollection.getPageData = () => pageData;
   return pageCollection;
 }
 
@@ -101,12 +107,22 @@ describe('PageCollection', () => {
       older_than_token: 'token-1',
       count: 1,
     });
+    transport.postJsonString.mockResolvedValue({
+      items: [collectionItem(3)],
+      more_available: true,
+    });
+    await expect(
+      pageCollection.loadWishlistItems({ includeSummaryFlags: false }),
+    ).rejects.toThrow('Incomplete Bandcamp pagination');
+    pageCollection.getPageData().wishlist_data.item_count = 0;
+    await expect(pageCollection.loadWishlistItems()).resolves.toEqual([]);
   });
 
-  it('loads following fans and genres from page-data caches', async () => {
+  it('loads following fans and paginates genres beyond the page cache', async () => {
+    const postJsonString = rstest.fn();
     const pageCollection = await createPageCollection({
       getJson: rstest.fn(),
-      postJsonString: rstest.fn(),
+      postJsonString,
     });
 
     await expect(pageCollection.loadFollowingFansItems()).resolves.toEqual([
@@ -115,6 +131,30 @@ describe('PageCollection', () => {
     await expect(pageCollection.loadFollowingGenresItems()).resolves.toEqual([
       { name: 'Metal', tag_page_url: '/tag/metal' },
     ]);
+    expect(postJsonString).not.toHaveBeenCalled();
+    pageCollection.getPageData().following_genres_data.item_count = 2;
+    postJsonString.mockResolvedValueOnce({
+      followeers: [
+        { name: 'Ambient', tag_page_url: '/tag/ambient', token: 'genre-2' },
+      ],
+      more_available: false,
+    });
+    await expect(pageCollection.loadFollowingGenresItems()).resolves.toEqual([
+      { name: 'Metal', tag_page_url: '/tag/metal' },
+      { name: 'Ambient', tag_page_url: '/tag/ambient', token: 'genre-2' },
+    ]);
+    expect(postJsonString).toHaveBeenCalledWith(
+      'https://bandcamp.com/api/fancollection/1/following_genres_items',
+      { fan_id: 42, older_than_token: 'genre-1', count: 40 },
+      undefined,
+    );
+    postJsonString.mockResolvedValueOnce({
+      followeers: [],
+      more_available: false,
+    });
+    await expect(pageCollection.loadFollowingGenresItems()).rejects.toThrow(
+      'Incomplete following genres data',
+    );
   });
 
   it('loads following bands through the paginated endpoint', async () => {

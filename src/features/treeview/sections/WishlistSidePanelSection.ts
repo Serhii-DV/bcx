@@ -18,7 +18,8 @@ export class WishlistSidePanelSection {
       label: 'Wishlist',
       rootNavigation: 'tabs',
       ttl: SIDE_PANEL_SECTION_CACHE_TTL.WISHLIST,
-      createTreeItem: (username) => WishlistTreeItem.create(username),
+      createTreeItem: (username, fanId) =>
+        WishlistTreeItem.create(username, fanId),
     });
   }
 }

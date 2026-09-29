@@ -1,11 +1,21 @@
-import { beforeEach, describe, expect, it } from '@rstest/core';
+import { beforeEach, describe, expect, it, rs } from '@rstest/core';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandMetadata } from 'src/bandcamp/domain/band/metadata';
+import {
+  libraryKey,
+  readLibrary,
+  readSavedItems,
+  saveAvailability,
+  saveSnapshot,
+  stagingKey,
+  unavailableKey,
+} from 'src/bandcamp/domain/fanData/library';
 import type { FollowingBandItem } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { sessionStorage, storage } from 'src/core/shared';
 import { loadBandPreview } from '../BandPreview';
 import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
+import { appendFanArchive } from './fanArchive';
 import { TreeItemCache } from './TreeItemCache';
 
 beforeEach(async () => {
@@ -208,6 +218,126 @@ describe('Following Bands', () => {
       albumCount: 0,
       links: [{ label: 'Website', url: 'https://example.com/' }],
     });
+
+    const account = { fanId: 42, username: 'listener' };
+    expect(
+      (await FollowingBandsTreeItem.create('listener', 42)).children?.[0]
+        .childrenCount,
+    ).toBe(45);
+    await saveSnapshot(account, 'following-bands', bands.slice(1));
+    expect(
+      (await readLibrary(42))?.lists['following-bands']?.current,
+    ).toHaveLength(44);
+    expect(
+      Object.keys(
+        (await readLibrary(42))?.lists['following-bands']?.records ?? {},
+      ),
+    ).toHaveLength(45);
+    await expect(storage.getByKey('/following-bands')).resolves.toEqual([
+      ...bands.slice(1),
+      bands[0],
+    ]);
+    expect(
+      await storage.getByKey(stagingKey(42, 'following-bands')),
+    ).toBeUndefined();
+    expect(
+      (
+        await FollowingBandsTreeItem.create('listener', 42)
+      ).children?.[0].children?.at(-1)?.bandPreview?.following,
+    ).toBe(false);
+    const beforeFailure = await storage.getByKey(libraryKey(42));
+    const originalSet = chrome.storage.local.set.bind(chrome.storage.local);
+    const failedWrite = rs
+      .spyOn(chrome.storage.local, 'set')
+      .mockImplementation((items, callback) => {
+        if (libraryKey(42) in items) {
+          Object.defineProperty(chrome.runtime, 'lastError', {
+            value: { message: 'Storage quota exceeded' },
+            configurable: true,
+          });
+          callback?.();
+          Object.defineProperty(chrome.runtime, 'lastError', {
+            value: undefined,
+            configurable: true,
+          });
+          return Promise.resolve();
+        }
+        return callback ? originalSet(items, callback) : originalSet(items);
+      });
+    await expect(saveSnapshot(account, 'following-bands', [])).rejects.toThrow(
+      'Storage quota exceeded',
+    );
+    failedWrite.mockRestore();
+    expect(await storage.getByKey(libraryKey(42))).toEqual(beforeFailure);
+    expect(await storage.getByKey('/following-bands')).toEqual([
+      ...bands.slice(1),
+      bands[0],
+    ]);
+    expect(
+      await storage.getByKey(stagingKey(42, 'following-bands')),
+    ).toBeUndefined();
+    await expect(
+      saveSnapshot(account, 'following-bands', [bands[0], bands[0]]),
+    ).rejects.toThrow('Duplicate item');
+    const absent = {
+      state: 'unavailable' as const,
+      checkedAt: '2026-01-01',
+      url: preview.url,
+      reason: 'HTTP 404',
+    };
+    await saveAvailability(42, 'band:1', absent);
+    await saveAvailability(42, 'band:1', {
+      ...absent,
+      state: 'unknown',
+      reason: 'Network error',
+    });
+    expect(await storage.getByKey(unavailableKey(42))).toEqual({
+      'band:1': absent,
+    });
+    const scoped = await appendFanArchive(
+      await FollowingBandsTreeItem.create('listener', 42),
+      42,
+      'following-bands',
+    );
+    const archived = scoped.children?.find(
+      (item) => item.label === 'Unavailable',
+    );
+    expect(archived?.children?.[0].bandPreview).toMatchObject({
+      id: 1,
+      following: false,
+    });
+    expect(scoped.children?.[0].childrenCount).toBe(45);
+    expect(scoped.children?.some((item) => item.label === 'All saved')).toBe(
+      false,
+    );
+    expect(scoped.children?.slice(-2).map((item) => item.label)).toEqual([
+      'Unavailable',
+      'No longer listed',
+    ]);
+    expect(
+      (await FollowingBandsTreeItem.create('another-listener', 99))
+        .children?.[0].childrenCount,
+    ).toBe(0);
+    await saveAvailability(42, 'band:1', {
+      ...absent,
+      state: 'available',
+      reason: 'Page returned',
+    });
+    expect(await storage.getByKey(unavailableKey(42))).toEqual({});
+    await saveSnapshot(
+      { fanId: 99, username: 'another-listener' },
+      'following-bands',
+      [{ ...bands[0], name: 'Another account band' }],
+    );
+    expect(await readSavedItems('following-bands', 42)).toHaveLength(45);
+    expect(
+      (await readSavedItems<FollowingBandItem>('following-bands', 99))[0].name,
+    ).toBe('Another account band');
+    await saveSnapshot(account, 'following-bands', bands);
+    expect(await readSavedItems('following-bands', 99)).toHaveLength(1);
+    expect(
+      (await readLibrary(42))?.lists['following-bands']?.current,
+    ).toHaveLength(45);
   });
 
   it('handles an empty stored list', async () => {

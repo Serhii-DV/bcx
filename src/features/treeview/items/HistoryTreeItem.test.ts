@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
+import { unavailableKey } from 'src/bandcamp/domain/fanData/library';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { History } from 'src/core/history';
@@ -9,6 +10,7 @@ import { HistoryTreeItem } from './HistoryTreeItem';
 
 afterEach(() => {
   rs.restoreAllMocks();
+  return chrome.storage.local.remove(unavailableKey(42));
 });
 
 async function showMore(root: TreeItem) {
@@ -92,6 +94,23 @@ describe('History pagination', () => {
         '00:03:15',
       ),
     ]);
+    await chrome.storage.local.set({
+      [unavailableKey(42)]: Object.fromEntries(
+        [
+          'https://artist.bandcamp.com/',
+          'https://artist.bandcamp.com/album/release-2',
+          'https://unvisited.bandcamp.com/album/missing',
+        ].map((url) => [
+          url,
+          {
+            state: 'unavailable',
+            url,
+            checkedAt: '2026-09-29T00:00:00Z',
+            reason: 'HTTP 404',
+          },
+        ]),
+      ),
+    });
     const tree = await HistoryTreeItem.createLatestVisitedSections();
     expect(tree.children?.map((item) => item.label)).toEqual([
       'All',

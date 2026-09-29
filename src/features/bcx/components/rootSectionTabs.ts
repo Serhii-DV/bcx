@@ -3,7 +3,9 @@ import { isNode } from 'src/features/treeview/utils';
 
 export function createRootSectionTabs(items: TreeItem[]) {
   const tabOrder = (item: TreeItem) =>
-    item.releasePreview && item.label === 'Releases'
+    (item.releasePreview && item.label === 'Releases') ||
+    item.label === 'Latest added' ||
+    item.label === 'All'
       ? 0
       : item.releasePreview && item.label === 'Artists'
         ? 1

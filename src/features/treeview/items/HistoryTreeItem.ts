@@ -31,7 +31,10 @@ const HISTORY_LABEL = 'History';
 const LATEST_VISITED_BATCH_SIZE = 50;
 const SHOW_MORE_LABEL = 'Show more';
 
-const HISTORY_TABS: { label: string; type?: HistoryPageType }[] = [
+const HISTORY_TABS: {
+  label: string;
+  type?: HistoryPageType;
+}[] = [
   { label: 'All' },
   { label: 'Bands', type: 'band' },
   { label: 'Releases', type: 'release' },
@@ -175,9 +178,7 @@ export class HistoryTreeItem {
     limit: number,
   ) {
     const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages(query);
-    const matchingPages = type
-      ? pages.filter((page) => page.type === type)
-      : pages;
+    const matchingPages = pages.filter((page) => !type || page.type === type);
 
     return {
       items: await HistoryTreeItem.createLatestVisitedChildren(

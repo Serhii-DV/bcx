@@ -26,7 +26,9 @@ export class FanPageDataTreeItem {
       ),
     });
 
-    children.push(await WishlistTreeItem.create(fan_data.username));
+    children.push(
+      await WishlistTreeItem.create(fan_data.username, fan_data.fan_id),
+    );
     children.push({
       label: 'Following Bands',
       href: BandcampUrlFactory.generateFollowingBandsUrl(fan_data.username),
