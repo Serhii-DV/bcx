@@ -6,9 +6,12 @@ import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import {
+  type CatalogGroupSort,
+  type CatalogYearSort,
   createRootSectionTabs,
   type FollowingBandCountrySort,
   type FollowingBandYearSort,
+  sortCatalogGroups,
   sortFollowingBandGroups,
 } from './rootSectionTabs';
 
@@ -16,6 +19,9 @@ const tabDescriptions: Record<string, { label?: string; title: string }> = {
   All: { title: 'Browse all items in this section.' },
   Artists: { title: 'Browse releases grouped by artist.' },
   Releases: { title: 'Browse releases in this section.' },
+  'Releases: Reverse': { title: 'Browse releases in reverse catalog order.' },
+  'Releases: Title A–Z': { title: 'Browse releases by title, A to Z.' },
+  'Releases: Title Z–A': { title: 'Browse releases by title, Z to A.' },
   Bands: { title: 'Browse bands in this section.' },
   Tracks: { title: 'Browse tracks in this section.' },
   'Release years': {
@@ -68,11 +74,21 @@ let {
 let rootVersion = $state(0);
 let yearSort = $state<FollowingBandYearSort>('newest');
 let countrySort = $state<FollowingBandCountrySort>('az');
+let artistSort = $state<CatalogGroupSort>('az');
+let releaseYearSort = $state<CatalogYearSort>('newest');
+let addedYearSort = $state<CatalogYearSort>('newest');
+const isReleaseCatalog = $derived(
+  treeData.items.some(
+    (item) => item.releasePreview && item.label === 'Releases',
+  ),
+);
 const displayedTreeData = $derived.by(() => {
   rootVersion;
   return sortBands
     ? sortFollowingBandGroups(treeData, yearSort, countrySort)
-    : treeData;
+    : isReleaseCatalog
+      ? sortCatalogGroups(treeData, artistSort, releaseYearSort, addedYearSort)
+      : treeData;
 });
 const tabs = $derived.by(() => {
   return createRootSectionTabs(displayedTreeData.items);
@@ -94,6 +110,74 @@ const displayTabs = $derived.by(() => {
           ? 'View artist or label information and links.'
           : `Open ${rootLabel ?? 'section'}.`),
     };
+    if (isReleaseCatalog && rootLabel === 'Artists') {
+      return {
+        ...labeledTab,
+        sortValue: artistSort,
+        sortLabel: 'Sort artists',
+        onSortChange: setArtistSort,
+        sortOptions: [
+          {
+            id: 'az',
+            label: 'A–Z',
+            title: 'Show artists in alphabetical order.',
+          },
+          {
+            id: 'za',
+            label: 'Z–A',
+            title: 'Show artists in reverse alphabetical order.',
+          },
+          {
+            id: 'most-releases',
+            label: 'Most releases',
+            title: 'Show artists with the most releases first.',
+          },
+          {
+            id: 'fewest-releases',
+            label: 'Fewest releases',
+            title: 'Show artists with the fewest releases first.',
+          },
+        ],
+      };
+    }
+    if (
+      isReleaseCatalog &&
+      (rootLabel === 'Release years' || rootLabel === 'Added years')
+    ) {
+      return {
+        ...labeledTab,
+        sortValue:
+          rootLabel === 'Release years' ? releaseYearSort : addedYearSort,
+        sortLabel:
+          rootLabel === 'Release years'
+            ? 'Sort release years'
+            : 'Sort years added',
+        onSortChange:
+          rootLabel === 'Release years' ? setReleaseYearSort : setAddedYearSort,
+        sortOptions: [
+          {
+            id: 'newest',
+            label: 'Newest first',
+            title: 'Show the newest years first.',
+          },
+          {
+            id: 'oldest',
+            label: 'Oldest first',
+            title: 'Show the oldest years first.',
+          },
+          {
+            id: 'most-releases',
+            label: 'Most releases',
+            title: 'Show years with the most releases first.',
+          },
+          {
+            id: 'fewest-releases',
+            label: 'Fewest releases',
+            title: 'Show years with the fewest releases first.',
+          },
+        ],
+      };
+    }
     if (!sortBands) return labeledTab;
     if (rootLabel === 'Followed by Year') {
       return {
@@ -157,6 +241,36 @@ const displayTabs = $derived.by(() => {
     }
     return labeledTab;
   });
+  if (isReleaseCatalog) {
+    const sortRoots = [
+      'Releases',
+      'Releases: Reverse',
+      'Releases: Title A–Z',
+      'Releases: Title Z–A',
+    ].map((name) =>
+      displayedTreeData.items.find((item) => item.label === name),
+    );
+    if (sortRoots.some((root) => !root?.path)) return labeledTabs;
+    const optionLabels = [
+      'Catalog order',
+      'Reverse order',
+      'Title A–Z',
+      'Title Z–A',
+    ];
+    const sortOptions = sortRoots.map((root, index) => ({
+      id: root?.path ?? '',
+      label: optionLabels[index],
+      title: root?.label ? tabDescriptions[root.label]?.title : undefined,
+    }));
+    const sortIds = new Set(sortOptions.map((option) => option.id));
+    return labeledTabs.flatMap((tab) =>
+      tab.id === sortOptions[0].id
+        ? [{ ...tab, sortLabel: 'Sort releases', sortOptions }]
+        : sortIds.has(tab.id)
+          ? []
+          : [tab],
+    );
+  }
   if (!sortBands) return labeledTabs;
 
   const sortRoots = ['Latest added', 'Earliest followed', 'A–Z', 'Z–A'].map(
@@ -202,6 +316,36 @@ function setCountrySort(id: string) {
     id === 'fewest-bands'
   )
     countrySort = id;
+}
+
+function isCatalogGroupSort(id: string): id is CatalogGroupSort {
+  return (
+    id === 'az' ||
+    id === 'za' ||
+    id === 'most-releases' ||
+    id === 'fewest-releases'
+  );
+}
+
+function isCatalogYearSort(id: string): id is CatalogYearSort {
+  return (
+    id === 'newest' ||
+    id === 'oldest' ||
+    id === 'most-releases' ||
+    id === 'fewest-releases'
+  );
+}
+
+function setArtistSort(id: string) {
+  if (isCatalogGroupSort(id)) artistSort = id;
+}
+
+function setReleaseYearSort(id: string) {
+  if (isCatalogYearSort(id)) releaseYearSort = id;
+}
+
+function setAddedYearSort(id: string) {
+  if (isCatalogYearSort(id)) addedYearSort = id;
 }
 
 $effect(() => {

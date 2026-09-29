@@ -307,6 +307,9 @@ describe('release catalog previews', () => {
           'Releases',
           'Release years',
           'Added years',
+          'Releases: Reverse',
+          'Releases: Title A–Z',
+          'Releases: Title Z–A',
         ]);
       }
       const key = TreeItemCache.subtreeKey('listener', label);
@@ -319,6 +322,25 @@ describe('release catalog previews', () => {
       const releases = restored?.children?.find(
         (item) => item.label === 'Releases',
       );
+      const reverseReleases = restored?.children?.find(
+        (item) => item.label === 'Releases: Reverse',
+      );
+      const titleReleases = restored?.children?.find(
+        (item) => item.label === 'Releases: Title A–Z',
+      );
+      const titleReleasesDescending = restored?.children?.find(
+        (item) => item.label === 'Releases: Title Z–A',
+      );
+      expect(reverseReleases?.children?.[0].label).toContain('Release 24');
+      expect(titleReleases?.children?.[0].label).toContain('Release 0');
+      expect(titleReleasesDescending?.children?.[0].label).toContain(
+        'Release 24',
+      );
+      if (label === 'Collection' && reverseReleases) {
+        expect(reverseReleases.children).toHaveLength(21);
+        await loadMore(reverseReleases);
+        expect(reverseReleases.children?.at(-1)?.label).toContain('Release 0');
+      }
       if (label === 'Collection') {
         const addedYears = restored?.children?.find(
           (item) => item.label === 'Added years',
@@ -331,6 +353,9 @@ describe('release catalog previews', () => {
           'Releases',
           'Release years',
           'Added years',
+          'Releases: Reverse',
+          'Releases: Title A–Z',
+          'Releases: Title Z–A',
         ]);
         expect(addedYears?.children?.map((item) => item.label)).toEqual([
           '2025',

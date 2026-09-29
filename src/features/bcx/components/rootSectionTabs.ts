@@ -12,6 +12,85 @@ export type FollowingBandCountrySort =
   | 'za'
   | 'most-bands'
   | 'fewest-bands';
+export type CatalogGroupSort =
+  | 'az'
+  | 'za'
+  | 'most-releases'
+  | 'fewest-releases';
+export type CatalogYearSort =
+  | 'newest'
+  | 'oldest'
+  | 'most-releases'
+  | 'fewest-releases';
+
+export function sortCatalogGroups(
+  treeData: TreeData,
+  artistSort: CatalogGroupSort,
+  releaseYearSort: CatalogYearSort,
+  addedYearSort: CatalogYearSort,
+): TreeData {
+  const collator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+  const releaseCount = (item: TreeItem) =>
+    item.childrenCount ?? item.children?.length ?? 0;
+  const artistName = (a: TreeItem, b: TreeItem) =>
+    collator.compare(a.label ?? '', b.label ?? '');
+  const newestYear = (a: TreeItem, b: TreeItem) => {
+    if (a.label === 'Unknown year') return 1;
+    if (b.label === 'Unknown year') return -1;
+    return Number(b.label) - Number(a.label);
+  };
+
+  return new TreeData(
+    treeData.items.map((root) => {
+      if (!root.releasePreview || !root.children) return root;
+      // Keep lazy roots intact so their loader can hydrate the original item.
+      if (root.loadChildren && !root.childrenLoaded) return root;
+      if (root.label === 'Artists') {
+        return {
+          ...root,
+          children: [...root.children].sort((a, b) => {
+            switch (artistSort) {
+              case 'za':
+                return -artistName(a, b);
+              case 'most-releases':
+                return releaseCount(b) - releaseCount(a) || artistName(a, b);
+              case 'fewest-releases':
+                return releaseCount(a) - releaseCount(b) || artistName(a, b);
+              default:
+                return artistName(a, b);
+            }
+          }),
+        };
+      }
+      if (root.label === 'Release years' || root.label === 'Added years') {
+        const sort =
+          root.label === 'Release years' ? releaseYearSort : addedYearSort;
+        return {
+          ...root,
+          children: [...root.children].sort((a, b) => {
+            switch (sort) {
+              case 'oldest':
+                return a.label === 'Unknown year' || b.label === 'Unknown year'
+                  ? newestYear(a, b)
+                  : -newestYear(a, b);
+              case 'most-releases':
+                return releaseCount(b) - releaseCount(a) || newestYear(a, b);
+              case 'fewest-releases':
+                return releaseCount(a) - releaseCount(b) || newestYear(a, b);
+              default:
+                return newestYear(a, b);
+            }
+          }),
+        };
+      }
+      return root;
+    }),
+    treeData.layout,
+  );
+}
 
 export function sortFollowingBandGroups(
   treeData: TreeData,

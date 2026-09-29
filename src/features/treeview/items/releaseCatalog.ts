@@ -94,19 +94,26 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     .withImage(ICON_MIC)
     .withChildrenImage(ICON_MIC)
     .build();
-  const roots = [
-    artists,
+  const collator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+  const compareTitles = (a: Album, b: Album) =>
+    collator.compare(a.title, b.title) ||
+    collator.compare(a.artist.toString(), b.artist.toString());
+  const createReleasesRoot = (label: string, orderedAlbums: Album[]) =>
     catalog.paginateReleases === false
-      ? items('Releases', albums.map(createReleaseItem))
+      ? items(label, orderedAlbums.map(createReleaseItem))
           .withImage(ICON_DISC)
           .build()
       : createPagedReleasesTreeItem({
-          albums,
+          albums: orderedAlbums,
           errorContext: '[Release catalog]',
+          label,
           withPreview: true,
           createPreviewItem: createReleaseItem,
-        }),
-  ];
+        });
+  const roots = [artists, createReleasesRoot('Releases', albums)];
 
   if ((catalog.groupByYear || catalog.addedYearSource) && albums.length > 0) {
     const createReleaseYears = (years: Map<string, number>): TreeItem => {
@@ -163,6 +170,14 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     );
     if (addedYears) roots.push(addedYears);
   }
+  roots.push(
+    createReleasesRoot('Releases: Reverse', [...albums].reverse()),
+    createReleasesRoot('Releases: Title A–Z', [...albums].sort(compareTitles)),
+    createReleasesRoot(
+      'Releases: Title Z–A',
+      [...albums].sort((a, b) => compareTitles(b, a)),
+    ),
+  );
   const remaining = new Map(
     roots.map((root) => [
       root.label,

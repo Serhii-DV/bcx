@@ -5,6 +5,7 @@ import {
   createRootSectionTabs,
   type FollowingBandCountrySort,
   type FollowingBandYearSort,
+  sortCatalogGroups,
   sortFollowingBandGroups,
 } from './rootSectionTabs';
 
@@ -89,6 +90,60 @@ describe('createRootSectionTabs', () => {
       '2023',
     ]);
 
+    const catalog = new TreeData([
+      {
+        label: 'Artists',
+        releasePreview: true,
+        children: [
+          { label: 'Alpha', childrenCount: 1 },
+          { label: 'Beta', childrenCount: 3 },
+          { label: 'Gamma', childrenCount: 2 },
+        ],
+      },
+      {
+        label: 'Release years',
+        releasePreview: true,
+        children: [
+          { label: '2025', childrenCount: 1 },
+          { label: '2024', childrenCount: 3 },
+          { label: 'Unknown year', childrenCount: 2 },
+        ],
+      },
+      {
+        label: 'Added years',
+        releasePreview: true,
+        children: [
+          { label: '2025', childrenCount: 2 },
+          { label: '2024', childrenCount: 1 },
+        ],
+      },
+    ]);
+    const sortedCatalog = sortCatalogGroups(
+      catalog,
+      'most-releases',
+      'oldest',
+      'fewest-releases',
+    );
+    expect(
+      sortedCatalog.items.map((root) =>
+        root.children?.map((group) => group.label),
+      ),
+    ).toEqual([
+      ['Beta', 'Gamma', 'Alpha'],
+      ['2024', '2025', 'Unknown year'],
+      ['2024', '2025'],
+    ]);
+    expect(
+      sortCatalogGroups(catalog, 'za', 'most-releases', 'newest').items.map(
+        (root) => root.children?.map((group) => group.label),
+      ),
+    ).toEqual([
+      ['Gamma', 'Beta', 'Alpha'],
+      ['2024', 'Unknown year', '2025'],
+      ['2025', '2024'],
+    ]);
+    expect(catalog.items[0].children?.[0].label).toBe('Alpha');
+
     const bands = new TreeData([
       {
         path: '0',
@@ -137,6 +192,20 @@ describe('createRootSectionTabs', () => {
     ]);
     expect(loadChildren).not.toHaveBeenCalled();
     expect(item.children).toBeUndefined();
+    const lazyCatalogRoot = {
+      ...item,
+      releasePreview: true,
+      children: [{ label: 'Unknown year' }],
+      childrenLoaded: false,
+    };
+    expect(
+      sortCatalogGroups(
+        new TreeData([lazyCatalogRoot]),
+        'az',
+        'oldest',
+        'newest',
+      ).items[0],
+    ).toBe(lazyCatalogRoot);
     expect(
       createRootSectionTabs(
         ['All', 'Bands', 'Releases', 'Tracks'].map((label, index) => ({
