@@ -27,7 +27,9 @@ const displayTabs = $derived.by(() => {
   if (!sortBands) return tabs;
 
   const labeledTabs = tabs.map((tab) => {
-    const rootLabel = treeData.items.find((item) => item.path === tab.id)?.label;
+    const rootLabel = treeData.items.find(
+      (item) => item.path === tab.id,
+    )?.label;
     if (rootLabel === 'Followed by Year')
       return { ...tab, label: tab.label.replace(rootLabel, 'By Year') };
     if (rootLabel === 'Countries')
