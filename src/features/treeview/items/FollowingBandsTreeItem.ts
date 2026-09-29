@@ -1,5 +1,9 @@
 import { Band } from 'src/bandcamp/domain/band/band';
-import { readCurrentItems } from 'src/bandcamp/domain/fanData/library';
+import {
+  itemId,
+  readCurrentItems,
+  readSavedItems,
+} from 'src/bandcamp/domain/fanData/library';
 import type { FollowingBandItem } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { TreeItemButtonFactory } from '../buttons/factory';
@@ -18,7 +22,7 @@ import {
 
 export class FollowingBandsTreeItem {
   static async create(username: string, fanId?: number): Promise<TreeItem> {
-    const storedItems = await readCurrentItems<FollowingBandItem>(
+    const storedItems = await readSavedItems<FollowingBandItem>(
       'following-bands',
       fanId,
     );
@@ -31,8 +35,13 @@ export class FollowingBandsTreeItem {
         ),
       ],
     };
+    const current = new Set(
+      (await readCurrentItems<FollowingBandItem>('following-bands', fanId)).map(
+        itemId,
+      ),
+    );
     const latestItems = storedItems.map((item) =>
-      this.createFollowingBandTreeItem(item),
+      this.createFollowingBandTreeItem(item, current.has(itemId(item))),
     );
     const collator = new Intl.Collator(undefined, {
       numeric: true,
@@ -67,6 +76,7 @@ export class FollowingBandsTreeItem {
 
   private static createFollowingBandTreeItem(
     item: FollowingBandItem,
+    following: boolean,
   ): TreeItem {
     const band = Band.create(
       item.band_id,
@@ -76,7 +86,7 @@ export class FollowingBandsTreeItem {
     );
 
     const treeItem = BandTreeItemFactory.createWithPreview(band, {
-      following: true,
+      following,
       location: item.location ?? undefined,
     });
     const followedAt = toIsoDate(item.date_followed);

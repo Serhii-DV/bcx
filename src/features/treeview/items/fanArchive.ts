@@ -6,7 +6,9 @@ import {
   type FanDataset,
   type FanItem,
   fanStorage,
+  itemId,
   readLibrary,
+  readSavedItems,
   unavailableKey,
 } from 'src/bandcamp/domain/fanData/library';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
@@ -75,7 +77,9 @@ export async function appendFanArchive(
       ? await storage.getByKey<AvailabilityList>(unavailableKey(fanId))
       : undefined) ?? {};
   const current = new Set(list?.current ?? []);
-  const entries = Object.entries(list?.records ?? {});
+  const entries = (await readSavedItems(dataset, fanId)).map(
+    (item): [string, FanItem] => [itemId(item), item],
+  );
   const makeItems = (records: typeof entries) =>
     records.map(([id, item]) =>
       archiveItem(
@@ -83,7 +87,7 @@ export async function appendFanArchive(
         current.has(id),
         unavailable[id]
           ? `Unavailable: ${unavailable[id].reason} · ${unavailable[id].checkedAt}`
-          : !current.has(id)
+          : list?.syncedAt && !current.has(id)
             ? dataset === 'following-genres'
               ? 'No longer followed.'
               : `No longer listed. ${results[id]?.reason ?? 'Availability check pending.'}`
@@ -102,24 +106,13 @@ export async function appendFanArchive(
   roots.push(
     archiveRoot(
       'No longer listed',
-      makeItems(entries.filter(([id]) => !current.has(id) && !unavailable[id])),
+      makeItems(
+        entries.filter(
+          ([id]) => list?.syncedAt && !current.has(id) && !unavailable[id],
+        ),
+      ),
     ),
   );
   roots.push(archiveRoot('All saved', makeItems(entries)));
-  const legacy = (await storage.getByKey<FanItem[]>(`/${dataset}`)) ?? [];
-  if (legacy.length && !library?.legacyImported) {
-    roots.push(
-      archiveRoot(
-        'Older saved lists',
-        legacy.map((item) =>
-          archiveItem(
-            item,
-            false,
-            'Unassigned saved entry. Use Import older saved lists to keep it in this account.',
-          ),
-        ),
-      ),
-    );
-  }
   return { ...tree, children: roots, childrenCount: roots.length };
 }

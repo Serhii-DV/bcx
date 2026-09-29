@@ -1,4 +1,5 @@
 import { console } from 'src/utils/console';
+import { getErrorMessage } from 'src/utils/getErrorMessage';
 import {
   cancelFanSync,
   recoverFanSync,
@@ -108,8 +109,7 @@ chrome.runtime.onMessage.addListener(
         (error) =>
           sendResponse({
             ok: false,
-            error:
-              error instanceof Error ? error.message : 'Could not start sync',
+            error: getErrorMessage(error, 'Could not start sync'),
           }),
       );
       return true;

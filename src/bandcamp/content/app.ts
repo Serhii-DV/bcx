@@ -1,5 +1,6 @@
 import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
 import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
+import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { mount } from 'svelte';
 import App from './app.svelte';
 import { loadFanData } from './fanDataSync';
@@ -103,10 +104,7 @@ chrome.runtime.onMessage.addListener(
         .catch((error) => {
           sendResponse({
             ok: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : 'Could not load Bandcamp data',
+            error: getErrorMessage(error, 'Could not load Bandcamp data'),
           });
         });
       return true;

@@ -1,4 +1,5 @@
 import { MessageType } from 'src/core/message';
+import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { checkAvailability } from './availability';
 import {
   type AvailabilityList,
@@ -29,6 +30,7 @@ export interface FanSyncJob {
   startedAt: number;
   tabId?: number;
   tabUrl?: string;
+  completedDatasets?: FanDataset[];
 }
 let controller: AbortController | undefined;
 let starting = false;
@@ -87,6 +89,7 @@ export async function startFanSync(
       state: 'running',
       message: 'Opening your Collection page…',
       startedAt: Date.now(),
+      completedDatasets: [],
     };
     controller = new AbortController();
     await fanStorage().set({ [FAN_SYNC_JOB_KEY]: job });
@@ -160,7 +163,9 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
         signal.throwIfAborted();
         if (!response.ok)
           throw new Error(response.error || `Could not load ${dataset}.`);
+        await progress(`Saving ${dataset}…`);
         await saveSnapshot(job.account, dataset, response.items);
+        (job.completedDatasets ??= []).push(dataset);
       }
     }
     const library = await readLibrary(job.account.fanId);
@@ -217,10 +222,15 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
       : 'Saved data updated.';
   } catch (error) {
     job.state = signal.aborted ? 'cancelled' : 'error';
-    job.message =
-      error instanceof Error
-        ? error.message
-        : 'Sync failed. Saved data has been retained.';
+    const reason = getErrorMessage(error, 'Unexpected sync error');
+    const step = job.message.replace(/[.…]+$/, '');
+    const updated = job.completedDatasets?.length
+      ? ` Updated: ${job.completedDatasets.join(', ')}.`
+      : '';
+    job.message = signal.aborted
+      ? reason
+      : `${step} failed: ${reason} Saved data has been retained.${updated}`;
+    console.error('[Fan sync]', step, reason);
   } finally {
     clearInterval(heartbeat);
     clearTimeout(timeout);

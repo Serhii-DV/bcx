@@ -38,6 +38,12 @@ export const unavailableKey = (fanId: number) =>
   `${libraryKey(fanId)}/unavailable`;
 export const availabilityKey = (fanId: number) =>
   `${libraryKey(fanId)}/availability`;
+export const SAVED_LIST_OWNERS_KEY = '/fan-data/saved-list-owners';
+type SavedListOwners = Partial<
+  Record<FanDataset, { fanId: number; revision: string }>
+>;
+export const stagingKey = (fanId: number, dataset: FanDataset) =>
+  `${libraryKey(fanId)}/staging/${dataset}`;
 export const fanStorage = () => new Storage(chrome.storage.local);
 
 export function isFanDataset(value: unknown): value is FanDataset {
@@ -126,17 +132,61 @@ export async function readLibrary(
   }
   return library;
 }
+// Shared array keys remain compatible with the original saved-list readers.
+export async function readSavedItems<T extends FanItem>(
+  dataset: FanDataset,
+  fanId?: number,
+): Promise<T[]> {
+  const items = await readSharedItems<T>(dataset, fanId);
+  const list = fanId ? (await readLibrary(fanId))?.lists[dataset] : undefined;
+  if (!list) return items;
+  const records = {
+    ...Object.fromEntries(items.map((item) => [itemId(item), item])),
+    ...list.records,
+  };
+  const ids = [...new Set([...list.current, ...Object.keys(records)])];
+  return ids.map((id) => records[id] as T);
+}
+
+async function readSharedItems<T extends FanItem>(
+  dataset: FanDataset,
+  fanId?: number,
+): Promise<T[]> {
+  const storage = fanStorage();
+  const owners = await storage.getByKey<SavedListOwners>(SAVED_LIST_OWNERS_KEY);
+  if (fanId && owners?.[dataset] && owners[dataset].fanId !== fanId) return [];
+  return (await storage.getByKey<T[]>(`/${dataset}`)) ?? [];
+}
+
+export async function savedListRevision(
+  dataset: FanDataset,
+  fanId?: number,
+): Promise<string> {
+  const owner = (
+    await fanStorage().getByKey<SavedListOwners>(SAVED_LIST_OWNERS_KEY)
+  )?.[dataset];
+  const list = fanId ? (await readLibrary(fanId))?.lists[dataset] : undefined;
+  return `${!fanId || owner?.fanId === fanId ? (owner?.revision ?? '') : ''}:${list?.syncedAt ?? 'unsynced'}`;
+}
+
 export async function readCurrentItems<T extends FanItem>(
   dataset: FanDataset,
   fanId?: number,
 ): Promise<T[]> {
-  if (!fanId) return (await fanStorage().getByKey<T[]>(`/${dataset}`)) ?? [];
-  const list = (await readLibrary(fanId))?.lists[dataset];
+  const owner = !fanId
+    ? (await fanStorage().getByKey<SavedListOwners>(SAVED_LIST_OWNERS_KEY))?.[
+        dataset
+      ]
+    : undefined;
+  const accountId = fanId ?? owner?.fanId;
+  const list = accountId
+    ? (await readLibrary(accountId))?.lists[dataset]
+    : undefined;
   return list
     ? list.current.flatMap((id) =>
         list.records[id] ? [list.records[id] as T] : [],
       )
-    : [];
+    : readSharedItems<T>(dataset, fanId);
 }
 
 // Preserve every previously seen record before publishing the latest membership.
@@ -168,16 +218,51 @@ export async function saveSnapshot(
   items: unknown,
 ): Promise<void> {
   const validItems = validateItems(dataset, items);
-  const library = (await readLibrary(account.fanId)) ?? {
-    version: 1,
-    account,
-    revision: '',
-    lists: {},
-  };
-  library.account = account;
-  library.lists[dataset] = mergeSnapshot(library.lists[dataset], validItems);
-  library.revision = crypto.randomUUID();
-  await fanStorage().set({ [libraryKey(account.fanId)]: library });
+  const storage = fanStorage();
+  const temporaryKey = stagingKey(account.fanId, dataset);
+  await storage.set({ [temporaryKey]: validItems });
+  try {
+    const library = (await readLibrary(account.fanId)) ?? {
+      version: 1,
+      account,
+      revision: '',
+      lists: {},
+    };
+    const saved = validateItems(
+      dataset,
+      await readSharedItems(dataset, account.fanId),
+    );
+    const previous = library.lists[dataset];
+    const records = {
+      ...Object.fromEntries(saved.map((item) => [itemId(item), item])),
+      ...previous?.records,
+    };
+    library.account = account;
+    library.lists[dataset] = mergeSnapshot(
+      { records, current: previous?.current ?? [] },
+      validItems,
+    );
+    library.revision = crypto.randomUUID();
+    const list = library.lists[dataset];
+    const ids = [...new Set([...list.current, ...Object.keys(list.records)])];
+    const owners =
+      (await storage.getByKey<SavedListOwners>(SAVED_LIST_OWNERS_KEY)) ?? {};
+    await storage.set({
+      [`/${dataset}`]: ids.map((id) => list.records[id]),
+      [SAVED_LIST_OWNERS_KEY]: {
+        ...owners,
+        [dataset]: { fanId: account.fanId, revision: library.revision },
+      },
+      [libraryKey(account.fanId)]: library,
+    });
+  } finally {
+    // Staged data is never read by panels; a failed merge leaves saved lists intact.
+    await storage
+      .remove(temporaryKey)
+      .catch((error) =>
+        console.warn('Could not remove staged fan data', error),
+      );
+  }
 }
 
 export async function importLegacyLists(account: FanAccount): Promise<void> {
@@ -188,7 +273,7 @@ export async function importLegacyLists(account: FanAccount): Promise<void> {
     lists: {},
   };
   for (const dataset of FAN_DATASETS) {
-    const legacy = await fanStorage().getByKey<unknown>(`/${dataset}`);
+    const legacy = await readSharedItems(dataset, account.fanId);
     if (!legacy) continue;
     const items = validateItems(dataset, legacy);
     const list = library.lists[dataset] ?? { records: {}, current: [] };

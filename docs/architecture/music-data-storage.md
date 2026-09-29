@@ -54,8 +54,11 @@ A URL reference requires a first storage lookup to find its entity key. Album re
 
 ## Fan library and unavailable entries
 
-`src/bandcamp/domain/fanData/library.ts` owns account-scoped snapshots at
-`/fan-data/account/{fanId}`. Each dataset retains all previously seen records and a
+`src/bandcamp/domain/fanData/library.ts` keeps the original `/collection`,
+`/wishlist`, `/following-bands`, and `/following-genres` array fields. Collection,
+Wishlist, and Following Bands display these saved entries before the first sync,
+without an import step. The array shape stays compatible with existing readers.
+Account-scoped membership and saved history remain at `/fan-data/account/{fanId}`. Each dataset retains all previously seen records and a
 separate ordered list of current IDs. Missing IDs are never deleted. Releases use
 `a:{id}` or `t:{id}`, bands use `band:{id}`, and genre identities use their tag URL.
 Successful snapshots merge fields; absent/null fields do not erase saved metadata.
@@ -75,7 +78,10 @@ items still in current lists. Oldest/unattempted checks run first so retries aft
 a timeout make progress. Results are saved incrementally. Genres retain historical
 membership but do not receive page-availability classifications.
 
-Panels show current catalogs plus Unavailable, No longer listed, and All saved.
+Collection, Wishlist, and Following Bands show all saved entries in their main
+catalogs, plus Unavailable, No longer listed, and All saved. Following Genres keeps
+its Current membership tab. Following badges use current membership, so a saved
+band missing from the latest list is not shown as currently followed.
 The Sync toolbar sits above the subtabs in each fan-data panel. Artist and release
 pages identify the signed-in fan through `identities.fan.id` (with a `fan_id`
 fallback). Without a verified account, the toolbar remains visible but disabled
@@ -86,13 +92,28 @@ History also has an Unavailable subtab, matching visited Bandcamp URLs against t
 current account's confirmed unavailable registry. It does not check every history
 entry over the network. Search stays within those matching entries, pagination
 remains in batches of 50, and storage changes refresh already loaded panels.
-Unassigned legacy `/collection`, `/wishlist`, `/following-bands`, and
-`/following-genres` arrays remain unchanged and visible under Older saved lists.
-The explicit Import older saved lists action assigns copies to the verified account
-and syncs it; it never deletes the originals or overwrites newer account records.
-No automatic account assignment is inferred from these older global keys.
+After the Collection page verifies the account and returns a complete dataset,
+sync validates the response and stages it at
+`/fan-data/account/{fanId}/staging/{dataset}`. It merges the existing shared array
+and account history by stable ID, then publishes the merged array, account metadata,
+and ownership revision in one storage write. Fresh items come first; saved missing
+entries remain afterward. Failed validation or publishing leaves prior saved data
+intact; staging is removed after the attempt and is never read by the panels.
+
+`/fan-data/saved-list-owners` records the fan ID and revision for each shared array.
+Previously unassigned arrays are adopted during a verified sync. A list already
+owned by another account is not adopted; that account retains its own saved copy.
+When switching accounts, panels use the matching account history if the shared
+array belongs to another fan. Ordinary sync now includes older data automatically;
+the former explicit import action remains supported only for message compatibility.
 
 `/fan-data/sync-job` stores job progress and errors. An interrupted worker marks the
 job interrupted on its next startup; retry preserves already committed data.
-Local storage quota failures are reported as errors rather than successful syncs.
+The manifest requests `unlimitedStorage` because the retained music archive and
+staging snapshots can outgrow Chrome's default 10 MB local-storage quota. Reload
+the extension after this manifest change. Storage callbacks normalize Chrome's
+plain `runtime.lastError` objects into JavaScript Errors, preserving their message.
+Sync errors include the failing step and any datasets already published, and the
+panel suppresses the initial saved-list notice while a failure is displayed.
+Storage failures are reported as errors rather than successful syncs.
 Saved artwork URLs are retained, but image bytes and audio are not archived.

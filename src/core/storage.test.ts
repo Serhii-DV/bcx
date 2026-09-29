@@ -63,6 +63,16 @@ describe('Storage', () => {
       album: { title: 'Moon Safari' },
       artist: { name: 'Air' },
     });
+    storageArea.set.mockImplementationOnce((_items, callback) => {
+      setChromeLastError({ message: 'QUOTA_BYTES quota exceeded' });
+      callback?.();
+      setChromeLastError(undefined);
+      return Promise.resolve();
+    });
+    await expect(storage.setByKey('new-release', {})).rejects.toThrow(
+      'QUOTA_BYTES quota exceeded',
+    );
+    await expect(storage.getByKey('new-release')).resolves.toBeUndefined();
   });
 
   it('requires data when setting by string key', async () => {

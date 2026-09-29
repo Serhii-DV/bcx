@@ -1,6 +1,9 @@
 <script lang="ts">
 import { Tabs } from 'bits-ui';
-import { libraryKey } from 'src/bandcamp/domain/fanData/library';
+import {
+  libraryKey,
+  SAVED_LIST_OWNERS_KEY,
+} from 'src/bandcamp/domain/fanData/library';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { TreeData } from 'src/features/treeview/TreeData';
@@ -157,7 +160,12 @@ onMount(() => {
     if (area !== 'local') return;
     for (const section of sections) {
       const account = section.fanSync?.account ?? section.fanAccount;
-      if (account && libraryKey(account.fanId) in changes)
+      if (
+        (account && libraryKey(account.fanId) in changes) ||
+        (section.fanSync &&
+          (`/${section.fanSync.dataset}` in changes ||
+            SAVED_LIST_OWNERS_KEY in changes))
+      )
         pending.add(section.id);
     }
     if (!pending.size) return;

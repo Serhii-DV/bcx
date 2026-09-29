@@ -1,7 +1,8 @@
 import {
   isFanAccount,
   isFanDataset,
-  readLibrary,
+  readSavedItems,
+  savedListRevision,
 } from 'src/bandcamp/domain/fanData/library';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { appendFanArchive } from '../items/fanArchive';
@@ -55,14 +56,11 @@ export function createFanDataSubtreeSection(
         ? pageData?.[options.itemCountPath]?.item_count
         : undefined),
     createTreeData: async () => {
-      const library = fanId ? await readLibrary(fanId) : undefined;
       let item = await TreeItemCache.getOrCreate(
         TreeItemCache.subtreeKey(fanId ?? userKeyPart, options.cacheKey),
         () => options.createTreeItem(fanData.username || '', fanId),
         options.ttl,
-        sync
-          ? (library?.lists[sync.dataset]?.syncedAt ?? 'unsynced')
-          : undefined,
+        sync ? await savedListRevision(sync.dataset, fanId) : undefined,
       );
       if (sync) {
         if (sync.dataset === 'following-genres')
@@ -78,8 +76,9 @@ export function createFanDataSubtreeSection(
             ],
           };
         item = await appendFanArchive(item, fanId, sync.dataset);
-        section.childrenCount =
-          library?.lists[sync.dataset]?.current.length ?? 0;
+        section.childrenCount = (
+          await readSavedItems(sync.dataset, fanId)
+        ).length;
       }
       if (item.releaseCatalog) {
         section.navigationUrls = [

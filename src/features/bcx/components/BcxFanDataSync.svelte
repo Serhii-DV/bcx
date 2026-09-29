@@ -5,6 +5,8 @@ import {
   fanStorage,
   libraryKey,
   readLibrary,
+  readSavedItems,
+  SAVED_LIST_OWNERS_KEY,
 } from 'src/bandcamp/domain/fanData/library';
 import {
   FAN_SYNC_JOB_KEY,
@@ -12,6 +14,7 @@ import {
   type FanSyncJob,
 } from 'src/bandcamp/domain/fanData/sync';
 import { MessageType } from 'src/core/message';
+import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount } from 'svelte';
 
 let { account, dataset }: { account?: FanAccount; dataset: FanDataset } =
@@ -20,8 +23,7 @@ let job = $state<FanSyncJob>();
 let error = $state('');
 let sending = $state(false);
 let syncedAt = $state<string>();
-let legacyImported = $state(false);
-let hasLegacy = $state(false);
+let hasSaved = $state(false);
 let action = $state<FanSyncAction>('all');
 const running = $derived(job?.state === 'running');
 const ownJob = $derived(
@@ -31,19 +33,18 @@ let generation = 0;
 async function refresh() {
   const token = ++generation;
   try {
-    const [nextJob, library, legacy] = await Promise.all([
+    const [nextJob, library, saved] = await Promise.all([
       fanStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY),
       account ? readLibrary(account.fanId) : undefined,
-      fanStorage().getByKey<unknown[]>(`/${dataset}`),
+      readSavedItems(dataset, account?.fanId),
     ]);
     if (token !== generation) return;
     job = nextJob;
     syncedAt = library?.lists[dataset]?.syncedAt;
-    legacyImported = !!library?.legacyImported;
-    if (legacyImported && action === 'import') action = 'all';
-    hasLegacy = !!legacy?.length;
+    hasSaved = !!saved?.length;
   } catch (reason) {
-    if (token === generation) error = String(reason);
+    if (token === generation)
+      error = getErrorMessage(reason, 'Could not read saved sync status.');
   }
 }
 $effect(() => {
@@ -59,6 +60,8 @@ onMount(() => {
     if (
       area === 'local' &&
       (FAN_SYNC_JOB_KEY in changes ||
+        SAVED_LIST_OWNERS_KEY in changes ||
+        `/${dataset}` in changes ||
         (account && libraryKey(account.fanId) in changes))
     )
       void refresh();
@@ -98,7 +101,7 @@ async function request(nextAction?: FanSyncAction) {
       throw new Error(response?.error || 'Could not start sync');
     await refresh();
   } catch (reason) {
-    error = reason instanceof Error ? reason.message : 'Sync request failed';
+    error = getErrorMessage(reason, 'Sync request failed');
   } finally {
     clearTimeout(timer);
     sending = false;
@@ -112,16 +115,15 @@ async function request(nextAction?: FanSyncAction) {
     <select aria-label="Bandcamp sync action" bind:value={action} disabled={!account || running || sending}>
       <option value="all">Sync all Bandcamp data</option>
       <option value="check">Check saved pages’ availability</option>
-      {#if account && hasLegacy && !legacyImported}<option value="import">Import older saved lists into @{account.username}</option>{/if}
     </select>
     <button disabled={!account || running || sending} onclick={() => request(action)}>Run</button>
     {#if running}<button disabled={sending} onclick={() => request()}>Cancel</button>{/if}
   </div>
-  <p class="status" role="status">
+  <p class="status" role={ownJob?.state === 'error' ? 'alert' : 'status'}>
     {#if ownJob}{ownJob.message}{:else if running}Another Bandcamp sync is running.{/if}
     {#if syncedAt}<span>Last synced: {new Date(syncedAt).toLocaleString()}</span>{/if}
   </p>
-  {#if account && hasLegacy && !legacyImported}<p>Older lists are kept separately. Import them only if they belong to @{account.username}.</p>{/if}
+  {#if account && hasSaved && !syncedAt && !running && ownJob?.state !== 'error' && ownJob?.state !== 'cancelled' && !error}<p>Your saved lists are shown. Sync merges fresh Bandcamp data and keeps missing entries.</p>{/if}
   {#if !account}<p>Sign in to Bandcamp and reload the page to sync saved data.</p>{/if}
   {#if error}<p role="alert">{error}</p>{/if}
 </div>

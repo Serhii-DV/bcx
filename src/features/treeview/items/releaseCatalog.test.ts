@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, rs } from '@rstest/core';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
+import {
+  readCurrentItems,
+  readSavedItems,
+  saveSnapshot,
+  stagingKey,
+} from 'src/bandcamp/domain/fanData/library';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
@@ -271,6 +277,24 @@ describe('release catalog previews', () => {
         );
         await BandcampStorage.saveAlbum(storedAlbum);
       }
+      const dataset = label === 'Collection' ? 'collection' : 'wishlist';
+      const createScoped = () =>
+        label === 'Collection'
+          ? CollectionTreeItem.create('listener', 42)
+          : WishlistTreeItem.create('listener', 42);
+      expect((await createScoped()).releaseCatalog?.albums).toHaveLength(25);
+      const saved = await readSavedItems(dataset, 42);
+      await saveSnapshot(
+        { fanId: 42, username: 'listener' },
+        dataset,
+        saved.slice(1),
+      );
+      expect((await createScoped()).releaseCatalog?.albums).toHaveLength(25);
+      expect(await readCurrentItems(dataset, 42)).toHaveLength(24);
+      expect(await readCurrentItems(dataset)).toHaveLength(24);
+      expect(await storage.getByKey(stagingKey(42, dataset))).toBeUndefined();
+      // Restore the source order for the existing catalog/cache assertions below.
+      await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, saved);
       const original = await create();
       if (label === 'Wishlist') {
         for (const name of ['Artists', 'Releases']) {

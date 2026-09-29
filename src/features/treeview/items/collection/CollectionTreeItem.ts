@@ -1,5 +1,5 @@
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
-import { readCurrentItems } from 'src/bandcamp/domain/fanData/library';
+import { readSavedItems } from 'src/bandcamp/domain/fanData/library';
 import type { BandcampItem } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
@@ -13,7 +13,7 @@ import { withReleaseCatalog } from '../releaseCatalog';
 export class CollectionTreeItem {
   static async create(username: string, fanId?: number): Promise<TreeItem> {
     const builder = item('Collection');
-    const collectionItems = await readCurrentItems<BandcampItem>(
+    const collectionItems = await readSavedItems<BandcampItem>(
       'collection',
       fanId,
     );
