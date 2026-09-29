@@ -46,6 +46,22 @@ describe('active tab fan sections during navigation', () => {
       url: 'https://first-test.bandcamp.com/music',
     });
     expect(first.map((section) => section.id)).toContain('wishlist-listener');
+    expect(first.some((section) => section.id === 'fan-listener')).toBe(false);
+    const otherFanSections = await MainSidePanelSections.create(
+      Url.create('https://bandcamp.com/other'),
+      null,
+      {
+        pageData: {
+          data: {
+            fan_data: { fan_id: 99, username: 'other', name: 'Other Fan' },
+          },
+          fanData: fanContext.fanData,
+        },
+      },
+    );
+    expect(
+      otherFanSections.find((section) => section.id === 'fan-listener')?.label,
+    ).toBe('Fan: Other Fan');
     for (const dataset of ['wishlist', 'following-bands']) {
       const section = first.find(
         (section) => section.fanSync?.dataset === dataset,
