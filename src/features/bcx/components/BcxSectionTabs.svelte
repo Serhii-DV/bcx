@@ -9,7 +9,8 @@ interface SectionTab {
   id: string;
   label: string;
   image?: string;
-  sortOptions?: { id: string; label: string }[];
+  title?: string;
+  sortOptions?: { id: string; label: string; title?: string }[];
 }
 
 let {
@@ -83,6 +84,10 @@ function tabLabelText(tab: SectionTab) {
   return sort ? `${tab.label} · ${sort.label}` : tab.label;
 }
 
+function tabTitle(tab: SectionTab) {
+  return selectedSortOption(tab)?.title ?? tab.title ?? tabLabelText(tab);
+}
+
 async function handleCloseAutoFocus(event: Event) {
   if (!focusSelectedOnClose) return;
   event.preventDefault();
@@ -109,17 +114,17 @@ async function handleCloseAutoFocus(event: Event) {
     {#each visibleTabs as tab (tab.id)}
       {#if tab.sortOptions}
         <div class="bcx-sort-tab-group">
-          <Tabs.Trigger value={selectedSortOption(tab)?.id ?? tab.id} class="bcx-section-tab" title={tabLabelText(tab)}>
+          <Tabs.Trigger value={selectedSortOption(tab)?.id ?? tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
             {@render tabLabel(tab)}
           </Tabs.Trigger>
           <DropdownMenu.Root>
-            <DropdownMenu.Trigger class="bcx-section-tab bcx-sort-button" aria-label="Sort bands" title="Sort bands">
+            <DropdownMenu.Trigger class="bcx-section-tab bcx-sort-button" aria-label="Sort followed bands" title="Choose how followed bands are ordered">
               <ChevronDown size={14} aria-hidden="true" />
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal to={bar?.closest('.bcx-side-panel-shell') ?? undefined}>
               <DropdownMenu.Content class="bcx-section-overflow" align="start" sideOffset={6} strategy="fixed" onCloseAutoFocus={handleCloseAutoFocus}>
                 {#each tab.sortOptions as option (option.id)}
-                  <DropdownMenu.Item class="bcx-section-menu-item" aria-label={`${option.label}${selectedSortOption(tab)?.id === option.id ? ', selected' : ''}`} onSelect={() => onSelectTab(option.id)}>
+                  <DropdownMenu.Item class="bcx-section-menu-item" aria-label={`${option.label}${selectedSortOption(tab)?.id === option.id ? ', selected' : ''}`} title={option.title} onSelect={() => onSelectTab(option.id)}>
                     <span class="bcx-sort-check">{#if selectedSortOption(tab)?.id === option.id}<Check size={14} aria-hidden="true" />{/if}</span>
                     {option.label}
                   </DropdownMenu.Item>
@@ -129,7 +134,7 @@ async function handleCloseAutoFocus(event: Event) {
           </DropdownMenu.Root>
         </div>
       {:else}
-        <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tab.label}>
+        <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
           {@render tabLabel(tab)}
         </Tabs.Trigger>
       {/if}
@@ -145,12 +150,12 @@ async function handleCloseAutoFocus(event: Event) {
           {#each hiddenTabs as tab (tab.id)}
             {#if tab.sortOptions}
               {#each tab.sortOptions as option (option.id)}
-                <DropdownMenu.Item class="bcx-section-menu-item" onSelect={() => onSelectTab(option.id)}>
+                <DropdownMenu.Item class="bcx-section-menu-item" title={option.title} onSelect={() => onSelectTab(option.id)}>
                   {tab.label} · {option.label}
                 </DropdownMenu.Item>
               {/each}
             {:else}
-              <DropdownMenu.Item class="bcx-section-menu-item" onSelect={() => onSelectTab(tab.id)}>
+              <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectTab(tab.id)}>
                 {@render tabLabel(tab)}
               </DropdownMenu.Item>
             {/if}

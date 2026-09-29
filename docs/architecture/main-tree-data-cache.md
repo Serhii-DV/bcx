@@ -92,6 +92,8 @@ Catalog roots carry `releasePreview` and browser layout at runtime so nested
 artist/year groups share the bottom details panel. Loaded Collection and Wishlist
 sections also expose all catalog URLs, including releases beyond the first page,
 to preserve the mounted side panel during release navigation.
+The tab strip presents Release years as By Release Year and Added years as By
+Year Added. These display labels leave the cached root names and paths intact.
 
 Following Bands stores every loaded band in its tree snapshot without pagination.
 Snapshot version 15 invalidates older snapshots that predate the Latest added,
