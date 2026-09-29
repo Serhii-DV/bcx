@@ -1,9 +1,8 @@
 import { Band } from 'src/bandcamp/domain/band/band';
-import {
-  type FollowingBandItem,
-  PageCollection,
-} from 'src/bandcamp/domain/page/PageCollection';
+import { readCurrentItems } from 'src/bandcamp/domain/fanData/library';
+import type { FollowingBandItem } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
+import { TreeItemButtonFactory } from '../buttons/factory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import {
@@ -16,23 +15,25 @@ import {
   ICON_GLOBE,
   ICON_MAP_PIN,
 } from '../utils/icon';
-import { createStoredFanListTreeItem } from './createStoredFanListTreeItem';
-
-const FOLLOWING_BANDS_KEY = '/following-bands';
 
 export class FollowingBandsTreeItem {
-  static async create(username: string): Promise<TreeItem> {
-    const item = await createStoredFanListTreeItem<FollowingBandItem>({
+  static async create(username: string, fanId?: number): Promise<TreeItem> {
+    const storedItems = await readCurrentItems<FollowingBandItem>(
+      'following-bands',
+      fanId,
+    );
+    const item: TreeItem = {
       label: 'Following Bands',
-      openButtonLabel: 'Open Following Bands',
-      openUrl: BandcampUrlFactory.generateFollowingBandsUrl(username),
-      refreshButtonLabel: 'Refresh Following Bands',
-      storageKey: FOLLOWING_BANDS_KEY,
-      username,
-      loadItems: loadFollowingBands,
-      createTreeItem: (item) => this.createFollowingBandTreeItem(item),
-    });
-    const latestItems = item.children ?? [];
+      buttons: [
+        TreeItemButtonFactory.createExternalLink(
+          'Open Following Bands',
+          BandcampUrlFactory.generateFollowingBandsUrl(username),
+        ),
+      ],
+    };
+    const latestItems = storedItems.map((item) =>
+      this.createFollowingBandTreeItem(item),
+    );
     const collator = new Intl.Collator(undefined, {
       numeric: true,
       sensitivity: 'base',
@@ -172,11 +173,4 @@ function createCountriesRoot(
     itemPreview: true,
     layout: TREE_ITEM_LAYOUT.BROWSER,
   };
-}
-
-async function loadFollowingBands(): Promise<FollowingBandItem[]> {
-  const pageCollection = new PageCollection();
-  return pageCollection.loadFollowingBandsItems({
-    includeSummaryFlags: false,
-  });
 }

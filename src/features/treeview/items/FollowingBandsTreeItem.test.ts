@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, it } from '@rstest/core';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandMetadata } from 'src/bandcamp/domain/band/metadata';
+import {
+  importLegacyLists,
+  readLibrary,
+  saveAvailability,
+  saveSnapshot,
+  unavailableKey,
+} from 'src/bandcamp/domain/fanData/library';
 import type { FollowingBandItem } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { sessionStorage, storage } from 'src/core/shared';
 import { loadBandPreview } from '../BandPreview';
 import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
+import { appendFanArchive } from './fanArchive';
 import { TreeItemCache } from './TreeItemCache';
 
 beforeEach(async () => {
@@ -208,6 +216,64 @@ describe('Following Bands', () => {
       albumCount: 0,
       links: [{ label: 'Website', url: 'https://example.com/' }],
     });
+
+    const account = { fanId: 42, username: 'listener' };
+    await importLegacyLists(account);
+    await saveSnapshot(account, 'following-bands', bands.slice(1));
+    expect(
+      (await readLibrary(42))?.lists['following-bands']?.current,
+    ).toHaveLength(44);
+    expect(
+      Object.keys(
+        (await readLibrary(42))?.lists['following-bands']?.records ?? {},
+      ),
+    ).toHaveLength(45);
+    await expect(storage.getByKey('/following-bands')).resolves.toEqual(bands);
+    const absent = {
+      state: 'unavailable' as const,
+      checkedAt: '2026-01-01',
+      url: preview.url,
+      reason: 'HTTP 404',
+    };
+    await saveAvailability(42, 'band:1', absent);
+    await saveAvailability(42, 'band:1', {
+      ...absent,
+      state: 'unknown',
+      reason: 'Network error',
+    });
+    expect(await storage.getByKey(unavailableKey(42))).toEqual({
+      'band:1': absent,
+    });
+    const scoped = await appendFanArchive(
+      await FollowingBandsTreeItem.create('listener', 42),
+      42,
+      'following-bands',
+    );
+    const archived = scoped.children?.find(
+      (item) => item.label === 'Unavailable',
+    );
+    expect(archived?.children?.[0].bandPreview).toMatchObject({
+      id: 1,
+      following: false,
+    });
+    expect(
+      scoped.children?.find((item) => item.label === 'All saved')
+        ?.childrenCount,
+    ).toBe(45);
+    expect(
+      (await FollowingBandsTreeItem.create('another-listener', 99))
+        .children?.[0].childrenCount,
+    ).toBe(0);
+    await saveAvailability(42, 'band:1', {
+      ...absent,
+      state: 'available',
+      reason: 'Page returned',
+    });
+    expect(await storage.getByKey(unavailableKey(42))).toEqual({});
+    await saveSnapshot(account, 'following-bands', bands);
+    expect(
+      (await readLibrary(42))?.lists['following-bands']?.current,
+    ).toHaveLength(45);
   });
 
   it('handles an empty stored list', async () => {

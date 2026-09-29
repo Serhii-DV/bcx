@@ -15,6 +15,7 @@ import {
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 
 export interface ReleaseCatalog {
+  fanId?: number;
   albums: RawAlbumData[];
   addedAt?: Array<string | null>;
   releaseDates?: Array<string | null>;
@@ -53,7 +54,10 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     albums.map((album, index) => [album, catalog.releaseDates?.[index]]),
   );
   const createReleaseItem = (album: Album): TreeItem => {
-    const release = AlbumTreeItemFactory.createWithPreview(album);
+    const release = AlbumTreeItemFactory.createWithPreview(
+      album,
+      catalog.fanId,
+    );
     const addedAt = addedAtByAlbum.get(album);
     const published = album.metadata?.published;
     const releaseDate =

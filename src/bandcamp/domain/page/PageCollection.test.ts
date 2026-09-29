@@ -54,6 +54,8 @@ async function createPageCollection(transport: unknown) {
       },
     }) as any;
 
+  const pageData = pageCollection.getPageData();
+  pageCollection.getPageData = () => pageData;
   return pageCollection;
 }
 
@@ -101,6 +103,15 @@ describe('PageCollection', () => {
       older_than_token: 'token-1',
       count: 1,
     });
+    transport.postJsonString.mockResolvedValue({
+      items: [collectionItem(3)],
+      more_available: true,
+    });
+    await expect(
+      pageCollection.loadWishlistItems({ includeSummaryFlags: false }),
+    ).rejects.toThrow('Incomplete Bandcamp pagination');
+    pageCollection.getPageData().wishlist_data.item_count = 0;
+    await expect(pageCollection.loadWishlistItems()).resolves.toEqual([]);
   });
 
   it('loads following fans and genres from page-data caches', async () => {
@@ -115,6 +126,10 @@ describe('PageCollection', () => {
     await expect(pageCollection.loadFollowingGenresItems()).resolves.toEqual([
       { name: 'Metal', tag_page_url: '/tag/metal' },
     ]);
+    pageCollection.getPageData().following_genres_data.item_count = 2;
+    await expect(pageCollection.loadFollowingGenresItems()).rejects.toThrow(
+      'Incomplete following genres data',
+    );
   });
 
   it('loads following bands through the paginated endpoint', async () => {

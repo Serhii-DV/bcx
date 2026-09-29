@@ -51,3 +51,38 @@ flowchart TB
 ```
 
 A URL reference requires a first storage lookup to find its entity key. Album reads can then follow stored track IDs, load those track records, and attach the reconstructed Tracks to the Album. Direct track reads rebuild a Track from its compressed record.
+
+## Fan library and unavailable entries
+
+`src/bandcamp/domain/fanData/library.ts` owns account-scoped snapshots at
+`/fan-data/account/{fanId}`. Each dataset retains all previously seen records and a
+separate ordered list of current IDs. Missing IDs are never deleted. Releases use
+`a:{id}` or `t:{id}`, bands use `band:{id}`, and genre identities use their tag URL.
+Successful snapshots merge fields; absent/null fields do not erase saved metadata.
+Existing detailed `BandcampStorage` records remain intact.
+
+`/fan-data/account/{fanId}/unavailable` is a separate registry of confirmed
+unavailable references, with URLs, timestamps and reasons. The account's
+`/availability` registry also records accessible and inconclusive checks. Only
+HTTP 404/410 at the requested URL adds an Unavailable entry. Redirects, challenges,
+unsupported custom domains and request failures remain inconclusive. An accessible
+Bandcamp page removes an earlier Unavailable status. List membership is independent:
+a missing item can still be accessible (for example, an unfollowed band).
+
+Sync checks missing records and previously unavailable records in the selected
+list. The toolbar also offers a check of all saved release/band pages, including
+items still in current lists. Oldest/unattempted checks run first so retries after
+a timeout make progress. Results are saved incrementally. Genres retain historical
+membership but do not receive page-availability classifications.
+
+Panels show current catalogs plus Unavailable, No longer listed, and All saved.
+Unassigned legacy `/collection`, `/wishlist`, `/following-bands`, and
+`/following-genres` arrays remain unchanged and visible under Older saved lists.
+The explicit Import older saved lists action assigns copies to the verified account
+and syncs it; it never deletes the originals or overwrites newer account records.
+No automatic account assignment is inferred from these older global keys.
+
+`/fan-data/sync-job` stores job progress and errors. An interrupted worker marks the
+job interrupted on its next startup; retry preserves already committed data.
+Local storage quota failures are reported as errors rather than successful syncs.
+Saved artwork URLs are retained, but image bytes and audio are not archived.

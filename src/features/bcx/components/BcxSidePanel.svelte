@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Tabs } from 'bits-ui';
+import { libraryKey } from 'src/bandcamp/domain/fanData/library';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { TreeData } from 'src/features/treeview/TreeData';
@@ -10,8 +11,9 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
 import { ICON_INFO } from 'src/features/treeview/utils/icon';
-import { untrack } from 'svelte';
+import { onMount, untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
+import BcxFanDataSync from './BcxFanDataSync.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
@@ -47,6 +49,7 @@ let selectedSectionId = $state('');
 let sectionFilterQueryById: Record<string, string> = $state({});
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
+const sectionRequests = new Map<string, number>();
 
 function getTreeDataForSection(section: SidePanelSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
@@ -89,13 +92,18 @@ function shouldShowBreadcrumb(section: SidePanelSection): boolean {
   return !startsInTreeLayout(section) && hasRootItemsWithChildren(section);
 }
 
-async function loadSectionTreeData(section: SidePanelSection) {
-  if (sectionTreeDataById[section.id] || sectionLoadingById[section.id]) {
+async function loadSectionTreeData(section: SidePanelSection, force = false) {
+  if (
+    !force &&
+    (sectionTreeDataById[section.id] || sectionLoadingById[section.id])
+  ) {
     return;
   }
 
   sectionErrorById = { ...sectionErrorById, [section.id]: '' };
   const loadGeneration = sectionLoadGeneration;
+  const request = (sectionRequests.get(section.id) ?? 0) + 1;
+  sectionRequests.set(section.id, request);
   sectionLoadingById = {
     ...sectionLoadingById,
     [section.id]: true,
@@ -104,7 +112,10 @@ async function loadSectionTreeData(section: SidePanelSection) {
   try {
     const sectionTreeData = await section.createTreeData();
 
-    if (loadGeneration !== sectionLoadGeneration) {
+    if (
+      loadGeneration !== sectionLoadGeneration ||
+      sectionRequests.get(section.id) !== request
+    ) {
       return;
     }
 
@@ -113,7 +124,10 @@ async function loadSectionTreeData(section: SidePanelSection) {
       [section.id]: sectionTreeData,
     };
   } catch (error) {
-    if (loadGeneration === sectionLoadGeneration) {
+    if (
+      loadGeneration === sectionLoadGeneration &&
+      sectionRequests.get(section.id) === request
+    ) {
       sectionErrorById = {
         ...sectionErrorById,
         [section.id]:
@@ -121,7 +135,10 @@ async function loadSectionTreeData(section: SidePanelSection) {
       };
     }
   } finally {
-    if (loadGeneration === sectionLoadGeneration) {
+    if (
+      loadGeneration === sectionLoadGeneration &&
+      sectionRequests.get(section.id) === request
+    ) {
       sectionLoadingById = {
         ...sectionLoadingById,
         [section.id]: false,
@@ -129,6 +146,45 @@ async function loadSectionTreeData(section: SidePanelSection) {
     }
   }
 }
+
+onMount(() => {
+  const pending = new Set<string>();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const changed = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    area: string,
+  ) => {
+    if (area !== 'local') return;
+    for (const section of sections) {
+      if (
+        section.fanSync &&
+        libraryKey(section.fanSync.account.fanId) in changes
+      )
+        pending.add(section.id);
+    }
+    if (!pending.size) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      for (const section of sections) {
+        if (
+          pending.has(section.id) &&
+          (sectionTreeDataById[section.id] ||
+            sectionLoadingById[section.id] ||
+            selectedSectionId === section.id)
+        ) {
+          void loadSectionTreeData(section, true);
+        }
+      }
+      pending.clear();
+    }, 100);
+  };
+  chrome.storage.onChanged.addListener(changed);
+  return () => {
+    sectionLoadGeneration++;
+    clearTimeout(timer);
+    chrome.storage.onChanged.removeListener(changed);
+  };
+});
 
 function handleSectionFilterArrowDown() {
   sectionsContainer
@@ -209,11 +265,19 @@ $effect(() => {
               />
               {#each sections as section (section.id)}
                 <Tabs.Content value={section.id} class="bcx-tab-content">
+                  {#if section.fanSync}
+                    <BcxFanDataSync account={section.fanSync.account} dataset={section.fanSync.dataset} />
+                    {#if sectionErrorById[section.id]}<p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>{/if}
+                  {/if}
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
+                      {#if section.fanSync}
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} />
+                      {:else}
                       {#key sectionTreeDataById[section.id]}
                         <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} />
                       {/key}
+                      {/if}
                     {:else}
                       <BcxTreeBrowserFilter
                         bind:value={sectionFilterQueryById[section.id]}

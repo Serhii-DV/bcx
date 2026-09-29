@@ -4,7 +4,7 @@ import type { TreeItem } from '../TreeItem';
 import type { TreeItemButton } from '../TreeItemButton';
 import { type ReleaseCatalog, restoreReleaseCatalog } from './releaseCatalog';
 
-const CACHE_VERSION = 28;
+const CACHE_VERSION = 29;
 const CACHE_KEY_PREFIX = '/cache/tree-item';
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 
@@ -39,6 +39,7 @@ interface TreeItemSnapshot {
 }
 
 interface SubtreeSnapshot {
+  revision?: string;
   createdAt: number;
   expiresAt: number;
   version: number;
@@ -58,23 +59,24 @@ export class TreeItemCache {
     key: string,
     createFn: () => Promise<TreeItem>,
     ttlMs: number = DEFAULT_TTL_MS,
+    revision?: string,
   ): Promise<TreeItem> {
-    const cached = await this.get(key);
+    const cached = await this.get(key, revision);
     if (cached) {
       return cached;
     }
 
     const item = await createFn();
-    await this.set(key, item, ttlMs);
+    await this.set(key, item, ttlMs, revision);
     return item;
   }
 
-  static async get(key: string): Promise<TreeItem | null> {
+  static async get(key: string, revision?: string): Promise<TreeItem | null> {
     const logLabel = `[TreeItemCache.get:${key}]`;
     console.time(logLabel);
 
     const cacheResult = await this.getSnapshot(key);
-    if (!cacheResult) {
+    if (!cacheResult || cacheResult.snapshot.revision !== revision) {
       console.timeEnd(logLabel);
       console.log(logLabel, 'MISS');
       return null;
@@ -94,9 +96,11 @@ export class TreeItemCache {
     key: string,
     item: TreeItem,
     ttlMs: number = DEFAULT_TTL_MS,
+    revision?: string,
   ): Promise<void> {
     const now = Date.now();
     const snapshot: SubtreeSnapshot = {
+      revision,
       createdAt: now,
       expiresAt: now + ttlMs,
       version: CACHE_VERSION,

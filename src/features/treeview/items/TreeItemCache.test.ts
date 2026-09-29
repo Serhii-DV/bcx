@@ -72,6 +72,26 @@ describe('TreeItemCache', () => {
     });
     expect(second.onClick).toBeUndefined();
     expect(createFn).toHaveBeenCalledTimes(1);
+    await TreeItemCache.getOrCreate(
+      'tree:collection',
+      createFn,
+      60000,
+      'sync-1',
+    );
+    await TreeItemCache.getOrCreate(
+      'tree:collection',
+      createFn,
+      60000,
+      'sync-1',
+    );
+    expect(createFn).toHaveBeenCalledTimes(2);
+    await TreeItemCache.getOrCreate(
+      'tree:collection',
+      createFn,
+      60000,
+      'sync-2',
+    );
+    expect(createFn).toHaveBeenCalledTimes(3);
   });
 
   it('invalidates all tree item cache entries', async () => {

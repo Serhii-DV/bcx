@@ -17,7 +17,8 @@ export class FollowingGenresSidePanelSection {
       itemCountPath: 'following_genres_data',
       label: 'Following Genres',
       ttl: SIDE_PANEL_SECTION_CACHE_TTL.FOLLOWING_GENRES,
-      createTreeItem: (username) => FollowingGenresTreeItem.create(username),
+      createTreeItem: (username, fanId) =>
+        FollowingGenresTreeItem.create(username, fanId),
     });
   }
 }

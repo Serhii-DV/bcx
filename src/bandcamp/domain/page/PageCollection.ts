@@ -221,6 +221,7 @@ export class PageCollection {
       : null;
 
     let olderThanToken = PageCollection.makeNowToken(lastToken);
+    const seenTokens = new Set([olderThanToken]);
     const all: BandcampItem[] = [];
 
     while (true) {
@@ -238,6 +239,12 @@ export class PageCollection {
           parsed.error_message || 'Bandcamp API error while loading items.',
         );
 
+      if (
+        !Array.isArray(parsed.items) ||
+        typeof parsed.more_available !== 'boolean'
+      ) {
+        throw new Error('Invalid Bandcamp pagination response.');
+      }
       const batch = includeSummaryFlags
         ? this.enrich(parsed.items, summary)
         : parsed.items;
@@ -247,7 +254,12 @@ export class PageCollection {
 
       // Workaround from userscript: last_token can be wrong, use last item token
       const lastItem = parsed.items[parsed.items.length - 1];
-      if (!lastItem?.token) break;
+      if (!lastItem?.token || seenTokens.has(lastItem.token)) {
+        throw new Error(
+          'Incomplete Bandcamp pagination; saved data must be retained.',
+        );
+      }
+      seenTokens.add(lastItem.token);
       olderThanToken = lastItem.token;
     }
 
@@ -255,6 +267,7 @@ export class PageCollection {
   }
 
   async loadWishlistItems(options?: LoadOptions): Promise<BandcampItem[]> {
+    if (this.getPageData().wishlist_data?.item_count === 0) return [];
     const lastToken = this.getPageData().wishlist_data?.last_token;
     if (!lastToken)
       throw new Error('This page does not contain wishlist_data.last_token.');
@@ -267,6 +280,7 @@ export class PageCollection {
   }
 
   async loadCollectionItems(options?: LoadOptions): Promise<BandcampItem[]> {
+    if (this.getPageData().collection_data?.item_count === 0) return [];
     const lastToken = this.getPageData().collection_data?.last_token;
     if (!lastToken)
       throw new Error('This page does not contain collection_data.last_token.');
@@ -281,6 +295,7 @@ export class PageCollection {
   async loadFollowingBandsItems(
     options?: LoadOptions,
   ): Promise<FollowingBandItem[]> {
+    if (this.getPageData().following_bands_data?.item_count === 0) return [];
     const lastToken = this.getPageData().following_bands_data?.last_token;
     if (!lastToken)
       throw new Error(
@@ -292,6 +307,7 @@ export class PageCollection {
     const fanId = pageData.fan_data.fan_id;
 
     let olderThanToken = PageCollection.makeNowToken(lastToken);
+    const seenTokens = new Set([olderThanToken]);
     const all: FollowingBandItem[] = [];
 
     while (true) {
@@ -311,12 +327,23 @@ export class PageCollection {
             'Bandcamp API error while loading following bands.',
         );
 
+      if (
+        !Array.isArray(parsed.followeers) ||
+        typeof parsed.more_available !== 'boolean'
+      ) {
+        throw new Error('Invalid following bands response.');
+      }
       all.push(...parsed.followeers);
 
       if (!parsed.more_available) break;
 
       const lastItem = parsed.followeers[parsed.followeers.length - 1];
-      if (!lastItem?.token) break;
+      if (!lastItem?.token || seenTokens.has(lastItem.token)) {
+        throw new Error(
+          'Incomplete Bandcamp pagination; saved data must be retained.',
+        );
+      }
+      seenTokens.add(lastItem.token);
       olderThanToken = lastItem.token;
     }
 
@@ -335,8 +362,20 @@ export class PageCollection {
 
   async loadFollowingGenresItems(): Promise<GenreItem[]> {
     const pageData = this.getPageData();
-    const genreIds = pageData.following_genres_data?.sequence ?? [];
-    const cache = pageData.item_cache.following_genres ?? {};
+    if (pageData.following_genres_data?.item_count === 0) return [];
+    const genreIds = pageData.following_genres_data?.sequence;
+    const cache = pageData.item_cache?.following_genres;
+    if (
+      !Array.isArray(genreIds) ||
+      !cache ||
+      genreIds.some((id) => !cache[id]) ||
+      (typeof pageData.following_genres_data.item_count === 'number' &&
+        genreIds.length !== pageData.following_genres_data.item_count)
+    ) {
+      throw new Error(
+        'Incomplete following genres data; saved data must be retained.',
+      );
+    }
 
     return genreIds
       .map((id) => cache[id])

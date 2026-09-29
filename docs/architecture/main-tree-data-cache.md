@@ -160,3 +160,24 @@ History is exposed as All, Bands, Releases, and Tracks root tabs. Each tab owns 
 filtered page list and pagination offset, while the initial cached-entity lookup is
 shared across the visible first batches. Saved tracks use the same item preview
 panel with track metadata; unsaved tracks retain the URL-derived fallback preview.
+
+## Account library sync
+
+Fan sections now expose a fixed Sync toolbar that sends a request to the background
+worker. The worker opens an inactive Collection tab and invokes `PageCollection`
+through a content-script message. Account identity and complete pagination are
+checked before each dataset is saved. Requests are bounded and cancellable; an
+interrupted job is marked for retry when the worker restarts. Only a tab still
+carrying the job's original URL is closed by cleanup.
+
+Fan subtree keys use the numeric fan ID. Snapshot version 29 stores an optional
+revision (the dataset's last successful sync timestamp), preventing an old cache
+entry from hiding newly saved data without discarding unrelated caches. Existing
+TTLs and other subtree keys are unchanged. Archive roots are appended after cache
+restoration so their preview callbacks and availability state are always current.
+
+Open panel instances listen for account-library changes in local storage, debounce
+updates, and rebuild loaded fan sections with stale-request protection. They retain
+mounted root tabs and use stable paths to preserve filters and selection when the
+selected item remains present. Collection pagination still resets on a rebuild;
+items beyond its first page remain accessible through Show more or All saved.

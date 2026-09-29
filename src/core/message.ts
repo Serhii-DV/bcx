@@ -1,4 +1,12 @@
+import type {
+  FanAccount,
+  FanDataset,
+} from 'src/bandcamp/domain/fanData/library';
+import type { FanSyncAction } from 'src/bandcamp/domain/fanData/sync';
 export enum MessageType {
+  START_FAN_SYNC = 'START_FAN_SYNC',
+  CANCEL_FAN_SYNC = 'CANCEL_FAN_SYNC',
+  LOAD_FAN_DATA = 'LOAD_FAN_DATA',
   HISTORY_SEARCH = 'HISTORY_SEARCH',
   GET_ACTIVE_BANDCAMP_TAB = 'GET_ACTIVE_BANDCAMP_TAB',
   GET_ACTIVE_BANDCAMP_PAGE_DATA = 'GET_ACTIVE_BANDCAMP_PAGE_DATA',
@@ -36,6 +44,17 @@ export interface ToggleSidePanelMessage {
 }
 
 export type Message =
+  | {
+      type: MessageType.START_FAN_SYNC;
+      account: FanAccount;
+      action: FanSyncAction;
+    }
+  | { type: MessageType.CANCEL_FAN_SYNC }
+  | {
+      type: MessageType.LOAD_FAN_DATA;
+      account: FanAccount;
+      dataset: FanDataset | 'identity';
+    }
   | HistorySearchMessage
   | GetActiveBandcampTabMessage
   | GetActiveBandcampPageDataMessage

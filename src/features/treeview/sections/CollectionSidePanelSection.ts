@@ -21,7 +21,8 @@ export class CollectionSidePanelSection {
         pageData?.collection_data?.item_count ??
         pageData?.current_fan?.collection_count ??
         pageData?.collection_count,
-      createTreeItem: (username) => CollectionTreeItem.create(username),
+      createTreeItem: (username, fanId) =>
+        CollectionTreeItem.create(username, fanId),
     });
   }
 }

@@ -1,8 +1,14 @@
 import { console } from 'src/utils/console';
+import {
+  cancelFanSync,
+  recoverFanSync,
+  startFanSync,
+} from './bandcamp/domain/fanData/sync';
 import { History } from './core/history';
 import { type Message, MessageType } from './core/message';
 
 console.log('Running background script');
+void recoverFanSync().catch(console.error);
 
 const SIDEPANEL_PATH = 'sidepanel.html';
 const BANDCAMP_HOST_PATTERN = /(^|\.)bandcamp\.com$/;
@@ -96,6 +102,23 @@ async function getActiveBandcampTab(): Promise<chrome.tabs.Tab | null> {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.START_FAN_SYNC) {
+      startFanSync(message.account, message.action).then(
+        () => sendResponse({ ok: true }),
+        (error) =>
+          sendResponse({
+            ok: false,
+            error:
+              error instanceof Error ? error.message : 'Could not start sync',
+          }),
+      );
+      return true;
+    }
+    if (message.type === MessageType.CANCEL_FAN_SYNC) {
+      cancelFanSync();
+      sendResponse({ ok: true });
+      return;
+    }
     if (message.type === MessageType.HISTORY_SEARCH) {
       History.search(message.query)
         .then((results) => {

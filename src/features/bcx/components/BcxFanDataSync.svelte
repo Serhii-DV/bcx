@@ -1,0 +1,131 @@
+<script lang="ts">
+import {
+  type FanAccount,
+  type FanDataset,
+  fanStorage,
+  libraryKey,
+  readLibrary,
+} from 'src/bandcamp/domain/fanData/library';
+import {
+  FAN_SYNC_JOB_KEY,
+  type FanSyncAction,
+  type FanSyncJob,
+} from 'src/bandcamp/domain/fanData/sync';
+import { MessageType } from 'src/core/message';
+import { onMount } from 'svelte';
+
+let { account, dataset }: { account: FanAccount; dataset: FanDataset } =
+  $props();
+let job = $state<FanSyncJob>();
+let error = $state('');
+let sending = $state(false);
+let syncedAt = $state<string>();
+let legacyImported = $state(false);
+let hasLegacy = $state(false);
+let action = $state<FanSyncAction>('all');
+const running = $derived(job?.state === 'running');
+const ownJob = $derived(job?.account.fanId === account.fanId ? job : undefined);
+let generation = 0;
+async function refresh() {
+  const token = ++generation;
+  try {
+    const [nextJob, library, legacy] = await Promise.all([
+      fanStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY),
+      readLibrary(account.fanId),
+      fanStorage().getByKey<unknown[]>(`/${dataset}`),
+    ]);
+    if (token !== generation) return;
+    job = nextJob;
+    syncedAt = library?.lists[dataset]?.syncedAt;
+    legacyImported = !!library?.legacyImported;
+    if (legacyImported && action === 'import') action = 'all';
+    hasLegacy = !!legacy?.length;
+  } catch (reason) {
+    if (token === generation) error = String(reason);
+  }
+}
+$effect(() => {
+  account;
+  dataset;
+  void refresh();
+});
+onMount(() => {
+  const changed = (
+    changes: Record<string, chrome.storage.StorageChange>,
+    area: string,
+  ) => {
+    if (
+      area === 'local' &&
+      (FAN_SYNC_JOB_KEY in changes || libraryKey(account.fanId) in changes)
+    )
+      void refresh();
+  };
+  chrome.storage.onChanged.addListener(changed);
+  return () => {
+    generation++;
+    chrome.storage.onChanged.removeListener(changed);
+  };
+});
+async function request(nextAction?: FanSyncAction) {
+  sending = true;
+  error = '';
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const response = await Promise.race([
+      chrome.runtime.sendMessage(
+        nextAction
+          ? { type: MessageType.START_FAN_SYNC, account, action: nextAction }
+          : { type: MessageType.CANCEL_FAN_SYNC },
+      ),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              new Error('BCX did not respond. Reload the extension and retry.'),
+            ),
+          10000,
+        );
+      }),
+    ]);
+    if (!response?.ok)
+      throw new Error(response?.error || 'Could not start sync');
+    await refresh();
+  } catch (reason) {
+    error = reason instanceof Error ? reason.message : 'Sync request failed';
+  } finally {
+    clearTimeout(timer);
+    sending = false;
+  }
+}
+</script>
+
+<div class="fan-sync">
+  <div class="actions">
+    <button disabled={running || sending} onclick={() => request(dataset)} title={`Sync ${dataset} from your Bandcamp Collection page`}>Sync</button>
+    <select aria-label="Bandcamp sync action" bind:value={action} disabled={running || sending}>
+      <option value="all">Sync all Bandcamp data</option>
+      <option value="check">Check saved pages’ availability</option>
+      {#if hasLegacy && !legacyImported}<option value="import">Import older saved lists into @{account.username}</option>{/if}
+    </select>
+    <button disabled={running || sending} onclick={() => request(action)}>Run</button>
+    {#if running}<button disabled={sending} onclick={() => request()}>Cancel</button>{/if}
+  </div>
+  <p class="status" role="status">
+    {#if ownJob}{ownJob.message}{:else if running}Another Bandcamp sync is running.{/if}
+    {#if syncedAt}<span>Last synced: {new Date(syncedAt).toLocaleString()}</span>{/if}
+  </p>
+  {#if hasLegacy && !legacyImported}<p>Older lists are kept separately. Import them only if they belong to @{account.username}.</p>{/if}
+  {#if error}<p role="alert">{error}</p>{/if}
+</div>
+
+<style>
+  .fan-sync { flex-shrink: 0; margin: 0 8px 8px; font-size: 0.75rem; color: #d1d5db; }
+  .actions { display: flex; flex-wrap: wrap; gap: 4px; }
+  button, select { background: #374151; color: #f9fafb; border: 1px solid #4b5563; border-radius: 4px; padding: 4px 8px; }
+  select { flex: 1; min-width: 0; max-width: 100%; }
+  button { cursor: pointer; }
+  button:disabled, select:disabled { opacity: 0.5; cursor: default; }
+  button:focus-visible, select:focus-visible { outline: 2px solid #04b1fe; }
+  p { margin-top: 4px; overflow-wrap: anywhere; }
+  .status span { display: block; }
+</style>
