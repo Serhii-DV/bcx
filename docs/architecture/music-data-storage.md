@@ -76,6 +76,16 @@ a timeout make progress. Results are saved incrementally. Genres retain historic
 membership but do not receive page-availability classifications.
 
 Panels show current catalogs plus Unavailable, No longer listed, and All saved.
+The Sync toolbar sits above the subtabs in each fan-data panel. Artist and release
+pages identify the signed-in fan through `identities.fan.id` (with a `fan_id`
+fallback). Without a verified account, the toolbar remains visible but disabled
+with a sign-in message, and empty archive tabs remain visible. Unavailable appears
+beside the primary catalog tab.
+
+History also has an Unavailable subtab, matching visited Bandcamp URLs against the
+current account's confirmed unavailable registry. It does not check every history
+entry over the network. Search stays within those matching entries, pagination
+remains in batches of 50, and storage changes refresh already loaded panels.
 Unassigned legacy `/collection`, `/wishlist`, `/following-bands`, and
 `/following-genres` arrays remain unchanged and visible under Older saved lists.
 The explicit Import older saved lists action assigns copies to the verified account

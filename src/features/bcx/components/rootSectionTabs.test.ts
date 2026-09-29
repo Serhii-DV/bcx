@@ -42,7 +42,16 @@ describe('createRootSectionTabs', () => {
       childrenCount: 91,
       loadChildren,
     };
-    expect(createRootSectionTabs([item])[0].label).toBe('Release years (91)');
+    const tabs = createRootSectionTabs([
+      item,
+      { path: '1', label: 'Unavailable', hasChildren: true, children: [] },
+      { path: '2', label: 'All', hasChildren: true },
+    ]);
+    expect(tabs.map((tab) => tab.label)).toEqual([
+      'All',
+      'Unavailable',
+      'Release years (91)',
+    ]);
     expect(loadChildren).not.toHaveBeenCalled();
     expect(item.children).toBeUndefined();
   });

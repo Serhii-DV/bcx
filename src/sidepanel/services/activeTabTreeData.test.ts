@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Band } from 'src/bandcamp/domain/band/band';
+import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { Url } from 'src/core/url';
+import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
 import {
   createActiveTabSidePanelData,
@@ -16,10 +19,23 @@ describe('active tab fan sections during navigation', () => {
     rs.spyOn(BandcampStorage, 'getByUuids').mockResolvedValue([]);
     rs.spyOn(BandcampStorage, 'getBands').mockResolvedValue([]);
     const createSections = rs.spyOn(MainSidePanelSections, 'create');
-    const fanContext = {
-      data: {},
-      fanData: { username: 'listener', name: 'Listener', fan_id: 42 },
+    const data = {
+      identities: { fan: { id: 42, username: 'listener', name: 'Listener' } },
     };
+    const fanContext = {
+      data,
+      fanData: detectFanDataFromPageData(
+        { data },
+        Url.create('https://first-test.bandcamp.com/music'),
+      ),
+    };
+    expect(fanContext.fanData.fan_id).toBe(42);
+    expect(
+      detectFanDataFromPageData(
+        { data: { identities: { fan: null } } },
+        Url.create('https://first-test.bandcamp.com/music'),
+      ).fan_id,
+    ).toBeUndefined();
     const sendMessage = rs.spyOn(chrome.runtime, 'sendMessage');
     sendMessage.mockImplementationOnce(async () => ({ pageData: fanContext }));
     const { sections: first } = await createActiveTabSidePanelData({
@@ -28,6 +44,22 @@ describe('active tab fan sections during navigation', () => {
       url: 'https://first-test.bandcamp.com/music',
     });
     expect(first.map((section) => section.id)).toContain('wishlist-listener');
+    for (const dataset of ['wishlist', 'following-bands']) {
+      const section = first.find(
+        (section) => section.fanSync?.dataset === dataset,
+      );
+      expect(section?.fanSync?.account).toEqual({
+        fanId: 42,
+        username: 'listener',
+      });
+      const tree = await section!.createTreeData();
+      expect(
+        createRootSectionTabs(tree.items).map((tab) => tab.label),
+      ).toContain('Unavailable');
+    }
+    expect(
+      first.find((section) => section.id === 'history')?.fanAccount?.fanId,
+    ).toBe(42);
 
     sendMessage.mockImplementationOnce(async () => ({
       pageData: null,
@@ -42,6 +74,31 @@ describe('active tab fan sections during navigation', () => {
     expect(next.map((section) => section.id)).toContain('collection-listener');
     expect(createSections.mock.calls.at(-1)?.[1]).toBeNull();
     expect(createSections.mock.calls.at(-1)?.[2]?.pageData).toEqual(fanContext);
+
+    const anonymous = await MainSidePanelSections.create(
+      Url.create('https://second-test.bandcamp.com/music'),
+      null,
+      {
+        pageData: {
+          data: {},
+          fanData: detectFanDataFromPageData(
+            { data: {} },
+            Url.create('https://second-test.bandcamp.com/music'),
+          ),
+        },
+      },
+    );
+    const anonymousWishlist = anonymous.find(
+      (section) => section.fanSync?.dataset === 'wishlist',
+    );
+    expect(anonymousWishlist?.fanSync).toEqual({
+      account: undefined,
+      dataset: 'wishlist',
+    });
+    const anonymousTree = await anonymousWishlist!.createTreeData();
+    expect(
+      createRootSectionTabs(anonymousTree.items).map((tab) => tab.label),
+    ).toContain('Unavailable');
 
     const updatedContext = {
       data: {},
