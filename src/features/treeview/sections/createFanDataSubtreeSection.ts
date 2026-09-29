@@ -38,8 +38,10 @@ export function createFanDataSubtreeSection(
 
   const account = { fanId: fanData.fan_id, username: fanData.username };
   const dataset = isFanDataset(options.cacheKey) ? options.cacheKey : undefined;
-  const sync =
-    dataset && isFanAccount(account) ? { account, dataset } : undefined;
+  const sync = dataset
+    ? { account: isFanAccount(account) ? account : undefined, dataset }
+    : undefined;
+  const fanId = sync?.account?.fanId;
   const section: SidePanelSection = {
     fanSync: sync,
     id: options.id,
@@ -53,14 +55,10 @@ export function createFanDataSubtreeSection(
         ? pageData?.[options.itemCountPath]?.item_count
         : undefined),
     createTreeData: async () => {
-      const library = sync ? await readLibrary(account.fanId) : undefined;
+      const library = fanId ? await readLibrary(fanId) : undefined;
       let item = await TreeItemCache.getOrCreate(
-        TreeItemCache.subtreeKey(
-          sync ? account.fanId : userKeyPart,
-          options.cacheKey,
-        ),
-        () =>
-          options.createTreeItem(fanData.username || '', sync?.account.fanId),
+        TreeItemCache.subtreeKey(fanId ?? userKeyPart, options.cacheKey),
+        () => options.createTreeItem(fanData.username || '', fanId),
         options.ttl,
         sync
           ? (library?.lists[sync.dataset]?.syncedAt ?? 'unsynced')
@@ -79,7 +77,7 @@ export function createFanDataSubtreeSection(
               },
             ],
           };
-        item = await appendFanArchive(item, account.fanId, sync.dataset);
+        item = await appendFanArchive(item, fanId, sync.dataset);
         section.childrenCount =
           library?.lists[sync.dataset]?.current.length ?? 0;
       }

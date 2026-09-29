@@ -14,7 +14,7 @@ import {
 import { MessageType } from 'src/core/message';
 import { onMount } from 'svelte';
 
-let { account, dataset }: { account: FanAccount; dataset: FanDataset } =
+let { account, dataset }: { account?: FanAccount; dataset: FanDataset } =
   $props();
 let job = $state<FanSyncJob>();
 let error = $state('');
@@ -24,14 +24,16 @@ let legacyImported = $state(false);
 let hasLegacy = $state(false);
 let action = $state<FanSyncAction>('all');
 const running = $derived(job?.state === 'running');
-const ownJob = $derived(job?.account.fanId === account.fanId ? job : undefined);
+const ownJob = $derived(
+  account && job?.account.fanId === account.fanId ? job : undefined,
+);
 let generation = 0;
 async function refresh() {
   const token = ++generation;
   try {
     const [nextJob, library, legacy] = await Promise.all([
       fanStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY),
-      readLibrary(account.fanId),
+      account ? readLibrary(account.fanId) : undefined,
       fanStorage().getByKey<unknown[]>(`/${dataset}`),
     ]);
     if (token !== generation) return;
@@ -56,7 +58,8 @@ onMount(() => {
   ) => {
     if (
       area === 'local' &&
-      (FAN_SYNC_JOB_KEY in changes || libraryKey(account.fanId) in changes)
+      (FAN_SYNC_JOB_KEY in changes ||
+        (account && libraryKey(account.fanId) in changes))
     )
       void refresh();
   };
@@ -67,6 +70,10 @@ onMount(() => {
   };
 });
 async function request(nextAction?: FanSyncAction) {
+  if (nextAction && !account) {
+    error = 'Sign in to Bandcamp and reload the page to sync saved data.';
+    return;
+  }
   sending = true;
   error = '';
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -101,20 +108,21 @@ async function request(nextAction?: FanSyncAction) {
 
 <div class="fan-sync">
   <div class="actions">
-    <button disabled={running || sending} onclick={() => request(dataset)} title={`Sync ${dataset} from your Bandcamp Collection page`}>Sync</button>
-    <select aria-label="Bandcamp sync action" bind:value={action} disabled={running || sending}>
+    <button disabled={!account || running || sending} onclick={() => request(dataset)} title={`Sync ${dataset} from your Bandcamp Collection page`}>Sync</button>
+    <select aria-label="Bandcamp sync action" bind:value={action} disabled={!account || running || sending}>
       <option value="all">Sync all Bandcamp data</option>
       <option value="check">Check saved pages’ availability</option>
-      {#if hasLegacy && !legacyImported}<option value="import">Import older saved lists into @{account.username}</option>{/if}
+      {#if account && hasLegacy && !legacyImported}<option value="import">Import older saved lists into @{account.username}</option>{/if}
     </select>
-    <button disabled={running || sending} onclick={() => request(action)}>Run</button>
+    <button disabled={!account || running || sending} onclick={() => request(action)}>Run</button>
     {#if running}<button disabled={sending} onclick={() => request()}>Cancel</button>{/if}
   </div>
   <p class="status" role="status">
     {#if ownJob}{ownJob.message}{:else if running}Another Bandcamp sync is running.{/if}
     {#if syncedAt}<span>Last synced: {new Date(syncedAt).toLocaleString()}</span>{/if}
   </p>
-  {#if hasLegacy && !legacyImported}<p>Older lists are kept separately. Import them only if they belong to @{account.username}.</p>{/if}
+  {#if account && hasLegacy && !legacyImported}<p>Older lists are kept separately. Import them only if they belong to @{account.username}.</p>{/if}
+  {#if !account}<p>Sign in to Bandcamp and reload the page to sync saved data.</p>{/if}
   {#if error}<p role="alert">{error}</p>{/if}
 </div>
 

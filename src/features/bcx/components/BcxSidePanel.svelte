@@ -156,10 +156,8 @@ onMount(() => {
   ) => {
     if (area !== 'local') return;
     for (const section of sections) {
-      if (
-        section.fanSync &&
-        libraryKey(section.fanSync.account.fanId) in changes
-      )
+      const account = section.fanSync?.account ?? section.fanAccount;
+      if (account && libraryKey(account.fanId) in changes)
         pending.add(section.id);
     }
     if (!pending.size) return;
@@ -271,7 +269,7 @@ $effect(() => {
                   {/if}
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
-                      {#if section.fanSync}
+                      {#if section.fanSync || section.fanAccount}
                         <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}

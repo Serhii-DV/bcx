@@ -46,8 +46,8 @@ export class BandcampPageData {
   }
 }
 
-function detectFanDataFromPageData(
-  pageData: BandcampPageData,
+export function detectFanDataFromPageData(
+  pageData: Pick<BandcampPageData, 'data'>,
   currentPageUrl: Url,
 ): FanData {
   const data = pageData.data;
@@ -66,9 +66,9 @@ function detectFanDataFromPageData(
     isBandcampTrackUrl(currentPageUrl)
   ) {
     // We are on the music page
-    username = data.identities?.fan.username;
-    name = data.identities?.fan.name;
-    fan_id = data.identities?.fan.fan_id;
+    username = data.identities?.fan?.username;
+    name = data.identities?.fan?.name;
+    fan_id = data.identities?.fan?.fan_id ?? data.identities?.fan?.id;
   } else if (isBandcampFeedUrl(currentPageUrl)) {
     // We are on the feed page
     username = data.fan_info?.username;

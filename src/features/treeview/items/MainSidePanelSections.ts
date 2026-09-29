@@ -69,7 +69,11 @@ export class MainSidePanelSections {
         createPageDataSections(pageDataContext, band?.url.toString()),
       );
     }
-    addSection(HistorySidePanelSection.create());
+    addSection(
+      HistorySidePanelSection.create(
+        includePageData ? pageDataContext : undefined,
+      ),
+    );
 
     console.timeEnd(logLabel);
 

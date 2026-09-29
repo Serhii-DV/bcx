@@ -60,16 +60,20 @@ function archiveRoot(label: string, children: TreeItem[]): TreeItem {
 
 export async function appendFanArchive(
   tree: TreeItem,
-  fanId: number,
+  fanId: number | undefined,
   dataset: FanDataset,
 ): Promise<TreeItem> {
   const storage = fanStorage();
-  const library = await readLibrary(fanId);
+  const library = fanId ? await readLibrary(fanId) : undefined;
   const list = library?.lists[dataset];
   const results =
-    (await storage.getByKey<AvailabilityList>(availabilityKey(fanId))) ?? {};
+    (fanId
+      ? await storage.getByKey<AvailabilityList>(availabilityKey(fanId))
+      : undefined) ?? {};
   const unavailable =
-    (await storage.getByKey<AvailabilityList>(unavailableKey(fanId))) ?? {};
+    (fanId
+      ? await storage.getByKey<AvailabilityList>(unavailableKey(fanId))
+      : undefined) ?? {};
   const current = new Set(list?.current ?? []);
   const entries = Object.entries(list?.records ?? {});
   const makeItems = (records: typeof entries) =>
