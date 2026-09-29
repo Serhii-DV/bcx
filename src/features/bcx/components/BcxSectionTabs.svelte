@@ -11,6 +11,9 @@ interface SectionTab {
   image?: string;
   title?: string;
   sortOptions?: { id: string; label: string; title?: string }[];
+  sortValue?: string;
+  sortLabel?: string;
+  onSortChange?: (id: string) => void;
 }
 
 let {
@@ -67,14 +70,15 @@ $effect(() => {
   return () => observer.disconnect();
 });
 
-function onSelectTab(id: string) {
+function onSelectSortOption(tab: SectionTab, id: string) {
   focusSelectedOnClose = true;
-  value = id;
+  tab.onSortChange?.(id);
+  value = tab.onSortChange ? tab.id : id;
 }
 
 function selectedSortOption(tab: SectionTab) {
   return (
-    tab.sortOptions?.find((option) => option.id === value) ??
+    tab.sortOptions?.find((option) => option.id === (tab.sortValue ?? value)) ??
     tab.sortOptions?.find((option) => option.id === lastSortId)
   );
 }
@@ -114,17 +118,17 @@ async function handleCloseAutoFocus(event: Event) {
     {#each visibleTabs as tab (tab.id)}
       {#if tab.sortOptions}
         <div class="bcx-sort-tab-group">
-          <Tabs.Trigger value={selectedSortOption(tab)?.id ?? tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
+          <Tabs.Trigger value={tab.onSortChange ? tab.id : selectedSortOption(tab)?.id ?? tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
             {@render tabLabel(tab)}
           </Tabs.Trigger>
           <DropdownMenu.Root>
-            <DropdownMenu.Trigger class="bcx-section-tab bcx-sort-button" aria-label="Sort followed bands" title="Choose how followed bands are ordered">
+            <DropdownMenu.Trigger class="bcx-section-tab bcx-sort-button" aria-label={tab.sortLabel ?? 'Sort followed bands'} title={tab.sortLabel ?? 'Choose how followed bands are ordered'}>
               <ChevronDown size={14} aria-hidden="true" />
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal to={bar?.closest('.bcx-side-panel-shell') ?? undefined}>
               <DropdownMenu.Content class="bcx-section-overflow" align="start" sideOffset={6} strategy="fixed" onCloseAutoFocus={handleCloseAutoFocus}>
                 {#each tab.sortOptions as option (option.id)}
-                  <DropdownMenu.Item class="bcx-section-menu-item" aria-label={`${option.label}${selectedSortOption(tab)?.id === option.id ? ', selected' : ''}`} title={option.title} onSelect={() => onSelectTab(option.id)}>
+                  <DropdownMenu.Item class="bcx-section-menu-item" aria-label={`${option.label}${selectedSortOption(tab)?.id === option.id ? ', selected' : ''}`} title={option.title} onSelect={() => onSelectSortOption(tab, option.id)}>
                     <span class="bcx-sort-check">{#if selectedSortOption(tab)?.id === option.id}<Check size={14} aria-hidden="true" />{/if}</span>
                     {option.label}
                   </DropdownMenu.Item>
@@ -150,12 +154,12 @@ async function handleCloseAutoFocus(event: Event) {
           {#each hiddenTabs as tab (tab.id)}
             {#if tab.sortOptions}
               {#each tab.sortOptions as option (option.id)}
-                <DropdownMenu.Item class="bcx-section-menu-item" title={option.title} onSelect={() => onSelectTab(option.id)}>
+                <DropdownMenu.Item class="bcx-section-menu-item" title={option.title} onSelect={() => onSelectSortOption(tab, option.id)}>
                   {tab.label} · {option.label}
                 </DropdownMenu.Item>
               {/each}
             {:else}
-              <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectTab(tab.id)}>
+              <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectSortOption(tab, tab.id)}>
                 {@render tabLabel(tab)}
               </DropdownMenu.Item>
             {/if}
@@ -169,7 +173,7 @@ async function handleCloseAutoFocus(event: Event) {
       {#each tabs as tab (tab.id)}
         {#if tab.sortOptions}
           <span class="bcx-sort-tab-group">
-            <span class="bcx-section-tab">{tab.label} · {tab.sortOptions[0].label}</span>
+            <span class="bcx-section-tab">{tab.label} · {selectedSortOption(tab)?.label ?? tab.sortOptions[0].label}</span>
             <span class="bcx-section-tab bcx-sort-button"><ChevronDown size={14} /></span>
           </span>
         {:else}

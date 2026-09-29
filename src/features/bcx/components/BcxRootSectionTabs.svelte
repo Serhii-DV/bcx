@@ -5,7 +5,12 @@ import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
-import { createRootSectionTabs } from './rootSectionTabs';
+import {
+  createRootSectionTabs,
+  type FollowingBandCountrySort,
+  type FollowingBandYearSort,
+  sortFollowingBandGroups,
+} from './rootSectionTabs';
 
 const tabDescriptions: Record<string, { label?: string; title: string }> = {
   All: { title: 'Browse all items in this section.' },
@@ -23,6 +28,9 @@ const tabDescriptions: Record<string, { label?: string; title: string }> = {
   },
   'Latest added': {
     title: 'Browse followed bands, most recently followed first.',
+  },
+  'Earliest followed': {
+    title: 'Browse followed bands, earliest followed first.',
   },
   'A–Z': { title: 'Browse followed bands by name, A to Z.' },
   'Z–A': { title: 'Browse followed bands by name, Z to A.' },
@@ -58,17 +66,24 @@ let {
   sortBands?: boolean;
 } = $props();
 let rootVersion = $state(0);
-const tabs = $derived.by(() => {
+let yearSort = $state<FollowingBandYearSort>('newest');
+let countrySort = $state<FollowingBandCountrySort>('az');
+const displayedTreeData = $derived.by(() => {
   rootVersion;
-  return createRootSectionTabs(treeData.items);
+  return sortBands
+    ? sortFollowingBandGroups(treeData, yearSort, countrySort)
+    : treeData;
+});
+const tabs = $derived.by(() => {
+  return createRootSectionTabs(displayedTreeData.items);
 });
 const displayTabs = $derived.by(() => {
   const labeledTabs = tabs.map((tab) => {
-    const rootLabel = treeData.items.find(
+    const rootLabel = displayedTreeData.items.find(
       (item) => item.path === tab.id,
     )?.label;
     const description = rootLabel ? tabDescriptions[rootLabel] : undefined;
-    return {
+    const labeledTab = {
       ...tab,
       label: description?.label
         ? tab.label.replace(rootLabel ?? '', description.label)
@@ -79,11 +94,73 @@ const displayTabs = $derived.by(() => {
           ? 'View artist or label information and links.'
           : `Open ${rootLabel ?? 'section'}.`),
     };
+    if (!sortBands) return labeledTab;
+    if (rootLabel === 'Followed by Year') {
+      return {
+        ...labeledTab,
+        sortValue: yearSort,
+        sortLabel: 'Sort followed years',
+        onSortChange: setYearSort,
+        sortOptions: [
+          {
+            id: 'newest',
+            label: 'Newest first',
+            title: 'Show the most recently followed years first.',
+          },
+          {
+            id: 'oldest',
+            label: 'Oldest first',
+            title: 'Show the earliest followed years first.',
+          },
+          {
+            id: 'most-bands',
+            label: 'Most bands',
+            title: 'Show years with the most followed bands first.',
+          },
+          {
+            id: 'fewest-bands',
+            label: 'Fewest bands',
+            title: 'Show years with the fewest followed bands first.',
+          },
+        ],
+      };
+    }
+    if (rootLabel === 'Countries') {
+      return {
+        ...labeledTab,
+        sortValue: countrySort,
+        sortLabel: 'Sort countries',
+        onSortChange: setCountrySort,
+        sortOptions: [
+          {
+            id: 'az',
+            label: 'A–Z',
+            title: 'Show countries in alphabetical order.',
+          },
+          {
+            id: 'za',
+            label: 'Z–A',
+            title: 'Show countries in reverse alphabetical order.',
+          },
+          {
+            id: 'most-bands',
+            label: 'Most bands',
+            title: 'Show countries with the most followed bands first.',
+          },
+          {
+            id: 'fewest-bands',
+            label: 'Fewest bands',
+            title: 'Show countries with the fewest followed bands first.',
+          },
+        ],
+      };
+    }
+    return labeledTab;
   });
   if (!sortBands) return labeledTabs;
 
-  const sortRoots = ['Latest added', 'A–Z', 'Z–A'].map((name) =>
-    treeData.items.find((item) => item.label === name),
+  const sortRoots = ['Latest added', 'Earliest followed', 'A–Z', 'Z–A'].map(
+    (name) => displayedTreeData.items.find((item) => item.label === name),
   );
   if (sortRoots.some((root) => !root?.path)) return labeledTabs;
 
@@ -107,6 +184,26 @@ const displayTabs = $derived.by(() => {
 let selectedRoot = $state('');
 let visitedRoots: Record<string, boolean> = $state({});
 
+function setYearSort(id: string) {
+  if (
+    id === 'newest' ||
+    id === 'oldest' ||
+    id === 'most-bands' ||
+    id === 'fewest-bands'
+  )
+    yearSort = id;
+}
+
+function setCountrySort(id: string) {
+  if (
+    id === 'az' ||
+    id === 'za' ||
+    id === 'most-bands' ||
+    id === 'fewest-bands'
+  )
+    countrySort = id;
+}
+
 $effect(() => {
   if (!tabs.some((tab) => tab.id === selectedRoot)) {
     selectedRoot = tabs[0]?.id ?? '';
@@ -115,7 +212,7 @@ $effect(() => {
 });
 
 function usesItemPreview(path: string): boolean {
-  const root = treeData.items.find((item) => item.path === path);
+  const root = displayedTreeData.items.find((item) => item.path === path);
   return !!(root?.itemPreview || root?.releasePreview);
 }
 
@@ -132,14 +229,14 @@ function refreshTabs() {
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
             {#if usesItemPreview(tab.id)}
-              <BcxItemPreviewPanel {treeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
+              <BcxItemPreviewPanel treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
             {:else}
-            {@const about = treeData.items.find((item) => item.path === tab.id)}
+            {@const about = displayedTreeData.items.find((item) => item.path === tab.id)}
             {#if about?.aboutProfile}
               <BcxBandDetails {about} />
             {:else}
               <BcxTreeBrowser
-                {treeData}
+                treeData={displayedTreeData}
                 initialRootPath={tab.id}
                 lockInitialRoot={true}
                 showBreadcrumb={false}
