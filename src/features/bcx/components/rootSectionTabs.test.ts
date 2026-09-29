@@ -46,14 +46,45 @@ describe('createRootSectionTabs', () => {
       item,
       { path: '1', label: 'Unavailable', hasChildren: true, children: [] },
       { path: '2', label: 'All', hasChildren: true },
+      { path: '3', label: 'No longer listed', hasChildren: true },
     ]);
     expect(tabs.map((tab) => tab.label)).toEqual([
       'All',
-      'Unavailable',
       'Release years (91)',
+      'Unavailable',
+      'No longer listed',
     ]);
     expect(loadChildren).not.toHaveBeenCalled();
     expect(item.children).toBeUndefined();
+    expect(
+      createRootSectionTabs(
+        ['All', 'Bands', 'Releases', 'Tracks', 'Unavailable'].map(
+          (label, index) => ({
+            path: String(index),
+            label,
+            hasChildren: true,
+          }),
+        ),
+      ).map((tab) => tab.label),
+    ).toEqual(['All', 'Bands', 'Releases', 'Tracks', 'Unavailable']);
+    expect(
+      createRootSectionTabs([
+        {
+          path: '0',
+          label: 'Artists',
+          releasePreview: true,
+          hasChildren: true,
+        },
+        {
+          path: '1',
+          label: 'Releases',
+          releasePreview: true,
+          hasChildren: true,
+        },
+        { path: '2', label: 'Unavailable', hasChildren: true },
+        { path: '3', label: 'No longer listed', hasChildren: true },
+      ]).map((tab) => tab.label),
+    ).toEqual(['Releases', 'Artists', 'Unavailable', 'No longer listed']);
   });
 
   it('respects hidden counts and excludes groups without navigation paths', () => {

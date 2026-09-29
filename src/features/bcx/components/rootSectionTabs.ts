@@ -7,11 +7,9 @@ export function createRootSectionTabs(items: TreeItem[]) {
     item.label === 'Latest added' ||
     item.label === 'All'
       ? 0
-      : item.label === 'Unavailable'
+      : item.releasePreview && item.label === 'Artists'
         ? 1
-        : item.releasePreview && item.label === 'Artists'
-          ? 2
-          : 3;
+        : 2;
   const orderedItems = [...items].sort((a, b) => tabOrder(a) - tabOrder(b));
 
   return orderedItems.flatMap((item) => {

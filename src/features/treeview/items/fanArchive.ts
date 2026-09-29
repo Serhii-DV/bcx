@@ -113,6 +113,7 @@ export async function appendFanArchive(
       ),
     ),
   );
-  roots.push(archiveRoot('All saved', makeItems(entries)));
+  if (dataset === 'following-genres')
+    roots.push(archiveRoot('All saved', makeItems(entries)));
   return { ...tree, children: roots, childrenCount: roots.length };
 }

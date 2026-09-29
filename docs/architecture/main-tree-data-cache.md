@@ -180,7 +180,7 @@ Open panel instances listen for account-library changes in local storage, deboun
 updates, and rebuild loaded fan sections with stale-request protection. They retain
 mounted root tabs and use stable paths to preserve filters and selection when the
 selected item remains present. Collection pagination still resets on a rebuild;
-items beyond its first page remain accessible through Show more or All saved.
+items beyond its first page remain accessible through Show more.
 
 Snapshot version 30 rebuilds Collection, Wishlist, and Following Bands from all
 saved entries, including the original shared arrays before the first sync. Fan

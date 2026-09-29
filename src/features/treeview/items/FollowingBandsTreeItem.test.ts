@@ -306,10 +306,14 @@ describe('Following Bands', () => {
       id: 1,
       following: false,
     });
-    expect(
-      scoped.children?.find((item) => item.label === 'All saved')
-        ?.childrenCount,
-    ).toBe(45);
+    expect(scoped.children?.[0].childrenCount).toBe(45);
+    expect(scoped.children?.some((item) => item.label === 'All saved')).toBe(
+      false,
+    );
+    expect(scoped.children?.slice(-2).map((item) => item.label)).toEqual([
+      'Unavailable',
+      'No longer listed',
+    ]);
     expect(
       (await FollowingBandsTreeItem.create('another-listener', 99))
         .children?.[0].childrenCount,

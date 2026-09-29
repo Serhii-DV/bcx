@@ -78,20 +78,21 @@ items still in current lists. Oldest/unattempted checks run first so retries aft
 a timeout make progress. Results are saved incrementally. Genres retain historical
 membership but do not receive page-availability classifications.
 
-Collection, Wishlist, and Following Bands show all saved entries in their main
-catalogs, plus Unavailable, No longer listed, and All saved. Following Genres keeps
-its Current membership tab. Following badges use current membership, so a saved
-band missing from the latest list is not shown as currently followed.
+Collection, Wishlist, and Following Bands show all saved entries in their first
+catalog tab. Their Unavailable tab appears before No longer listed. Following
+Genres keeps its Current and All saved membership tabs. Following badges use
+current membership, so a saved band missing from the latest list is not shown as
+currently followed.
 The Sync toolbar sits above the subtabs in each fan-data panel. Artist and release
 pages identify the signed-in fan through `identities.fan.id` (with a `fan_id`
 fallback). Without a verified account, the toolbar remains visible but disabled
-with a sign-in message, and empty archive tabs remain visible. Unavailable appears
-beside the primary catalog tab.
+with a sign-in message, and empty archive tabs remain visible.
 
-History also has an Unavailable subtab, matching visited Bandcamp URLs against the
-current account's confirmed unavailable registry. It does not check every history
-entry over the network. Search stays within those matching entries, pagination
-remains in batches of 50, and storage changes refresh already loaded panels.
+History has Unavailable as its last subtab, matching visited Bandcamp URLs
+against the current account's confirmed unavailable registry. It does not check
+every history entry over the network. Search stays within those matching
+entries, pagination remains in batches of 50, and storage changes refresh
+already loaded panels.
 After the Collection page verifies the account and returns a complete dataset,
 sync validates the response and stages it at
 `/fan-data/account/{fanId}/staging/{dataset}`. It merges the existing shared array
