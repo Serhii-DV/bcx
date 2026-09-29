@@ -1,10 +1,5 @@
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
-import {
-  type AvailabilityList,
-  fanStorage,
-  unavailableKey,
-} from 'src/bandcamp/domain/fanData/library';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { Track } from 'src/bandcamp/domain/track/track';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
@@ -39,13 +34,11 @@ const SHOW_MORE_LABEL = 'Show more';
 const HISTORY_TABS: {
   label: string;
   type?: HistoryPageType;
-  unavailable?: boolean;
 }[] = [
   { label: 'All' },
   { label: 'Bands', type: 'band' },
   { label: 'Releases', type: 'release' },
   { label: 'Tracks', type: 'track' },
-  { label: 'Unavailable', unavailable: true },
 ];
 
 export class HistoryTreeItem {
@@ -132,21 +125,13 @@ export class HistoryTreeItem {
 
   static async createLatestVisitedSections(
     limit = LATEST_VISITED_BATCH_SIZE,
-    fanId?: number,
   ): Promise<TreeItem> {
     try {
       const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages();
-      const unavailableUuids =
-        await HistoryTreeItem.getUnavailablePageUuids(fanId);
-      const tabPages = HISTORY_TABS.map(({ label, type, unavailable }) => ({
+      const tabPages = HISTORY_TABS.map(({ label, type }) => ({
         label,
         type,
-        unavailable,
-        pages: unavailable
-          ? pages.filter((page) => unavailableUuids.has(page.uuid))
-          : type
-            ? pages.filter((page) => page.type === type)
-            : pages,
+        pages: type ? pages.filter((page) => page.type === type) : pages,
       }));
       const initialPages = tabPages.flatMap(({ pages }) =>
         pages.slice(0, limit),
@@ -157,30 +142,23 @@ export class HistoryTreeItem {
       const initialItems =
         await HistoryTreeItem.createUuidTreeItemsMap(uniqueInitialPages);
       const children = await Promise.all(
-        tabPages.map(
-          async ({ label, type, unavailable, pages: pagesForTab }) => {
-            return {
-              label,
-              childrenCount: pagesForTab.length,
-              hasChildren: true,
-              children: await HistoryTreeItem.createLatestVisitedChildren(
-                pagesForTab,
-                0,
-                limit,
-                initialItems,
-              ),
-              filterSearch: (query: string) =>
-                HistoryTreeItem.searchLatestVisited(
-                  query,
-                  type,
-                  limit,
-                  unavailable ? unavailableUuids : undefined,
-                ),
-              itemPreview: true,
-              layout: TREE_ITEM_LAYOUT.BROWSER,
-            };
-          },
-        ),
+        tabPages.map(async ({ label, type, pages: pagesForTab }) => {
+          return {
+            label,
+            childrenCount: pagesForTab.length,
+            hasChildren: true,
+            children: await HistoryTreeItem.createLatestVisitedChildren(
+              pagesForTab,
+              0,
+              limit,
+              initialItems,
+            ),
+            filterSearch: (query: string) =>
+              HistoryTreeItem.searchLatestVisited(query, type, limit),
+            itemPreview: true,
+            layout: TREE_ITEM_LAYOUT.BROWSER,
+          };
+        }),
       );
 
       return { label: HISTORY_LABEL, children };
@@ -194,36 +172,13 @@ export class HistoryTreeItem {
     }
   }
 
-  private static async getUnavailablePageUuids(
-    fanId?: number,
-  ): Promise<Set<string>> {
-    if (!fanId) return new Set();
-    const unavailable = await fanStorage().getByKey<AvailabilityList>(
-      unavailableKey(fanId),
-    );
-    return new Set(
-      Object.values(unavailable ?? {}).flatMap((result) => {
-        const uuid = HistoryTreeItem.getBandcampPageUuid({
-          id: result.url,
-          url: result.url,
-        });
-        return uuid ? [uuid] : [];
-      }),
-    );
-  }
-
   private static async searchLatestVisited(
     query: string,
     type: HistoryPageType | undefined,
     limit: number,
-    unavailableUuids?: Set<string>,
   ) {
     const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages(query);
-    const matchingPages = pages.filter(
-      (page) =>
-        (!type || page.type === type) &&
-        (!unavailableUuids || unavailableUuids.has(page.uuid)),
-    );
+    const matchingPages = pages.filter((page) => !type || page.type === type);
 
     return {
       items: await HistoryTreeItem.createLatestVisitedChildren(

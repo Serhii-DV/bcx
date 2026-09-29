@@ -60,7 +60,7 @@ describe('History pagination', () => {
     );
   });
 
-  it('builds All, Bands, Releases, Tracks, and Unavailable tabs with previewable items', async () => {
+  it('builds All, Bands, Releases, and Tracks tabs with previewable items', async () => {
     rs.spyOn(History, 'search').mockResolvedValue(
       Array.from({ length: 50 }, (_, index) => ({
         id: String(index),
@@ -111,19 +111,15 @@ describe('History pagination', () => {
         ]),
       ),
     });
-    const tree = await HistoryTreeItem.createLatestVisitedSections(
-      undefined,
-      42,
-    );
+    const tree = await HistoryTreeItem.createLatestVisitedSections();
     expect(tree.children?.map((item) => item.label)).toEqual([
       'All',
       'Bands',
       'Releases',
       'Tracks',
-      'Unavailable',
     ]);
     expect(tree.children?.map((item) => item.childrenCount)).toEqual([
-      50, 2, 47, 1, 2,
+      50, 2, 47, 1,
     ]);
     expect(
       tree.children?.every(
@@ -151,24 +147,6 @@ describe('History pagination', () => {
       releaseType: 'Track',
       duration: '3:15',
     });
-
-    const unavailable = tree.children?.find(
-      (item) => item.label === 'Unavailable',
-    );
-    expect(unavailable?.children?.map((item) => item.href)).toEqual([
-      'https://artist.bandcamp.com/',
-      'https://artist.bandcamp.com/album/release-2',
-    ]);
-    const unavailableSearch = await unavailable?.filterSearch?.('dream pop');
-    expect(unavailableSearch?.total).toBe(2);
-    const otherAccount = await HistoryTreeItem.createLatestVisitedSections(
-      undefined,
-      43,
-    );
-    expect(
-      otherAccount.children?.find((item) => item.label === 'Unavailable')
-        ?.childrenCount,
-    ).toBe(0);
 
     const bands = tree.children?.[1];
     const searchResult = await bands?.filterSearch?.('dream pop');

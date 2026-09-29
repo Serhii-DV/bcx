@@ -58,15 +58,13 @@ describe('createRootSectionTabs', () => {
     expect(item.children).toBeUndefined();
     expect(
       createRootSectionTabs(
-        ['All', 'Bands', 'Releases', 'Tracks', 'Unavailable'].map(
-          (label, index) => ({
-            path: String(index),
-            label,
-            hasChildren: true,
-          }),
-        ),
+        ['All', 'Bands', 'Releases', 'Tracks'].map((label, index) => ({
+          path: String(index),
+          label,
+          hasChildren: true,
+        })),
       ).map((tab) => tab.label),
-    ).toEqual(['All', 'Bands', 'Releases', 'Tracks', 'Unavailable']);
+    ).toEqual(['All', 'Bands', 'Releases', 'Tracks']);
     expect(
       createRootSectionTabs([
         {

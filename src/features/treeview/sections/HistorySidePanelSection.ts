@@ -20,10 +20,7 @@ export class HistorySidePanelSection {
       rootNavigation: 'tabs',
       createTreeData: async () =>
         createTreeDataFromTreeItemChildren(
-          await HistoryTreeItem.createLatestVisitedSections(
-            undefined,
-            account?.fanId,
-          ),
+          await HistoryTreeItem.createLatestVisitedSections(),
         ),
     };
   }

@@ -88,11 +88,8 @@ pages identify the signed-in fan through `identities.fan.id` (with a `fan_id`
 fallback). Without a verified account, the toolbar remains visible but disabled
 with a sign-in message, and empty archive tabs remain visible.
 
-History has Unavailable as its last subtab, matching visited Bandcamp URLs
-against the current account's confirmed unavailable registry. It does not check
-every history entry over the network. Search stays within those matching
-entries, pagination remains in batches of 50, and storage changes refresh
-already loaded panels.
+History keeps All, Bands, Releases, and Tracks subtabs. Search stays within the
+selected type, and pagination remains in batches of 50.
 After the Collection page verifies the account and returns a complete dataset,
 sync validates the response and stages it at
 `/fan-data/account/{fanId}/staging/{dataset}`. It merges the existing shared array
