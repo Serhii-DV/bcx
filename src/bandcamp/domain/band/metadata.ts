@@ -2,6 +2,7 @@ import type { StorableObject, StorageObject } from 'src/core/storage';
 import { arrayNumberUnique, arrayUnique } from 'src/utils/array';
 import type { Album } from '../album/album';
 import { type Compressable, compress, decompress } from '../compressor';
+import { UNKNOWN_YEAR } from '../page/pageMusic';
 import { bandMetadataCompressor } from '../shared';
 import { getArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
@@ -98,6 +99,7 @@ export class BandMetadata implements StorableObject, Compressable {
     queries.push(...this.releaseArtistNames);
     queries.push(...this.releaseKeywords);
     queries.push(...this.releaseYears.map((year) => year.toString()));
+    queries.push(UNKNOWN_YEAR);
     return queries;
   }
 

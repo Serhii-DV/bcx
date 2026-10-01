@@ -29,6 +29,8 @@ type Release = Album | Track;
 
 let pageMusic: PageMusic | null = null;
 
+export const UNKNOWN_YEAR = 'unknown year';
+
 export class PageMusic implements BandPage {
   public musicGridElement: HTMLElement | null = null;
   public musicGridItemElements: HTMLElement[];
@@ -119,9 +121,9 @@ export class PageMusic implements BandPage {
     return createQueryCountBadgeElement(query, count, title, className);
   }
 
-  private createYearBadgeElement(year: number): HTMLElement {
+  private createYearBadgeElement(year: number | undefined): HTMLElement {
     return createQueryCountBadgeElement(
-      year.toString(),
+      year?.toString() || UNKNOWN_YEAR,
       1,
       'Filter by year',
       'bcx-badge-year',
@@ -148,10 +150,8 @@ export class PageMusic implements BandPage {
     const metadataElement = createMetadataElement();
 
     // Show album year first
-    if (album.metadata?.year) {
-      const badge = this.createYearBadgeElement(album.metadata.year);
-      metadataElement.appendChild(badge);
-    }
+    const badge = this.createYearBadgeElement(album.metadata?.year);
+    metadataElement.appendChild(badge);
 
     // Output artist names
     arrayUnique(album.artistNames)
@@ -175,10 +175,8 @@ export class PageMusic implements BandPage {
     const metadataElement = createMetadataElement();
 
     // Show album year first
-    if (track.metadata?.year) {
-      const badge = this.createYearBadgeElement(track.metadata.year);
-      metadataElement.appendChild(badge);
-    }
+    const badge = this.createYearBadgeElement(track.metadata?.year);
+    metadataElement.appendChild(badge);
 
     // Artist names
     arrayUnique(track.artist?.names || [])
