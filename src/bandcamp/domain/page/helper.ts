@@ -20,10 +20,14 @@ export function createBadgeElement(
   query: string,
   title: string,
   className?: string,
+  tagName: 'span' | 'button' = 'span',
 ): HTMLElement {
-  const badge = createElement(
-    `<span class="bcx-badge ${className ?? ''}" title="${title}" data-search-query="${query}">${value}</span>`,
-  ) as HTMLElement;
+  const badge = document.createElement(tagName);
+  if (badge instanceof HTMLButtonElement) badge.type = 'button';
+  badge.className = `bcx-badge ${className ?? ''}`;
+  badge.title = title;
+  badge.dataset.searchQuery = query;
+  badge.textContent = value;
 
   handleSearchBadgeOnClick(badge);
 
@@ -39,10 +43,11 @@ export function createQueryCountBadgeElement(
   count: number,
   title: string,
   className?: string,
+  tagName: 'span' | 'button' = 'span',
 ): HTMLElement {
   const value = createQueryCountString(query, count);
   title += '\n' + query + '\n' + `On this page: ${count}`;
-  return createBadgeElement(value, query, title, className);
+  return createBadgeElement(value, query, title, className, tagName);
 }
 
 export function createReleaseYearElement(

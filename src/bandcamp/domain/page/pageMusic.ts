@@ -14,6 +14,7 @@ import { Track } from '../track/track';
 import type { BandPage } from './BandPage';
 import { readBandMetadata } from './bandMetadata';
 import { createMetadataElement, createQueryCountBadgeElement } from './helper';
+import { KeywordBadges } from './keywordBadges';
 
 interface MusicGridClientItem {
   art_id: number;
@@ -29,12 +30,16 @@ type Release = Album | Track;
 
 let pageMusic: PageMusic | null = null;
 
+export const UNKNOWN_YEAR = 'unknown year';
+
 export class PageMusic implements BandPage {
   public musicGridElement: HTMLElement | null = null;
   public musicGridItemElements: HTMLElement[];
   public queryCountMap: QueryCountMap = new Map();
   public readonly album: null = null;
   public readonly albumDetails: null = null;
+
+  private readonly keywordGroups: KeywordBadges[] = [];
 
   private constructor(public readonly band: Band) {
     elementHtml()?.classList.add('bcx-page-music');
@@ -108,21 +113,47 @@ export class PageMusic implements BandPage {
       const trackMetadataElement = this.createTrackMetadataElement(track);
       gridItem.insertAdjacentElement('beforeend', trackMetadataElement);
     });
+
+    const cleanup = (event: PageTransitionEvent) => {
+      if (event.persisted) return;
+      this.keywordGroups.forEach((group) => group.destroy());
+      this.keywordGroups.length = 0;
+      window.removeEventListener('pagehide', cleanup);
+    };
+    window.addEventListener('pagehide', cleanup);
+  }
+
+  private appendKeywordBadges(
+    metadataElement: HTMLElement,
+    keywords: string[],
+  ): void {
+    if (!keywords.length) return;
+    const group = new KeywordBadges(keywords, (keyword) =>
+      this.createKeywordBadgeElement(keyword),
+    );
+    this.keywordGroups.push(group);
+    metadataElement.appendChild(group.element);
   }
 
   private createBadgeWithCount(
     query: string,
     title: string,
     className?: string,
+    tagName: 'span' | 'button' = 'span',
   ): HTMLElement {
     const count = this.queryCountMap.get(query) || 0;
-    return createQueryCountBadgeElement(query, count, title, className);
+    return createQueryCountBadgeElement(
+      query,
+      count,
+      title,
+      className,
+      tagName,
+    );
   }
 
-  private createYearBadgeElement(year: number): HTMLElement {
-    return createQueryCountBadgeElement(
-      year.toString(),
-      1,
+  private createYearBadgeElement(year: number | undefined): HTMLElement {
+    return this.createBadgeWithCount(
+      year?.toString() || UNKNOWN_YEAR,
       'Filter by year',
       'bcx-badge-year',
     );
@@ -141,6 +172,7 @@ export class PageMusic implements BandPage {
       keyword,
       'Filter by keyword',
       'bcx-badge-keyword',
+      'button',
     );
   }
 
@@ -148,10 +180,8 @@ export class PageMusic implements BandPage {
     const metadataElement = createMetadataElement();
 
     // Show album year first
-    if (album.metadata?.year) {
-      const badge = this.createYearBadgeElement(album.metadata.year);
-      metadataElement.appendChild(badge);
-    }
+    const badge = this.createYearBadgeElement(album.metadata?.year);
+    metadataElement.appendChild(badge);
 
     // Output artist names
     arrayUnique(album.artistNames)
@@ -162,11 +192,7 @@ export class PageMusic implements BandPage {
       });
 
     // Keywords
-    album.metadata?.keywords
-      .map((keyword) => this.createKeywordBadgeElement(keyword))
-      .forEach((badge) => {
-        metadataElement.appendChild(badge);
-      });
+    this.appendKeywordBadges(metadataElement, album.metadata?.keywords || []);
 
     return metadataElement;
   }
@@ -175,10 +201,8 @@ export class PageMusic implements BandPage {
     const metadataElement = createMetadataElement();
 
     // Show album year first
-    if (track.metadata?.year) {
-      const badge = this.createYearBadgeElement(track.metadata.year);
-      metadataElement.appendChild(badge);
-    }
+    const badge = this.createYearBadgeElement(track.metadata?.year);
+    metadataElement.appendChild(badge);
 
     // Artist names
     arrayUnique(track.artist?.names || [])
@@ -189,11 +213,7 @@ export class PageMusic implements BandPage {
       });
 
     // Keywords
-    track.metadata?.keywords
-      .map((keyword) => this.createKeywordBadgeElement(keyword))
-      .forEach((badge) => {
-        metadataElement.appendChild(badge);
-      });
+    this.appendKeywordBadges(metadataElement, track.metadata?.keywords || []);
 
     return metadataElement;
   }

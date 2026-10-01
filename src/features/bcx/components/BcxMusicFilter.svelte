@@ -7,6 +7,7 @@ import Isotope from 'isotope-layout';
 import type { Album } from 'src/bandcamp/domain/album/album';
 import type { Band } from 'src/bandcamp/domain/band/band';
 import { createQueryCountString } from 'src/bandcamp/domain/page/helper';
+import { UNKNOWN_YEAR } from 'src/bandcamp/domain/page/pageMusic';
 import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
@@ -133,8 +134,12 @@ function initMusicIsotope(): void {
       ', ' + getUniqueArtistNamesFromTracks(album.tracks).join(', ');
 
     // Include keywords in filter value
-    if (album.metadata) {
+    if (album.metadata && album.metadata.keywords.length > 0) {
       filterValue += ', ' + album.metadata.keywords.join(', ');
+    }
+
+    if (!(album.metadata && album.metadata.year)) {
+      filterValue += ', ' + UNKNOWN_YEAR;
     }
 
     gridElement?.setAttribute('data-filter-value', filterValue.toLowerCase());
