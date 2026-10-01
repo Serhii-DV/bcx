@@ -122,9 +122,8 @@ export class PageMusic implements BandPage {
   }
 
   private createYearBadgeElement(year: number | undefined): HTMLElement {
-    return createQueryCountBadgeElement(
+    return this.createBadgeWithCount(
       year?.toString() || UNKNOWN_YEAR,
-      1,
       'Filter by year',
       'bcx-badge-year',
     );

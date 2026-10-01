@@ -72,6 +72,12 @@ export class BandMetadata implements StorableObject, Compressable {
     );
   }
 
+  get albumsWithoutYears(): Album[] {
+    return this.albums.filter(
+      (album: Album) => album.metadata?.year === undefined,
+    );
+  }
+
   albumsByYear(year: number): Album[] {
     return this.albums.filter((album: Album) => album.metadata?.year === year);
   }
@@ -99,7 +105,7 @@ export class BandMetadata implements StorableObject, Compressable {
     queries.push(...this.releaseArtistNames);
     queries.push(...this.releaseKeywords);
     queries.push(...this.releaseYears.map((year) => year.toString()));
-    queries.push(UNKNOWN_YEAR);
+    queries.push(...this.albumsWithoutYears.map(() => UNKNOWN_YEAR));
     return queries;
   }
 
