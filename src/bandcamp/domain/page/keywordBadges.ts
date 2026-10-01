@@ -46,7 +46,16 @@ export class KeywordBadges {
 
     this.popover.addEventListener(
       'beforetoggle',
-      () => this.updatePopoverSurface(),
+      (event) => {
+        if (event.newState !== 'open') return;
+        this.updatePopoverSurface();
+        // Measure without painting, before the native popover becomes visible.
+        this.popover.classList.add('bcx-keyword-popover-measuring');
+        const width = this.popover.offsetWidth;
+        const height = this.popover.offsetHeight;
+        this.popover.classList.remove('bcx-keyword-popover-measuring');
+        this.setPopoverPosition(width, height);
+      },
       {
         signal: this.events.signal,
       },
@@ -96,8 +105,14 @@ export class KeywordBadges {
   }
 
   private readonly positionPopover = (): void => {
+    this.setPopoverPosition(
+      this.popover.offsetWidth,
+      this.popover.offsetHeight,
+    );
+  };
+
+  private setPopoverPosition(width: number, height: number): void {
     const trigger = this.trigger.getBoundingClientRect();
-    const { width, height } = this.popover.getBoundingClientRect();
     const margin = 8;
     const viewportWidth = document.documentElement.clientWidth;
     const viewportHeight = document.documentElement.clientHeight;
@@ -115,5 +130,5 @@ export class KeywordBadges {
     );
     this.popover.style.left = `${left}px`;
     this.popover.style.top = `${top}px`;
-  };
+  }
 }
