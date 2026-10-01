@@ -84,6 +84,15 @@ pnpm fix           # Fix linting and formatting issues (writes changes)
 
 `pnpm fix` and `make format` write changes. Prefer targeted formatting when unrelated files would otherwise change.
 
+## Changelog
+
+- Automatically update `CHANGELOG.md` in the same task when implementing a new feature, fixing a bug, or changing application logic or behavior. Do not wait for a separate user request.
+- Add concise entries describing the resulting behavior and its impact. Follow the existing changelog format and categories, and use the unreleased section; create it if missing.
+- Update an existing unreleased entry when refining the same change instead of adding duplicate entries. Preserve released entries.
+- Do not bump versions, assign release dates, or run release commands unless explicitly requested.
+- Documentation-only, formatting-only, and test-only changes do not require changelog entries unless requested.
+- Before completing the task, check that the changelog accurately reflects the implemented changes.
+
 ## Validation
 
 - Create new tests only when the user explicitly requests them. Feature work, bug fixes, and refactoring do not imply a request to add tests. Existing tests may be updated when necessary to reflect intentionally changed behavior.
