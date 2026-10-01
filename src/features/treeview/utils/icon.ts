@@ -9,6 +9,7 @@ import {
   ClipboardCopy,
   CornerLeftUp,
   CornerRightUp,
+  Database,
   Disc,
   ExternalLink,
   FileText,
@@ -38,6 +39,7 @@ export const ICON_CORNER_RIGHT_UP = 'corner-right-up';
 export const ICON_BUILDING = 'building';
 export const ICON_CALENDAR = 'calendar';
 export const ICON_CALENDAR_DAYS = 'calendar-days';
+export const ICON_DATABASE = 'database';
 export const ICON_DISC = 'disc';
 export const ICON_EXTERNAL_LINK = 'external-link';
 export const ICON_FUNNEL = 'funnel';
@@ -78,6 +80,8 @@ export function makeIcon(iconName?: string): any {
       return CornerLeftUp;
     case ICON_CORNER_RIGHT_UP:
       return CornerRightUp;
+    case ICON_DATABASE:
+      return Database;
     case ICON_DISC:
       return Disc;
     case ICON_EXTERNAL_LINK:

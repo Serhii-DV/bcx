@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Added a Storage tab with measured usage, category sizes and entry counts, storage quotas, and manual refresh for local data, session memory, and Chrome sync storage.
+
 - Added responsive side-panel tabs, per-tab filters, contextual page headers, and a resizable preview pane that remembers its size.
 - Added band and release previews with artwork, metadata, release and collection-added dates, and direct Bandcamp links.
 - Expanded release browsing with artist and year catalogs, sorting options, and full Artist/Label, Wishlist, and Following Bands lists.
