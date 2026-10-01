@@ -18,7 +18,11 @@ import {
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
 import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
-import { ICON_INFO, ICON_REFRESH_CCW } from 'src/features/treeview/utils/icon';
+import {
+  ICON_DATABASE,
+  ICON_INFO,
+  ICON_REFRESH_CCW,
+} from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
@@ -27,6 +31,7 @@ import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxSidePanelHeader from './BcxSidePanelHeader.svelte';
+import BcxStoragePanel from './BcxStoragePanel.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
@@ -54,6 +59,7 @@ let sectionLoadingById: Record<string, boolean> = $state({});
 let sectionErrorById: Record<string, string> = $state({});
 let sectionRootPathById: Record<string, string | null> = $state({});
 const infoTabId = '__extension-info__';
+const storageTabId = '__storage__';
 const syncTabId = '__fan-sync__';
 let selectedSectionId = $state('');
 let fanSyncJob = $state<FanSyncJob>();
@@ -252,6 +258,7 @@ $effect(() => {
   currentSections = sections;
   if (
     selectedSectionId !== infoTabId &&
+    selectedSectionId !== storageTabId &&
     !(selectedSectionId === syncTabId && hasFanSync) &&
     !sections.some((section) => section.id === selectedSectionId)
   ) {
@@ -302,7 +309,7 @@ $effect(() => {
           <div bind:this={sectionsContainer} class="bcx-sections">
             <Tabs.Root bind:value={selectedSectionId} class="bcx-panel-body">
               <BcxSectionTabs
-                tabs={[...sections, ...(hasFanSync ? [{ id: syncTabId, label: 'Sync', image: ICON_REFRESH_CCW }] : []), { id: infoTabId, label: 'Extension Info', image: ICON_INFO }]}
+                tabs={[...sections, ...(hasFanSync ? [{ id: syncTabId, label: 'Sync', image: ICON_REFRESH_CCW }] : []), { id: storageTabId, label: 'Storage', image: ICON_DATABASE }, { id: infoTabId, label: 'Extension Info', image: ICON_INFO }]}
                 bind:value={selectedSectionId}
               />
               {#each sections as section (section.id)}
@@ -367,6 +374,10 @@ $effect(() => {
                   <BcxFanDataSync account={syncAccount} job={fanSyncJob} jobReadError={fanSyncError} />
                 </Tabs.Content>
               {/if}
+
+              <Tabs.Content value={storageTabId} class="bcx-tab-content bcx-info-scroll">
+                {#if selectedSectionId === storageTabId}<BcxStoragePanel />{/if}
+              </Tabs.Content>
 
               <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">
                 <div class="bcx-section-content">
