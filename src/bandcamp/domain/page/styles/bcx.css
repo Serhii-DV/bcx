@@ -9,3 +9,91 @@
   font-weight: normal;
   font-size: 16px;
 }
+
+.bcx-page-music .bcx-keywords {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.bcx-page-music .bcx-keywords > .bcx-badge,
+.bcx-page-music .bcx-keyword-popover > .bcx-badge {
+  display: block;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: inherit;
+}
+
+.bcx-page-music .bcx-keywords-trigger {
+  text-transform: none;
+  color: color-mix(in srgb, currentColor 65%, #ff9800);
+}
+
+.bcx-page-music .bcx-keywords .bcx-badge:focus-visible {
+  outline: 2px solid #854d0e;
+  outline-offset: 1px;
+}
+
+.bcx-page-music .bcx-keyword-popover {
+  position: fixed;
+  inset: auto;
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 16px));
+  max-height: min(320px, calc(100vh - 16px));
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 6px;
+  background: var(--bcx-keywords-surface, Canvas);
+  color: inherit;
+  box-shadow: 0 8px 24px #0003;
+  text-align: left;
+}
+
+.bcx-page-music .bcx-keyword-popover:popover-open {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+}
+
+.bcx-page-music .bcx-keyword-popover-heading {
+  flex-basis: 100%;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+@supports (backdrop-filter: blur(16px)) {
+  .bcx-page-music .bcx-keyword-popover {
+    background: color-mix(
+      in srgb,
+      var(--bcx-keywords-surface, Canvas) 68%,
+      transparent
+    );
+    backdrop-filter: blur(16px) saturate(125%);
+  }
+}
+
+.bcx-page-music .bcx-keyword-popover > .bcx-badge {
+  color: color-mix(in srgb, currentColor 65%, #ff9800);
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  border-color: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.bcx-page-music .bcx-keyword-popover > .bcx-badge:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  border-color: currentColor;
+}
+
+.bcx-page-music .bcx-keyword-popover > .bcx-badge:focus-visible {
+  outline-color: currentColor;
+}
+
+.bcx-page-music .bcx-keywords-trigger:hover {
+  border-color: currentColor;
+}
