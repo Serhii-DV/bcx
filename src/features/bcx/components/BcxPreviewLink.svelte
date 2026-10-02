@@ -1,10 +1,19 @@
 <script lang="ts">
-import { ImageOff } from '@lucide/svelte';
+import { ExternalLink, ImageOff } from '@lucide/svelte';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 import type { Url } from 'src/core/url';
 
-let { url, image, name }: { url: Url; image?: string; name?: string } =
-  $props();
+let {
+  url,
+  image,
+  name,
+  title,
+}: {
+  url: Url;
+  image?: string;
+  name?: string;
+  title?: string;
+} = $props();
 let error = $state('');
 let failedImage = $state<string>();
 
@@ -28,7 +37,7 @@ async function openPage(event: MouseEvent) {
 }
 </script>
 
-<a class="preview-link text-gray-400 hover:text-sky-300" class:band-link={!!name} href={url.toString()} onclick={openPage} title={name ? `${name}\n${url}` : url.toString()}>
+<a class="preview-link text-gray-400 hover:text-sky-300" class:band-link={!!name} href={url.toString()} onclick={openPage} title={title ? `${title}\n${url}` : name ? `${name}\n${url}` : url.toString()}>
   {#if name}
     {#if image && image !== failedImage}
       <img src={image} alt="" class="band-link-image" onerror={() => { failedImage = image; }} />
@@ -39,6 +48,7 @@ async function openPage(event: MouseEvent) {
   {:else}
     {url.toString()}
   {/if}
+  <ExternalLink size={12} class="shrink-0" aria-hidden="true" />
 </a>
 {#if error}<p role="alert">{error}</p>{/if}
 

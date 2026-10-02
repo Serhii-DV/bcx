@@ -57,7 +57,7 @@ let treeData = $derived(
   loadingMessage="Loading saved band details…"
   {error}
 >
-  {#if previewUrl}<BcxPreviewLink url={previewUrl} image={profile?.image} name={profile?.name ?? about.label ?? 'Band'} />{/if}
+  {#if previewUrl}<BcxPreviewLink url={previewUrl} image={profile?.image} name={profile?.name ?? about.label ?? 'Band'} title={`Open band page on Bandcamp: ${profile?.name ?? about.label ?? 'Band'}`} />{/if}
   {#if profile?.following}<span class="following-badge">Following</span>{/if}
 </BcxItemDetailsLayout>
 

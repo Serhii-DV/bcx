@@ -77,8 +77,8 @@ let treeData = $derived(
 >
   {#if information.releaseYear}<div class="release-year">{information.releaseYear}</div>{/if}
   <div class="release-links">
-    {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name={releaseUrl.withoutProtocol} />{/if}
-    {#if bandUrl}<BcxPreviewLink url={bandUrl} image={bandProfile?.image} name={bandName} />{/if}
+    {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name="Release" title={`Open release on Bandcamp: ${information.title} by ${information.artist}`} />{/if}
+    {#if bandUrl}<BcxPreviewLink url={bandUrl} image={bandProfile?.image} name={bandName} title={`Open band page on Bandcamp: ${bandName}`} />{/if}
   </div>
   {#if information.date}
     <div class="text-gray-400">

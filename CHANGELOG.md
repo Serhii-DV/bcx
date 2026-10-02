@@ -16,6 +16,8 @@
 
 ### Patch Changes
 
+- Shortened the preview release link to "Release" and added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.
+
 - Fixed missing artwork placeholders in TreeBrowser release and band rows, including History entries without saved artwork. History also recognizes `/artists` pages as band entries and previews saved band details from the root Bandcamp URL.
 
 - Added hover titles to linked TreeBrowser items explaining that clicking previews release or band details when available and double-clicking opens the page.
