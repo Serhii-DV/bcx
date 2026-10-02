@@ -375,7 +375,7 @@ $effect(() => {
                 </Tabs.Content>
               {/if}
 
-              <Tabs.Content value={storageTabId} class="bcx-tab-content bcx-info-scroll">
+              <Tabs.Content value={storageTabId} class="bcx-tab-content">
                 {#if selectedSectionId === storageTabId}<BcxStoragePanel />{/if}
               </Tabs.Content>
 

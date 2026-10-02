@@ -1,3 +1,5 @@
+import { captureStorageHistory } from 'src/features/bcx/storageHistory';
+import { initializeStorageHistory } from 'src/features/bcx/storageHistoryBackground';
 import { console } from 'src/utils/console';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import {
@@ -11,6 +13,7 @@ import { History } from './core/history';
 import { type Message, MessageType } from './core/message';
 
 console.log('Running background script');
+initializeStorageHistory();
 void recoverFanSync().catch(console.error);
 
 const SIDEPANEL_PATH = 'sidepanel.html';
@@ -110,6 +113,17 @@ async function getActiveBandcampTab(): Promise<chrome.tabs.Tab | null> {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.CAPTURE_STORAGE_HISTORY) {
+      captureStorageHistory().then(
+        () => sendResponse({ ok: true }),
+        (error) =>
+          sendResponse({
+            ok: false,
+            error: getErrorMessage(error, 'Could not save storage history.'),
+          }),
+      );
+      return true;
+    }
     if (message.type === MessageType.GET_FAN_SYNC_VERSION) {
       sendResponse({ protocolVersion: FAN_SYNC_PROTOCOL_VERSION });
       return;

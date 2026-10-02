@@ -2,7 +2,7 @@
 import { Check, ChevronDown, Ellipsis } from '@lucide/svelte';
 import { DropdownMenu, Tabs } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
-import { tick } from 'svelte';
+import { type Snippet, tick } from 'svelte';
 import { getVisibleSectionTabIds } from './sectionTabOverflow';
 
 interface SectionTab {
@@ -20,12 +20,17 @@ let {
   tabs,
   value = $bindable(),
   label = 'Music Explorer sections',
+  actions,
+  wrapActions = false,
 }: {
   tabs: SectionTab[];
   value: string;
   label?: string;
+  actions?: Snippet;
+  wrapActions?: boolean;
 } = $props();
 let bar = $state<HTMLDivElement>();
+let actionsElement = $state<HTMLDivElement>();
 let measurements: HTMLDivElement;
 let moreMeasurement: HTMLSpanElement;
 let visibleIds = $state<string[]>([]);
@@ -47,6 +52,7 @@ $effect(() => {
   const barElement = bar;
   if (!barElement) return;
   const currentTabs = tabs;
+  const currentActions = actionsElement;
   const activeId =
     currentTabs.find((tab) =>
       tab.sortOptions?.some((option) => option.id === value),
@@ -59,13 +65,18 @@ $effect(() => {
     visibleIds = getVisibleSectionTabIds(
       currentTabs.map((tab, index) => ({ ...tab, width: widths[index] ?? 0 })),
       activeId,
-      barElement.clientWidth - 8,
+      barElement.clientWidth -
+        8 -
+        (currentActions && getComputedStyle(currentActions).flexBasis !== '100%'
+          ? currentActions.getBoundingClientRect().width + 4
+          : 0),
       moreMeasurement.getBoundingClientRect().width,
     );
   };
   const observer = new ResizeObserver(measure);
   observer.observe(barElement);
   observer.observe(measurements);
+  if (currentActions) observer.observe(currentActions);
   measure();
   return () => observer.disconnect();
 });
@@ -113,7 +124,7 @@ async function handleCloseAutoFocus(event: Event) {
   <span class="bcx-tab-label">{tabLabelText(tab)}</span>
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs">
+<div bind:this={bar} class="bcx-section-tabs" class:wrap-actions={wrapActions}>
   <Tabs.List class="bcx-visible-tabs" aria-label={label}>
     {#each visibleTabs as tab (tab.id)}
       {#if tab.sortOptions}
@@ -168,6 +179,9 @@ async function handleCloseAutoFocus(event: Event) {
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   {/if}
+  {#if actions}
+    <div bind:this={actionsElement} class="bcx-section-actions">{@render actions()}</div>
+  {/if}
   <div class="bcx-tab-measurements" aria-hidden="true" inert>
     <div bind:this={measurements} class="bcx-tab-measurement-list">
       {#each tabs as tab (tab.id)}
@@ -186,6 +200,12 @@ async function handleCloseAutoFocus(event: Event) {
 </div>
 
 <style>
+  .bcx-section-actions { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+  .wrap-actions { container-type: inline-size; flex-wrap: wrap; }
+  .wrap-actions .bcx-section-actions { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
+  @container (max-width: 620px) {
+    .wrap-actions .bcx-section-actions { flex-basis: 100%; }
+  }
   .bcx-section-tabs {
     flex-shrink: 0;
     position: relative;

@@ -4,6 +4,7 @@ import type {
 } from 'src/bandcamp/domain/fanData/library';
 import type { FanSyncAction } from 'src/bandcamp/domain/fanData/sync';
 export enum MessageType {
+  CAPTURE_STORAGE_HISTORY = 'CAPTURE_STORAGE_HISTORY',
   GET_FAN_SYNC_VERSION = 'GET_FAN_SYNC_VERSION',
   START_FAN_SYNC = 'START_FAN_SYNC',
   CANCEL_FAN_SYNC = 'CANCEL_FAN_SYNC',
@@ -45,6 +46,7 @@ export interface ToggleSidePanelMessage {
 }
 
 export type Message =
+  | { type: MessageType.CAPTURE_STORAGE_HISTORY }
   | { type: MessageType.GET_FAN_SYNC_VERSION }
   | {
       type: MessageType.START_FAN_SYNC;
