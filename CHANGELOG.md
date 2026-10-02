@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Added a Storage tab with measured usage, category sizes and entry counts, storage quotas, and manual refresh for local data, session memory, and Chrome sync storage.
+- Added a Storage tab with measured usage, category sizes and entry counts, storage quotas, and manual refresh for local data, session memory, and Chrome sync storage. Daily history retains the latest measurement for 365 days, with size, category, and entry-count charts and 30/90/365-day filters. Current and History share a navigation bar with History filters before a right-aligned Refresh action for the active view; controls wrap on narrow panels.
 
 - Added responsive side-panel tabs, per-tab filters, contextual page headers, and a resizable preview pane that remembers its size.
 - Added band and release previews with artwork, metadata, release and collection-added dates, and direct Bandcamp links.

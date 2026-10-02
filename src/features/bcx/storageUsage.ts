@@ -25,6 +25,7 @@ export interface StorageUsage {
 }
 
 function categoryForKey(key: string): string {
+  if (key.startsWith('/storage-history/')) return 'Storage history';
   if (StorageKey.isAlbumKey(key)) return 'Albums';
   if (StorageKey.isTrackKey(key)) return 'Tracks';
   if (StorageKey.isBandKey(key) || StorageKey.isBandsKey(key)) return 'Bands';
