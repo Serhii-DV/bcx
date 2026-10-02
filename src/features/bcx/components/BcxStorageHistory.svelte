@@ -1,4 +1,5 @@
 <script lang="ts">
+import { Tabs } from 'bits-ui';
 import { MessageType } from 'src/core/message';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount } from 'svelte';
@@ -9,16 +10,19 @@ import {
 } from '../storageHistory';
 import { chartHistory, historyDays } from '../storageHistoryChart';
 import type { StorageAreaUsage } from '../storageUsage';
+import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxStorageHistoryChart from './BcxStorageHistoryChart.svelte';
 
 let snapshots = $state<StorageSnapshot[]>([]);
 let error = $state('');
 let {
   loading = $bindable(false),
+  selectedChart = $bindable('total'),
   days = 30,
   area = 'all',
 }: {
   loading?: boolean;
+  selectedChart?: string;
   days?: number;
   area?: StorageAreaUsage['id'] | 'all';
 } = $props();
@@ -91,20 +95,39 @@ onMount(() => {
 });
 </script>
 
-<section aria-label="Storage history" aria-busy={loading}>
+<section class="storage-history" aria-label="Storage history" aria-busy={loading}>
+  <Tabs.Root bind:value={selectedChart} class="bcx-panel-body">
+    <BcxSectionTabs
+      tabs={[{ id: 'total', label: 'Total storage size' }, { id: 'categories', label: 'Storage size by category' }, { id: 'entries', label: 'Stored entries' }]}
+      bind:value={selectedChart}
+      label="Storage history charts"
+    />
+  <div class="bcx-tab-content bcx-info-scroll">
+  <div class="history-content">
   <p>Latest observation per local calendar day, retained for 365 days. Today updates as storage changes. Missing or failed measurements appear as gaps.</p>
   {#if error}<p role="alert">{error}</p>{/if}
   {#if chart.totals.some((point) => point.values !== null)}
-    <BcxStorageHistoryChart title="Total storage size" points={chart.totals} labels={['Total size']} />
-    <BcxStorageHistoryChart title="Storage size by category" points={chart.categories} labels={chart.labels} stacked />
-    <BcxStorageHistoryChart title="Stored entries" points={chart.entries} labels={['Entries']} counts />
+    <Tabs.Content value="total">
+      <BcxStorageHistoryChart title="Total storage size" points={chart.totals} labels={['Total size']} />
+    </Tabs.Content>
+    <Tabs.Content value="categories">
+      <BcxStorageHistoryChart title="Storage size by category" points={chart.categories} labels={chart.labels} stacked />
+    </Tabs.Content>
+    <Tabs.Content value="entries">
+      <BcxStorageHistoryChart title="Stored entries" points={chart.entries} labels={['Entries']} counts />
+    </Tabs.Content>
     <p>Entries count storage keys, not releases inside lists. Session memory is temporary. Storage history includes its own size as observed before each snapshot is saved. Hover over a chart for daily values, or expand its measurement table.</p>
   {:else if !loading && !error}
     <p role="status">No measurements in this period yet. Select Refresh to record the first observation. Earlier days cannot be reconstructed.</p>
   {/if}
+  </div>
+  </div>
+  </Tabs.Root>
 </section>
 
 <style>
+  .storage-history { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }
+  .history-content { padding: 0 12px 12px; }
   p { color: #9ca3af; line-height: 1.5; margin: 10px 0; }
   [role='alert'] { color: #fca5a5; }
 </style>

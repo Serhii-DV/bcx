@@ -1,4 +1,5 @@
 <script lang="ts">
+import { storageCategoryColor } from '../storageColors';
 import type { StorageChartPoint } from '../storageHistoryChart';
 import { formatStorageBytes } from '../storageUsage';
 
@@ -16,18 +17,6 @@ let {
   counts?: boolean;
 } = $props();
 
-const colors = [
-  '#38bdf8',
-  '#a78bfa',
-  '#34d399',
-  '#fb923c',
-  '#f472b6',
-  '#facc15',
-  '#2dd4bf',
-  '#818cf8',
-  '#f87171',
-  '#cbd5e1',
-];
 const maximum = $derived(
   Math.max(
     1,
@@ -65,7 +54,7 @@ function description(point: StorageChartPoint): string {
     <text x="72" y="164" text-anchor="end">0</text>
     <text x="80" y="185">{points[0]?.day}</text>
     <text x="620" y="185" text-anchor="end">{points.at(-1)?.day}</text>
-    {#if !stacked}<path d={path} fill="none" stroke={colors[0]} stroke-width="2" />{/if}
+    {#if !stacked}<path d={path} fill="none" stroke="#38bdf8" stroke-width="2" />{/if}
     {#each points as point, index (point.day)}
       {#if point.values !== null}
         <g>
@@ -73,10 +62,10 @@ function description(point: StorageChartPoint): string {
           {#if stacked}
             {#each point.values as value, category}
               {@const sum = point.values.slice(0, category + 1).reduce((total, item) => total + item, 0)}
-              <rect x={x(index) - step * 0.4} y={y(sum)} width={step * 0.8} height={value / maximum * 130} fill={colors[category % colors.length]} />
+              <rect x={x(index) - step * 0.4} y={y(sum)} width={step * 0.8} height={value / maximum * 130} fill={storageCategoryColor(labels[category])} />
             {/each}
           {:else}
-            <circle cx={x(index)} cy={y(point.values[0] ?? 0)} r="2.5" fill={colors[0]} />
+            <circle cx={x(index)} cy={y(point.values[0] ?? 0)} r="2.5" fill="#38bdf8" />
           {/if}
           <rect x={x(index) - step / 2} y="25" width={step} height="140" fill="transparent" />
         </g>
@@ -85,7 +74,7 @@ function description(point: StorageChartPoint): string {
   </svg>
   {#if stacked}
     <ul aria-label="Category legend">
-      {#each labels as label, index}<li><span style:background={colors[index % colors.length]}></span>{label}</li>{/each}
+      {#each labels as label}<li><span style:background={storageCategoryColor(label)}></span>{label}</li>{/each}
     </ul>
   {/if}
   <details>
