@@ -1,4 +1,5 @@
 <script lang="ts">
+import { RefreshCcw } from '@lucide/svelte';
 import {
   FAN_DATASETS,
   type FanAccount,
@@ -157,6 +158,11 @@ async function request(nextAction?: FanSyncAction) {
 
 <div class="fan-sync">
   <h2>Bandcamp data sync</h2>
+  <div class="description">
+    <h3>Keep your saved lists up to date</h3>
+    <p>Update your Collection, Wishlist, Following Bands, and Following Genres in BCX after buying music, editing your wishlist, or changing who you follow.</p>
+    <p class="saved-history"><strong>Your history stays saved.</strong> Sync keeps previous entries, even when they disappear from your Bandcamp lists.</p>
+  </div>
   <div class="actions">
     <select aria-label="Bandcamp sync action" bind:value={action} disabled={!account || running || sending}>
       <option value="all">Sync all Bandcamp data</option>
@@ -176,12 +182,20 @@ async function request(nextAction?: FanSyncAction) {
     {:else if running}Another Bandcamp sync is running.{/if}
   </p>
   {#if account}
-    <div class="last-synced">
-      <h3>Last synced</h3>
-      {#each FAN_DATASETS as dataset}
-        <div><span>{datasetLabels[dataset]}</span><span>{syncedAt[dataset] ? new Date(syncedAt[dataset]).toLocaleString() : 'Never'}</span></div>
-      {/each}
-    </div>
+    <table class="last-synced">
+      <caption>
+        <span class="history-heading"><RefreshCcw size={14} aria-hidden="true" />Last synced</span>
+        <span class="history-subtitle">Your saved Bandcamp lists</span>
+      </caption>
+      <tbody>
+        {#each FAN_DATASETS as dataset}
+          <tr>
+            <th scope="row">{datasetLabels[dataset]}</th>
+            <td><span class="sync-date" class:never={!syncedAt[dataset]}>{syncedAt[dataset] ? new Date(syncedAt[dataset]).toLocaleString() : 'Never synced'}</span></td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
   {/if}
   {#if account && hasSaved && !FAN_DATASETS.some((dataset) => syncedAt[dataset]) && !running && ownJob?.state !== 'error' && ownJob?.state !== 'cancelled' && !error}<p>Your saved lists are shown. Sync merges fresh Bandcamp data and keeps missing entries.</p>{/if}
   {#if !account}<p>Sign in to Bandcamp and reload the page to sync saved data.</p>{/if}
@@ -190,15 +204,33 @@ async function request(nextAction?: FanSyncAction) {
 </div>
 
 <style>
-  .fan-sync { margin: 8px; font-size: 0.75rem; color: #d1d5db; }
-  h2 { margin-bottom: 8px; color: #f9fafb; font-size: 0.875rem; font-weight: 700; }
-  h3 { margin: 12px 0 4px; color: #f9fafb; font-weight: 700; }
-  .actions { display: flex; flex-wrap: wrap; gap: 4px; }
-  button, select { background: #374151; color: #f9fafb; border: 1px solid #4b5563; border-radius: 4px; padding: 4px 8px; }
+  .fan-sync { margin: 16px; font-size: 0.75rem; color: #d1d5db; line-height: 1.5; }
+  h2 { margin-bottom: 16px; color: #f9fafb; font-size: 0.875rem; font-weight: 700; }
+  .description { margin-bottom: 20px; padding: 16px; border: 1px solid #374151; border-left: 3px solid #04b1fe; border-radius: 8px; background: #1f2937; line-height: 1.7; }
+  .description h3 { margin: 0 0 8px; color: #f9fafb; font-weight: 600; }
+  .description p { margin: 0; }
+  .description .saved-history { margin-top: 14px; padding-top: 12px; border-top: 1px solid #374151; color: #9ca3af; }
+  .saved-history strong { color: #d1d5db; font-weight: 600; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  button, select { background: #374151; color: #f9fafb; border: 1px solid #4b5563; border-radius: 6px; padding: 7px 10px; }
   select { flex: 1; min-width: 0; max-width: 100%; }
   button { cursor: pointer; }
   button:disabled, select:disabled { opacity: 0.5; cursor: default; }
-  button:focus-visible, select:focus-visible { outline: 2px solid #04b1fe; }
-  p { margin-top: 4px; overflow-wrap: anywhere; }
-  .last-synced > div { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+  button:focus-visible, select:focus-visible { outline: 2px solid #04b1fe; outline-offset: 2px; }
+  p { margin-top: 12px; overflow-wrap: anywhere; }
+  .status { margin-top: 12px; }
+  .status:empty { margin: 0; }
+  .last-synced { width: max-content; max-width: 100%; margin-top: 24px; border: 1px solid #374151; border-collapse: separate; border-spacing: 0; border-radius: 0 0 8px 8px; background: #111827; font-size: inherit; text-align: left; }
+  .last-synced caption { padding: 12px 16px; border: 1px solid #374151; border-bottom: 0; border-radius: 8px 8px 0 0; background: #1f2937; text-align: left; }
+  .history-heading { display: flex; align-items: center; gap: 8px; color: #f9fafb; font-weight: 600; }
+  .history-subtitle { display: block; margin-top: 4px; color: #9ca3af; font-size: 0.6875rem; }
+  .last-synced th, .last-synced td { padding: 10px 16px; border-bottom: 1px solid #263244; vertical-align: middle; }
+  .last-synced th { font-weight: 500; }
+  .last-synced td { padding-left: 0; }
+  .last-synced tr:nth-child(even) { background: #182231; }
+  .sync-date { display: inline-block; padding: 3px 8px; border: 1px solid #164e63; border-radius: 5px; background: #083344; color: #a5f3fc; font-size: 0.6875rem; font-variant-numeric: tabular-nums; }
+  .sync-date.never { border-color: #374151; background: #1f2937; color: #9ca3af; }
+  .last-synced tr:last-child th, .last-synced tr:last-child td { border-bottom: 0; }
+  .last-synced tr:last-child th { border-bottom-left-radius: 8px; }
+  .last-synced tr:last-child td { border-bottom-right-radius: 8px; }
 </style>

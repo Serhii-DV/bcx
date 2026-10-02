@@ -16,6 +16,8 @@
 
 ### Patch Changes
 
+- Added a styled explanation in the Sync panel of when to sync and how saved history is retained, with more spacing and a compact Last synced card featuring striped rows and timestamp badges.
+
 - Added descriptive hover titles to main navigation buttons, including sections in the overflow menu.
 
 - Preserved side-panel context, release order, selection, and cached previews when navigating between Bandcamp pages.
