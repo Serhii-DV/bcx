@@ -1,5 +1,7 @@
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
   isBandcampAlbumUrl,
+  isBandcampArtistsUrl,
   isBandcampMusicUrl,
   isBandcampTrackUrl,
 } from 'src/bandcamp/domain/url/helper';
@@ -17,9 +19,13 @@ export class HistoryEntryTreeItemFactory {
     return this.withVisitTime(
       {
         label: title,
-        ...(url && isBandcampMusicUrl(url)
+        ...(url && (isBandcampMusicUrl(url) || isBandcampArtistsUrl(url))
           ? {
-              bandPreview: { name: title, url: url.toString(), cached: false },
+              bandPreview: {
+                name: title,
+                url: BandcampUrlFactory.createBandUrl(url).toString(),
+                cached: false,
+              },
             }
           : {}),
         ...(url && (isBandcampAlbumUrl(url) || isBandcampTrackUrl(url))

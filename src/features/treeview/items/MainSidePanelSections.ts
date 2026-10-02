@@ -85,9 +85,9 @@ function createPageDataSections(
   const userKeyPart = getUserKeyPart(pageDataContext);
   return [
     FanSidePanelSection.create(pageDataContext, userKeyPart),
-    CollectionSidePanelSection.create(pageDataContext, userKeyPart),
-    WishlistSidePanelSection.create(pageDataContext, userKeyPart),
     HistorySidePanelSection.create(pageDataContext),
+    WishlistSidePanelSection.create(pageDataContext, userKeyPart),
+    CollectionSidePanelSection.create(pageDataContext, userKeyPart),
     FollowingBandsSidePanelSection.create(
       pageDataContext,
       userKeyPart,

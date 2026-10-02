@@ -16,6 +16,18 @@
 
 ### Patch Changes
 
+- Shortened the preview release link to "Release" and added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.
+
+- Fixed missing artwork placeholders in TreeBrowser release and band rows, including History entries without saved artwork. History also recognizes `/artists` pages as band entries and previews saved band details from the root Bandcamp URL.
+
+- Added hover titles to linked TreeBrowser items explaining that clicking previews release or band details when available and double-clicking opens the page.
+
+- Expanded Extension Info with a centered layout, header-style BCX branding, left-aligned minimal discovery, library, and history summaries, a keyboard shortcut, and the version from `package.json`.
+
+- Added a styled explanation in the Sync panel of when to sync and how saved history is retained, with more spacing and a compact Last synced card featuring striped rows and timestamp badges. Sync timestamps now show automatically updating relative times with the exact local date and time on hover.
+
+- Added descriptive hover titles to main navigation buttons, including sections in the overflow menu.
+
 - Preserved side-panel context, release order, selection, and cached previews when navigating between Bandcamp pages.
 - Improved fan-data pagination, account validation, sync recovery, and refresh of related panels.
 - Improved tree keyboard and double-click navigation, focus states, scrolling, and artwork fallbacks.

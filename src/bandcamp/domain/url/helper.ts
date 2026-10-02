@@ -15,6 +15,13 @@ export function isBandcampMusicUrl(url: Url): boolean {
   return url.subdomain !== '' && (path === '/' || path.startsWith('/music'));
 }
 
+export function isBandcampArtistsUrl(url: Url): boolean {
+  return (
+    url.subdomain !== '' &&
+    (url.pathname === '/artists' || url.pathname === '/artists/')
+  );
+}
+
 export function isBandcampAlbumUrl(url: Url): boolean {
   const path = url.pathname;
   return url.subdomain !== '' && path.startsWith('/album/');

@@ -5,6 +5,7 @@ import { Track } from 'src/bandcamp/domain/track/track';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import {
   isBandcampAlbumUrl,
+  isBandcampArtistsUrl,
   isBandcampMusicUrl,
   isBandcampRegularUrl,
   isBandcampTrackUrl,
@@ -287,6 +288,19 @@ export class HistoryTreeItem {
     historyItem: chrome.history.HistoryItem,
   ): TreeItem {
     const storedTreeItem = treeItems.get(uuid);
+    const url = Url.fromHistoryItem(historyItem);
+
+    if (storedTreeItem && url && isBandcampArtistsUrl(url)) {
+      const historyTreeItem = HistoryEntryTreeItemFactory.create(historyItem);
+      return HistoryEntryTreeItemFactory.withVisitTime(
+        {
+          ...storedTreeItem,
+          href: historyTreeItem.href,
+          buttons: historyTreeItem.buttons,
+        },
+        historyItem,
+      );
+    }
 
     return storedTreeItem
       ? HistoryEntryTreeItemFactory.withVisitTime(storedTreeItem, historyItem)
@@ -331,7 +345,7 @@ export class HistoryTreeItem {
   ): HistoryPageType {
     const url = Url.fromHistoryItem(item);
     if (!url) return 'other';
-    if (isBandcampMusicUrl(url)) return 'band';
+    if (isBandcampMusicUrl(url) || isBandcampArtistsUrl(url)) return 'band';
     if (isBandcampAlbumUrl(url)) return 'release';
     if (isBandcampTrackUrl(url)) return 'track';
     return 'other';
@@ -352,8 +366,18 @@ export class HistoryTreeItem {
   private static async createUuidTreeItemsMap(
     pages: VisitedBandcampPage[],
   ): Promise<Map<string, TreeItem>> {
+    const pageUuids = pages.map(({ item, uuid, type }) => {
+      const url = Url.fromHistoryItem(item);
+      return {
+        uuid,
+        storageUuid:
+          type === 'band' && url
+            ? BandcampUrlFactory.createBandUrl(url).uuid
+            : uuid,
+      };
+    });
     const entities: (Band | Album | Track)[] = await BandcampStorage.getByUuids(
-      pages.map((page) => page.uuid),
+      pageUuids.map((page) => page.storageUuid),
     );
     const uuidTreeItemsMap = new Map<string, TreeItem>();
 
@@ -368,6 +392,11 @@ export class HistoryTreeItem {
       if (entity.url) uuidTreeItemsMap.set(entity.url.uuid, treeItem);
     });
 
-    return uuidTreeItemsMap;
+    const historyTreeItemsMap = new Map<string, TreeItem>();
+    pageUuids.forEach(({ uuid, storageUuid }) => {
+      const treeItem = uuidTreeItemsMap.get(storageUuid);
+      if (treeItem) historyTreeItemsMap.set(uuid, treeItem);
+    });
+    return historyTreeItemsMap;
   }
 }
