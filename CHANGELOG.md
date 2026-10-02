@@ -16,6 +16,8 @@
 
 ### Patch Changes
 
+- Added descriptive hover titles to main navigation buttons, including sections in the overflow menu.
+
 - Preserved side-panel context, release order, selection, and cached previews when navigating between Bandcamp pages.
 - Improved fan-data pagination, account validation, sync recovery, and refresh of related panels.
 - Improved tree keyboard and double-click navigation, focus states, scrolling, and artwork fallbacks.

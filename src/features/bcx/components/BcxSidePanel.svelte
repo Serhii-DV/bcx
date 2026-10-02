@@ -78,6 +78,22 @@ let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
 const sectionRequests = new Map<string, number>();
 
+const sectionTitles: Record<string, string> = {
+  Collection: 'Browse releases in your Bandcamp collection.',
+  Wishlist: 'Browse releases saved to your Bandcamp wishlist.',
+  History: 'Revisit Bandcamp artists, labels, and releases you have viewed.',
+  'Following Bands': 'Browse artists and labels you follow on Bandcamp.',
+  'Following Genres': 'Browse genres you follow on Bandcamp.',
+};
+
+function getSectionTitle(section: SidePanelSection): string {
+  if (section.id.startsWith('band-'))
+    return `Browse releases and artist or label information for ${section.label}.`;
+  if (section.id.startsWith('fan-'))
+    return `Browse the collection and wishlist of ${section.label.replace(/^Fan: /, '')}.`;
+  return sectionTitles[section.label] ?? `Browse ${section.label}.`;
+}
+
 function getTreeDataForSection(section: SidePanelSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
 }
@@ -309,7 +325,12 @@ $effect(() => {
           <div bind:this={sectionsContainer} class="bcx-sections">
             <Tabs.Root bind:value={selectedSectionId} class="bcx-panel-body">
               <BcxSectionTabs
-                tabs={[...sections, ...(hasFanSync ? [{ id: syncTabId, label: 'Sync', image: ICON_REFRESH_CCW }] : []), { id: storageTabId, label: 'Storage', image: ICON_DATABASE }, { id: infoTabId, label: 'Extension Info', image: ICON_INFO }]}
+                tabs={[
+                  ...sections.map((section) => ({ ...section, title: getSectionTitle(section) })),
+                  ...(hasFanSync ? [{ id: syncTabId, label: 'Sync', image: ICON_REFRESH_CCW, title: 'Sync your saved Bandcamp data and view sync progress.' }] : []),
+                  { id: storageTabId, label: 'Storage', image: ICON_DATABASE, title: 'View extension storage usage, saved data, and daily history.' },
+                  { id: infoTabId, label: 'Extension Info', image: ICON_INFO, title: 'Learn about BCX features and keyboard shortcuts.' },
+                ]}
                 bind:value={selectedSectionId}
               />
               {#each sections as section (section.id)}
