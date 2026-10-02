@@ -66,9 +66,9 @@ describe('History pagination', () => {
         id: String(index),
         url:
           index === 0
-            ? 'https://artist.bandcamp.com/'
+            ? 'https://artist.bandcamp.com/artists'
             : index === 1
-              ? 'https://uncached.bandcamp.com/'
+              ? 'https://uncached.bandcamp.com/artists/'
               : index === 3
                 ? 'https://artist.bandcamp.com/track/saved-track'
                 : `https://artist.bandcamp.com/album/release-${index}`,
@@ -134,7 +134,12 @@ describe('History pagination', () => {
     expect(all?.[0].bandPreview).toMatchObject({
       id: 1,
       name: 'Saved Band',
+      url: 'https://artist.bandcamp.com/',
     });
+    expect(all?.[0].href).toBe('https://artist.bandcamp.com/artists');
+    expect(all?.[0].buttons?.[0].href).toBe(
+      'https://artist.bandcamp.com/artists',
+    );
     expect(all?.[0].bandPreview?.following).toBeUndefined();
     expect(all?.[1].bandPreview).toMatchObject({
       cached: false,
@@ -158,7 +163,9 @@ describe('History pagination', () => {
     expect(searchResult?.total).toBe(2);
     expect(searchResult?.items).toHaveLength(2);
     expect(
-      searchResult?.items.every((item) => item.href?.endsWith('bandcamp.com/')),
+      searchResult?.items.every((item) =>
+        item.bandPreview?.url.endsWith('bandcamp.com/'),
+      ),
     ).toBe(true);
   });
 });

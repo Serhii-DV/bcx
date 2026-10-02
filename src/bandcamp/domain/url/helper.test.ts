@@ -2,6 +2,7 @@ import { describe, expect, it } from '@rstest/core';
 import { Url } from 'src/core/url';
 import {
   isBandcampAlbumUrl,
+  isBandcampArtistsUrl,
   isBandcampDiscoverUrl,
   isBandcampFanUrl,
   isBandcampFeedUrl,
@@ -26,6 +27,20 @@ describe('Bandcamp URL helpers', () => {
     expect(
       isBandcampMusicUrl(Url.create('https://artist.bandcamp.com/music')),
     ).toBe(true);
+    expect(
+      isBandcampArtistsUrl(Url.create('https://artist.bandcamp.com/artists')),
+    ).toBe(true);
+    expect(
+      isBandcampArtistsUrl(Url.create('https://artist.bandcamp.com/artists/')),
+    ).toBe(true);
+    expect(
+      isBandcampArtistsUrl(Url.create('https://bandcamp.com/artists')),
+    ).toBe(false);
+    expect(
+      isBandcampArtistsUrl(
+        Url.create('https://artist.bandcamp.com/artists-other'),
+      ),
+    ).toBe(false);
     expect(
       isBandcampAlbumUrl(Url.create('https://artist.bandcamp.com/album/name')),
     ).toBe(true);
