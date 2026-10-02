@@ -105,7 +105,7 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 
 {#snippet treeItemImage(item: TreeItem)}
   {@const ImageIcon = makeIcon(item.image)}
-  {#if item.image !== undefined || item.flagCode}
+  {#if isReleaseOrBand || item.image !== undefined || item.flagCode}
     <span class="bcx-tree-item-img flex-shrink-0" class:largeArtwork={isReleaseOrBand} aria-hidden={item.image || item.flagCode ? undefined : 'true'}>
       {#if item.flagCode}
         <span class={'flag:' + item.flagCode} aria-hidden="true"></span>

@@ -16,6 +16,8 @@
 
 ### Patch Changes
 
+- Fixed missing artwork placeholders in TreeBrowser release and band rows, including History entries without saved artwork.
+
 - Added hover titles to linked TreeBrowser items explaining that clicking previews release or band details when available and double-clicking opens the page.
 
 - Expanded Extension Info with a centered layout, header-style BCX branding, left-aligned minimal discovery, library, and history summaries, a keyboard shortcut, and the version from `package.json`.
