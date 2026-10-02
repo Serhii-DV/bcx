@@ -26,6 +26,7 @@ import {
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
+import BcxExtensionInfo from './BcxExtensionInfo.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
@@ -401,15 +402,7 @@ $effect(() => {
               </Tabs.Content>
 
               <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">
-                <div class="bcx-section-content">
-                  <p>
-                    BCX enhances your Bandcamp experience with powerful search and filtering tools.
-                  </p>
-                  <div class="bcx-keyboard-shortcuts">
-                    <h3>Keyboard Shortcuts</h3>
-                    <div><kbd class="kbd">Ctrl+Shift+X</kbd> Toggle panel</div>
-                  </div>
-                </div>
+                <BcxExtensionInfo />
               </Tabs.Content>
             </Tabs.Root>
           </div>
