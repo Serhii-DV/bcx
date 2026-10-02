@@ -64,9 +64,9 @@ describe('active tab fan sections during navigation', () => {
     ).toBe('Fan: Other Fan');
     expect(otherFanSections.map((section) => section.id)).toEqual([
       'fan-listener',
-      'collection-listener',
-      'wishlist-listener',
       'history',
+      'wishlist-listener',
+      'collection-listener',
       'following-bands-listener',
       'following-genres-listener',
     ]);
