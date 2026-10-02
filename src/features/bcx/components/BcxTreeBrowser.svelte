@@ -314,6 +314,17 @@ function handleItemDoubleClick(item: TreeItem, event: MouseEvent) {
   void handleItemClick(item, event);
 }
 
+function getItemTitle(item: TreeItem): string | undefined {
+  if (!item.href) return item.hint;
+
+  const navigationHint = 'Double-click to open the page';
+  const actionHint = hasItemPreview(item)
+    ? `Click to preview ${item.bandPreview ? 'band' : 'release'} details\n${navigationHint}`
+    : navigationHint;
+
+  return item.hint ? `${item.hint}\n${actionHint}` : actionHint;
+}
+
 async function handleKeyDown(event: KeyboardEvent) {
   if (!treeContainer) return;
 
@@ -855,6 +866,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       data-level={item.level}
       data-path={item.path}
       tabindex={focusedPath === item.path ? 0 : -1}
+      title={getItemTitle(item)}
       onfocus={() => { focusedPath = item.path ?? null; onSelect?.(item); }}
       onclick={() => focusTreeItem(item)}
       ondblclick={(event) => handleItemDoubleClick(item, event)}
@@ -876,7 +888,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       data-level="{item.level}"
       data-path="{item.path}"
       tabindex={focusedPath === item.path ? 0 : -1}
-      title={item.hint}
+      title={getItemTitle(item)}
       onclick={(e) => handleBrowserItemClick(item, e)}
       ondblclick={(event) => handleItemDoubleClick(item, event)}
       onkeydown={(e) => {
@@ -899,7 +911,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       onclick={(e) => handleItemClick(item, e)}
       ondblclick={(event) => handleItemDoubleClick(item, event)}
       href={item.href}
-      title={item.hint}
+      title={getItemTitle(item)}
     >
       <BcxTreeItem item={withBrowserChildCount(item)} />
     </a>
@@ -933,6 +945,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
             visibleChildCounts={treeLayoutVisibleChildCounts}
             onItemClick={handleItemClick}
             onItemDoubleClick={handleItemDoubleClick}
+            {getItemTitle}
             onNodeClick={handleTreeLayoutNodeClick}
           />
         </li>

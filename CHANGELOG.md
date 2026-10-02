@@ -16,6 +16,8 @@
 
 ### Patch Changes
 
+- Added hover titles to linked TreeBrowser items explaining that clicking previews release or band details when available and double-clicking opens the page.
+
 - Expanded Extension Info with a centered layout, header-style BCX branding, left-aligned minimal discovery, library, and history summaries, a keyboard shortcut, and the version from `package.json`.
 
 - Added a styled explanation in the Sync panel of when to sync and how saved history is retained, with more spacing and a compact Last synced card featuring striped rows and timestamp badges.
