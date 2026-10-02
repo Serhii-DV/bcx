@@ -51,6 +51,12 @@ export class BandSidePanelSection {
   }
 }
 
+export function createBandTreeData(band: Band) {
+  return createTreeDataFromTreeItemChildren(
+    withReleasePreviews(BandTreeItem.create(band, band.url), band),
+  );
+}
+
 function createCurrentBandPageSection(
   band: NonNullable<BandPage['band']>,
   currentPageUrl: Url,

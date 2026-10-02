@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   createBandAboutFallback,
-  loadBandAbout,
+  loadBandDetails,
 } from 'src/features/treeview/BandPreview';
 import type { ReleasePreview } from 'src/features/treeview/ReleasePreview';
 import type { TreeData } from 'src/features/treeview/TreeData';
@@ -16,7 +16,7 @@ import {
   saveItemPreviewSize,
   updateItemPreviewSize,
 } from '../stores/itemPreviewSize';
-import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxBandPanel from './BcxBandPanel.svelte';
 import BcxReleaseDetails from './BcxReleaseDetails.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 
@@ -40,6 +40,7 @@ let {
   onRootLoaded?: () => void;
 } = $props();
 let bandAbout: TreeItem | null = $state(null);
+let bandTreeData: TreeData | undefined = $state();
 const componentId = $props.id();
 const itemListId = `${componentId}-item-list`;
 const itemPreviewId = `${componentId}-item-preview`;
@@ -133,12 +134,16 @@ $effect(() => {
   let cancelled = false;
   preview = null;
   bandAbout = null;
+  bandTreeData = undefined;
   error = '';
   loading = !!(item?.loadPreview || item?.bandPreview);
   if (item?.bandPreview) {
-    loadBandAbout(item.bandPreview)
+    loadBandDetails(item.bandPreview)
       .then((data) => {
-        if (!cancelled) bandAbout = data;
+        if (!cancelled) {
+          bandAbout = data.about;
+          bandTreeData = data.treeData;
+        }
       })
       .catch(() => {
         if (!cancelled) error = 'Could not read saved band details.';
@@ -202,11 +207,9 @@ $effect(() => {
   </div>
   <section id={itemPreviewId} class="item-preview-panel-details" aria-label="Selected item details">
     {#if selectedItem?.bandPreview}
-      <div class="item-preview-panel-content">
-        {#key selectedItem}
-          <BcxBandDetails about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} bandUrl={selectedItem.bandPreview.url} {loading} {error} />
-        {/key}
-      </div>
+      {#key selectedItem}
+        <BcxBandPanel treeData={bandTreeData} about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} bandUrl={selectedItem.bandPreview.url} {loading} {error} />
+      {/key}
     {:else if selectedItem && information}
       <div class="item-preview-panel-content">
         {#key selectedItem}

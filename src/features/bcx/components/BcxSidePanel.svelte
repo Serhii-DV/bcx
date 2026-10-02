@@ -25,6 +25,7 @@ import {
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
+import BcxBandPanel from './BcxBandPanel.svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxExtensionInfo from './BcxExtensionInfo.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
@@ -351,7 +352,11 @@ $effect(() => {
                         <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} />
+                        {#if section.id.startsWith('band-')}
+                          <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} />
+                        {:else}
+                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} />
+                        {/if}
                       {/key}
                       {/if}
                     {:else}
