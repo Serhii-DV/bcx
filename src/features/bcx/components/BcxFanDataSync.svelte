@@ -189,9 +189,23 @@ async function request(nextAction?: FanSyncAction) {
       </caption>
       <tbody>
         {#each FAN_DATASETS as dataset}
+          {@const lastSynced = syncedAt[dataset]}
           <tr>
             <th scope="row">{datasetLabels[dataset]}</th>
-            <td><span class="sync-date" class:never={!syncedAt[dataset]}>{syncedAt[dataset] ? new Date(syncedAt[dataset]).toLocaleString() : 'Never synced'}</span></td>
+            <td>
+              <span class="sync-date" class:never={!lastSynced}>
+                {#if lastSynced}
+                  <relative-time
+                    datetime={lastSynced}
+                    format="relative"
+                    precision="minute"
+                    title={new Date(lastSynced).toLocaleString()}
+                  >{new Date(lastSynced).toLocaleString()}</relative-time>
+                {:else}
+                  Never synced
+                {/if}
+              </span>
+            </td>
           </tr>
         {/each}
       </tbody>
