@@ -29,10 +29,12 @@ let {
   account,
   job,
   jobReadError = '',
+  onViewLog,
 }: {
   account?: FanAccount;
   job?: FanSyncJob;
   jobReadError?: string;
+  onViewLog?: () => void;
 } = $props();
 let error = $state('');
 let sending = $state(false);
@@ -172,6 +174,7 @@ async function request(nextAction?: FanSyncAction) {
       <option value="check">Check saved pages’ availability</option>
     </select>
     <button disabled={!account || running || sending} onclick={() => request(action)}>{actionButtonLabel}</button>
+    {#if onViewLog}<button onclick={onViewLog}>View log</button>{/if}
     {#if running}<button disabled={sending} onclick={() => request()}>Cancel</button>{/if}
   </div>
   <p class="status" role={ownJob?.state === 'error' ? 'alert' : 'status'}>

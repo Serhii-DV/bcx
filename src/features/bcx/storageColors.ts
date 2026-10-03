@@ -1,4 +1,5 @@
 const categoryColors: Record<string, string> = {
+  'Activity log': '#a3e635',
   Albums: '#38bdf8',
   Bands: '#a78bfa',
   'Fan libraries and sync data': '#34d399',

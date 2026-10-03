@@ -25,6 +25,7 @@ export interface StorageUsage {
 }
 
 function categoryForKey(key: string): string {
+  if (key.startsWith('/activity-log/')) return 'Activity log';
   if (key.startsWith('/storage-history/')) return 'Storage history';
   if (StorageKey.isAlbumKey(key)) return 'Albums';
   if (StorageKey.isTrackKey(key)) return 'Tracks';
@@ -109,4 +110,31 @@ export function formatStorageBytes(bytes: number): string {
   if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
   if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
   return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+function isCount(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
+export function isStorageAreaUsage(value: unknown): value is StorageAreaUsage {
+  return (
+    isObject(value) &&
+    ['local', 'session', 'sync'].includes(String(value.id)) &&
+    typeof value.label === 'string' &&
+    (value.quota === null || isCount(value.quota)) &&
+    isCount(value.bytes) &&
+    isCount(value.entries) &&
+    (value.error === undefined || typeof value.error === 'string') &&
+    Array.isArray(value.categories) &&
+    value.categories.every(
+      (category: unknown) =>
+        isObject(category) &&
+        typeof category.label === 'string' &&
+        isCount(category.bytes) &&
+        isCount(category.entries),
+    )
+  );
 }

@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Added an Activity log for grouped Bandcamp sync, saved-page availability checks, storage measurements, and daily storage captures. Includes live progress, outcomes, durations, process filters, links from Sync and Storage, copy/export, and clearing. Logs stay local with seven-day, 200-operation, and 256 KB limits; routine automatic captures are hidden by default, and log writes do not trigger storage-history captures.
+
 - Shared the Band panel’s catalog tabs with Band previews, opening an "About [Band]" tab first, followed by Releases and the existing catalog tabs. Preserved filtering, sorting, release details, and an empty state for bands without saved releases. About shows full band information and a Bandcamp link in both views, including for large catalogs.
 
 - Added a Storage tab with measured usage, category sizes and entry counts, storage quotas, and manual refresh for local data, session memory, and Chrome sync storage. Daily history retains the latest measurement for 365 days, with size, category, and entry-count charts and 30/90/365-day filters. Current and History share a navigation bar with History filters before a right-aligned Refresh action for the active view; controls wrap on narrow panels. Current usage includes horizontal category bars with consistent colors across both views. Storage uses the shared subnavigation layout with icons and independently scrolling content. Nested tabs select the Current storage area and History chart, retaining selections when switching views.

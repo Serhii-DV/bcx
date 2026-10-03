@@ -1,4 +1,5 @@
 import { console } from 'src/utils/console';
+import { ACTIVITY_LOG_KEY } from './activityLog';
 import { captureStorageHistory, STORAGE_HISTORY_KEY } from './storageHistory';
 
 const PERIODIC_ALARM = 'storage-history-periodic';
@@ -17,12 +18,16 @@ export function initializeStorageHistory(): void {
   let scheduling = Promise.resolve();
 
   chrome.runtime.onStartup.addListener(() => {
-    void captureStorageHistory().catch(report);
+    void captureStorageHistory(false, 'Browser startup').catch(report);
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (!['local', 'session', 'sync'].includes(area)) return;
-    if (Object.keys(changes).every((key) => key === STORAGE_HISTORY_KEY))
+    if (
+      Object.keys(changes).every(
+        (key) => key === STORAGE_HISTORY_KEY || key === ACTIVITY_LOG_KEY,
+      )
+    )
       return;
     // A persistent alarm batches bursts and survives worker suspension.
     scheduling = scheduling
@@ -36,7 +41,10 @@ export function initializeStorageHistory(): void {
 
   chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === PERIODIC_ALARM || alarm.name === CHANGE_ALARM) {
-      void captureStorageHistory().catch(report);
+      void captureStorageHistory(
+        false,
+        alarm.name === PERIODIC_ALARM ? 'Hourly capture' : 'Storage changed',
+      ).catch(report);
     }
   });
 
@@ -45,6 +53,6 @@ export function initializeStorageHistory(): void {
     if (!(await chrome.alarms.get(PERIODIC_ALARM))) {
       await chrome.alarms.create(PERIODIC_ALARM, { periodInMinutes: 60 });
     }
-    await captureStorageHistory(true);
+    await captureStorageHistory(true, 'Worker startup');
   })().catch(report);
 }

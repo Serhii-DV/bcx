@@ -1,5 +1,14 @@
 import { Storage } from 'src/core/storage';
-import { readStorageUsage, type StorageAreaUsage } from './storageUsage';
+import { activityError, startActivity, updateActivity } from './activityLog';
+import {
+  storageMeasurementStatus,
+  storageMeasurementSummary,
+} from './storageActivity';
+import {
+  isStorageAreaUsage,
+  readStorageUsage,
+  type StorageAreaUsage,
+} from './storageUsage';
 
 export const STORAGE_HISTORY_KEY = '/storage-history/daily';
 export const STORAGE_HISTORY_DAYS = 365;
@@ -18,30 +27,6 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isCount(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
-}
-
-function isArea(value: unknown): value is StorageAreaUsage {
-  return (
-    isObject(value) &&
-    ['local', 'session', 'sync'].includes(String(value.id)) &&
-    typeof value.label === 'string' &&
-    (value.quota === null || isCount(value.quota)) &&
-    isCount(value.bytes) &&
-    isCount(value.entries) &&
-    (value.error === undefined || typeof value.error === 'string') &&
-    Array.isArray(value.categories) &&
-    value.categories.every(
-      (category: unknown) =>
-        isObject(category) &&
-        typeof category.label === 'string' &&
-        isCount(category.bytes) &&
-        isCount(category.entries),
-    )
-  );
-}
-
 function isSnapshot(value: unknown): value is StorageSnapshot {
   return (
     isObject(value) &&
@@ -54,7 +39,7 @@ function isSnapshot(value: unknown): value is StorageSnapshot {
     Number.isFinite(Date.parse(value.measuredAt)) &&
     Array.isArray(value.areas) &&
     value.areas.length === 3 &&
-    value.areas.every(isArea) &&
+    value.areas.every(isStorageAreaUsage) &&
     new Set(value.areas.map((area) => area.id)).size === 3
   );
 }
@@ -83,33 +68,66 @@ export async function readStorageHistory(): Promise<StorageSnapshot[]> {
 // Only the background worker writes history. Serialize overlapping triggers.
 let pending: Promise<void> = Promise.resolve();
 
-export function captureStorageHistory(onlyIfMissing = false): Promise<void> {
+export function captureStorageHistory(
+  onlyIfMissing = false,
+  trigger = 'Automatic capture',
+): Promise<string | undefined> {
   const capture = pending.then(async () => {
-    const snapshots = await readStorageHistory();
-    if (
-      onlyIfMissing &&
-      snapshots.some((item) => item.day === storageDay(new Date()))
-    )
-      return;
-    const usage = await readStorageUsage();
-    if (usage.areas.every((area) => area.error))
-      throw new Error('Could not measure any storage area.');
-    const day = storageDay(usage.measuredAt);
-    const cutoff = new Date(usage.measuredAt);
-    cutoff.setDate(cutoff.getDate() - STORAGE_HISTORY_DAYS + 1);
-    const retained = snapshots.filter(
-      (item) => item.day >= storageDay(cutoff) && item.day < day,
-    );
-    retained.push({
-      day,
-      measuredAt: usage.measuredAt.toISOString(),
-      areas: usage.areas,
-    });
-    await new Storage(chrome.storage.local).setByKey(STORAGE_HISTORY_KEY, {
-      version: 1,
-      snapshots: retained.sort((a, b) => a.day.localeCompare(b.day)),
-    });
+    let id: string | undefined;
+    try {
+      const snapshots = await readStorageHistory();
+      if (
+        onlyIfMissing &&
+        snapshots.some((item) => item.day === storageDay(new Date()))
+      )
+        return;
+      id = await startActivity(
+        'storage-history',
+        'Capture storage history',
+        trigger !== 'Manual refresh',
+      );
+      await updateActivity(id, trigger);
+      const usage = await readStorageUsage();
+      if (usage.areas.every((area) => area.error))
+        throw new Error('Could not measure any storage area.');
+      const day = storageDay(usage.measuredAt);
+      const cutoff = new Date(usage.measuredAt);
+      cutoff.setDate(cutoff.getDate() - STORAGE_HISTORY_DAYS + 1);
+      const retained = snapshots.filter(
+        (item) => item.day >= storageDay(cutoff) && item.day < day,
+      );
+      const updating = snapshots.some((item) => item.day === day);
+      const pruned = snapshots.filter(
+        (item) => item.day < storageDay(cutoff),
+      ).length;
+      retained.push({
+        day,
+        measuredAt: usage.measuredAt.toISOString(),
+        areas: usage.areas,
+      });
+      await new Storage(chrome.storage.local).setByKey(STORAGE_HISTORY_KEY, {
+        version: 1,
+        snapshots: retained.sort((a, b) => a.day.localeCompare(b.day)),
+      });
+      await updateActivity(
+        id,
+        `${updating ? 'Updated' : 'Saved'} daily snapshot. ${pruned} old snapshots pruned. ${storageMeasurementSummary(usage)}`,
+        storageMeasurementStatus(usage),
+      );
+      return id;
+    } catch (error) {
+      id ??= await startActivity(
+        'storage-history',
+        'Capture storage history',
+        trigger !== 'Manual refresh',
+      );
+      await updateActivity(id, activityError(error), 'failed');
+      throw error;
+    }
   });
-  pending = capture.catch(() => {});
+  pending = capture.then(
+    () => {},
+    () => {},
+  );
   return capture;
 }

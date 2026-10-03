@@ -20,11 +20,14 @@ import {
 import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
 import {
   ICON_DATABASE,
+  ICON_HISTORY,
   ICON_INFO,
   ICON_REFRESH_CCW,
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
+import type { ActivityProcess } from '../activityLog';
+import BcxActivityLog from './BcxActivityLog.svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxExtensionInfo from './BcxExtensionInfo.svelte';
@@ -63,6 +66,14 @@ let sectionRootPathById: Record<string, string | null> = $state({});
 const infoTabId = '__extension-info__';
 const storageTabId = '__storage__';
 const syncTabId = '__fan-sync__';
+const activityTabId = '__activity-log__';
+let activityProcess = $state<ActivityProcess | 'all'>('all');
+let activityOperationId = $state('');
+function viewActivity(process: ActivityProcess, id = '') {
+  activityProcess = process;
+  activityOperationId = id;
+  selectedSectionId = activityTabId;
+}
 let selectedSectionId = $state('');
 let fanSyncJob = $state<FanSyncJob>();
 let fanSyncError = $state('');
@@ -277,6 +288,7 @@ $effect(() => {
   if (
     selectedSectionId !== infoTabId &&
     selectedSectionId !== storageTabId &&
+    selectedSectionId !== activityTabId &&
     !(selectedSectionId === syncTabId && hasFanSync) &&
     !sections.some((section) => section.id === selectedSectionId)
   ) {
@@ -331,6 +343,7 @@ $effect(() => {
                   ...sections.map((section) => ({ ...section, title: getSectionTitle(section) })),
                   ...(hasFanSync ? [{ id: syncTabId, label: 'Sync', image: ICON_REFRESH_CCW, title: 'Sync your saved Bandcamp data and view sync progress.' }] : []),
                   { id: storageTabId, label: 'Storage', image: ICON_DATABASE, title: 'View extension storage usage, saved data, and daily history.' },
+                  { id: activityTabId, label: 'Activity log', image: ICON_HISTORY, title: 'View extension process progress, outcomes, and recent logs.' },
                   { id: infoTabId, label: 'Extension Info', image: ICON_INFO, title: 'Learn about BCX features and keyboard shortcuts.' },
                 ]}
                 bind:value={selectedSectionId}
@@ -398,12 +411,16 @@ $effect(() => {
 
               {#if hasFanSync}
                 <Tabs.Content value={syncTabId} class="bcx-tab-content bcx-info-scroll">
-                  <BcxFanDataSync account={syncAccount} job={fanSyncJob} jobReadError={fanSyncError} />
+                  <BcxFanDataSync account={syncAccount} job={fanSyncJob} jobReadError={fanSyncError} onViewLog={() => viewActivity(accountSyncJob?.action === 'check' ? 'availability' : 'sync', accountSyncJob?.id)} />
                 </Tabs.Content>
               {/if}
 
               <Tabs.Content value={storageTabId} class="bcx-tab-content">
-                {#if selectedSectionId === storageTabId}<BcxStoragePanel />{/if}
+                {#if selectedSectionId === storageTabId}<BcxStoragePanel onViewLog={viewActivity} />{/if}
+              </Tabs.Content>
+
+              <Tabs.Content value={activityTabId} class="bcx-tab-content">
+                {#if selectedSectionId === activityTabId}<BcxActivityLog bind:process={activityProcess} bind:operationId={activityOperationId} />{/if}
               </Tabs.Content>
 
               <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">

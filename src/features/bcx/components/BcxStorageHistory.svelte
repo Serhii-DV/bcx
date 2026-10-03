@@ -20,8 +20,10 @@ let {
   selectedChart = $bindable('total'),
   days = 30,
   area = 'all',
+  activityId = $bindable(''),
 }: {
   loading?: boolean;
+  activityId?: string;
   selectedChart?: string;
   days?: number;
   area?: StorageAreaUsage['id'] | 'all';
@@ -34,6 +36,7 @@ export async function refresh(capture = true) {
   const token = ++generation;
   loading = true;
   error = '';
+  if (capture) activityId = '';
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const result = await Promise.race([
@@ -57,6 +60,13 @@ export async function refresh(capture = true) {
                 : 'Could not save a measurement. Reload BCX in chrome://extensions and retry.',
             );
           }
+          if (
+            active &&
+            token === generation &&
+            'id' in response &&
+            typeof response.id === 'string'
+          )
+            activityId = response.id;
         }
         return readStorageHistory();
       })(),

@@ -1,3 +1,8 @@
+import {
+  clearActivityLog,
+  recoverActivityLog,
+} from 'src/features/bcx/activityLog';
+import { measureStorageActivity } from 'src/features/bcx/storageActivity';
 import { captureStorageHistory } from 'src/features/bcx/storageHistory';
 import { initializeStorageHistory } from 'src/features/bcx/storageHistoryBackground';
 import { console } from 'src/utils/console';
@@ -13,6 +18,7 @@ import { History } from './core/history';
 import { type Message, MessageType } from './core/message';
 
 console.log('Running background script');
+void recoverActivityLog();
 initializeStorageHistory();
 void recoverFanSync().catch(console.error);
 
@@ -113,9 +119,36 @@ async function getActiveBandcampTab(): Promise<chrome.tabs.Tab | null> {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
-    if (message.type === MessageType.CAPTURE_STORAGE_HISTORY) {
-      captureStorageHistory().then(
+    if (message.type === MessageType.CLEAR_ACTIVITY_LOG) {
+      clearActivityLog().then(
         () => sendResponse({ ok: true }),
+        (error) =>
+          sendResponse({
+            ok: false,
+            error: getErrorMessage(error, 'Could not clear activity log.'),
+          }),
+      );
+      return true;
+    }
+    if (message.type === MessageType.MEASURE_STORAGE) {
+      measureStorageActivity().then(
+        ({ id, usage }) =>
+          sendResponse({
+            ok: true,
+            id,
+            usage: { ...usage, measuredAt: usage.measuredAt.toISOString() },
+          }),
+        (error) =>
+          sendResponse({
+            ok: false,
+            error: getErrorMessage(error, 'Could not measure storage.'),
+          }),
+      );
+      return true;
+    }
+    if (message.type === MessageType.CAPTURE_STORAGE_HISTORY) {
+      captureStorageHistory(false, 'Manual refresh').then(
+        (id) => sendResponse({ ok: true, id }),
         (error) =>
           sendResponse({
             ok: false,
