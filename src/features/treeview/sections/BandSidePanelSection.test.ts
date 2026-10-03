@@ -36,12 +36,22 @@ describe('Artist/Label release browser', () => {
       biography: 'Independent label.',
       links: [{ label: 'Website', url: 'https://example.com/' }],
     });
+    // A large catalog must not defer the About rows read by the details panel.
+    band.metadata.albums = Array.from({ length: 250 }, () =>
+      AlbumFactory.fromRawData(album.toRawData()),
+    );
     for (const url of [band.url, album.url]) {
       const data = await BandSidePanelSection.create(
         band,
         url,
       )?.createTreeData();
       const about = data?.items.find((item) => item.label === 'About');
+      expect(about?.loadChildren).toBeUndefined();
+      if (url === band.url) {
+        expect(
+          data?.items.find((item) => item.label === 'Releases')?.loadChildren,
+        ).toBeDefined();
+      }
       expect(about?.children?.map((item) => item.label)).toContain(
         'Location: Paris, France',
       );

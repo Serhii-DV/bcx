@@ -25,7 +25,11 @@ let {
   error?: string;
 } = $props();
 let previewUrl = $derived.by(() => {
-  const url = createItemUrl(bandUrl);
+  const url = createItemUrl(
+    bandUrl ??
+      about.children?.find((item) => item.label === 'Open Bandcamp catalog')
+        ?.href,
+  );
   return url ? BandcampUrlFactory.createBandUrl(url) : undefined;
 });
 let profile = $derived(about.aboutProfile);

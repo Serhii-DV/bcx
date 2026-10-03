@@ -16,6 +16,7 @@ describe('createRootSectionTabs', () => {
       {
         path: '1',
         label: 'Artists',
+        releasePreview: true,
         image: 'mic',
         childrenCount: 91,
         children: [{ label: 'Artist' }],
@@ -23,6 +24,7 @@ describe('createRootSectionTabs', () => {
       {
         path: '2',
         label: 'Releases',
+        releasePreview: true,
         childrenCount: 322,
         children: [{ label: 'Release' }, { label: 'Load more' }],
       },
@@ -31,13 +33,19 @@ describe('createRootSectionTabs', () => {
         label: 'Release years',
         children: [{ label: '2026' }, { label: '2025' }],
       },
-      { path: '4', label: 'About', children: [{ label: 'Created' }] },
+      {
+        path: '4',
+        label: 'About',
+        aboutProfile: { name: 'Example Band' },
+        showChildrenCount: false,
+        children: [{ label: 'Created' }],
+      },
     ];
     expect(createRootSectionTabs(items)).toEqual([
-      { id: '1', label: 'Artists (91)', image: 'mic' },
+      { id: '4', label: 'About Example Band', image: undefined },
       { id: '2', label: 'Releases (322)', image: undefined },
+      { id: '1', label: 'Artists (91)', image: 'mic' },
       { id: '3', label: 'Release years (2)', image: undefined },
-      { id: '4', label: 'About (1)', image: undefined },
     ]);
 
     const grouped = new TreeData([

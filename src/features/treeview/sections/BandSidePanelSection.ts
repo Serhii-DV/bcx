@@ -51,6 +51,12 @@ export class BandSidePanelSection {
   }
 }
 
+export function createBandTreeData(band: Band) {
+  return createTreeDataFromTreeItemChildren(
+    withReleasePreviews(BandTreeItem.create(band, band.url), band),
+  );
+}
+
 function createCurrentBandPageSection(
   band: NonNullable<BandPage['band']>,
   currentPageUrl: Url,
@@ -59,9 +65,12 @@ function createCurrentBandPageSection(
     BandTreeItem.create(band, currentPageUrl),
     band,
   );
-  const children = deferDescendants(bandTreeItemFromStorage.children || []).map(
-    (child) =>
-      child.releasePreview
+  const roots = bandTreeItemFromStorage.children || [];
+  const children = deferDescendants(roots).map((child, index) =>
+    // About is rendered directly, without a browser to hydrate lazy children.
+    child.aboutProfile
+      ? roots[index]
+      : child.releasePreview
         ? { ...child, layout: TREE_ITEM_LAYOUT.BROWSER }
         : child,
   );

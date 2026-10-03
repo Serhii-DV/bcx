@@ -172,20 +172,25 @@ export function sortFollowingBandGroups(
 }
 
 export function createRootSectionTabs(items: TreeItem[]) {
+  const hasBandAbout = items.some((item) => item.aboutProfile);
   const tabOrder = (item: TreeItem) =>
-    (item.releasePreview && item.label === 'Releases') ||
-    item.label === 'Latest added' ||
-    item.label === 'All'
-      ? 0
-      : item.releasePreview && item.label === 'Artists'
-        ? 1
-        : 2;
+    item.aboutProfile
+      ? -1
+      : ((item.releasePreview || hasBandAbout) && item.label === 'Releases') ||
+          item.label === 'Latest added' ||
+          item.label === 'All'
+        ? 0
+        : item.releasePreview && item.label === 'Artists'
+          ? 1
+          : 2;
   const orderedItems = [...items].sort((a, b) => tabOrder(a) - tabOrder(b));
 
   return orderedItems.flatMap((item) => {
     if (!item.path || !isNode(item)) return [];
     const count = item.childrenCount ?? item.children?.length ?? 0;
-    const label = item.label ?? '';
+    const label = item.aboutProfile
+      ? `About ${item.aboutProfile.name ?? 'Band'}`
+      : (item.label ?? '');
     return [
       {
         id: item.path,

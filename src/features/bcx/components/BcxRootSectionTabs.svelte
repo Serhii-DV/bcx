@@ -1,6 +1,9 @@
 <script lang="ts">
 import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
+import type { TreeItem } from 'src/features/treeview/TreeItem';
+import type { Snippet } from 'svelte';
+import type { ItemPreviewSizeStore } from '../stores/itemPreviewSize';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
@@ -64,12 +67,16 @@ let {
   treeData,
   label,
   initialSelectedHref,
+  previewSize,
   sortBands = false,
+  aboutContent,
 }: {
   treeData: TreeData;
   label: string;
   initialSelectedHref?: string;
+  previewSize?: ItemPreviewSizeStore;
   sortBands?: boolean;
+  aboutContent?: Snippet<[TreeItem]>;
 } = $props();
 let rootVersion = $state(0);
 let yearSort = $state<FollowingBandYearSort>('newest');
@@ -373,11 +380,17 @@ function refreshTabs() {
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
             {#if usesItemPreview(tab.id)}
-              <BcxItemPreviewPanel treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
+              <BcxItemPreviewPanel {previewSize} treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
             {:else}
             {@const about = displayedTreeData.items.find((item) => item.path === tab.id)}
             {#if about?.aboutProfile}
-              <BcxBandDetails {about} />
+              <div class="item-preview-panel-content about-content">
+                {#if aboutContent}
+                  {@render aboutContent(about)}
+                {:else}
+                  <BcxBandDetails {about} />
+                {/if}
+              </div>
             {:else}
               <BcxTreeBrowser
                 treeData={displayedTreeData}
@@ -397,3 +410,7 @@ function refreshTabs() {
 {:else}
   <BcxTreeBrowser {treeData} />
 {/if}
+
+<style>
+.about-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
+</style>
