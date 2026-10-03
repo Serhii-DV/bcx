@@ -8,13 +8,12 @@ import type { TreeData } from 'src/features/treeview/TreeData';
 import { hasItemPreview, type TreeItem } from 'src/features/treeview/TreeItem';
 import { onMount } from 'svelte';
 import {
+  bandReleasePreviewSize,
   DEFAULT_ITEM_PREVIEW_SIZE,
+  type ItemPreviewSizeStore,
   itemPreviewSize,
   MAX_ITEM_PREVIEW_SIZE,
   MIN_ITEM_PREVIEW_SIZE,
-  restoreItemPreviewSize,
-  saveItemPreviewSize,
-  updateItemPreviewSize,
 } from '../stores/itemPreviewSize';
 import BcxBandPanel from './BcxBandPanel.svelte';
 import BcxReleaseDetails from './BcxReleaseDetails.svelte';
@@ -30,6 +29,7 @@ let {
   showFilter = true,
   isLoading = false,
   onRootLoaded,
+  previewSize = itemPreviewSize,
 }: {
   treeData: TreeData;
   rootPath?: string;
@@ -38,6 +38,7 @@ let {
   showFilter?: boolean;
   isLoading?: boolean;
   onRootLoaded?: () => void;
+  previewSize?: ItemPreviewSizeStore;
 } = $props();
 let bandAbout: TreeItem | null = $state(null);
 let bandTreeData: TreeData | undefined = $state();
@@ -61,7 +62,7 @@ function selectItem(item: TreeItem | null) {
 }
 
 onMount(() => {
-  void restoreItemPreviewSize();
+  void previewSize.restore();
 });
 
 function startResize(event: PointerEvent) {
@@ -70,7 +71,7 @@ function startResize(event: PointerEvent) {
 
   event.preventDefault();
   resizeStartY = event.clientY;
-  resizeStartSize = $itemPreviewSize;
+  resizeStartSize = $previewSize;
   isResizing = true;
   event.currentTarget.setPointerCapture(event.pointerId);
 }
@@ -84,11 +85,11 @@ function resize(event: PointerEvent) {
   if (!availableHeight) return;
 
   const sizeChange = ((resizeStartY - event.clientY) / availableHeight) * 100;
-  updateItemPreviewSize(resizeStartSize + sizeChange);
+  previewSize.update(resizeStartSize + sizeChange);
 }
 
 function stopResize(event: PointerEvent) {
-  if (isResizing) saveItemPreviewSize($itemPreviewSize);
+  if (isResizing) previewSize.save($previewSize);
   isResizing = false;
   if (
     event.currentTarget instanceof HTMLElement &&
@@ -102,10 +103,10 @@ function handleResizeKeydown(event: KeyboardEvent) {
 
   switch (event.key) {
     case 'ArrowUp':
-      nextSize = $itemPreviewSize + KEYBOARD_RESIZE_STEP;
+      nextSize = $previewSize + KEYBOARD_RESIZE_STEP;
       break;
     case 'ArrowDown':
-      nextSize = $itemPreviewSize - KEYBOARD_RESIZE_STEP;
+      nextSize = $previewSize - KEYBOARD_RESIZE_STEP;
       break;
     case 'Home':
       nextSize = MIN_ITEM_PREVIEW_SIZE;
@@ -121,11 +122,11 @@ function handleResizeKeydown(event: KeyboardEvent) {
   if (nextSize === null) return;
 
   event.preventDefault();
-  saveItemPreviewSize(nextSize);
+  previewSize.save(nextSize);
 }
 
 function handleLostPointerCapture() {
-  if (isResizing) saveItemPreviewSize($itemPreviewSize);
+  if (isResizing) previewSize.save($previewSize);
   isResizing = false;
 }
 
@@ -177,7 +178,7 @@ $effect(() => {
   bind:this={previewPanel}
   class:resizing={isResizing}
   class="item-preview-panel"
-  style:grid-template-rows={`${100 - $itemPreviewSize}fr auto ${$itemPreviewSize}fr`}
+  style:grid-template-rows={`${100 - $previewSize}fr auto ${$previewSize}fr`}
 >
   <div id={itemListId} class="item-preview-panel-list">
     <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={!!rootPath} {filterQuery} {showFilter} {isLoading} showBreadcrumb={false} initialSelectedHref={initialSelectedHref ?? treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} {onRootLoaded} nativeTabNavigation={true} />
@@ -191,8 +192,8 @@ $effect(() => {
     aria-controls={`${itemListId} ${itemPreviewId}`}
     aria-valuemin={MIN_ITEM_PREVIEW_SIZE}
     aria-valuemax={MAX_ITEM_PREVIEW_SIZE}
-    aria-valuenow={Math.round($itemPreviewSize)}
-    aria-valuetext={`Item details ${Math.round($itemPreviewSize)}% of available height`}
+    aria-valuenow={Math.round($previewSize)}
+    aria-valuetext={`Item details ${Math.round($previewSize)}% of available height`}
     tabindex="0"
     title="Drag to resize. Use Up and Down arrows, or press Enter to reset."
     onpointerdown={startResize}
@@ -201,14 +202,14 @@ $effect(() => {
     onpointercancel={stopResize}
     onlostpointercapture={handleLostPointerCapture}
     onkeydown={handleResizeKeydown}
-    ondblclick={() => saveItemPreviewSize(DEFAULT_ITEM_PREVIEW_SIZE)}
+    ondblclick={() => previewSize.save(DEFAULT_ITEM_PREVIEW_SIZE)}
   >
     <span aria-hidden="true"></span>
   </div>
   <section id={itemPreviewId} class="item-preview-panel-details" aria-label="Selected item details">
     {#if selectedItem?.bandPreview}
       {#key selectedItem}
-        <BcxBandPanel treeData={bandTreeData} about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} bandUrl={selectedItem.bandPreview.url} {loading} {error} />
+        <BcxBandPanel previewSize={bandReleasePreviewSize} treeData={bandTreeData} about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} bandUrl={selectedItem.bandPreview.url} {loading} {error} />
       {/key}
     {:else if selectedItem && information}
       <div class="item-preview-panel-content">

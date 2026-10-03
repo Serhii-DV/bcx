@@ -18,6 +18,8 @@
 
 ### Patch Changes
 
+- Release previews inside Band previews now remember their own height, so resizing them no longer resizes the parent Band preview.
+
 - Shortened the preview release link to "Release" and added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.
 
 - Fixed missing artwork placeholders in TreeBrowser release and band rows, including History entries without saved artwork. History also recognizes `/artists` pages as band entries and previews saved band details from the root Bandcamp URL.

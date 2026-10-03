@@ -3,6 +3,7 @@ import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { Snippet } from 'svelte';
+import type { ItemPreviewSizeStore } from '../stores/itemPreviewSize';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
@@ -66,12 +67,14 @@ let {
   treeData,
   label,
   initialSelectedHref,
+  previewSize,
   sortBands = false,
   aboutContent,
 }: {
   treeData: TreeData;
   label: string;
   initialSelectedHref?: string;
+  previewSize?: ItemPreviewSizeStore;
   sortBands?: boolean;
   aboutContent?: Snippet<[TreeItem]>;
 } = $props();
@@ -377,7 +380,7 @@ function refreshTabs() {
         {#if visitedRoots[tab.id]}
           <div class="bcx-section-tree-browser">
             {#if usesItemPreview(tab.id)}
-              <BcxItemPreviewPanel treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
+              <BcxItemPreviewPanel {previewSize} treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
             {:else}
             {@const about = displayedTreeData.items.find((item) => item.path === tab.id)}
             {#if about?.aboutProfile}

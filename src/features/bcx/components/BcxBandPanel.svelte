@@ -4,6 +4,7 @@ import {
   TREE_ITEM_LAYOUT,
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
+import type { ItemPreviewSizeStore } from '../stores/itemPreviewSize';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 
@@ -13,6 +14,7 @@ let {
   fallbackLocation,
   bandUrl,
   initialSelectedHref,
+  previewSize,
   loading = false,
   error = '',
 }: {
@@ -21,6 +23,7 @@ let {
   fallbackLocation?: string;
   bandUrl?: string;
   initialSelectedHref?: string;
+  previewSize?: ItemPreviewSizeStore;
   loading?: boolean;
   error?: string;
 } = $props();
@@ -72,4 +75,4 @@ let catalog = $derived.by(() => {
   <BcxBandDetails about={item} {fallbackLocation} {bandUrl} {loading} {error} />
 {/snippet}
 
-<BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} />
+<BcxRootSectionTabs {previewSize} treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} />
