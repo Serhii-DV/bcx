@@ -1,4 +1,5 @@
 import { MessageType } from 'src/core/message';
+import { startActivity, updateActivity } from 'src/features/bcx/activityLog';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { checkAvailability } from './availability';
 import {
@@ -69,6 +70,11 @@ export function recoverFanSync(): Promise<void> {
   recovery ??= (async () => {
     const job = await fanStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY);
     if (job?.state !== 'running') return;
+    await updateActivity(
+      job.id,
+      'Sync was interrupted. Saved data is safe; sync again to continue.',
+      'failed',
+    );
     await closeOwnedTab(job);
     await fanStorage().set({
       [FAN_SYNC_JOB_KEY]: {
@@ -113,6 +119,14 @@ export async function startFanSync(
     };
     controller = new AbortController();
     await fanStorage().set({ [FAN_SYNC_JOB_KEY]: job });
+    await startActivity(
+      job.action === 'check' ? 'availability' : 'sync',
+      job.action === 'check'
+        ? 'Check saved-page availability'
+        : `Sync ${job.action === 'all' ? 'all Bandcamp data' : job.action}`,
+      false,
+      job.id,
+    );
     void runJob(job, controller).catch(console.error);
   } catch (error) {
     controller = undefined;
@@ -146,10 +160,17 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
       );
   };
   chrome.tabs.onRemoved.addListener(onRemoved);
+  let inconclusive = 0;
   const progress = async (message: string) => {
     signal.throwIfAborted();
     job.message = message;
     await storage.set({ [FAN_SYNC_JOB_KEY]: job });
+    await updateActivity(
+      job.id,
+      message,
+      undefined,
+      message.startsWith('Checking saved pages '),
+    );
   };
   try {
     if (job.action !== 'check') {
@@ -195,6 +216,10 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
         await progress(`Saving ${dataset}…`);
         await saveSnapshot(job.account, dataset, response.items);
         (job.completedDatasets ??= []).push(dataset);
+        await updateActivity(
+          job.id,
+          `${dataset} saved: ${Array.isArray(response.items) ? response.items.length : 0} current items. Previous entries retained.`,
+        );
       }
     }
     const library = await readLibrary(job.account.fanId);
@@ -238,13 +263,25 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
         ),
       );
     let checked = 0;
+    let available = 0;
+    let unavailableCount = 0;
+    let changed = 0;
     for (const item of orderedCandidates) {
       await progress(`Checking saved pages ${++checked}/${candidates.size}…`);
       const result = await checkAvailability(item, signal);
       signal.throwIfAborted();
       await saveAvailability(job.account.fanId, itemId(item), result);
+      if (result.state === 'available') available++;
+      else if (result.state === 'unavailable') unavailableCount++;
+      else inconclusive++;
+      const previous = previousChecks[itemId(item)];
+      if (previous && previous.state !== result.state) changed++;
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
+    await updateActivity(
+      job.id,
+      `Availability: ${available} available, ${unavailableCount} unavailable, ${inconclusive} inconclusive; ${changed} changed. Inconclusive checks remain saved for retry.`,
+    );
     job.state = 'complete';
     job.message = candidates.size
       ? `Saved data updated. Checked ${checked} pages; inconclusive checks remain saved for retry.`
@@ -269,6 +306,24 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
     delete job.tabUrl;
     try {
       await storage.set({ [FAN_SYNC_JOB_KEY]: job });
+      await updateActivity(
+        job.id,
+        job.message,
+        job.state === 'complete'
+          ? inconclusive
+            ? 'warning'
+            : 'completed'
+          : job.state === 'cancelled'
+            ? 'cancelled'
+            : 'failed',
+      );
+    } catch (error) {
+      await updateActivity(
+        job.id,
+        getErrorMessage(error, 'Could not save final sync status.'),
+        'failed',
+      );
+      throw error;
     } finally {
       controller = undefined;
     }

@@ -28,3 +28,32 @@ flowchart TB
 ```
 
 The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers, while Chrome storage keeps data available across extension contexts.
+
+## Activity log
+
+The Activity log presents Sync, availability checks, current storage measurements,
+and storage-history captures as a flat, newest-first list of timestamped messages.
+The underlying operation records remain compatible with existing saved logs. A pure
+projection adds start messages and inline final outcomes/durations; active availability
+progress occupies one temporary line, replaced by its summary when checks finish.
+Only the background worker writes `/activity-log/operations` in local storage;
+serialized writes avoid lost updates across concurrent processes and panel instances.
+Panels read the validated, versioned records and subscribe to storage changes.
+Current storage measurement requests run in the worker so recording can finish when
+the panel closes. The existing daily storage-history snapshots remain separate.
+
+Retention is bounded to seven days, 200 operations, and 256 KB of serialized log
+payload, with at most 40 events per operation and 500 characters per message.
+Expired operations are excluded on read and pruned on writes. Worker startup marks
+unfinished operations with a warning; interrupted fan sync gets its specific failure
+message through the existing recovery flow. Logging errors go to the developer
+console without failing the underlying operation.
+
+Storage-history change monitoring ignores both its own snapshot key and the activity
+log key to prevent measurement feedback loops. Activity log data has its own storage
+category. Routine automatic captures are hidden by default; warnings and failures
+remain visible. Copy produces plain text from the visible lines. The only other
+controls are Clear and Show automatic activity; Sync and Storage open the general
+log without filtering. Clearing the
+log removes all retained operations, including running entries, without cancelling
+processes; later updates to removed entries do not recreate them.
