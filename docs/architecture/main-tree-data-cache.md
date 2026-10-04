@@ -124,17 +124,32 @@ Following-list identity, artwork, and location provide the fallback when no band
 is saved. Band About shows a compact profile, expandable biography, and collapsed
 external links, with Bandcamp and Copy actions in the catalog tab bar. Release
 previews keep the original artist/title/year typography and place navigation and
-copy actions in the left-aligned shared toolbar between the header and tracklist.
+copy actions in the left-aligned shared toolbar below the header.
 Artist links resolve from explicit release metadata, saved band names, and saved
 Following Bands records. Additional release links match saved album title and
 artist values, ignoring case and repeated whitespace, exclude the current URL,
 and retain each distinct saved destination. They open the saved release page and
 show the hosting band's name and image, falling back to its subdomain and release
-artwork. A Bandcamp-branded Search menu offers artist and release searches. Copy
+artwork. These additional links follow the artist/label links, before Search.
+Search and Copy triggers show dropdown chevrons; the Bandcamp-branded Search menu
+offers artist and release searches. Copy
 menus show the exact clipboard text and briefly replace the copy icon with a
 checkmark after success. Summary
 metadata, release/modification dates, tags, and library badges stay in the header;
-the details tree contains the tracklist and collapsed release notes and credits.
+the details tree contains collapsed release notes and credits. Tracks and Related
+releases toolbar actions toggle a closable subpanel using the shared TreeBrowser.
+Each panel opens directly at its catalog root, retaining filtering and pagination.
+Related releases reads the local album store only when its panel is opened.
+It matches any of the current release's parsed artist names across saved album
+pages, including solo releases and collaborations. A shared host or publisher
+alone does not qualify a release. It excludes the current page and deduplicates
+normalized URLs; Various Artists is not treated as a shared artist identity.
+The list uses the shared paginated release rows with artwork and destination URLs;
+an empty store shows a saved-data empty state. Loading failures show an error with
+Retry, and stale responses are discarded when switching panels. TreeBrowser link
+rows select on single-click and open on double-click or Enter, including links
+that also carry callbacks or filter queries. This runtime node is created with
+the release preview and does not change subtree cache keys, TTLs, or snapshots.
 
 Following Bands snapshots include serializable `bandPreview` identities rather
 than callbacks or copies of full cached catalogs. Snapshot version 11 invalidates

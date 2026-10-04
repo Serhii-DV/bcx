@@ -10,8 +10,13 @@ import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { storage } from 'src/core/shared';
 import { loadReleaseBandLinks } from '../BandPreview';
-import { createReleaseInformation } from '../ReleasePreview';
+import {
+  createReleaseDetailsTree,
+  createReleaseInformation,
+} from '../ReleasePreview';
+import { TreeData } from '../TreeData';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
+import { ICON_EXTERNAL_LINK } from '../utils/icon';
 import { AlbumTreeItemFactory } from './AlbumTreeItemFactory';
 
 const album = AlbumFactory.fromBandcampItem({
@@ -52,7 +57,19 @@ describe('release previews', () => {
     expect(preview?.layout).toBe(TREE_ITEM_LAYOUT.TREE);
     expect(preview?.information.title).toBe('Release');
     expect(preview?.information.artist).toBe('Artist');
-    expect(preview?.items).toEqual([]);
+    expect(preview?.items.map((item) => item.label)).toEqual([
+      'Related releases',
+    ]);
+    const more = preview!.items[0];
+    expect(more.open).toBe(false);
+    expect(more.children).toBeUndefined();
+    const empty = await more.loadChildren?.();
+    expect(empty).toMatchObject({
+      children: [
+        { label: 'No other saved releases by this artist or these artists.' },
+      ],
+      showChildrenCount: false,
+    });
     const getBands = rs.spyOn(BandcampStorage, 'getBands');
     const links = await loadReleaseBandLinks(preview!.information, album.url);
     expect(links.artists.map((band) => band.url.toString())).toEqual([
@@ -162,6 +179,17 @@ describe('release previews', () => {
       Band.create(14, 'Artist', 'https://artist-saved.bandcamp.com/', 24),
     );
     await BandcampStorage.saveBand(label);
+    const labelRelease = Album.create(
+      'https://label.bandcamp.com/album/label-release',
+      'Someone Else',
+      'Label Release',
+      6,
+      34,
+      label.id,
+      [],
+      stored.metadata,
+    );
+    await BandcampStorage.saveAlbum(labelRelease);
     await storage.set({
       '/following-bands': [
         {
@@ -213,6 +241,88 @@ describe('release previews', () => {
       'Artist',
       'ARTIST',
     ]);
+    const more = preview!.items.find(
+      (item) => item.label === 'Related releases',
+    );
+    const related = await more?.loadChildren?.();
+    expect(related).toMatchObject({ childrenCount: 2 });
+    expect(Array.isArray(related)).toBe(false);
+    if (!related || Array.isArray(related)) throw new Error('Missing releases');
+    expect(related.children?.map((item) => item.href)).toEqual([
+      otherRelease.url.toString(),
+      'https://other-label.bandcamp.com/album/different-release',
+    ]);
+    expect(related.children?.[0].previewInformation?.title).toBe(' release ');
+    expect(related.children?.[0].image).toBe(otherRelease.artwork.tinySizeUrl);
+    expect(related.children?.[0].buttons).toBeUndefined();
+    expect(related.children?.[0].actionIcon).toBe(ICON_EXTERNAL_LINK);
+    expect(related.children?.[0].hint).toBe(
+      `Open release on Bandcamp\n${otherRelease.url}`,
+    );
+    const firstSolo = Album.create(
+      'https://label.bandcamp.com/album/first-solo',
+      'Artist',
+      'First Solo',
+      7,
+      35,
+      label.id,
+    );
+    const secondSolo = Album.create(
+      'https://artist-2.bandcamp.com/album/second-solo',
+      'Artist 2',
+      'Second Solo',
+      8,
+      36,
+      17,
+    );
+    const collaboration = Album.create(
+      'https://other-label.bandcamp.com/album/collaboration',
+      'Artist 2 & Artist 3',
+      'Collaboration',
+      9,
+      37,
+      otherLabel.id,
+    );
+    for (const release of [firstSolo, secondSolo, collaboration]) {
+      await BandcampStorage.saveAlbum(release);
+    }
+    const collaborationPreview = createReleaseDetailsTree(
+      new TreeData([]),
+      { ...preview!.information, artist: 'Artist & Artist 2' },
+      `${label.url}album/current-collaboration?from=search#info`,
+    );
+    const artistsReleases = await collaborationPreview.items
+      .find((item) => item.label === 'Related releases')
+      ?.loadChildren?.();
+    if (!artistsReleases || Array.isArray(artistsReleases))
+      throw new Error('Missing artists releases');
+    expect(artistsReleases.children?.map((item) => item.href)).toEqual([
+      stored.url.toString(),
+      otherRelease.url.toString(),
+      'https://other-label.bandcamp.com/album/different-release',
+      firstSolo.url.toString(),
+      secondSolo.url.toString(),
+      collaboration.url.toString(),
+    ]);
+    const compilationPreview = createReleaseDetailsTree(
+      new TreeData([]),
+      {
+        ...preview!.information,
+        artist: 'Various Artists',
+        publisher: undefined,
+        publisherUrl: undefined,
+      },
+      `${label.url}album/compilation?from=search#info`,
+    );
+    const compilationReleases = await compilationPreview.items
+      .find((item) => item.label === 'Related releases')
+      ?.loadChildren?.();
+    expect(compilationReleases).toMatchObject({
+      children: [
+        { label: 'No other saved releases by this artist or these artists.' },
+      ],
+      showChildrenCount: false,
+    });
   });
 
   it('propagates storage failures instead of presenting a missing-data summary', async () => {
@@ -228,6 +338,14 @@ describe('release previews', () => {
     await expect(
       loadReleaseBandLinks(createReleaseInformation(album), album.url),
     ).rejects.toThrow('Storage unavailable');
+    const preview = createReleaseDetailsTree(
+      new TreeData([]),
+      createReleaseInformation(album),
+      album.url.toString(),
+    );
+    await expect(preview.items[0].loadChildren?.()).rejects.toThrow(
+      'Storage unavailable',
+    );
   });
 
   it('loads saved collection status alongside the release preview', async () => {

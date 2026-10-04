@@ -278,16 +278,19 @@ async function handleItemClick(
 ) {
   if (!item) return;
 
-  if (
-    item.href &&
-    !item.onClick &&
-    !item.query &&
-    event instanceof MouseEvent &&
-    event.type === 'click'
-  ) {
+  if (item.href && event instanceof MouseEvent && event.type === 'click') {
     event.preventDefault();
     focusTreeItem(item);
     return;
+  }
+
+  if (
+    item.href &&
+    event instanceof KeyboardEvent &&
+    event.key === 'Enter' &&
+    !isNode(item)
+  ) {
+    item = { ...item, onClick: undefined, query: undefined };
   }
 
   focusedPath = item.path ?? null;
@@ -306,21 +309,25 @@ async function handleItemClick(
 }
 
 function handleItemDoubleClick(item: TreeItem, event: MouseEvent) {
-  if (!item.href || item.onClick || item.query) return;
+  if (!item.href) return;
   if (event.target instanceof Element && event.target.closest('.item-button'))
     return;
   event.preventDefault();
   event.stopPropagation();
-  void handleItemClick(item, event);
+  void handleItemClick(
+    { ...item, onClick: undefined, query: undefined },
+    event,
+  );
 }
 
 function getItemTitle(item: TreeItem): string | undefined {
   if (!item.href) return item.hint;
 
   const navigationHint = 'Double-click to open the page';
-  const actionHint = hasItemPreview(item)
-    ? `Click to preview ${item.bandPreview ? 'band' : 'release'} details\n${navigationHint}`
-    : navigationHint;
+  const actionHint =
+    hasItemPreview(item) && onSelect
+      ? `Click to preview ${item.bandPreview ? 'band' : 'release'} details\n${navigationHint}`
+      : `Click to select\n${navigationHint}`;
 
   return item.hint ? `${item.hint}\n${actionHint}` : actionHint;
 }
@@ -623,9 +630,12 @@ function applyFilterImmediately() {
   debouncedFilterQuery = effectiveFilterQuery;
 }
 
-async function enterBrowserItem(item: TreeItem) {
+async function enterBrowserItem(
+  item: TreeItem,
+  event?: MouseEvent | KeyboardEvent,
+) {
   if (!isNode(item) || !item.path) {
-    await handleItemClick(item);
+    await handleItemClick(item, event);
     return;
   }
 
@@ -643,7 +653,7 @@ async function enterBrowserItem(item: TreeItem) {
   }
 
   if (item.query) {
-    await handleItemClick(item);
+    await handleItemClick(item, event);
   }
   navigateToLevel(itemPath);
 }
@@ -710,7 +720,8 @@ async function handleBrowserItemClick(
   }
 
   if (isNode(item)) {
-    await enterBrowserItem(item);
+    event?.preventDefault();
+    await enterBrowserItem(item, event);
     return;
   }
 

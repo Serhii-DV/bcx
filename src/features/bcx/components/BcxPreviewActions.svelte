@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Check, Copy } from '@lucide/svelte';
+import { Check, ChevronDown, Copy } from '@lucide/svelte';
 import { DropdownMenu } from 'bits-ui';
 import { copyToClipboard } from 'src/utils/clipboard';
 import { onDestroy } from 'svelte';
@@ -40,9 +40,10 @@ async function copy(value: string) {
 
 <div bind:this={container} class="preview-actions">
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger class="bcx-section-tab" aria-label={label} title={label}>
+    <DropdownMenu.Trigger class="bcx-section-tab" aria-label={label} title={`${label} (menu)`}>
       {#if copied}<Check size={14} class="text-emerald-300" aria-hidden="true" />{:else}<Copy size={14} aria-hidden="true" />{/if}
       Copy
+      <ChevronDown size={14} class="shrink-0" aria-hidden="true" />
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
       <DropdownMenu.Content class="preview-actions-menu" align="end" sideOffset={4} strategy="fixed">

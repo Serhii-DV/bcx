@@ -90,10 +90,18 @@ describe('release information', () => {
     );
     expect(tree.items.map((item) => item.label)).toEqual([
       'Tracks',
+      'Related releases',
       'About this release',
       'Credits',
     ]);
-    expect(tree.items.map((item) => item.open)).toEqual([true, false, false]);
+    expect(tree.items.map((item) => item.open)).toEqual([
+      true,
+      false,
+      false,
+      false,
+    ]);
+    expect(tree.items[1].loadChildren).toBeDefined();
+    expect(tree.items[1].children).toBeUndefined();
     expect(tree.items[0].children?.[0].href).toBe(
       'https://artist.bandcamp.com/track/first',
     );

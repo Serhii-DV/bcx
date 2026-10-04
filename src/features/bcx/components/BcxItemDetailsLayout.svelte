@@ -17,6 +17,7 @@ let {
   compactImage = false,
   details,
   actions,
+  panels,
   treeData,
   detailsLabel,
   loading = false,
@@ -35,6 +36,7 @@ let {
   compactImage?: boolean;
   details?: Snippet;
   actions?: Snippet;
+  panels?: Snippet;
   treeData: TreeData;
   detailsLabel: string;
   loading?: boolean;
@@ -68,6 +70,7 @@ let failedImage = $state<string>();
     {#if error}<p role="alert">{error}</p>{/if}
     {@render details?.()}
     {#if actions}<BcxSectionTabs tabs={[]} value="" label={`${detailsLabel} actions`} {actions} wrapActions={true} />{/if}
+    {@render panels?.()}
     {#if treeData.items.length}
       {#key treeData}
         <BcxTreeView {treeData} showFilter={false} />

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ExternalLink } from '@lucide/svelte';
+import { ChevronDown, ExternalLink } from '@lucide/svelte';
 import { DropdownMenu } from 'bits-ui';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 
@@ -37,10 +37,10 @@ async function openSearch(event: MouseEvent, url: string) {
 
 <div bind:this={container} class="release-search">
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger class="bcx-section-tab" aria-label="Search Bandcamp" title="Search Bandcamp">
+    <DropdownMenu.Trigger class="bcx-section-tab" aria-label="Search Bandcamp" title="Search Bandcamp (menu)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="shrink-0"><path d="M0 18.6 7.2 5.4H24l-7.2 13.2Z" /></svg>
       Search
-      <ExternalLink size={12} class="shrink-0" aria-hidden="true" />
+      <ChevronDown size={14} class="shrink-0" aria-hidden="true" />
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
       <DropdownMenu.Content class="bcx-section-overflow" align="start" sideOffset={4} strategy="fixed">

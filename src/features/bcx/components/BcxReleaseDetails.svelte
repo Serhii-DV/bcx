@@ -1,4 +1,5 @@
 <script lang="ts">
+import { Disc3, ListMusic } from '@lucide/svelte';
 import { loadReleaseBandLinks } from 'src/features/treeview/BandPreview';
 import {
   createReleaseDetailsTree,
@@ -7,11 +8,13 @@ import {
 } from 'src/features/treeview/ReleasePreview';
 import { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
+import { tick } from 'svelte';
 import { musicFilterStore } from '../stores/musicFilter';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewActions from './BcxPreviewActions.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
 import BcxReleaseSearch from './BcxReleaseSearch.svelte';
+import BcxReleaseTreePanel from './BcxReleaseTreePanel.svelte';
 import { createItemUrl } from './itemUrl';
 
 let {
@@ -52,9 +55,40 @@ $effect(() => {
     cancelled = true;
   };
 });
-let treeData = $derived(
+let releaseTree = $derived(
   preview ?? createReleaseDetailsTree(new TreeData(), information, item.href),
 );
+let tracks = $derived(
+  releaseTree.items.find((item) => item.label === 'Tracks'),
+);
+let relatedReleases = $derived(
+  releaseTree.items.find((item) => item.label === 'Related releases'),
+);
+let treeData = $derived(
+  new TreeData(
+    releaseTree.items.filter(
+      (item) => item !== tracks && item !== relatedReleases,
+    ),
+    releaseTree.layout,
+  ),
+);
+let activePanel = $state<'tracks' | 'related' | null>(null);
+let panelRoot = $derived(
+  activePanel === 'tracks'
+    ? tracks
+    : activePanel === 'related'
+      ? relatedReleases
+      : undefined,
+);
+let tracksButton = $state<HTMLButtonElement>();
+let relatedButton = $state<HTMLButtonElement>();
+
+async function closePanel() {
+  const trigger = activePanel === 'tracks' ? tracksButton : relatedButton;
+  activePanel = null;
+  await tick();
+  trigger?.focus();
+}
 let releaseYear = $derived(
   information.releaseYear ??
     (information.date
@@ -73,6 +107,7 @@ let summary = $derived(
 let expandedTags = $state(false);
 const componentId = $props.id();
 const tagsId = `${componentId}-tags`;
+const panelId = `${componentId}-tree-panel`;
 let tags = $derived([...new Set(information.tags)]);
 let visibleTags = $derived(expandedTags ? tags : tags.slice(0, 3));
 let copyItems = $derived([
@@ -90,17 +125,29 @@ let copyItems = $derived([
 
 {#snippet releaseActions()}
   {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name="Release" toolbar={true} title={`Open release on Bandcamp: ${information.title} by ${information.artist}`} />{/if}
-  {#each bandLinks.releases as release (release.url.toString())}
-    <BcxPreviewLink url={release.url} image={release.image} name={`Release on ${release.name}`} toolbar={true} title={`Open ${information.title} on ${release.name}’s Bandcamp page`} />
-  {/each}
   {#each bandLinks.artists as artist (artist.url.toString())}
     <BcxPreviewLink url={artist.url} image={artist.image} name={artist.name} toolbar={true} title={`Open artist on Bandcamp: ${artist.name}`} />
   {/each}
   {#if bandLinks.publisher}
     <BcxPreviewLink url={bandLinks.publisher.url} image={bandLinks.publisher.image} name={bandLinks.publisher.name} toolbar={true} title={`Open label on Bandcamp: ${bandLinks.publisher.name}`} />
   {/if}
+  {#each bandLinks.releases as release (release.url.toString())}
+    <BcxPreviewLink url={release.url} image={release.image} name={`Release on ${release.name}`} toolbar={true} title={`Open ${information.title} on ${release.name}’s Bandcamp page`} />
+  {/each}
+  {#if tracks}
+    <button bind:this={tracksButton} type="button" class="bcx-section-tab" data-state={activePanel === 'tracks' ? 'active' : 'inactive'} aria-expanded={activePanel === 'tracks'} aria-controls={activePanel === 'tracks' ? panelId : undefined} title="Show this release’s tracks" onclick={() => { activePanel = activePanel === 'tracks' ? null : 'tracks'; }}><ListMusic size={16} aria-hidden="true" />Tracks</button>
+  {/if}
+  {#if relatedReleases}
+    <button bind:this={relatedButton} type="button" class="bcx-section-tab" data-state={activePanel === 'related' ? 'active' : 'inactive'} aria-expanded={activePanel === 'related'} aria-controls={activePanel === 'related' ? panelId : undefined} title="Show saved releases by this release’s artists across Bandcamp" onclick={() => { activePanel = activePanel === 'related' ? null : 'related'; }}><Disc3 size={16} aria-hidden="true" />Related releases</button>
+  {/if}
   <BcxReleaseSearch artist={information.artist} title={information.title} />
   <BcxPreviewActions label="Copy release details" items={copyItems} />
+{/snippet}
+
+{#snippet releasePanels()}
+  {#if panelRoot}
+    {#key panelRoot}<BcxReleaseTreePanel root={panelRoot} id={panelId} onClose={closePanel} />{/key}
+  {/if}
 {/snippet}
 
 {#snippet linkErrors()}
@@ -115,6 +162,7 @@ let copyItems = $derived([
   subheading={information.artist}
   subheadingSize={2.2}
   actions={releaseActions}
+  panels={releasePanels}
   details={linkErrors}
   {treeData}
   detailsLabel="Detailed release information"
