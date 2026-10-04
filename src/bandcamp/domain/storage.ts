@@ -9,7 +9,7 @@ import { type CompressedBandData } from './band/compressor';
 import { BandFactory } from './band/factory';
 import { bandDataCompressor } from './shared';
 import { BandIndexData } from './storage/bandIndexData';
-import { StorageKey } from './storageKey';
+import { ALBUM_KEY_PREFIX, StorageKey } from './storageKey';
 import { TrackFactory } from './track/factory';
 import type { Track } from './track/track';
 
@@ -293,6 +293,15 @@ export class BandcampStorage {
       .map((obj) => AlbumFactory.createRawData(obj as CompressedAlbumData));
 
     return albumsRawDataArray;
+  }
+
+  static async getAllAlbumsRawData(): Promise<RawAlbumData[]> {
+    const keys = await storage.getKeys();
+    const ids = keys
+      .filter(StorageKey.isAlbumKey)
+      .map((key) => Number(key.slice(ALBUM_KEY_PREFIX.length)))
+      .filter((id) => Number.isSafeInteger(id) && id > 0);
+    return ids.length ? this.getAlbumsRawDataByIds(ids) : [];
   }
 
   static async getAlbums(albums: Album[]): Promise<Album[]> {

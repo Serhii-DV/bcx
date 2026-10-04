@@ -10,6 +10,7 @@ import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { storage } from 'src/core/shared';
 import { loadReleaseBandLinks } from '../BandPreview';
+import { createReleaseInformation } from '../ReleasePreview';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
 import { AlbumTreeItemFactory } from './AlbumTreeItemFactory';
 
@@ -83,9 +84,9 @@ describe('release previews', () => {
         },
       ),
     );
-    rs.spyOn(BandcampStorage, 'getAlbumsRawDataByIds').mockResolvedValue([
-      stored.toRawData(),
-    ]);
+    const rawAlbums = rs
+      .spyOn(BandcampStorage, 'getAlbumsRawDataByIds')
+      .mockResolvedValue([stored.toRawData()]);
     rs.spyOn(BandcampStorage, 'getAlbums').mockResolvedValue([stored]);
     const details = rs.spyOn(AlbumTreeItemFactory, 'createWithDetails');
     const preview =
@@ -101,6 +102,54 @@ describe('release previews', () => {
         .label,
     ).toBe('Credits text');
     expect(preview?.information.modifiedDate).toBe('2024-02-03');
+    rawAlbums.mockRestore();
+    await BandcampStorage.saveAlbum(stored);
+    const otherLabel = Band.create(
+      15,
+      'Other Label',
+      'https://other-label.bandcamp.com/',
+      25,
+    );
+    await BandcampStorage.saveBand(otherLabel);
+    const otherRelease = Album.create(
+      'https://other-label.bandcamp.com/album/release',
+      'ARTIST',
+      ' release ',
+      2,
+      31,
+      otherLabel.id,
+    );
+    await BandcampStorage.saveAlbum(otherRelease);
+    await BandcampStorage.saveAlbum(
+      Album.create(
+        'https://unrelated.bandcamp.com/album/release',
+        'Someone Else',
+        'Release',
+        3,
+        32,
+        16,
+      ),
+    );
+    await BandcampStorage.saveAlbum(
+      Album.create(
+        'https://other-label.bandcamp.com/album/different-release',
+        'Artist',
+        'Different Release',
+        4,
+        33,
+        otherLabel.id,
+      ),
+    );
+    await BandcampStorage.saveAlbum(
+      Album.create(
+        'https://other-label.bandcamp.com/album/release',
+        'Artist',
+        'Release',
+        5,
+        31,
+        otherLabel.id,
+      ),
+    );
     const artist = Band.create(
       11,
       'Artist',
@@ -145,6 +194,13 @@ describe('release previews', () => {
       url: label.url,
       image: label.artwork.smallSizeUrl,
     });
+    expect(links.releases).toEqual([
+      {
+        name: 'Other Label',
+        url: otherRelease.url,
+        image: otherLabel.artwork.smallSizeUrl,
+      },
+    ]);
     const labelHosted = await loadReleaseBandLinks(
       {
         ...preview!.information,
@@ -165,6 +221,12 @@ describe('release previews', () => {
     );
     await expect(
       AlbumTreeItemFactory.createWithPreview(album).loadPreview?.(),
+    ).rejects.toThrow('Storage unavailable');
+    rs.spyOn(BandcampStorage, 'getAllAlbumsRawData').mockRejectedValue(
+      new Error('Storage unavailable'),
+    );
+    await expect(
+      loadReleaseBandLinks(createReleaseInformation(album), album.url),
     ).rejects.toThrow('Storage unavailable');
   });
 

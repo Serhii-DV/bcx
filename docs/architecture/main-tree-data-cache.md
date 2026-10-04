@@ -124,11 +124,15 @@ Following-list identity, artwork, and location provide the fallback when no band
 is saved. Band About shows a compact profile, expandable biography, and collapsed
 external links, with Bandcamp and Copy actions in the catalog tab bar. Release
 previews keep the original artist/title/year typography and place navigation and
-copy actions in the shared tab-panel toolbar between the header and tracklist.
+copy actions in the left-aligned shared toolbar between the header and tracklist.
 Artist links resolve from explicit release metadata, saved band names, and saved
-Following Bands records; Search artist remains a separate action. Link artwork
-comes from the release or saved band profile. Copy menus show the exact clipboard
-text and briefly replace the copy icon with a checkmark after success. Summary
+Following Bands records. Additional release links match saved album title and
+artist values, ignoring case and repeated whitespace, exclude the current URL,
+and retain each distinct saved destination. They open the saved release page and
+show the hosting band's name and image, falling back to its subdomain and release
+artwork. A Bandcamp-branded Search menu offers artist and release searches. Copy
+menus show the exact clipboard text and briefly replace the copy icon with a
+checkmark after success. Summary
 metadata, release/modification dates, tags, and library badges stay in the header;
 the details tree contains the tracklist and collapsed release notes and credits.
 

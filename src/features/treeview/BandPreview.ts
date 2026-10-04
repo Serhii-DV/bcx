@@ -13,7 +13,10 @@ import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { Url } from 'src/core/url';
 import { BandTreeItem } from './items/BandTreeItem';
-import type { ReleaseInformation } from './ReleasePreview';
+import {
+  loadSavedReleaseLinks,
+  type ReleaseInformation,
+} from './ReleasePreview';
 import { createBandTreeData } from './sections/BandSidePanelSection';
 import type { TreeData } from './TreeData';
 import type { TreeItem } from './TreeItem';
@@ -143,7 +146,11 @@ export interface BandLinkProfile {
 export async function loadReleaseBandLinks(
   information: ReleaseInformation,
   releaseUrl?: Url,
-): Promise<{ artists: BandLinkProfile[]; publisher?: BandLinkProfile }> {
+): Promise<{
+  artists: BandLinkProfile[];
+  publisher?: BandLinkProfile;
+  releases: BandLinkProfile[];
+}> {
   const normalize = (name: string) => name.trim().toLowerCase();
   const artistNames = new Set(
     [information.artist, ...Artist.parse(information.artist).names].map(
@@ -151,20 +158,15 @@ export async function loadReleaseBandLinks(
     ),
   );
   const publisherName = normalize(information.publisher ?? '');
-  const [bands, following] = await Promise.all([
+  const [bands, following, releaseLinks] = await Promise.all([
     BandcampStorage.getAllCompressedBandData(),
     readSavedItems<FollowingBandItem>('following-bands'),
+    loadSavedReleaseLinks(information, releaseUrl),
   ]);
   // The name index keeps only one ID per name. Read band profiles directly so
   // multiple saved pages are available without hydrating their release catalogs.
   const saved: BandLinkProfile[] = bands
-    .filter(
-      (band) =>
-        typeof band.n === 'string' &&
-        typeof band.u === 'string' &&
-        (artistNames.has(normalize(band.n)) ||
-          normalize(band.n) === publisherName),
-    )
+    .filter((band) => typeof band.n === 'string' && typeof band.u === 'string')
     .map((band) => ({
       name: band.n,
       url: BandcampUrlFactory.createBandUrl(
@@ -177,11 +179,6 @@ export async function loadReleaseBandLinks(
     }));
   validateItems('following-bands', following);
   for (const item of following) {
-    if (
-      !artistNames.has(normalize(item.name)) &&
-      normalize(item.name) !== publisherName
-    )
-      continue;
     saved.push({
       name: item.name,
       url: Url.create(
@@ -247,5 +244,18 @@ export async function loadReleaseBandLinks(
         index,
     ),
     publisher,
+    releases: await Promise.all(
+      releaseLinks.map(async (release) => {
+        const band = await profile(
+          BandcampUrlFactory.createBandUrl(release.url),
+          release.url.hostname.replace(/\.bandcamp\.com$/, ''),
+        );
+        return {
+          name: band.name,
+          url: release.url,
+          image: band.image ?? release.image,
+        };
+      }),
+    ),
   };
 }

@@ -11,6 +11,7 @@ import { musicFilterStore } from '../stores/musicFilter';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewActions from './BcxPreviewActions.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
+import BcxReleaseSearch from './BcxReleaseSearch.svelte';
 import { createItemUrl } from './itemUrl';
 
 let {
@@ -27,20 +28,16 @@ let {
   error: string;
 } = $props();
 let releaseUrl = $derived(createItemUrl(item.href));
-let artistSearchUrl = $derived(
-  createItemUrl(
-    `https://bandcamp.com/search?q=${encodeURIComponent(information.artist)}&item_type=b`,
-  ),
-);
 let bandLinks = $state<Awaited<ReturnType<typeof loadReleaseBandLinks>>>({
   artists: [],
+  releases: [],
 });
 let bandLinksError = $state('');
 $effect(() => {
   const currentInformation = information;
   const currentUrl = releaseUrl;
   let cancelled = false;
-  bandLinks = { artists: [] };
+  bandLinks = { artists: [], releases: [] };
   bandLinksError = '';
   void loadReleaseBandLinks(currentInformation, currentUrl)
     .then((links) => {
@@ -49,7 +46,7 @@ $effect(() => {
     .catch(() => {
       if (!cancelled)
         bandLinksError =
-          'Could not load saved band links. Please reopen the preview to try again.';
+          'Could not load saved release and band links. Please reopen the preview to try again.';
     });
   return () => {
     cancelled = true;
@@ -93,13 +90,16 @@ let copyItems = $derived([
 
 {#snippet releaseActions()}
   {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name="Release" toolbar={true} title={`Open release on Bandcamp: ${information.title} by ${information.artist}`} />{/if}
+  {#each bandLinks.releases as release (release.url.toString())}
+    <BcxPreviewLink url={release.url} image={release.image} name={`Release on ${release.name}`} toolbar={true} title={`Open ${information.title} on ${release.name}’s Bandcamp page`} />
+  {/each}
   {#each bandLinks.artists as artist (artist.url.toString())}
     <BcxPreviewLink url={artist.url} image={artist.image} name={artist.name} toolbar={true} title={`Open artist on Bandcamp: ${artist.name}`} />
   {/each}
   {#if bandLinks.publisher}
     <BcxPreviewLink url={bandLinks.publisher.url} image={bandLinks.publisher.image} name={bandLinks.publisher.name} toolbar={true} title={`Open label on Bandcamp: ${bandLinks.publisher.name}`} />
   {/if}
-  {#if artistSearchUrl}<BcxPreviewLink url={artistSearchUrl} name="Search artist" toolbar={true} title={`Search Bandcamp for ${information.artist}`} />{/if}
+  <BcxReleaseSearch artist={information.artist} title={information.title} />
   <BcxPreviewActions label="Copy release details" items={copyItems} />
 {/snippet}
 

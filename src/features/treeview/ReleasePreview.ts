@@ -1,8 +1,12 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { getReleaseMetadataFromAlbum } from 'src/bandcamp/domain/album/helper';
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
+import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
+import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackTime } from 'src/bandcamp/domain/track/time';
 import type { Track } from 'src/bandcamp/domain/track/track';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
+import { Url } from 'src/core/url';
 import { TreeData } from './TreeData';
 import { TREE_ITEM_LAYOUT } from './TreeItem';
 import { items, linkOpen, text } from './TreeItemBuilder';
@@ -38,6 +42,47 @@ export class ReleasePreview extends TreeData {
   ) {
     super(tree.items, tree.layout);
   }
+}
+
+export async function loadSavedReleaseLinks(
+  information: ReleaseInformation,
+  releaseUrl?: Url,
+): Promise<{ url: Url; image?: string }[]> {
+  if (!releaseUrl?.pathname.startsWith('/album/')) return [];
+  const normalize = (value: string) =>
+    value.trim().replace(/\s+/g, ' ').toLowerCase();
+  const albums = await BandcampStorage.getAllAlbumsRawData();
+  const links = albums.flatMap((album) => {
+    if (
+      normalize(album.title) !== normalize(information.title) ||
+      normalize(album.artist) !== normalize(information.artist)
+    )
+      return [];
+    const href = releaseLink(album.url);
+    if (!href) return [];
+    const url = BandcampUrlFactory.createAlbumUrl(Url.create(href));
+    url.protocol = 'https:';
+    if (
+      !url.pathname.startsWith('/album/') ||
+      url.toString() === releaseUrl.toString()
+    )
+      return [];
+    return [
+      {
+        url,
+        image:
+          Number.isSafeInteger(album.artworkId) && album.artworkId > 0
+            ? Artwork.createForAlbum(album.artworkId).smallSizeUrl
+            : undefined,
+      },
+    ];
+  });
+  return links.filter(
+    (link, index) =>
+      links.findIndex(
+        (other) => other.url.toString() === link.url.toString(),
+      ) === index,
+  );
 }
 
 export function createReleaseDetailsTree(

@@ -124,7 +124,7 @@ async function handleCloseAutoFocus(event: Event) {
   <span class="bcx-tab-label">{tabLabelText(tab)}</span>
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs" class:wrap-actions={wrapActions} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
+<div bind:this={bar} class="bcx-section-tabs" class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
   {#if tabs.length}
   <Tabs.List class="bcx-visible-tabs" aria-label={label}>
     {#each visibleTabs as tab (tab.id)}
@@ -205,6 +205,7 @@ async function handleCloseAutoFocus(event: Event) {
   .bcx-section-actions { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
   .wrap-actions { container-type: inline-size; flex-wrap: wrap; }
   .wrap-actions .bcx-section-actions { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
+  .actions-only .bcx-section-actions { margin-left: 0; justify-content: flex-start; }
   @container (max-width: 620px) {
     .wrap-actions .bcx-section-actions { flex-basis: 100%; }
   }
