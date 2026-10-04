@@ -1,4 +1,5 @@
 <script lang="ts">
+import { Eye } from '@lucide/svelte';
 import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import {
@@ -50,6 +51,7 @@ interface Props {
   nativeTabNavigation?: boolean;
   initialSelectedHref?: string;
   onSelect?: (item: TreeItem | null) => void;
+  onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
   onRootLoaded?: () => void;
   filterQuery?: string | null;
   initialRootPath?: string | null;
@@ -66,6 +68,7 @@ const DRILL_UP_PATH = '__bcx_tree_drill_up__';
 let {
   treeData,
   onSelect,
+  onPreview,
   onRootLoaded,
   nativeTabNavigation = false,
   initialSelectedHref,
@@ -332,8 +335,25 @@ function getItemTitle(item: TreeItem): string | undefined {
   return item.hint ? `${item.hint}\n${actionHint}` : actionHint;
 }
 
+function withPreviewButton(item: TreeItem): TreeItem {
+  if (!onPreview || !item.previewInformation) return item;
+  return {
+    ...item,
+    buttons: [
+      ...(item.buttons ?? []),
+      {
+        icon: Eye,
+        title: `Preview ${item.previewInformation.title}`,
+        onClick: (trigger) => onPreview?.(item, trigger),
+      },
+    ],
+  };
+}
+
 async function handleKeyDown(event: KeyboardEvent) {
   if (!treeContainer) return;
+  if (event.target instanceof Element && event.target.closest('.item-button'))
+    return;
 
   if (shouldIgnoreTreeKeyDown(event)) {
     return;
@@ -882,6 +902,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       onclick={() => focusTreeItem(item)}
       ondblclick={(event) => handleItemDoubleClick(item, event)}
       onkeydown={(event) => {
+        if (event.target instanceof Element && event.target.closest('.item-button')) return;
         if (event.key === 'Enter') {
           event.preventDefault();
           event.stopPropagation();
@@ -889,7 +910,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
         }
       }}
     >
-      <BcxTreeItem item={withBrowserChildCount(item)} />
+      <BcxTreeItem item={withPreviewButton(withBrowserChildCount(item))} />
     </div>
   {:else if hasChildren}
     <div

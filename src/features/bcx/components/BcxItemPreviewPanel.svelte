@@ -3,10 +3,9 @@ import {
   createBandAboutFallback,
   loadBandDetails,
 } from 'src/features/treeview/BandPreview';
-import type { ReleasePreview } from 'src/features/treeview/ReleasePreview';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import { hasItemPreview, type TreeItem } from 'src/features/treeview/TreeItem';
-import { onMount } from 'svelte';
+import { onMount, untrack } from 'svelte';
 import {
   bandReleasePreviewSize,
   DEFAULT_ITEM_PREVIEW_SIZE,
@@ -16,7 +15,7 @@ import {
   MIN_ITEM_PREVIEW_SIZE,
 } from '../stores/itemPreviewSize';
 import BcxBandPanel from './BcxBandPanel.svelte';
-import BcxReleaseDetails from './BcxReleaseDetails.svelte';
+import BcxReleasePreviewTabs from './BcxReleasePreviewTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 
 const KEYBOARD_RESIZE_STEP = 5;
@@ -47,18 +46,17 @@ const itemListId = `${componentId}-item-list`;
 const itemPreviewId = `${componentId}-item-preview`;
 let previewPanel: HTMLDivElement;
 let selectedItem: TreeItem | null = $state(null);
-let preview: ReleasePreview | null = $state(null);
+let releasePreviewTabs = $state<BcxReleasePreviewTabs>();
 let error = $state('');
 let loading = $state(false);
 let isResizing = $state(false);
 let resizeStartY = 0;
 let resizeStartSize = DEFAULT_ITEM_PREVIEW_SIZE;
-let information = $derived.by(
-  () => preview?.information ?? selectedItem?.previewInformation,
-);
 
 function selectItem(item: TreeItem | null) {
   selectedItem = hasItemPreview(item) ? item : null;
+  if (item?.previewInformation || item?.loadPreview)
+    untrack(() => releasePreviewTabs?.showPreview(item));
 }
 
 onMount(() => {
@@ -133,11 +131,10 @@ function handleLostPointerCapture() {
 $effect(() => {
   const item = selectedItem;
   let cancelled = false;
-  preview = null;
   bandAbout = null;
   bandTreeData = undefined;
   error = '';
-  loading = !!(item?.loadPreview || item?.bandPreview);
+  loading = !!item?.bandPreview;
   if (item?.bandPreview) {
     loadBandDetails(item.bandPreview)
       .then((data) => {
@@ -148,21 +145,6 @@ $effect(() => {
       })
       .catch(() => {
         if (!cancelled) error = 'Could not read saved band details.';
-      })
-      .finally(() => {
-        if (!cancelled) loading = false;
-      });
-  }
-  if (item?.loadPreview) {
-    item
-      .loadPreview()
-      .then((data) => {
-        if (!cancelled) preview = data;
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled)
-          error =
-            reason instanceof Error ? reason.message : 'Failed to load release';
       })
       .finally(() => {
         if (!cancelled) loading = false;
@@ -211,11 +193,9 @@ $effect(() => {
       {#key selectedItem}
         <BcxBandPanel previewSize={bandReleasePreviewSize} treeData={bandTreeData} about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} bandUrl={selectedItem.bandPreview.url} {loading} {error} />
       {/key}
-    {:else if selectedItem && information}
+    {:else if selectedItem?.previewInformation || selectedItem?.loadPreview}
       <div class="item-preview-panel-content release-preview-content">
-        {#key selectedItem}
-          <BcxReleaseDetails item={selectedItem} {information} {preview} {loading} {error} />
-        {/key}
+        <BcxReleasePreviewTabs bind:this={releasePreviewTabs} item={selectedItem} />
       </div>
     {:else}
       <h3>Item details</h3>

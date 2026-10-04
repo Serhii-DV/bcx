@@ -117,9 +117,22 @@ are still rebuilt from raw album data, and Collection release pagination is reta
 
 ## Shared item preview
 
-`BcxItemPreviewPanel` owns the shared selection, asynchronous loading, and
-resizable details area for releases and followed bands. Release details retain
-their existing renderer; band details read `BandcampStorage` only on selection.
+`BcxItemPreviewPanel` owns shared selection, asynchronous band loading, and
+the resizable details area for releases and followed bands. `BcxReleasePreviewTabs`
+keeps previewed releases in a shared `BcxSectionTabs` / Bits UI Tabs row above
+the release header. Main-list selection adds or activates a release tab, keyed by
+its normalized Bandcamp URL, with artwork, release title, and a full title/artist/URL
+hover description. The existing overflow menu handles narrow widths and extra tabs.
+Optional close callbacks add separate close controls beside each release tab and
+inside the overflow menu, including their widths in overflow measurements. Closing
+a tab unmounts its preview and discards pending loading results; the active tab falls back
+to the next tab or the previous one when closing the last tab in the row. Closing
+the final preview shows an empty state. Explicit main-list selection can reopen
+a closed release without immediately recreating it after dismissal. Keyboard
+focus returns to the active tab or the empty preview area.
+`BcxReleasePreview` owns cancellable loading independently for each release tab
+and reuses the existing release details renderer;
+band details read `BandcampStorage` only on selection.
 Following-list identity, artwork, and location provide the fallback when no band
 is saved. Band About shows a compact profile, expandable biography, and collapsed
 external links, with Bandcamp and Copy actions in the catalog tab bar. Release
@@ -153,7 +166,15 @@ pages, including solo releases and collaborations. A shared host or publisher
 alone does not qualify a release. It excludes the current page and deduplicates
 normalized URLs; Various Artists is not treated as a shared artist identity.
 The list uses the shared paginated release rows with artwork and destination URLs;
-an empty store shows a saved-data empty state. Loading failures show an error with
+an empty store shows a saved-data empty state. Related rows add an explicit Preview
+button through TreeBrowser without changing single-click selection or double-click
+link navigation. It adds and activates a release preview tab and moves keyboard
+focus to that tab. Previewing the same URL reuses its existing tab; different
+Bandcamp destinations remain distinct. Inactive panels stay mounted and hidden
+to preserve their selected section, filter, pagination, and scroll position.
+Related releases in any preview can add further tabs, with independent cancellable
+loading and the existing preview height. Tabs live within the current release
+preview area and are not saved to storage. Loading failures show an error with
 Retry, and stale responses are discarded when switching releases. TreeBrowser link
 rows select on single-click and open on double-click or Enter, including links
 that also carry callbacks or filter queries. This runtime node is created with

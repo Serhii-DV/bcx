@@ -27,12 +27,14 @@ let {
   preview,
   loading,
   error,
+  onPreview,
 }: {
   item: TreeItem;
   information: ReleaseInformation;
   preview: ReleasePreview | null;
   loading: boolean;
   error: string;
+  onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
 } = $props();
 let releaseUrl = $derived(createItemUrl(item.href));
 let bandLinks = $state<Awaited<ReturnType<typeof loadReleaseBandLinks>>>({
@@ -170,7 +172,7 @@ let dates = $derived(
   {#if root.pathKey === 'release-info'}
     <div class="release-info-content">{@render releaseNotes()}</div>
   {:else}
-    <BcxReleaseTreePanel {root} />
+    <BcxReleaseTreePanel {root} onPreview={root.pathKey === 'related-releases' ? onPreview : undefined} />
   {/if}
 {/snippet}
 

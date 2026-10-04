@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Check, ChevronDown, Ellipsis } from '@lucide/svelte';
+import { Check, ChevronDown, Ellipsis, X } from '@lucide/svelte';
 import { DropdownMenu, Tabs } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
 import { type Snippet, tick } from 'svelte';
@@ -14,6 +14,7 @@ interface SectionTab {
   sortValue?: string;
   sortLabel?: string;
   onSortChange?: (id: string) => void;
+  onClose?: () => void;
 }
 
 let {
@@ -149,6 +150,13 @@ async function handleCloseAutoFocus(event: Event) {
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
         </div>
+      {:else if tab.onClose}
+        <div class="bcx-closable-tab-group">
+          <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
+            {@render tabLabel(tab)}
+          </Tabs.Trigger>
+          <button type="button" class="bcx-section-tab bcx-tab-close" aria-label={`Close ${tab.label}`} title={`Close ${tab.label}`} tabindex={value === tab.id ? 0 : -1} onclick={() => tab.onClose?.()}><X size={14} aria-hidden="true" /></button>
+        </div>
       {:else}
         <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
           {@render tabLabel(tab)}
@@ -171,6 +179,13 @@ async function handleCloseAutoFocus(event: Event) {
                   {tab.label} · {option.label}
                 </DropdownMenu.Item>
               {/each}
+            {:else if tab.onClose}
+              <div class="bcx-overflow-tab-group">
+                <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectSortOption(tab, tab.id)}>
+                  {@render tabLabel(tab)}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item class="bcx-section-menu-item bcx-close-menu-item" aria-label={`Close ${tab.label}`} title={`Close ${tab.label}`} onSelect={() => { focusSelectedOnClose = true; tab.onClose?.(); }}><X size={14} aria-hidden="true" /></DropdownMenu.Item>
+              </div>
             {:else}
               <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectSortOption(tab, tab.id)}>
                 {@render tabLabel(tab)}
@@ -191,6 +206,11 @@ async function handleCloseAutoFocus(event: Event) {
           <span class="bcx-sort-tab-group">
             <span class="bcx-section-tab">{tab.label} · {selectedSortOption(tab)?.label ?? tab.sortOptions[0].label}</span>
             <span class="bcx-section-tab bcx-sort-button"><ChevronDown size={14} /></span>
+          </span>
+        {:else if tab.onClose}
+          <span class="bcx-closable-tab-group">
+            <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
+            <span class="bcx-section-tab bcx-tab-close"><X size={14} /></span>
           </span>
         {:else}
           <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
@@ -274,6 +294,11 @@ async function handleCloseAutoFocus(event: Event) {
     flex: 0 1 auto;
     gap: 2px;
   }
+  .bcx-closable-tab-group { display: inline-flex; min-width: 0; max-width: 224px; flex: 0 1 auto; }
+  :global(.bcx-tab-close) { flex: 0 0 24px; justify-content: center; padding-inline: 4px; }
+  .bcx-overflow-tab-group { display: flex; align-items: center; }
+  .bcx-overflow-tab-group :global(.bcx-section-menu-item:not(.bcx-close-menu-item)) { flex: 1 1 0%; min-width: 0; }
+  :global(.bcx-close-menu-item) { flex-shrink: 0; }
   :global(.bcx-sort-button) {
     flex: 0 0 24px;
     justify-content: center;
