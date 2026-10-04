@@ -37,15 +37,78 @@ export const activityProcessLabels: Record<ActivityProcess, string> = {
   storage: 'Storage measurement',
   'storage-history': 'Storage history',
 };
-export const activityStatusLabels: Record<ActivityStatus, string> = {
-  running: 'Running',
-  completed: 'Completed',
-  warning: 'Warnings',
-  failed: 'Failed',
-  cancelled: 'Cancelled',
-};
-const MAX_OPERATIONS = 200;
-const MAX_BYTES = 256 * 1024;
+export interface ActivityLine extends ActivityEvent {
+  id: string;
+  level: 'info' | 'warning' | 'error';
+}
+
+// Flatten existing records without changing stored data or the writer protocol.
+export function activityLines(
+  operations: ActivityOperation[],
+  showAutomatic: boolean,
+): ActivityLine[] {
+  const lines: ActivityLine[] = [];
+  for (const operation of operations) {
+    const routine = operation.automatic && !showAutomatic;
+    if (
+      routine &&
+      operation.status !== 'warning' &&
+      operation.status !== 'failed'
+    )
+      continue;
+    if (!routine)
+      lines.push({
+        id: `${operation.id}-start`,
+        time: operation.startedAt,
+        message: `${operation.title} started.`,
+        level: 'info',
+      });
+    operation.events.forEach((event, index) => {
+      const final =
+        operation.status !== 'running' && index === operation.events.length - 1;
+      if (routine && !final) return;
+      const progress = /^Checking saved pages \d+\/\d+…$/.test(event.message);
+      // Progress is temporary; the availability summary replaces it on completion.
+      if (
+        progress &&
+        (operation.status !== 'running' ||
+          index !== operation.events.length - 1)
+      )
+        return;
+      const level =
+        final && operation.status === 'failed'
+          ? 'error'
+          : final && operation.status === 'warning'
+            ? 'warning'
+            : 'info';
+      let message = `${activityProcessLabels[operation.process]}: ${event.message}`;
+      if (final) {
+        const outcome =
+          operation.status === 'completed'
+            ? 'completed'
+            : operation.status === 'warning'
+              ? 'finished with warnings'
+              : operation.status;
+        const seconds =
+          Math.max(
+            0,
+            (operation.finishedAt ?? event.time) - operation.startedAt,
+          ) / 1000;
+        message = `${activityProcessLabels[operation.process]} ${outcome} in ${seconds.toFixed(1)}s. ${event.message}`;
+      }
+      lines.push({
+        id: `${operation.id}-${progress ? 'progress' : index}`,
+        time: event.time,
+        message,
+        level,
+      });
+    });
+  }
+  // Reverse insertion order breaks equal-millisecond ties with the final event first.
+  return lines.reverse().sort((a, b) => b.time - a.time);
+}
+export const ACTIVITY_MAX_OPERATIONS = 200;
+export const ACTIVITY_MAX_BYTES = 256 * 1024;
 const MAX_EVENTS = 40;
 const MAX_MESSAGE = 500;
 
@@ -89,7 +152,7 @@ function retained(operations: ActivityOperation[]): ActivityOperation[] {
       (operation) => operation.startedAt >= Date.now() - ACTIVITY_RETENTION_MS,
     )
     .sort((a, b) => b.startedAt - a.startedAt)
-    .slice(0, MAX_OPERATIONS);
+    .slice(0, ACTIVITY_MAX_OPERATIONS);
 }
 export async function readActivityLog(): Promise<ActivityOperation[]> {
   const value: unknown = (await chrome.storage.local.get(ACTIVITY_LOG_KEY))[
@@ -100,7 +163,7 @@ export async function readActivityLog(): Promise<ActivityOperation[]> {
     !isObject(value) ||
     value.version !== 1 ||
     !Array.isArray(value.operations) ||
-    value.operations.length > MAX_OPERATIONS ||
+    value.operations.length > ACTIVITY_MAX_OPERATIONS ||
     !value.operations.every(isOperation) ||
     new Set(value.operations.map((operation) => operation.id)).size !==
       value.operations.length
@@ -122,7 +185,7 @@ function mutate(
     const bytes = () =>
       new TextEncoder().encode(JSON.stringify({ version: 1, operations }))
         .length;
-    while (operations.length && bytes() > MAX_BYTES) operations.pop();
+    while (operations.length && bytes() > ACTIVITY_MAX_BYTES) operations.pop();
     await chrome.storage.local.set({
       [ACTIVITY_LOG_KEY]: { version: 1, operations },
     });

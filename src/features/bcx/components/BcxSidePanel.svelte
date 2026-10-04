@@ -26,7 +26,6 @@ import {
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
-import type { ActivityProcess } from '../activityLog';
 import BcxActivityLog from './BcxActivityLog.svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
@@ -67,11 +66,7 @@ const infoTabId = '__extension-info__';
 const storageTabId = '__storage__';
 const syncTabId = '__fan-sync__';
 const activityTabId = '__activity-log__';
-let activityProcess = $state<ActivityProcess | 'all'>('all');
-let activityOperationId = $state('');
-function viewActivity(process: ActivityProcess, id = '') {
-  activityProcess = process;
-  activityOperationId = id;
+function viewActivity() {
   selectedSectionId = activityTabId;
 }
 let selectedSectionId = $state('');
@@ -411,7 +406,7 @@ $effect(() => {
 
               {#if hasFanSync}
                 <Tabs.Content value={syncTabId} class="bcx-tab-content bcx-info-scroll">
-                  <BcxFanDataSync account={syncAccount} job={fanSyncJob} jobReadError={fanSyncError} onViewLog={() => viewActivity(accountSyncJob?.action === 'check' ? 'availability' : 'sync', accountSyncJob?.id)} />
+                  <BcxFanDataSync account={syncAccount} job={fanSyncJob} jobReadError={fanSyncError} onViewLog={viewActivity} />
                 </Tabs.Content>
               {/if}
 
@@ -420,7 +415,7 @@ $effect(() => {
               </Tabs.Content>
 
               <Tabs.Content value={activityTabId} class="bcx-tab-content">
-                {#if selectedSectionId === activityTabId}<BcxActivityLog bind:process={activityProcess} bind:operationId={activityOperationId} />{/if}
+                {#if selectedSectionId === activityTabId}<BcxActivityLog />{/if}
               </Tabs.Content>
 
               <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">

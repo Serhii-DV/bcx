@@ -31,8 +31,11 @@ The content scripts work within Bandcamp tabs. The side panel presents the colle
 
 ## Activity log
 
-The Activity log groups Sync, availability checks, current storage measurements,
-and storage-history captures into operations with timestamped events and outcomes.
+The Activity log presents Sync, availability checks, current storage measurements,
+and storage-history captures as a flat, newest-first list of timestamped messages.
+The underlying operation records remain compatible with existing saved logs. A pure
+projection adds start messages and inline final outcomes/durations; active availability
+progress occupies one temporary line, replaced by its summary when checks finish.
 Only the background worker writes `/activity-log/operations` in local storage;
 serialized writes avoid lost updates across concurrent processes and panel instances.
 Panels read the validated, versioned records and subscribe to storage changes.
@@ -49,6 +52,8 @@ console without failing the underlying operation.
 Storage-history change monitoring ignores both its own snapshot key and the activity
 log key to prevent measurement feedback loops. Activity log data has its own storage
 category. Routine automatic captures are hidden by default; warnings and failures
-remain visible. Copy and export use the currently filtered operations. Clearing the
+remain visible. Copy produces plain text from the visible lines. The only other
+controls are Clear and Show automatic activity; Sync and Storage open the general
+log without filtering. Clearing the
 log removes all retained operations, including running entries, without cancelling
 processes; later updates to removed entries do not recreate them.

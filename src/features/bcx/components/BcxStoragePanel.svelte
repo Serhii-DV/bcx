@@ -11,16 +11,11 @@ import {
 import { ICON_DATABASE, ICON_HISTORY } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount } from 'svelte';
-import type { ActivityProcess } from '../activityLog';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxStorageBar from './BcxStorageBar.svelte';
 import BcxStorageHistory from './BcxStorageHistory.svelte';
 
-let {
-  onViewLog,
-}: { onViewLog?: (process: ActivityProcess, id?: string) => void } = $props();
-let measurementId = $state('');
-let historyId = $state('');
+let { onViewLog }: { onViewLog?: () => void } = $props();
 let view = $state('current');
 let currentArea = $state('local');
 let historyChart = $state('total');
@@ -45,7 +40,6 @@ async function refresh() {
   const token = ++generation;
   loading = true;
   error = '';
-  measurementId = '';
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const result = await Promise.race([
@@ -83,12 +77,6 @@ async function refresh() {
           !Number.isFinite(Date.parse(value.measuredAt))
         )
           throw new Error('Invalid storage measurement response.');
-        if (
-          token === generation &&
-          'id' in response &&
-          typeof response.id === 'string'
-        )
-          measurementId = response.id;
         return { areas: value.areas, measuredAt: new Date(value.measuredAt) };
       })(),
       new Promise<never>((_, reject) => {
@@ -126,7 +114,7 @@ onMount(() => {
       wrapActions={view === 'history'}
     >
       {#snippet actions()}
-        {#if onViewLog}<button class="bcx-section-tab" onclick={() => onViewLog?.(view === 'history' ? 'storage-history' : 'storage', view === 'history' ? historyId : measurementId)}>View log</button>{/if}
+        {#if onViewLog}<button class="bcx-section-tab" onclick={onViewLog}>View log</button>{/if}
         {#if view === 'history'}
           <label class="storage-filter">Period <select bind:value={historyDays}><option value={30}>30 days</option><option value={90}>90 days</option><option value={365}>365 days</option></select></label>
           <label class="storage-filter">Storage <select bind:value={historyArea}><option value="all">All storage</option><option value="local">Local data</option><option value="session">Session memory</option><option value="sync">Chrome sync</option></select></label>
@@ -138,7 +126,7 @@ onMount(() => {
       {/snippet}
     </BcxSectionTabs>
   <Tabs.Content value="history" class="bcx-tab-content">
-    <BcxStorageHistory bind:this={historyPanel} bind:activityId={historyId} bind:loading={historyLoading} bind:selectedChart={historyChart} days={historyDays} area={historyArea} />
+    <BcxStorageHistory bind:this={historyPanel} bind:loading={historyLoading} bind:selectedChart={historyChart} days={historyDays} area={historyArea} />
   </Tabs.Content>
   <Tabs.Content value="current" class="bcx-tab-content">
   <Tabs.Root bind:value={currentArea} class="bcx-panel-body">
