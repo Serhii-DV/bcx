@@ -45,8 +45,10 @@ export interface TreeItem {
   flagCode?: string;
   aboutProfile?: {
     name: string;
+    url?: string;
     image?: string;
     location?: string;
+    biography?: string;
     following?: boolean;
   };
   hint?: string;

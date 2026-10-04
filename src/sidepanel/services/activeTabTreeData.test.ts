@@ -217,15 +217,13 @@ describe('active tab public profile', () => {
       .find((section) => section.id === 'band-901')
       ?.createTreeData();
     const about = tree?.items.find((item) => item.label === 'About');
-    expect(about?.children?.map((item) => item.label)).toContain(
-      'Location: Copenhagen, Denmark',
-    );
-    expect(about?.children?.map((item) => item.label)).toContain(
-      'Independent label.',
-    );
+    expect(about?.aboutProfile).toMatchObject({
+      location: 'Copenhagen, Denmark',
+      biography: 'Independent label.',
+    });
     expect(
-      about?.children?.find((item) => item.label === 'Websites & social links')
-        ?.children?.[0].href,
+      about?.children?.find((item) => item.label === 'Links')?.children?.[0]
+        .href,
     ).toBe(profile.links[0].url);
   });
 
@@ -255,10 +253,9 @@ describe('active tab public profile', () => {
       .find((section) => section.id === 'band-902')
       ?.createTreeData();
     expect(
-      tree?.items
-        .find((item) => item.label === 'About')
-        ?.children?.map((item) => item.label),
-    ).toContain('Location: Paris, France');
+      tree?.items.find((item) => item.label === 'About')?.aboutProfile
+        ?.location,
+    ).toBe('Paris, France');
   });
 });
 

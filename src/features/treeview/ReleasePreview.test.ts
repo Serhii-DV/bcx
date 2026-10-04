@@ -4,9 +4,11 @@ import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import {
+  createReleaseDetailsTree,
   createReleaseInformation,
   releaseCollectionStatus,
 } from './ReleasePreview';
+import { TreeData } from './TreeData';
 
 function album() {
   return Album.create(
@@ -74,6 +76,25 @@ describe('release information', () => {
       'Second',
     ]);
     expect(release.tracks[0].title).toBe('Second');
+    const tree = createReleaseDetailsTree(
+      new TreeData([
+        { label: 'Copy' },
+        { label: 'Artists' },
+        { label: '2026' },
+        { label: 'Tags' },
+      ]),
+      info,
+      release.url.toString(),
+    );
+    expect(tree.items.map((item) => item.label)).toEqual([
+      'Tracks',
+      'About this release',
+      'Credits',
+    ]);
+    expect(tree.items.map((item) => item.open)).toEqual([true, false, false]);
+    expect(tree.items[0].children?.[0].href).toBe(
+      'https://artist.bandcamp.com/track/first',
+    );
   });
 
   it('does not label incomplete track durations as a total', () => {

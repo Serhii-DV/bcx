@@ -8,6 +8,7 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
+import BcxPreviewActions from './BcxPreviewActions.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
 import { createItemUrl } from './itemUrl';
 
@@ -25,14 +26,24 @@ let {
   error?: string;
 } = $props();
 let previewUrl = $derived.by(() => {
-  const url = createItemUrl(
-    bandUrl ??
-      about.children?.find((item) => item.label === 'Open Bandcamp catalog')
-        ?.href,
-  );
+  const url = createItemUrl(bandUrl ?? about.aboutProfile?.url);
   return url ? BandcampUrlFactory.createBandUrl(url) : undefined;
 });
 let profile = $derived(about.aboutProfile);
+let expandedBiography = $state(false);
+const componentId = $props.id();
+const biographyId = `${componentId}-biography`;
+const BIOGRAPHY_PREVIEW_LENGTH = 220;
+let biography = $derived(profile?.biography?.trim());
+let longBiography = $derived(
+  (biography?.length ?? 0) > BIOGRAPHY_PREVIEW_LENGTH,
+);
+let biographyPreview = $derived(
+  biography
+    ?.slice(0, BIOGRAPHY_PREVIEW_LENGTH)
+    .replace(/\s+\S*$/, '')
+    .trimEnd(),
+);
 let location = $derived(profile?.location || fallbackLocation);
 let flagCode = $derived(
   countryFlagCodeFromLocation(location) ??
@@ -49,23 +60,44 @@ let treeData = $derived(
   {/if}
 {/snippet}
 
+{#snippet biographyContent()}
+  {#if biography}
+    <div class="band-biography">
+      <p id={biographyId}>{expandedBiography || !longBiography ? biography : `${biographyPreview}…`}</p>
+      {#if longBiography}<button type="button" aria-expanded={expandedBiography} aria-controls={biographyId} onclick={() => { expandedBiography = !expandedBiography; }}>{expandedBiography ? 'Show less' : 'Read more'}</button>{/if}
+    </div>
+  {/if}
+{/snippet}
+
 <BcxItemDetailsLayout
   image={profile?.image}
   imageAlt={`${profile?.name ?? 'Band'} profile`}
   heading={profile?.name ?? about.label ?? 'Band'}
   subheading={location}
   subheadingPrefix={flagCode ? locationFlag : undefined}
+  compactImage={true}
+  details={biographyContent}
   {treeData}
   detailsLabel="Detailed band information"
   {loading}
   loadingMessage="Loading saved band details…"
   {error}
 >
-  {#if previewUrl}<BcxPreviewLink url={previewUrl} image={profile?.image} name={profile?.name ?? about.label ?? 'Band'} title={`Open band page on Bandcamp: ${profile?.name ?? about.label ?? 'Band'}`} />{/if}
   {#if profile?.following}<span class="following-badge">Following</span>{/if}
+  {#if previewUrl}
+    <div class="band-actions">
+      <BcxPreviewLink url={previewUrl} name="Open on Bandcamp" plain={true} title={`Open band page on Bandcamp: ${profile?.name ?? about.label ?? 'Band'}`} />
+      <BcxPreviewActions label="More band actions" items={[{ label: 'Copy Bandcamp URL', value: previewUrl.toString() }]} />
+    </div>
+  {/if}
 </BcxItemDetailsLayout>
 
 <style>
 .location-flag { --CountryFlagIcon-height: 1.25rem; flex-shrink: 0; }
 .following-badge { display: block; width: fit-content; margin-top: 0.375rem; border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
+.band-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.375rem; }
+.band-biography { padding: 0 1rem 0.75rem; font-size: 0.8125rem; line-height: 1.5; }
+.band-biography p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.band-biography button { margin-top: 0.25rem; padding: 0; border: 0; background: transparent; color: #7dd3fc; cursor: pointer; }
+.band-biography button:focus-visible { outline: 1px solid #38bdf8; outline-offset: 2px; }
 </style>

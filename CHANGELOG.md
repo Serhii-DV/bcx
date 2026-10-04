@@ -6,12 +6,12 @@
 
 - Added a minimal Activity log with timestamped Sync, availability, and Storage messages in a flat, newest-first list. Includes live progress, subtle warnings/errors, plain-text Copy, Clear, and Show automatic activity; Sync and Storage link to the general log. An info popover explains automatic cleanup, retention limits, and manual clearing; it uses native browser opening and viewport positioning to avoid invisible floating content when clicked. Logs stay local with seven-day, 200-operation, and 256 KB limits, preserve existing records, and do not trigger storage-history captures.
 
-- Shared the Band panel’s catalog tabs with Band previews, opening an "About [Band]" tab first, followed by Releases and the existing catalog tabs. Preserved filtering, sorting, release details, and an empty state for bands without saved releases. About shows full band information and a Bandcamp link in both views, including for large catalogs.
+- Shared the Band panel’s catalog tabs with Band previews, opening an "About [Band]" tab first, followed by Releases and the existing catalog tabs. Preserved filtering, sorting, release details, and an empty state for bands without saved releases. About shows a compact profile, location, expandable biography, collapsed website/social links, and one Bandcamp action in both views, including for large catalogs.
 
 - Added a Storage tab with measured usage, category sizes and entry counts, storage quotas, and manual refresh for local data, session memory, and Chrome sync storage. Daily history retains the latest measurement for 365 days, with size, category, and entry-count charts and 30/90/365-day filters. Current and History share a navigation bar with History filters before a right-aligned Refresh action for the active view; controls wrap on narrow panels. Current usage includes horizontal category bars with consistent colors across both views. Storage uses the shared subnavigation layout with icons and independently scrolling content. Nested tabs select the Current storage area and History chart, retaining selections when switching views.
 
 - Added responsive side-panel tabs, per-tab filters, contextual page headers, and a resizable preview pane that remembers its size.
-- Added band and release previews with artwork, metadata, release and collection-added dates, and direct Bandcamp links.
+- Added band and release previews with artwork and direct Bandcamp links. Release previews prioritize the title and linked artist, with a compact year/type/track-count/duration summary, expandable tags, collection/wishlist badges, and price. Exact release dates are available on hover/focus; tracklists stay accessible while notes and credits start collapsed. Copy actions use compact menus, and duplicate links and administrative metadata are omitted.
 - Expanded release browsing with artist and year catalogs, sorting options, and full Artist/Label, Wishlist, and Following Bands lists.
 - Added a shared Sync tab for fan data, preserving saved library data and exposing unavailable releases and former follows.
 - Added Following Bands grouping by follow date and country, with country flags and sorting options.
@@ -22,7 +22,7 @@
 
 - Release previews inside Band previews now remember their own height, so resizing them no longer resizes the parent Band preview.
 
-- Shortened the preview release link to "Release" and added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.
+- Added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.
 
 - Fixed missing artwork placeholders in TreeBrowser release and band rows, including History entries without saved artwork. History also recognizes `/artists` pages as band entries and previews saved band details from the root Bandcamp URL.
 

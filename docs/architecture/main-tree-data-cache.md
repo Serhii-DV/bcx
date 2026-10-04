@@ -121,7 +121,10 @@ are still rebuilt from raw album data, and Collection release pagination is reta
 resizable details area for releases and followed bands. Release details retain
 their existing renderer; band details read `BandcampStorage` only on selection.
 Following-list identity, artwork, and location provide the fallback when no band
-is saved. Saved catalog counts describe locally available releases.
+is saved. Band About shows a compact profile, expandable biography, and collapsed
+external links. Release previews place summary metadata, tags, library badges,
+and copy actions in the header; the details tree contains the tracklist and
+collapsed release notes and credits.
 
 Following Bands snapshots include serializable `bandPreview` identities rather
 than callbacks or copies of full cached catalogs. Snapshot version 11 invalidates

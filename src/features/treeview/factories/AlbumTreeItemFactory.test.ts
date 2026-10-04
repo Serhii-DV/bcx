@@ -6,6 +6,7 @@ import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { storage } from 'src/core/shared';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
 import { AlbumTreeItemFactory } from './AlbumTreeItemFactory';
@@ -41,24 +42,14 @@ describe('release previews', () => {
     expect(item.previewInformation?.title).toBe('Release');
   });
 
-  it('shows the existing summary when the release is not stored', async () => {
+  it('shows header information without duplicate tree rows when the release is not stored', async () => {
     rs.spyOn(BandcampStorage, 'getAlbumsRawDataByIds').mockResolvedValue([]);
     const preview =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(preview?.layout).toBe(TREE_ITEM_LAYOUT.TREE);
     expect(preview?.information.title).toBe('Release');
-    expect(preview?.items.map((item) => item.label)).toEqual([
-      ...(AlbumTreeItemFactory.createWithSummary(album)
-        .children?.filter(
-          (item) =>
-            item.label !== 'Filter' && item.href !== album.url.toString(),
-        )
-        .map((item) => item.label) ?? []),
-      'Links',
-    ]);
-    expect(
-      preview?.items.find((item) => item.label === 'Links')?.children?.[0].href,
-    ).toBe(album.url.toString());
+    expect(preview?.information.artist).toBe('Artist');
+    expect(preview?.items).toEqual([]);
   });
 
   it('uses hydrated stored data and includes release notes in the tree', async () => {
@@ -69,7 +60,7 @@ describe('release previews', () => {
       album.id,
       album.artwork.id,
       album.bandId,
-      [],
+      [TrackFactory.create(1, 1, 'Artist', 'First', 1)],
       Metadata.create(
         Price.create(0, 'EUR'),
         '',

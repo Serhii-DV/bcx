@@ -52,17 +52,17 @@ describe('Artist/Label release browser', () => {
           data?.items.find((item) => item.label === 'Releases')?.loadChildren,
         ).toBeDefined();
       }
-      expect(about?.children?.map((item) => item.label)).toContain(
-        'Location: Paris, France',
-      );
-      expect(about?.children?.map((item) => item.label)).toContain(
-        'Independent label.',
-      );
+      expect(about?.aboutProfile).toMatchObject({
+        url: band.url.toString(),
+        location: 'Paris, France',
+        biography: 'Independent label.',
+      });
       expect(
-        about?.children?.find(
-          (item) => item.label === 'Websites & social links',
-        )?.children?.[0].href,
+        about?.children?.find((item) => item.label === 'Links')?.children?.[0]
+          .href,
       ).toBe('https://example.com/');
+      expect(about?.children?.map((item) => item.label)).toEqual(['Links']);
+      expect(about?.children?.[0].open).toBe(false);
     }
   });
   it('filters artist and year groups while preserving releases after cache restoration', async () => {
@@ -197,19 +197,17 @@ describe('Artist/Label release browser', () => {
     const about = data?.items.find((item) => item.label === 'About');
     expect(about?.aboutProfile).toEqual({
       name: 'Label',
+      url: band.url.toString(),
       image: undefined,
       location: undefined,
+      biography: undefined,
     });
     expect(
       createRootSectionTabs(data?.items ?? []).some(
         (tab) => tab.label === 'Tags',
       ),
     ).toBe(true);
-    expect(
-      about?.children?.some(
-        (item) => item.label === 'Loaded catalog: 0 albums, 0 track releases',
-      ),
-    ).toBe(true);
+    expect(about?.children).toEqual([]);
   });
 
   it('refreshes About information and artwork after reading an older cached tree', async () => {
@@ -230,11 +228,8 @@ describe('Artist/Label release browser', () => {
       false,
     );
     expect(about?.[0].aboutProfile?.image).toBe(band.artwork.mediumSizeUrl);
-    expect(
-      about?.[0].children?.some(
-        (item) => item.label === 'Loaded catalog: 1 albums, 0 track releases',
-      ),
-    ).toBe(true);
+    expect(about?.[0].aboutProfile?.url).toBe(band.url.toString());
+    expect(about?.[0].children).toEqual([]);
     expect(
       about?.[0].children?.some((item) =>
         ['Artists in catalog', 'Genres and tags'].includes(item.label ?? ''),

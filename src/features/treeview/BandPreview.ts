@@ -8,7 +8,7 @@ import { BandTreeItem } from './items/BandTreeItem';
 import { createBandTreeData } from './sections/BandSidePanelSection';
 import type { TreeData } from './TreeData';
 import type { TreeItem } from './TreeItem';
-import { copyable, items, linkOpenPage, text } from './TreeItemBuilder';
+import { items, linkOpen, text } from './TreeItemBuilder';
 
 export interface BandPreview {
   id?: number;
@@ -80,19 +80,30 @@ export async function loadBandAbout(fallback: BandPreview): Promise<TreeItem> {
 export function createBandAboutFallback(fallback: BandPreview): TreeItem {
   return {
     ...items('About', [
-      ...(fallback.location ? [text(`Location: ${fallback.location}`)] : []),
-      linkOpenPage('Open Bandcamp catalog', fallback.url),
-      copyable('Copy Bandcamp URL', fallback.url),
-      text(
-        'No saved band details yet. Open the band’s Bandcamp page to explore its catalog.',
-      ),
+      ...(fallback.links?.length
+        ? [
+            items(
+              'Links',
+              fallback.links.map((link) => linkOpen(link.label, link.url)),
+            ),
+          ]
+        : []),
+      ...(!fallback.cached
+        ? [
+            text(
+              'No saved band details yet. Open the band’s Bandcamp page to explore its catalog.',
+            ),
+          ]
+        : []),
     ])
       .asTree()
       .build(),
     aboutProfile: {
       name: fallback.name,
+      url: fallback.url,
       image: fallback.image,
       location: fallback.location,
+      biography: fallback.biography,
       following: fallback.following,
     },
   };
