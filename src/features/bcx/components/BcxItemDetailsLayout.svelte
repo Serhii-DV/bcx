@@ -47,7 +47,7 @@ let {
 let failedImage = $state<string>();
 </script>
 
-<div class="item-details" class:compact-image={compactImage} style:--item-heading-size={`${headingSize}rem`} style:--item-subheading-size={`${subheadingSize}rem`}>
+<div class="item-details" class:compact-image={compactImage} class:with-panels={!!panels} style:--item-heading-size={`${headingSize}rem`} style:--item-subheading-size={`${subheadingSize}rem`}>
   <header class="item-details-header">
     {#if !compactImage || (image && image !== failedImage)}
       {#if image && image !== failedImage}
@@ -81,6 +81,9 @@ let failedImage = $state<string>();
 
 <style>
 .item-details { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 100%; }
+.item-details.with-panels { min-height: 0; overflow: hidden; }
+.with-panels .item-details-header { flex-shrink: 0; }
+.with-panels .item-details-tree { flex: 1 1 0%; min-height: 0; overflow: hidden; }
 .item-details-header { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; }
 .item-details-image { width: min(12rem, 40%); aspect-ratio: 1; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
 .compact-image .item-details-image { width: min(5rem, 25%); }

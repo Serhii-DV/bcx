@@ -19,6 +19,11 @@ import {
 } from './rootSectionTabs';
 
 const tabDescriptions: Record<string, { label?: string; title: string }> = {
+  'Release Info': { title: 'View release information, notes, and credits.' },
+  'Related releases': {
+    title:
+      'Browse locally saved releases by this release’s artists across Bandcamp.',
+  },
   All: { title: 'Browse all items in this section.' },
   Artists: { title: 'Browse releases grouped by artist.' },
   Releases: { title: 'Browse releases in this section.' },
@@ -70,6 +75,7 @@ let {
   previewSize,
   sortBands = false,
   aboutContent,
+  sectionContent,
   actions,
 }: {
   treeData: TreeData;
@@ -78,6 +84,7 @@ let {
   previewSize?: ItemPreviewSizeStore;
   sortBands?: boolean;
   aboutContent?: Snippet<[TreeItem]>;
+  sectionContent?: Snippet<[TreeItem]>;
   actions?: Snippet;
 } = $props();
 let rootVersion = $state(0);
@@ -380,8 +387,11 @@ function refreshTabs() {
     {#each tabs as tab (tab.id)}
       <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}
+          {@const root = displayedTreeData.items.find((item) => item.path === tab.id)}
           <div class="bcx-section-tree-browser">
-            {#if usesItemPreview(tab.id)}
+            {#if root && sectionContent}
+              {@render sectionContent(root)}
+            {:else if usesItemPreview(tab.id)}
               <BcxItemPreviewPanel {previewSize} treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
             {:else}
             {@const about = displayedTreeData.items.find((item) => item.path === tab.id)}

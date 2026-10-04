@@ -212,7 +212,7 @@ $effect(() => {
         <BcxBandPanel previewSize={bandReleasePreviewSize} treeData={bandTreeData} about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} bandUrl={selectedItem.bandPreview.url} {loading} {error} />
       {/key}
     {:else if selectedItem && information}
-      <div class="item-preview-panel-content">
+      <div class="item-preview-panel-content release-preview-content">
         {#key selectedItem}
           <BcxReleaseDetails item={selectedItem} {information} {preview} {loading} {error} />
         {/key}
@@ -233,6 +233,7 @@ $effect(() => {
 .item-preview-panel-resizer:hover, .item-preview-panel-resizer:focus-visible, .item-preview-panel.resizing .item-preview-panel-resizer { border-color: #38bdf8; background: rgb(56 189 248 / 0.12); outline: none; }
 .item-preview-panel-resizer:hover span, .item-preview-panel-resizer:focus-visible span, .item-preview-panel.resizing .item-preview-panel-resizer span { background: #7dd3fc; }
 .item-preview-panel-content { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.release-preview-content { flex: 1 1 0%; overflow: hidden; }
 h3 { margin: 0; padding: 0.5rem 1rem; font-size: 0.875rem; }
 p { padding: 0.5rem 1rem; font-size: 0.875rem; color: #d1d5db; }
 </style>

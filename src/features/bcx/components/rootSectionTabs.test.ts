@@ -48,6 +48,32 @@ describe('createRootSectionTabs', () => {
       { id: '3', label: 'Release years (2)', image: undefined },
     ]);
 
+    expect(
+      createRootSectionTabs([
+        {
+          path: 'release-info',
+          label: 'Release Info',
+          hasChildren: true,
+          showChildrenCount: false,
+        },
+        {
+          path: 'tracks',
+          label: 'Tracks',
+          children: [{ label: 'First track' }],
+        },
+        {
+          path: 'related-releases',
+          label: 'Related releases',
+          hasChildren: true,
+          showChildrenCount: false,
+        },
+      ]),
+    ).toEqual([
+      { id: 'release-info', label: 'Release Info', image: undefined },
+      { id: 'tracks', label: 'Tracks (1)', image: undefined },
+      { id: 'related-releases', label: 'Related releases', image: undefined },
+    ]);
+
     const grouped = new TreeData([
       {
         label: 'Followed by Year',
