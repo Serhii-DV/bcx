@@ -1,10 +1,19 @@
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
+import { Artist } from 'src/bandcamp/domain/artist/artist';
+import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
 import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
 import { Band } from 'src/bandcamp/domain/band/band';
+import {
+  readSavedItems,
+  validateItems,
+} from 'src/bandcamp/domain/fanData/library';
+import type { FollowingBandItem } from 'src/bandcamp/domain/page/PageCollection';
+import { urlCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
-import type { Url } from 'src/core/url';
+import { Url } from 'src/core/url';
 import { BandTreeItem } from './items/BandTreeItem';
+import type { ReleaseInformation } from './ReleasePreview';
 import { createBandTreeData } from './sections/BandSidePanelSection';
 import type { TreeData } from './TreeData';
 import type { TreeItem } from './TreeItem';
@@ -122,5 +131,121 @@ export async function loadBandLinkProfile(
       band.artwork.id > 0
         ? (band.artwork.getUrl(ArtworkSize.SMALL) ?? undefined)
         : undefined,
+  };
+}
+
+export interface BandLinkProfile {
+  name: string;
+  url: Url;
+  image?: string;
+}
+
+export async function loadReleaseBandLinks(
+  information: ReleaseInformation,
+  releaseUrl?: Url,
+): Promise<{ artists: BandLinkProfile[]; publisher?: BandLinkProfile }> {
+  const normalize = (name: string) => name.trim().toLowerCase();
+  const artistNames = new Set(
+    [information.artist, ...Artist.parse(information.artist).names].map(
+      normalize,
+    ),
+  );
+  const publisherName = normalize(information.publisher ?? '');
+  const [bands, following] = await Promise.all([
+    BandcampStorage.getAllCompressedBandData(),
+    readSavedItems<FollowingBandItem>('following-bands'),
+  ]);
+  // The name index keeps only one ID per name. Read band profiles directly so
+  // multiple saved pages are available without hydrating their release catalogs.
+  const saved: BandLinkProfile[] = bands
+    .filter(
+      (band) =>
+        typeof band.n === 'string' &&
+        typeof band.u === 'string' &&
+        (artistNames.has(normalize(band.n)) ||
+          normalize(band.n) === publisherName),
+    )
+    .map((band) => ({
+      name: band.n,
+      url: BandcampUrlFactory.createBandUrl(
+        Url.create(urlCompressor.decompress(band.u)),
+      ),
+      image:
+        Number.isSafeInteger(band.a) && band.a > 0
+          ? Artwork.createForBand(band.a).smallSizeUrl
+          : undefined,
+    }));
+  validateItems('following-bands', following);
+  for (const item of following) {
+    if (
+      !artistNames.has(normalize(item.name)) &&
+      normalize(item.name) !== publisherName
+    )
+      continue;
+    saved.push({
+      name: item.name,
+      url: Url.create(
+        BandcampUrlFactory.generateBandUrlFromSubdomain(
+          item.url_hints.subdomain,
+        ),
+      ),
+      image:
+        typeof item.image_id === 'number' &&
+        Number.isSafeInteger(item.image_id) &&
+        item.image_id > 0
+          ? Artwork.createForBand(item.image_id).smallSizeUrl
+          : undefined,
+    });
+  }
+
+  function bandUrl(value?: string): Url | undefined {
+    const link = releaseLink(value);
+    if (!link) return undefined;
+    const url = Url.create(link);
+    if (url.hostname === 'bandcamp.com' || url.hostname === 'www.bandcamp.com')
+      return undefined;
+    url.protocol = 'https:';
+    return BandcampUrlFactory.createBandUrl(url);
+  }
+  async function profile(url: Url, name: string): Promise<BandLinkProfile> {
+    const stored = saved.find((band) => band.url.hasSameHostname(url));
+    return stored ?? { url, name, ...(await loadBandLinkProfile(url)) };
+  }
+
+  const distinctPublisher = !!publisherName && !artistNames.has(publisherName);
+  const publisherUrl =
+    bandUrl(information.publisherUrl) ??
+    saved.find((band) => normalize(band.name) === publisherName)?.url ??
+    (distinctPublisher ? bandUrl(releaseUrl?.toString()) : undefined);
+  let publisher =
+    distinctPublisher && publisherUrl
+      ? await profile(publisherUrl, information.publisher ?? '')
+      : undefined;
+  const artists = saved.filter((band) => artistNames.has(normalize(band.name)));
+  const explicitArtistUrl = bandUrl(information.artistUrl);
+  const artistUrl =
+    explicitArtistUrl ??
+    (!distinctPublisher ? bandUrl(releaseUrl?.toString()) : undefined);
+  if (
+    artistUrl &&
+    (!publisherUrl ||
+      !distinctPublisher ||
+      !artistUrl.hasSameHostname(publisherUrl))
+  ) {
+    const artist = await profile(artistUrl, information.artist);
+    if (explicitArtistUrl || artistNames.has(normalize(artist.name))) {
+      artists.unshift(artist);
+    } else {
+      // A saved hosting band may be a label when publisher metadata is absent.
+      publisher ??= artist;
+    }
+  }
+  return {
+    artists: artists.filter(
+      (band, index) =>
+        artists.findIndex((other) => other.url.hasSameHostname(band.url)) ===
+        index,
+    ),
+    publisher,
   };
 }

@@ -124,7 +124,8 @@ async function handleCloseAutoFocus(event: Event) {
   <span class="bcx-tab-label">{tabLabelText(tab)}</span>
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs" class:wrap-actions={wrapActions}>
+<div bind:this={bar} class="bcx-section-tabs" class:wrap-actions={wrapActions} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
+  {#if tabs.length}
   <Tabs.List class="bcx-visible-tabs" aria-label={label}>
     {#each visibleTabs as tab (tab.id)}
       {#if tab.sortOptions}
@@ -155,6 +156,7 @@ async function handleCloseAutoFocus(event: Event) {
       {/if}
     {/each}
   </Tabs.List>
+  {/if}
   {#if hiddenTabs.length}
     <DropdownMenu.Root>
       <DropdownMenu.Trigger class="bcx-section-tab bcx-more-tabs" aria-label="More sections" title="More sections">

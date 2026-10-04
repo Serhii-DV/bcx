@@ -14,6 +14,7 @@ export interface ReleaseInformation {
   publisher?: string;
   publisherUrl?: string;
   date?: string;
+  modifiedDate?: string;
   releaseYear?: number;
   releaseType?: string;
   price?: string;
@@ -111,6 +112,10 @@ export function createReleaseInformation(album: Album): ReleaseInformation {
       metadata && Number.isFinite(metadata.published.getTime())
         ? metadata.publishedDate
         : undefined,
+    modifiedDate:
+      metadata && Number.isFinite(metadata.modified.getTime())
+        ? metadata.modifiedDate
+        : undefined,
     releaseYear: Number.isFinite(parsed.releaseYear)
       ? parsed.releaseYear
       : undefined,
@@ -153,6 +158,10 @@ export function createTrackInformation(track: Track): ReleaseInformation {
     date:
       metadata && Number.isFinite(metadata.published.getTime())
         ? metadata.publishedDate
+        : undefined,
+    modifiedDate:
+      metadata && Number.isFinite(metadata.modified.getTime())
+        ? metadata.modifiedDate
         : undefined,
     releaseType: 'Track',
     price:

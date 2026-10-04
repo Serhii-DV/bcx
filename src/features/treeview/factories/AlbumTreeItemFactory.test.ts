@@ -2,12 +2,14 @@ import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
+import { Band } from 'src/bandcamp/domain/band/band';
 import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { storage } from 'src/core/shared';
+import { loadReleaseBandLinks } from '../BandPreview';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
 import { AlbumTreeItemFactory } from './AlbumTreeItemFactory';
 
@@ -50,6 +52,12 @@ describe('release previews', () => {
     expect(preview?.information.title).toBe('Release');
     expect(preview?.information.artist).toBe('Artist');
     expect(preview?.items).toEqual([]);
+    const getBands = rs.spyOn(BandcampStorage, 'getBands');
+    const links = await loadReleaseBandLinks(preview!.information, album.url);
+    expect(links.artists.map((band) => band.url.toString())).toEqual([
+      'https://artist.bandcamp.com/',
+    ]);
+    expect(getBands).not.toHaveBeenCalled();
   });
 
   it('uses hydrated stored data and includes release notes in the tree', async () => {
@@ -63,13 +71,15 @@ describe('release previews', () => {
       [TrackFactory.create(1, 1, 'Artist', 'First', 1)],
       Metadata.create(
         Price.create(0, 'EUR'),
-        '',
+        'Label',
         '2024-01-02',
-        '2024-01-02',
+        '2024-02-03',
         [],
         {
           description: 'About the release',
           credits: 'Credits text',
+          artistUrl: 'https://artist.bandcamp.com/',
+          publisherUrl: 'https://label.bandcamp.com/',
         },
       ),
     );
@@ -90,6 +100,63 @@ describe('release previews', () => {
       preview?.items.find((item) => item.label === 'Credits')?.children?.[0]
         .label,
     ).toBe('Credits text');
+    expect(preview?.information.modifiedDate).toBe('2024-02-03');
+    const artist = Band.create(
+      11,
+      'Artist',
+      'https://artist.bandcamp.com/',
+      21,
+    );
+    const label = Band.create(12, 'Label', 'https://label.bandcamp.com/', 22);
+    await BandcampStorage.saveBand(artist);
+    await BandcampStorage.saveBand(
+      Band.create(14, 'Artist', 'https://artist-saved.bandcamp.com/', 24),
+    );
+    await BandcampStorage.saveBand(label);
+    await storage.set({
+      '/following-bands': [
+        {
+          band_id: 13,
+          name: 'ARTIST',
+          image_id: 23,
+          url_hints: { subdomain: 'artist-other' },
+          date_followed: '2024-01-01',
+        },
+        {
+          band_id: 11,
+          name: 'Artist',
+          image_id: 21,
+          url_hints: { subdomain: 'artist' },
+          date_followed: '2024-01-01',
+        },
+      ],
+    });
+    const links = await loadReleaseBandLinks(preview!.information, stored.url);
+    expect(links.artists.map((band) => band.url.toString())).toEqual([
+      'https://artist.bandcamp.com/',
+      'https://artist-saved.bandcamp.com/',
+      'https://artist-other.bandcamp.com/',
+    ]);
+    expect(links.artists[0].image).toBe(artist.artwork.smallSizeUrl);
+    expect(links.artists[1].image).toContain('/img/24_');
+    expect(links.artists[2].image).toContain('/img/23_');
+    expect(links.publisher).toEqual({
+      name: 'Label',
+      url: label.url,
+      image: label.artwork.smallSizeUrl,
+    });
+    const labelHosted = await loadReleaseBandLinks(
+      {
+        ...preview!.information,
+        artistUrl: label.url.toString(),
+      },
+      stored.url,
+    );
+    expect(labelHosted.artists.map((band) => band.name)).toEqual([
+      'Artist',
+      'Artist',
+      'ARTIST',
+    ]);
   });
 
   it('propagates storage failures instead of presenting a missing-data summary', async () => {

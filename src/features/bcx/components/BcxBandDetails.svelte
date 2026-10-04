@@ -1,6 +1,5 @@
 <script lang="ts">
 import 'country-flag-icons/3x2/flags.css';
-import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { createTreeDataFromTreeItemChildren } from 'src/features/treeview/sections/treeDataFactory';
 import {
   TREE_ITEM_LAYOUT,
@@ -8,14 +7,10 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
-import BcxPreviewActions from './BcxPreviewActions.svelte';
-import BcxPreviewLink from './BcxPreviewLink.svelte';
-import { createItemUrl } from './itemUrl';
 
 let {
   about,
   fallbackLocation,
-  bandUrl,
   loading = false,
   error = '',
 }: {
@@ -25,10 +20,6 @@ let {
   loading?: boolean;
   error?: string;
 } = $props();
-let previewUrl = $derived.by(() => {
-  const url = createItemUrl(bandUrl ?? about.aboutProfile?.url);
-  return url ? BandcampUrlFactory.createBandUrl(url) : undefined;
-});
 let profile = $derived(about.aboutProfile);
 let expandedBiography = $state(false);
 const componentId = $props.id();
@@ -84,18 +75,11 @@ let treeData = $derived(
   {error}
 >
   {#if profile?.following}<span class="following-badge">Following</span>{/if}
-  {#if previewUrl}
-    <div class="band-actions">
-      <BcxPreviewLink url={previewUrl} name="Open on Bandcamp" plain={true} title={`Open band page on Bandcamp: ${profile?.name ?? about.label ?? 'Band'}`} />
-      <BcxPreviewActions label="More band actions" items={[{ label: 'Copy Bandcamp URL', value: previewUrl.toString() }]} />
-    </div>
-  {/if}
 </BcxItemDetailsLayout>
 
 <style>
 .location-flag { --CountryFlagIcon-height: 1.25rem; flex-shrink: 0; }
 .following-badge { display: block; width: fit-content; margin-top: 0.375rem; border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
-.band-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.375rem; }
 .band-biography { padding: 0 1rem 0.75rem; font-size: 0.8125rem; line-height: 1.5; }
 .band-biography p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
 .band-biography button { margin-top: 0.25rem; padding: 0; border: 0; background: transparent; color: #7dd3fc; cursor: pointer; }

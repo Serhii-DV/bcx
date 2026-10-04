@@ -70,6 +70,7 @@ let {
   previewSize,
   sortBands = false,
   aboutContent,
+  actions,
 }: {
   treeData: TreeData;
   label: string;
@@ -77,6 +78,7 @@ let {
   previewSize?: ItemPreviewSizeStore;
   sortBands?: boolean;
   aboutContent?: Snippet<[TreeItem]>;
+  actions?: Snippet;
 } = $props();
 let rootVersion = $state(0);
 let yearSort = $state<FollowingBandYearSort>('newest');
@@ -374,7 +376,7 @@ function refreshTabs() {
 
 {#if tabs.length}
   <Tabs.Root bind:value={selectedRoot} class="bcx-panel-body">
-    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} />
+    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} {actions} />
     {#each tabs as tab (tab.id)}
       <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}

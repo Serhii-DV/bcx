@@ -2,17 +2,21 @@
 import { ImageOff } from '@lucide/svelte';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { Snippet } from 'svelte';
+import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeView from './BcxTreeView.svelte';
 
 let {
   image,
   imageAlt,
   heading,
+  headingSize = 2.2,
+  subheadingSize = 1.75,
   subheading,
   subheadingPrefix,
   subheadingContent,
   compactImage = false,
   details,
+  actions,
   treeData,
   detailsLabel,
   loading = false,
@@ -23,11 +27,14 @@ let {
   image?: string;
   imageAlt: string;
   heading: string;
+  headingSize?: number;
+  subheadingSize?: number;
   subheading?: string;
   subheadingPrefix?: Snippet;
   subheadingContent?: Snippet;
   compactImage?: boolean;
   details?: Snippet;
+  actions?: Snippet;
   treeData: TreeData;
   detailsLabel: string;
   loading?: boolean;
@@ -38,7 +45,7 @@ let {
 let failedImage = $state<string>();
 </script>
 
-<div class="item-details" class:compact-image={compactImage}>
+<div class="item-details" class:compact-image={compactImage} style:--item-heading-size={`${headingSize}rem`} style:--item-subheading-size={`${subheadingSize}rem`}>
   <header class="item-details-header">
     {#if !compactImage || (image && image !== failedImage)}
       {#if image && image !== failedImage}
@@ -60,6 +67,7 @@ let failedImage = $state<string>();
     {#if loading}<p role="status">{loadingMessage}</p>{/if}
     {#if error}<p role="alert">{error}</p>{/if}
     {@render details?.()}
+    {#if actions}<BcxSectionTabs tabs={[]} value="" label={`${detailsLabel} actions`} {actions} wrapActions={true} />{/if}
     {#if treeData.items.length}
       {#key treeData}
         <BcxTreeView {treeData} showFilter={false} />
@@ -75,8 +83,8 @@ let failedImage = $state<string>();
 .compact-image .item-details-image { width: min(5rem, 25%); }
 .item-details-placeholder { display: flex; align-items: center; justify-content: center; border: 1px dashed rgb(156 163 175 / 30%); background: #293548; color: #9ca3af; }
 .item-details-heading { min-width: 0; flex: 1 1 0%; overflow-wrap: anywhere; font-size: 0.8125rem; }
-.item-details-primary { margin: 0 0 0.375rem; font-size: 1.4rem; font-weight: 500; line-height: 1.2; }
-.item-details-secondary { margin: 0 0 0.375rem; font-size: 1rem; line-height: 1.4; }
+.item-details-primary { margin: 0 0 0.5rem; font-size: var(--item-heading-size); font-weight: 300; line-height: 1.1; letter-spacing: 0.01em; }
+.item-details-secondary { margin: 0 0 0.25rem; font-size: var(--item-subheading-size); font-weight: 300; line-height: 1.2; letter-spacing: 0.01em; }
 .item-details-secondary.withPrefix { display: flex; align-items: center; gap: 0.5rem; }
 .item-details-tree { display: flex; flex: 1 1 20rem; flex-direction: column; }
 p { margin: 0; padding: 0.5rem 1rem; font-size: 0.8125rem; }

@@ -122,9 +122,15 @@ resizable details area for releases and followed bands. Release details retain
 their existing renderer; band details read `BandcampStorage` only on selection.
 Following-list identity, artwork, and location provide the fallback when no band
 is saved. Band About shows a compact profile, expandable biography, and collapsed
-external links. Release previews place summary metadata, tags, library badges,
-and copy actions in the header; the details tree contains the tracklist and
-collapsed release notes and credits.
+external links, with Bandcamp and Copy actions in the catalog tab bar. Release
+previews keep the original artist/title/year typography and place navigation and
+copy actions in the shared tab-panel toolbar between the header and tracklist.
+Artist links resolve from explicit release metadata, saved band names, and saved
+Following Bands records; Search artist remains a separate action. Link artwork
+comes from the release or saved band profile. Copy menus show the exact clipboard
+text and briefly replace the copy icon with a checkmark after success. Summary
+metadata, release/modification dates, tags, and library badges stay in the header;
+the details tree contains the tracklist and collapsed release notes and credits.
 
 Following Bands snapshots include serializable `bandPreview` identities rather
 than callbacks or copies of full cached catalogs. Snapshot version 11 invalidates

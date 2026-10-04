@@ -26,6 +26,7 @@ describe('release information', () => {
     const info = createReleaseInformation(album());
     expect(info.price).toBeUndefined();
     expect(info.date).toBeUndefined();
+    expect(info.modifiedDate).toBeUndefined();
     expect(info.duration).toBeUndefined();
     expect(info.collectionStatus).toEqual([]);
   });
@@ -36,7 +37,7 @@ describe('release information', () => {
       Price.create(5, 'EUR'),
       'Label',
       '2026-01-02',
-      '2026-01-02',
+      '2026-02-03',
       ['ambient', 'ambient'],
       {
         description: 'Liner notes',
@@ -62,6 +63,7 @@ describe('release information', () => {
     const info = createReleaseInformation(release);
     expect(info).toMatchObject({
       date: '2026-01-02',
+      modifiedDate: '2026-02-03',
       releaseYear: 2026,
       price: 'From 5 EUR',
       publisher: 'Label',
@@ -123,6 +125,7 @@ describe('release information', () => {
     expect(createReleaseInformation(release)).toMatchObject({
       price: undefined,
       date: undefined,
+      modifiedDate: undefined,
       artistUrl: undefined,
       publisherUrl: undefined,
     });
