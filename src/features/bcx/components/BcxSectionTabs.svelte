@@ -151,7 +151,7 @@ async function handleCloseAutoFocus(event: Event) {
           </DropdownMenu.Root>
         </div>
       {:else if tab.onClose}
-        <div class="bcx-closable-tab-group">
+        <div class="bcx-closable-tab-group" class:active={value === tab.id} role="group" aria-label={tab.label}>
           <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
             {@render tabLabel(tab)}
           </Tabs.Trigger>
@@ -208,7 +208,7 @@ async function handleCloseAutoFocus(event: Event) {
             <span class="bcx-section-tab bcx-sort-button"><ChevronDown size={14} /></span>
           </span>
         {:else if tab.onClose}
-          <span class="bcx-closable-tab-group">
+          <span class="bcx-closable-tab-group" class:active={value === tab.id}>
             <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
             <span class="bcx-section-tab bcx-tab-close"><X size={14} /></span>
           </span>
@@ -294,7 +294,20 @@ async function handleCloseAutoFocus(event: Event) {
     flex: 0 1 auto;
     gap: 2px;
   }
-  .bcx-closable-tab-group { display: inline-flex; min-width: 0; max-width: 224px; flex: 0 1 auto; }
+  .bcx-closable-tab-group {
+    display: inline-flex;
+    min-width: 0;
+    max-width: 224px;
+    flex: 0 1 auto;
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    background: rgb(17 24 39 / 60%);
+  }
+  .bcx-closable-tab-group.active { border-color: #6b7280; background: #374151; }
+  .bcx-closable-tab-group :global(.bcx-section-tab:not(.bcx-tab-close)) { flex: 1 1 auto; border-radius: 5px 0 0 5px; }
+  .bcx-closable-tab-group :global(.bcx-tab-close) { border-left: 1px solid #4b5563; border-radius: 0 5px 5px 0; }
+  .bcx-closable-tab-group.active :global(.bcx-section-tab) { color: #f9fafb; }
+  .bcx-closable-tab-group :global(.bcx-section-tab[data-state='active']) { box-shadow: none; }
   :global(.bcx-tab-close) { flex: 0 0 24px; justify-content: center; padding-inline: 4px; }
   .bcx-overflow-tab-group { display: flex; align-items: center; }
   .bcx-overflow-tab-group :global(.bcx-section-menu-item:not(.bcx-close-menu-item)) { flex: 1 1 0%; min-width: 0; }
