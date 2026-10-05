@@ -282,7 +282,7 @@ let dates = $derived(
 
 {#snippet releasePanel(root: TreeItem)}
   {#if root.pathKey === 'release-info'}
-    <div class="release-info-content">{@render releaseInfo()}</div>
+    <div class="release-info-content bcx-info-scroll">{@render releaseInfo()}</div>
   {:else if root.pathKey === 'credits'}
     <div class="release-info-content">
       <section class="release-notes" aria-label="Release credits"><h4>Credits</h4><p>{information.credits}</p></section>

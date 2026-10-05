@@ -22,6 +22,8 @@
 
 ### Patch Changes
 
+- Matched Release Info scrollbar styling to TreeBrowser, using the shared thin scrollbar with a transparent track and hover highlight.
+
 - Added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.
 
 - Fixed missing artwork placeholders in TreeBrowser release and band rows, including History entries without saved artwork. History also recognizes `/artists` pages as band entries and previews saved band details from the root Bandcamp URL.
