@@ -23,12 +23,14 @@ let {
   label = 'Music Explorer sections',
   actions,
   wrapActions = false,
+  vertical = false,
 }: {
   tabs: SectionTab[];
   value: string;
   label?: string;
   actions?: Snippet;
   wrapActions?: boolean;
+  vertical?: boolean;
 } = $props();
 let bar = $state<HTMLDivElement>();
 let actionsElement = $state<HTMLDivElement>();
@@ -53,6 +55,10 @@ $effect(() => {
   const barElement = bar;
   if (!barElement) return;
   const currentTabs = tabs;
+  if (vertical) {
+    visibleIds = currentTabs.map((tab) => tab.id);
+    return;
+  }
   const currentActions = actionsElement;
   const activeId =
     currentTabs.find((tab) =>
@@ -125,7 +131,7 @@ async function handleCloseAutoFocus(event: Event) {
   <span class="bcx-tab-label">{tabLabelText(tab)}</span>
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs" class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
+<div bind:this={bar} class="bcx-section-tabs" class:vertical class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
   {#if tabs.length}
   <Tabs.List class="bcx-visible-tabs" aria-label={label}>
     {#each visibleTabs as tab (tab.id)}
@@ -360,4 +366,13 @@ async function handleCloseAutoFocus(event: Event) {
     display: flex;
     width: max-content;
   }
+  .bcx-section-tabs.vertical {
+    flex: 0 0 11rem;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .vertical :global(.bcx-visible-tabs) { flex-direction: column; flex-shrink: 0; overflow: visible; }
+  .vertical :global(.bcx-visible-tabs > .bcx-section-tab) { max-width: none; justify-content: flex-start; }
 </style>

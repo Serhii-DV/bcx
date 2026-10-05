@@ -77,6 +77,7 @@ let {
   aboutContent,
   sectionContent,
   actions,
+  responsiveSidebar = false,
 }: {
   treeData: TreeData;
   label: string;
@@ -86,7 +87,26 @@ let {
   aboutContent?: Snippet<[TreeItem]>;
   sectionContent?: Snippet<[TreeItem]>;
   actions?: Snippet;
+  responsiveSidebar?: boolean;
 } = $props();
+let container = $state<HTMLDivElement | null>(null);
+let containerWidth = $state(0);
+const orientation = $derived(
+  responsiveSidebar && containerWidth >= 640 ? 'vertical' : 'horizontal',
+);
+
+$effect(() => {
+  const element = container;
+  if (!responsiveSidebar || !element) return;
+  const measure = () => {
+    containerWidth = element.clientWidth;
+  };
+  const observer = new ResizeObserver(measure);
+  observer.observe(element);
+  measure();
+  return () => observer.disconnect();
+});
+
 let rootVersion = $state(0);
 let yearSort = $state<FollowingBandYearSort>('newest');
 let countrySort = $state<FollowingBandCountrySort>('az');
@@ -382,8 +402,8 @@ function refreshTabs() {
 </script>
 
 {#if tabs.length}
-  <Tabs.Root bind:value={selectedRoot} class="bcx-panel-body">
-    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} {actions} />
+  <Tabs.Root bind:ref={container} bind:value={selectedRoot} {orientation} class="bcx-panel-body bcx-root-sections">
+    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} {actions} vertical={orientation === 'vertical'} />
     {#each tabs as tab (tab.id)}
       <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}
@@ -424,5 +444,6 @@ function refreshTabs() {
 {/if}
 
 <style>
+:global(.bcx-panel-body.bcx-root-sections[data-orientation='vertical']) { flex-direction: row; }
 .about-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
 </style>
