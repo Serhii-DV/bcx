@@ -143,20 +143,24 @@ is saved. Band About shows a compact profile, expandable biography, and collapse
 external links, with Bandcamp and Copy actions in the catalog tab bar. Release
 previews separate external Release, Artist, and Label links plus Search and Copy
 from navigation: the release tab row comes first, followed by a left-aligned
-action toolbar, the shared `item-details-header` with artwork, original
-artist/title/year typography and metadata, then `BcxRootSectionTabs`.
+action toolbar, then `BcxRootSectionTabs`. The default Release Info panel contains
+the shared `item-details-header` with artwork, original artist/title/year
+typography and metadata, followed by notes and credits. Its content scrolls
+together; other sections use the full height beneath the toolbar.
 Release sections opt into a responsive sidebar: at a preview width of 640px or
 more, Release Info, Tracks, Related releases, and Tags form a 12rem left-side menu;
 narrower previews use the horizontal tab row and its overflow menu. The shared
 Tabs root switches orientation with the layout, preserving keyboard navigation
 and mounted panel state. Previewed release tabs remain horizontal at the top.
 The release preview wrapper provides shared CSS variables for a 1rem gutter,
-12rem cover/sidebar column, and 0.75rem column gap. The header and toolbars use
-the same gutter, and the sidebar aligns with the cover above it. Shared components
+12rem sidebar column, and 0.75rem column gap. The header and toolbars use
+the same gutter. Artwork is inside Release Info alongside the sidebar, using the
+shared layout’s image scale of 1.2: up to 14.4rem wide, capped at 48% of its container,
+with metadata wrapping below when needed. Shared components
 retain their existing spacing defaults outside release previews.
-Release details opt into actions before the header through the shared layout;
-other details retain their existing order. The first Release Info tab opens by default
-and contains notes and credits. Tab panels fill the remaining resizable preview
+Release Info reuses `BcxItemDetailsLayout` in content-fitting mode, avoiding its
+standalone minimum height and tree area sizing. Other details retain their
+existing layout. The first Release Info tab opens by default. Tab panels fill the remaining resizable preview
 height, with independently scrolling content rather than a fixed minimum height.
 The next tabs are Tracks and Related releases, including an empty Tracks state
 when no tracks are saved. Stable root keys retain selection during preview loading.
@@ -169,7 +173,7 @@ artwork. These additional links follow the artist/label links, before Search.
 Search and Copy triggers show dropdown chevrons; the Bandcamp-branded Search menu
 offers artist and release searches. Copy
 menus show the exact clipboard text and briefly replace the copy icon with a
-checkmark after success. The persistent header uses `relative-time-element` for Released
+checkmark after success. The Release Info header uses `relative-time-element` for Released
 and Modified dates, with ISO timestamps, exact-date hover titles, and a text
 fallback; missing or invalid dates are omitted. `BcxRootSectionTabs` accepts a
 custom section-content snippet while retaining its tab overflow, keyboard
@@ -201,7 +205,7 @@ rows select on single-click and open on double-click or Enter, including links
 that also carry callbacks or filter queries. This runtime node is created with
 the release preview and does not change subtree cache keys, TTLs, or snapshots.
 
-Release tags are removed from the persistent header and shown in a Tags section
+Release tags are shown in a separate Tags section
 with a count, only when saved tags exist. Its scrolling panel shows every unique
 tag as a button that applies the existing music filter.
 

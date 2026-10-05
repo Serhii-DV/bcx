@@ -15,6 +15,8 @@ let {
   subheadingPrefix,
   subheadingContent,
   compactImage = false,
+  imageScale = 1,
+  fitContent = false,
   details,
   actions,
   actionsBeforeHeader = false,
@@ -35,6 +37,8 @@ let {
   subheadingPrefix?: Snippet;
   subheadingContent?: Snippet;
   compactImage?: boolean;
+  imageScale?: number;
+  fitContent?: boolean;
   details?: Snippet;
   actions?: Snippet;
   actionsBeforeHeader?: boolean;
@@ -53,7 +57,7 @@ let failedImage = $state<string>();
   {#if actions}<BcxSectionTabs tabs={[]} value="" label={`${detailsLabel} actions`} {actions} wrapActions={true} />{/if}
 {/snippet}
 
-<div class="item-details" class:compact-image={compactImage} class:with-panels={!!panels} style:--item-heading-size={`${headingSize}rem`} style:--item-subheading-size={`${subheadingSize}rem`}>
+<div class="item-details" class:compact-image={compactImage} class:scaled-image={imageScale !== 1} style:--item-image-scale={imageScale} class:fit-content={fitContent} class:with-panels={!!panels} style:--item-heading-size={`${headingSize}rem`} style:--item-subheading-size={`${subheadingSize}rem`}>
   {#if actionsBeforeHeader}{@render actionsToolbar()}{/if}
   <header class="item-details-header">
     {#if !compactImage || (image && image !== failedImage)}
@@ -91,9 +95,13 @@ let failedImage = $state<string>();
 .item-details.with-panels { min-height: 0; overflow: hidden; }
 .with-panels .item-details-header { flex-shrink: 0; }
 .with-panels .item-details-tree { flex: 1 1 0%; min-height: 0; overflow: hidden; }
+.item-details.fit-content { flex: 0 0 auto; min-height: 0; }
+.fit-content .item-details-tree { flex: 0 0 auto; }
 .item-details-header { display: flex; align-items: flex-start; gap: var(--bcx-preview-column-gap, 0.75rem); padding: 0.75rem var(--bcx-preview-gutter, 1rem); }
-.item-details-image { width: min(var(--bcx-preview-column-width, 12rem), 40%); aspect-ratio: 1; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
+.item-details-image { width: min(calc(var(--bcx-preview-column-width, 12rem) * var(--item-image-scale)), calc(40% * var(--item-image-scale))); aspect-ratio: 1; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
 .compact-image .item-details-image { width: min(5rem, 25%); }
+.scaled-image .item-details-header { flex-wrap: wrap; }
+.scaled-image .item-details-heading { flex-basis: 14rem; }
 .item-details-placeholder { display: flex; align-items: center; justify-content: center; border: 1px dashed rgb(156 163 175 / 30%); background: #293548; color: #9ca3af; }
 .item-details-heading { min-width: 0; flex: 1 1 0%; overflow-wrap: anywhere; font-size: 0.8125rem; }
 .item-details-primary { margin: 0 0 0.5rem; font-size: var(--item-heading-size); font-weight: 300; line-height: 1.1; letter-spacing: 0.01em; }

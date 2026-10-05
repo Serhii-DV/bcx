@@ -23,6 +23,7 @@ import BcxPreviewLink from './BcxPreviewLink.svelte';
 import BcxReleaseSearch from './BcxReleaseSearch.svelte';
 import BcxReleaseTreePanel from './BcxReleaseTreePanel.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
+import BcxSectionTabs from './BcxSectionTabs.svelte';
 import { createItemUrl } from './itemUrl';
 
 let {
@@ -176,41 +177,17 @@ let dates = $derived(
   {/if}
 {/snippet}
 
-{#snippet releasePanel(root: TreeItem)}
-  {#if root.pathKey === 'release-info'}
-    <div class="release-info-content">{@render releaseNotes()}</div>
-  {:else if root.pathKey === 'tags'}
-    <section class="release-info-content" aria-label="Release tags">
-      <div class="release-tags">
-        {#each tags as tag}
-          <button type="button" class="tag" title={`Filter by ${tag}`} onclick={() => musicFilterStore.setSearchQuery(tag)}>{tag}</button>
-        {/each}
-      </div>
-    </section>
-  {:else}
-    <BcxReleaseTreePanel {root} onPreview={root.pathKey === 'related-releases' ? onPreview : undefined} />
-  {/if}
-{/snippet}
-
-{#snippet releasePanels()}
-  {#if bandLinksError}<p class="band-links-error" role="alert">{bandLinksError}</p>{/if}
-  {#if loading}<p class="release-status" role="status">Loading release details…</p>{/if}
-  {#if error}<p class="band-links-error" role="alert">{error}</p>{/if}
-  <div class="release-preview-tabs">
-    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} responsiveSidebar={true} />
-  </div>
-{/snippet}
-
+{#snippet releaseInfo()}
 <BcxItemDetailsLayout
   image={item.previewImage}
   imageAlt={`Cover art for ${information.title}`}
+  imageScale={1.2}
   heading={information.title}
   headingSize={1.75}
   subheading={information.artist}
   subheadingSize={2.2}
-  actions={releaseActions}
-  actionsBeforeHeader={true}
-  panels={releasePanels}
+  details={releaseNotes}
+  fitContent={true}
   treeData={emptyTree}
   detailsLabel="Detailed release information"
 >
@@ -244,8 +221,40 @@ let dates = $derived(
     </dl>
   {/if}
 </BcxItemDetailsLayout>
+{/snippet}
+
+{#snippet releasePanel(root: TreeItem)}
+  {#if root.pathKey === 'release-info'}
+    <div class="release-info-content">{@render releaseInfo()}</div>
+  {:else if root.pathKey === 'tags'}
+    <section class="release-info-content" aria-label="Release tags">
+      <div class="release-tags">
+        {#each tags as tag}
+          <button type="button" class="tag" title={`Filter by ${tag}`} onclick={() => musicFilterStore.setSearchQuery(tag)}>{tag}</button>
+        {/each}
+      </div>
+    </section>
+  {:else}
+    <BcxReleaseTreePanel {root} onPreview={root.pathKey === 'related-releases' ? onPreview : undefined} />
+  {/if}
+{/snippet}
+
+{#snippet releasePanels()}
+  {#if bandLinksError}<p class="band-links-error" role="alert">{bandLinksError}</p>{/if}
+  {#if loading}<p class="release-status" role="status">Loading release details…</p>{/if}
+  {#if error}<p class="band-links-error" role="alert">{error}</p>{/if}
+  <div class="release-preview-tabs">
+    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} responsiveSidebar={true} />
+  </div>
+{/snippet}
+
+<div class="release-details">
+  <BcxSectionTabs tabs={[]} value="" label="Release actions" actions={releaseActions} wrapActions={true} />
+  {@render releasePanels()}
+</div>
 
 <style>
+.release-details { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-preview-tabs { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-info-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
 .release-notes { display: flex; flex-direction: column; gap: 1rem; padding: 0.5rem 1rem 1rem; font-size: 0.8125rem; }
