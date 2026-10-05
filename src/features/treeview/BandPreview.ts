@@ -241,7 +241,8 @@ export async function loadReleaseBandLinks(
   ) {
     const artist = await profile(artistUrl, information.artist);
     if (explicitArtistUrl || artistNames.has(normalize(artist.name))) {
-      artists.unshift(artist);
+      if (saved.some((band) => band.url.hasSameHostname(artist.url)))
+        artists.unshift(artist);
     } else {
       // A saved hosting band may be a label when publisher metadata is absent.
       publisher ??= artist;

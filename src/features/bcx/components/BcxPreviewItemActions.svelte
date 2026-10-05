@@ -109,6 +109,10 @@ async function copy(value: string) {
 }
 </script>
 
+{#snippet bandcampIcon()}
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="shrink-0" aria-hidden="true"><path d="M0 18.6 7.2 5.4H24l-7.2 13.2Z" /></svg>
+{/snippet}
+
 <div bind:this={container} class="preview-item-actions">
   <DropdownMenu.Root>
     <DropdownMenu.Trigger class="bcx-section-tab" aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`}>
@@ -127,8 +131,9 @@ async function copy(value: string) {
           <DropdownMenu.Item class="preview-item-menu-action" title={destination}>
             {#snippet child({ props })}
               <a {...props} href={destination} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); void openPage(event, destination); }}>
-                <ExternalLink size={14} class="shrink-0" aria-hidden="true" />
+                {@render bandcampIcon()}
                 <span class="action-text"><span>Open on Bandcamp</span><span class="action-value">{destination}</span></span>
+                <ExternalLink size={12} class="shrink-0" aria-hidden="true" />
               </a>
             {/snippet}
           </DropdownMenu.Item>
@@ -154,7 +159,7 @@ async function copy(value: string) {
           <DropdownMenu.Item class="preview-item-menu-action" title={`Search Bandcamp for ${option.query}\n${option.url}`}>
             {#snippet child({ props })}
               <a {...props} href={option.url} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); void openPage(event, option.url); }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="shrink-0" aria-hidden="true"><path d="M0 18.6 7.2 5.4H24l-7.2 13.2Z" /></svg>
+                {@render bandcampIcon()}
                 <span class="action-text"><span>{option.label}</span><span class="action-value">{option.query}</span></span>
                 <ExternalLink size={12} class="shrink-0" aria-hidden="true" />
               </a>

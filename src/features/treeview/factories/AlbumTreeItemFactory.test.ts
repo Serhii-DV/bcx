@@ -72,9 +72,15 @@ describe('release previews', () => {
     });
     const getBands = rs.spyOn(BandcampStorage, 'getBands');
     const links = await loadReleaseBandLinks(preview!.information, album.url);
-    expect(links.artists.map((band) => band.url.toString())).toEqual([
-      'https://artist.bandcamp.com/',
-    ]);
+    expect(links.artists).toEqual([]);
+    const explicitLinks = await loadReleaseBandLinks(
+      {
+        ...preview!.information,
+        artistUrl: 'https://artist.bandcamp.com/',
+      },
+      album.url,
+    );
+    expect(explicitLinks.artists).toEqual([]);
     expect(getBands).not.toHaveBeenCalled();
   });
 

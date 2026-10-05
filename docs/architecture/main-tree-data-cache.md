@@ -188,8 +188,9 @@ height, with independently scrolling content rather than a fixed minimum height.
 Credits has a separate scrolling tab after Release Info, omitted when credits
 are missing or blank. Tracks and Related releases follow, including an empty Tracks state
 when no tracks are saved. Stable root keys retain selection during preview loading.
-Artist links resolve from explicit release metadata, saved band names, and saved
-Following Bands records. Additional release links match saved album title and
+Artist page actions resolve from saved band names and saved Following Bands
+records; explicit release metadata can identify a matching local page but does not
+enable Open or Preview for unsaved artists. Additional release links match saved album title and
 artist values, ignoring case and repeated whitespace, exclude the current URL,
 and retain each distinct saved destination. They open the saved release page and
 show the hosting band's name and image, falling back to its subdomain and release
@@ -202,8 +203,12 @@ URLs. Each menu appends Search release, Search artist, Search label, or Search b
 with the query shown. Release search uses the full artist/title query and the
 existing album search type; artist, label, and band searches use the name and band
 search type. Search links preserve modified clicks and active-tab navigation.
-An artist without a detected page retains name copying and search without Open,
-Preview, or URL copying. Release title copying also remains available without a URL.
+Release actions include every artist parsed from the release artist text. Each
+artist without a matching local record has an individually named menu for name
+copying and search, including while loading or after a storage error. Missing
+collaborators remain visible when other artists have saved profiles; missing names
+are deduplicated against saved menus case-insensitively. These menus omit Open, Preview, and URL copying. Open on Bandcamp and Search actions share
+the Bandcamp icon with a trailing external-link indicator. Release title copying also remains available without a URL.
 The current release or band
 uses Keep in preview tab, preserving the existing add-or-reuse behavior. Menu
 triggers retain artwork and names; real page links preserve modified clicks.

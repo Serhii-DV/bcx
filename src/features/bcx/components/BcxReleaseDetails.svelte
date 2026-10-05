@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Album } from 'src/bandcamp/domain/album/album';
+import { Artist } from 'src/bandcamp/domain/artist/artist';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import {
   type BandLinkProfile,
@@ -89,6 +90,21 @@ let bandLinks = $state<Awaited<ReturnType<typeof loadReleaseBandLinks>>>({
   releases: [],
 });
 let bandLinksError = $state('');
+let artistNames = $derived(
+  Artist.parse(information.artist).names.filter((name) => name.trim()),
+);
+let missingArtistNames = $derived.by(() => {
+  const normalize = (name: string) => name.trim().toLowerCase();
+  const representedNames = new Set(
+    bandLinks.artists.map((band) => normalize(band.name)),
+  );
+  return artistNames.filter((name) => {
+    const key = normalize(name);
+    if (representedNames.has(key)) return false;
+    representedNames.add(key);
+    return true;
+  });
+});
 $effect(() => {
   const currentInformation = information;
   const currentUrl = releaseUrl;
@@ -203,8 +219,11 @@ let dates = $derived(
   {#each bandLinks.artists as artist (artist.url.toString())}
     <BcxPreviewItemActions url={artist.url} image={artist.image} name={artist.name} kind="artist" copyValue={artist.name} previewItem={bandPreviewItem(artist)} />
   {/each}
-  {#if !bandLinks.artists.length && information.artist.trim()}
-    <BcxPreviewItemActions name={information.artist} kind="artist" copyValue={information.artist} />
+  {#each missingArtistNames as name (name)}
+    <BcxPreviewItemActions {name} kind="artist" copyValue={name} />
+  {/each}
+  {#if !artistNames.length && !bandLinks.artists.length}
+    <BcxPreviewItemActions name="Artist" kind="artist" copyValue={information.artist} />
   {/if}
   {#if bandLinks.publisher}
     <BcxPreviewItemActions url={bandLinks.publisher.url} image={bandLinks.publisher.image} name={bandLinks.publisher.name} kind="label" copyValue={bandLinks.publisher.name} previewItem={bandPreviewItem(bandLinks.publisher)} />
