@@ -145,10 +145,10 @@ previews separate external Release, Artist, and Label links plus Search and Copy
 from navigation: the release tab row comes first, followed by a left-aligned
 action toolbar, then `BcxRootSectionTabs`. The default Release Info panel contains
 the shared `item-details-header` with artwork, original artist/title/year
-typography and metadata, followed by notes and credits. Its content scrolls
+typography and metadata, followed by release notes. Its content scrolls
 together; other sections use the full height beneath the toolbar.
 Release sections opt into a responsive sidebar: at a preview width of 640px or
-more, Release Info, Tracks, Related releases, and Tags form a 12rem left-side menu;
+more, Release Info, Credits, Tracks, Related releases, and Tags form a 12rem left-side menu;
 narrower previews use the horizontal tab row and its overflow menu. The shared
 Tabs root switches orientation with the layout, preserving keyboard navigation
 and mounted panel state. Previewed release tabs remain horizontal at the top.
@@ -162,7 +162,8 @@ Release Info reuses `BcxItemDetailsLayout` in content-fitting mode, avoiding its
 standalone minimum height and tree area sizing. Other details retain their
 existing layout. The first Release Info tab opens by default. Tab panels fill the remaining resizable preview
 height, with independently scrolling content rather than a fixed minimum height.
-The next tabs are Tracks and Related releases, including an empty Tracks state
+Credits has a separate scrolling tab after Release Info, omitted when credits
+are missing or blank. Tracks and Related releases follow, including an empty Tracks state
 when no tracks are saved. Stable root keys retain selection during preview loading.
 Artist links resolve from explicit release metadata, saved band names, and saved
 Following Bands records. Additional release links match saved album title and

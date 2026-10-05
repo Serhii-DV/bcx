@@ -12,6 +12,7 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { items, text } from 'src/features/treeview/TreeItemBuilder';
 import {
+  ICON_FILE_TEXT,
   ICON_INFO,
   ICON_LIST_MUSIC,
   ICON_TAGS,
@@ -85,9 +86,18 @@ let tabTree = $derived.by(() => {
     hasChildren: true,
     showChildrenCount: false,
     children: releaseTree.items.filter(
-      (item) => item !== tracks && item !== relatedReleases,
+      (item) =>
+        item !== tracks && item !== relatedReleases && item.label !== 'Credits',
     ),
   });
+  if (information.credits?.trim())
+    data.add({
+      label: 'Credits',
+      pathKey: 'credits',
+      image: ICON_FILE_TEXT,
+      hasChildren: true,
+      showChildrenCount: false,
+    });
   data.add({
     ...(tracks ??
       items('Tracks', [text('No saved tracks for this release.')])
@@ -169,10 +179,9 @@ let dates = $derived(
 {/snippet}
 
 {#snippet releaseNotes()}
-  {#if information.description || information.credits}
+  {#if information.description}
     <div class="release-notes">
-      {#if information.description}<section aria-label="About this release"><h4>About this release</h4><p>{information.description}</p></section>{/if}
-      {#if information.credits}<section aria-label="Release credits"><h4>Credits</h4><p>{information.credits}</p></section>{/if}
+      <section aria-label="About this release"><h4>About this release</h4><p>{information.description}</p></section>
     </div>
   {/if}
 {/snippet}
@@ -226,6 +235,10 @@ let dates = $derived(
 {#snippet releasePanel(root: TreeItem)}
   {#if root.pathKey === 'release-info'}
     <div class="release-info-content">{@render releaseInfo()}</div>
+  {:else if root.pathKey === 'credits'}
+    <div class="release-info-content">
+      <section class="release-notes" aria-label="Release credits"><h4>Credits</h4><p>{information.credits}</p></section>
+    </div>
   {:else if root.pathKey === 'tags'}
     <section class="release-info-content" aria-label="Release tags">
       <div class="release-tags">

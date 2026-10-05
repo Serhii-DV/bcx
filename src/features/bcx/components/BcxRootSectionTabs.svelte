@@ -19,7 +19,8 @@ import {
 } from './rootSectionTabs';
 
 const tabDescriptions: Record<string, { label?: string; title: string }> = {
-  'Release Info': { title: 'View release information, notes, and credits.' },
+  'Release Info': { title: 'View release information, artwork, and notes.' },
+  Credits: { title: 'View release credits and contributors.' },
   'Related releases': {
     title:
       'Browse locally saved releases by this release’s artists across Bandcamp.',
