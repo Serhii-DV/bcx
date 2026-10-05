@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Unified release and band previews in one resizable Preview Panel shared across release and band sections. Both item types use the same artwork tabs, overflow menu, close controls, and retained panel state. Preview icons in catalog, History, Following Bands, fan-page lists, and release artist/label links add or reuse tabs; releases opened from a Band preview join the main panel.
+- Unified release and band previews in one resizable Preview Panel shared across release and band sections. Both item types use the same artwork tabs, overflow menu, close controls, and retained panel state. The first tab uses a "Preview:" prefix to distinguish the current selection from additional previews. Preview icons in catalog, History, Following Bands, fan-page lists, and release artist/label links add or reuse tabs; releases opened from a Band preview join the main panel.
 
 - Added a minimal Activity log with timestamped Sync, availability, and Storage messages in a flat, newest-first list. Includes live progress, subtle warnings/errors, plain-text Copy, Clear, and Show automatic activity; Sync and Storage link to the general log. An info popover explains automatic cleanup, retention limits, and manual clearing; it uses native browser opening and viewport positioning to avoid invisible floating content when clicked. Logs stay local with seven-day, 200-operation, and 256 KB limits, preserve existing records, and do not trigger storage-history captures.
 

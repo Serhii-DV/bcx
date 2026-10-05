@@ -18,7 +18,7 @@ let container: HTMLDivElement;
 const CURRENT_ITEM_TAB = 'current-item';
 let tabs = $derived(
   previews.map(({ id, item }) => {
-    const label = previewTabLabel(item);
+    const label = `${id === CURRENT_ITEM_TAB ? 'Preview: ' : ''}${previewTabLabel(item)}`;
     return {
       id,
       label,
