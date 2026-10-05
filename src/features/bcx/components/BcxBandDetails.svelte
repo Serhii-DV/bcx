@@ -4,20 +4,17 @@ import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
 import { Url } from 'src/core/url';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
-import type { Snippet } from 'svelte';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
 
 let {
   about,
   fallbackLocation,
-  actions,
   loading = false,
   error = '',
 }: {
   about: TreeItem;
   fallbackLocation?: string;
-  actions?: Snippet;
   bandUrl?: string;
   loading?: boolean;
   error?: string;
@@ -99,8 +96,6 @@ let catalogYears = $derived(
   subheading={location}
   subheadingPrefix={flagCode ? locationFlag : undefined}
   compactImage={true}
-  {actions}
-  actionsBeforeHeader={true}
   details={bandInformation}
   detailsLabel="Detailed band information"
   {loading}
