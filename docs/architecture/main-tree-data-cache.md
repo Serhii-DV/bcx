@@ -146,7 +146,7 @@ from navigation: the release tab row comes first, followed by a left-aligned
 action toolbar, the shared `item-details-header` with artwork, original
 artist/title/year typography and metadata, then `BcxRootSectionTabs`.
 Release sections opt into a responsive sidebar: at a preview width of 640px or
-more, Release Info, Tracks, and Related releases form an 11rem left-side menu;
+more, Release Info, Tracks, Related releases, and Tags form an 11rem left-side menu;
 narrower previews use the horizontal tab row and its overflow menu. The shared
 Tabs root switches orientation with the layout, preserving keyboard navigation
 and mounted panel state. Previewed release tabs remain horizontal at the top.
@@ -196,6 +196,10 @@ Retry, and stale responses are discarded when switching releases. TreeBrowser li
 rows select on single-click and open on double-click or Enter, including links
 that also carry callbacks or filter queries. This runtime node is created with
 the release preview and does not change subtree cache keys, TTLs, or snapshots.
+
+Release tags are removed from the persistent header and shown in a Tags section
+with a count, only when saved tags exist. Its scrolling panel shows every unique
+tag as a button that applies the existing music filter.
 
 Following Bands snapshots include serializable `bandPreview` identities rather
 than callbacks or copies of full cached catalogs. Snapshot version 11 invalidates

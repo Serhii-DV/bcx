@@ -11,7 +11,11 @@ import {
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
 import { items, text } from 'src/features/treeview/TreeItemBuilder';
-import { ICON_INFO, ICON_LIST_MUSIC } from 'src/features/treeview/utils/icon';
+import {
+  ICON_INFO,
+  ICON_LIST_MUSIC,
+  ICON_TAGS,
+} from 'src/features/treeview/utils/icon';
 import { musicFilterStore } from '../stores/musicFilter';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewActions from './BcxPreviewActions.svelte';
@@ -70,6 +74,7 @@ let tracks = $derived(
 let relatedReleases = $derived(
   releaseTree.items.find((item) => item.label === 'Related releases'),
 );
+let tags = $derived([...new Set(information.tags)]);
 let tabTree = $derived.by(() => {
   const data = new TreeData([], TREE_ITEM_LAYOUT.BROWSER);
   data.add({
@@ -96,6 +101,14 @@ let tabTree = $derived.by(() => {
       pathKey: 'related-releases',
       showChildrenCount: false,
     });
+  if (tags.length)
+    data.add({
+      label: 'Tags',
+      pathKey: 'tags',
+      image: ICON_TAGS,
+      hasChildren: true,
+      childrenCount: tags.length,
+    });
   return data;
 });
 const emptyTree = new TreeData();
@@ -114,11 +127,6 @@ let summary = $derived(
     information.duration,
   ].filter((value): value is string => !!value),
 );
-let expandedTags = $state(false);
-const componentId = $props.id();
-const tagsId = `${componentId}-tags`;
-let tags = $derived([...new Set(information.tags)]);
-let visibleTags = $derived(expandedTags ? tags : tags.slice(0, 3));
 let copyItems = $derived([
   { label: 'Copy artist name', value: information.artist },
   { label: 'Copy release title', value: information.title },
@@ -171,6 +179,14 @@ let dates = $derived(
 {#snippet releasePanel(root: TreeItem)}
   {#if root.pathKey === 'release-info'}
     <div class="release-info-content">{@render releaseNotes()}</div>
+  {:else if root.pathKey === 'tags'}
+    <section class="release-info-content" aria-label="Release tags">
+      <div class="release-tags">
+        {#each tags as tag}
+          <button type="button" class="tag" title={`Filter by ${tag}`} onclick={() => musicFilterStore.setSearchQuery(tag)}>{tag}</button>
+        {/each}
+      </div>
+    </section>
   {:else}
     <BcxReleaseTreePanel {root} onPreview={root.pathKey === 'related-releases' ? onPreview : undefined} />
   {/if}
@@ -227,18 +243,6 @@ let dates = $derived(
       {#each dates as date}<div><dt>{date.label}</dt><dd><relative-time datetime={date.dateTime} format="relative" precision="day" title={date.value}>{date.value}</relative-time></dd></div>{/each}
     </dl>
   {/if}
-  {#if tags.length}
-    <div class="release-tags">
-      <div id={tagsId} class="tag-list">
-        {#each visibleTags as tag}
-          <button type="button" class="tag" title={`Filter by ${tag}`} onclick={() => musicFilterStore.setSearchQuery(tag)}>{tag}</button>
-        {/each}
-      </div>
-      {#if tags.length > 3}
-        <button type="button" class="more-tags" aria-expanded={expandedTags} aria-controls={tagsId} onclick={() => { expandedTags = !expandedTags; }}>{expandedTags ? 'Show fewer tags' : `+${tags.length - 3} more`}</button>
-      {/if}
-    </div>
-  {/if}
 </BcxItemDetailsLayout>
 
 <style>
@@ -248,7 +252,8 @@ let dates = $derived(
 .release-notes h4 { margin: 0 0 0.375rem; font-size: 0.875rem; font-weight: 500; color: #e5e7eb; }
 .release-notes p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #d1d5db; }
 .release-status { margin: 0; padding: 0.5rem 1rem; font-size: 0.8125rem; color: #9ca3af; }
-.release-summary, .release-badges, .release-tags, .tag-list { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; }
+.release-summary, .release-badges, .release-tags { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; }
+.release-tags { padding: 0.5rem 1rem 1rem; }
 .release-year { margin-bottom: 0.5rem; font-size: 1.75rem; font-weight: 300; line-height: 1.2; letter-spacing: 0.01em; }
 .release-summary { color: #9ca3af; }
 .release-year time { position: relative; }
@@ -258,10 +263,9 @@ let dates = $derived(
 .release-dates dt { color: #9ca3af; }
 .release-dates dd { margin: 0; color: #d1d5db; }
 .band-links-error { margin: 0; padding: 0.5rem 1rem; color: #fca5a5; font-size: 0.8125rem; }
-.release-badges, .release-tags { margin-top: 0.5rem; }
+.release-badges { margin-top: 0.5rem; }
 .library-badge { border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
 .tag { padding: 0.125rem 0.375rem; border: 0; border-radius: 0.25rem; background: rgb(255 255 255 / 6%); color: #d1d5db; font-size: 0.75rem; cursor: pointer; }
 .tag:hover { background: rgb(255 255 255 / 12%); color: #7dd3fc; }
-.more-tags { padding: 0; border: 0; background: transparent; color: #7dd3fc; font-size: 0.75rem; cursor: pointer; }
-.tag:focus-visible, .more-tags:focus-visible, time:focus-visible { outline: 1px solid #38bdf8; outline-offset: 2px; border-radius: 0.25rem; }
+.tag:focus-visible, time:focus-visible { outline: 1px solid #38bdf8; outline-offset: 2px; border-radius: 0.25rem; }
 </style>
