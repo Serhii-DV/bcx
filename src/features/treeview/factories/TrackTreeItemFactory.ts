@@ -1,5 +1,5 @@
 import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
-import type { Track } from 'src/bandcamp/domain/track/track';
+import { Track } from 'src/bandcamp/domain/track/track';
 import { createTrackInformation } from '../ReleasePreview';
 import type { TreeItem } from '../TreeItem';
 import { linkOrText } from '../TreeItemBuilder';
@@ -28,6 +28,10 @@ export class TrackTreeItemFactory {
   }
 
   static createMany(tracks: TreeItemTrack[]): TreeItem[] {
-    return tracks.map((track) => this.create(track));
+    return tracks.map((track) =>
+      track instanceof Track
+        ? this.createWithPreview(track)
+        : this.create(track),
+    );
   }
 }

@@ -106,6 +106,25 @@ function getTreeDataForSection(section: SidePanelSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
 }
 
+function containsPreviewItems(items: TreeItem[]): boolean {
+  return items.some(
+    (item) =>
+      hasItemPreview(item) ||
+      item.itemPreview ||
+      item.releasePreview ||
+      !!item.aboutProfile ||
+      !!item.loadChildren ||
+      (item.children && containsPreviewItems(item.children)),
+  );
+}
+
+const showPreview = $derived.by(() => {
+  const section = sections.find((section) => section.id === selectedSectionId);
+  if (!section || section.label === 'Following Genres') return false;
+  const data = sectionTreeDataById[section.id];
+  return data ? containsPreviewItems(data.items) : true;
+});
+
 function getRootPathForSection(section: SidePanelSection): string | null {
   return sectionRootPathById[section.id] ?? null;
 }
@@ -343,6 +362,7 @@ $effect(() => {
                 ]}
                 bind:value={selectedSectionId}
               />
+              <BcxItemPreviewPanel visible={showPreview}>
               {#each sections as section (section.id)}
                 <Tabs.Content value={section.id} class="bcx-tab-content">
                   {#if section.fanSync && (fanSyncJob?.state === 'running' || accountSyncJob?.state === 'error')}
@@ -357,13 +377,13 @@ $effect(() => {
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#if section.fanSync || section.fanAccount}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} responsiveSidebar={true} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
                           <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} />
                         {:else}
-                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} />
+                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} responsiveSidebar={true} />
                         {/if}
                       {/key}
                       {/if}
@@ -384,9 +404,6 @@ $effect(() => {
                         {#if sectionErrorById[section.id]}
                           <p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>
                         {:else}
-                          {#if getTreeDataForSection(section).items.some(hasItemPreview)}
-                            <BcxItemPreviewPanel treeData={getTreeDataForSection(section)} initialSelectedHref={section.initialSelectedHref} filterQuery={sectionFilterQueryById[section.id] ?? ''} showFilter={false} isLoading={isSectionLoading(section)} />
-                          {:else}
                           <BcxTreeBrowser
                             treeData={getTreeDataForSection(section)}
                             isLoading={isSectionLoading(section)}
@@ -395,8 +412,8 @@ $effect(() => {
                             showBreadcrumb={false}
                             showFilter={false}
                             initialSelectedHref={section.initialSelectedHref}
+                            nativeTabNavigation={showPreview}
                           />
-                          {/if}
                         {/if}
                       </div>
                     {/if}
@@ -421,6 +438,7 @@ $effect(() => {
               <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">
                 <BcxExtensionInfo />
               </Tabs.Content>
+              </BcxItemPreviewPanel>
             </Tabs.Root>
           </div>
         </div>
@@ -436,6 +454,7 @@ $effect(() => {
 <style>
   :global(.bcx-side-panel-shell) {
     --bcx-side-panel-width: 400px;
+    --bcx-preview-gutter: 1rem;
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 999999;

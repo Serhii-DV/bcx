@@ -1,11 +1,16 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { getReleaseMetadataFromAlbum } from 'src/bandcamp/domain/album/helper';
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
+import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
+import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackTime } from 'src/bandcamp/domain/track/time';
 import type { Track } from 'src/bandcamp/domain/track/track';
+import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
+import { Url } from 'src/core/url';
+import { createRelatedReleasesTreeItem } from './items/relatedReleasesTreeItem';
 import { TreeData } from './TreeData';
 import { TREE_ITEM_LAYOUT } from './TreeItem';
-import { copyable, items, linkOpen, list, text } from './TreeItemBuilder';
+import { items, linkOpen, text } from './TreeItemBuilder';
 
 export interface ReleaseInformation {
   title: string;
@@ -14,6 +19,7 @@ export interface ReleaseInformation {
   publisher?: string;
   publisherUrl?: string;
   date?: string;
+  modifiedDate?: string;
   releaseYear?: number;
   releaseType?: string;
   price?: string;
@@ -39,78 +45,77 @@ export class ReleasePreview extends TreeData {
   }
 }
 
+export async function loadSavedReleaseLinks(
+  information: ReleaseInformation,
+  releaseUrl?: Url,
+): Promise<{ url: Url; image?: string }[]> {
+  if (!releaseUrl?.pathname.startsWith('/album/')) return [];
+  const normalize = (value: string) =>
+    value.trim().replace(/\s+/g, ' ').toLowerCase();
+  const albums = await BandcampStorage.getAllAlbumsRawData();
+  const links = albums.flatMap((album) => {
+    if (
+      normalize(album.title) !== normalize(information.title) ||
+      normalize(album.artist) !== normalize(information.artist)
+    )
+      return [];
+    const href = releaseLink(album.url);
+    if (!href) return [];
+    const url = BandcampUrlFactory.createAlbumUrl(Url.create(href));
+    url.protocol = 'https:';
+    if (
+      !url.pathname.startsWith('/album/') ||
+      url.toString() === releaseUrl.toString()
+    )
+      return [];
+    return [
+      {
+        url,
+        image:
+          Number.isSafeInteger(album.artworkId) && album.artworkId > 0
+            ? Artwork.createForAlbum(album.artworkId).smallSizeUrl
+            : undefined,
+      },
+    ];
+  });
+  return links.filter(
+    (link, index) =>
+      links.findIndex(
+        (other) => other.url.toString() === link.url.toString(),
+      ) === index,
+  );
+}
+
 export function createReleaseDetailsTree(
   baseTree: TreeData,
   information: ReleaseInformation,
   releaseUrl?: string,
 ): TreeData {
   const tree = new TreeData([], TREE_ITEM_LAYOUT.TREE);
-  const existing = baseTree.items.filter(
-    (item) =>
-      item.label !== 'Filter' && (!releaseUrl || item.href !== releaseUrl),
-  );
-  const links = [
-    ...(releaseUrl ? [linkOpen('Open release on Bandcamp', releaseUrl)] : []),
-    linkOpen(
-      'Explore artist',
-      information.artistUrl ??
-        `https://bandcamp.com/search?q=${encodeURIComponent(information.artist)}&item_type=b`,
-    ),
-    ...(information.publisher
-      ? [
-          linkOpen(
-            `Explore label: ${information.publisher}`,
-            information.publisherUrl ??
-              `https://bandcamp.com/search?q=${encodeURIComponent(information.publisher)}&item_type=b`,
-          ),
-        ]
-      : []),
-  ];
+  const tracks = baseTree.items.find((item) => item.label === 'Tracks');
 
   for (const item of [
-    ...existing,
-    items('Links', links).build(),
-    ...(!existing.some((item) => item.label === 'Copy')
-      ? [
-          items('Copy', [
-            copyable('Artist name', information.artist),
-            copyable('Release title', information.title),
-            ...(releaseUrl ? [copyable('Release URL', releaseUrl)] : []),
-          ]).build(),
-        ]
-      : []),
-    ...(!existing.some((item) => item.label === 'Tags') &&
-    information.tags.length
-      ? [list('Tags', information.tags).build()]
-      : []),
-    ...(!existing.some((item) => item.label === 'Tracks') &&
-    information.tracks.length
-      ? [
-          items(
-            'Tracks',
-            information.tracks.map((track) => {
-              const label = `${track.position}. ${track.title}${track.duration ? ` · ${track.duration}` : ''}`;
-              return track.url ? linkOpen(label, track.url) : text(label);
-            }),
-          ).build(),
-        ]
-      : []),
+    ...(tracks?.children?.length
+      ? [{ ...tracks, open: true }]
+      : information.tracks.length
+        ? [
+            items(
+              'Tracks',
+              information.tracks.map((track) => {
+                const label = `${track.position}. ${track.title}${track.duration ? ` · ${track.duration}` : ''}`;
+                return track.url ? linkOpen(label, track.url) : text(label);
+              }),
+            )
+              .withOpen(true)
+              .build(),
+          ]
+        : []),
+    createRelatedReleasesTreeItem(information, releaseUrl),
     ...(information.description
-      ? [
-          items('About this release', [text(information.description)])
-            .withOpen(true)
-            .build(),
-        ]
+      ? [items('About this release', [text(information.description)]).build()]
       : []),
     ...(information.credits
-      ? [
-          items('Credits', [text(information.credits)])
-            .withOpen(true)
-            .build(),
-        ]
-      : []),
-    ...(information.collectionStatus.includes('In collection')
-      ? [text('In collection').build()]
+      ? [items('Credits', [text(information.credits)]).build()]
       : []),
   ]) {
     tree.add(item);
@@ -154,10 +159,14 @@ export function createReleaseInformation(album: Album): ReleaseInformation {
       metadata && Number.isFinite(metadata.published.getTime())
         ? metadata.publishedDate
         : undefined,
+    modifiedDate:
+      metadata && Number.isFinite(metadata.modified.getTime())
+        ? metadata.modifiedDate
+        : undefined,
     releaseYear: Number.isFinite(parsed.releaseYear)
       ? parsed.releaseYear
       : undefined,
-    releaseType: parsed.releaseType ?? notes?.releaseType,
+    releaseType: parsed.releaseType ?? notes?.releaseType ?? 'Album',
     price: hasPrice
       ? `${notes?.minimumPrice !== undefined ? 'From ' : ''}${amount} ${price.currency}`
       : undefined,
@@ -196,6 +205,10 @@ export function createTrackInformation(track: Track): ReleaseInformation {
     date:
       metadata && Number.isFinite(metadata.published.getTime())
         ? metadata.publishedDate
+        : undefined,
+    modifiedDate:
+      metadata && Number.isFinite(metadata.modified.getTime())
+        ? metadata.modifiedDate
         : undefined,
     releaseType: 'Track',
     price:

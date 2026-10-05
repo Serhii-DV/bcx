@@ -45,9 +45,17 @@ export interface TreeItem {
   flagCode?: string;
   aboutProfile?: {
     name: string;
+    url?: string;
     image?: string;
     location?: string;
+    biography?: string;
     following?: boolean;
+    albumCount?: number;
+    trackReleaseCount?: number;
+    artistCount?: number;
+    releaseYears?: number[];
+    currency?: string;
+    createdDate?: string;
   };
   hint?: string;
   query?: string;

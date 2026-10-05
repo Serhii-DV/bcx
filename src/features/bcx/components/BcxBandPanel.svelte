@@ -4,9 +4,11 @@ import {
   TREE_ITEM_LAYOUT,
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
-import type { ItemPreviewSizeStore } from '../stores/itemPreviewSize';
 import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
+import BcxSectionTabs from './BcxSectionTabs.svelte';
+import { createItemUrl } from './itemUrl';
 
 let {
   treeData,
@@ -14,7 +16,6 @@ let {
   fallbackLocation,
   bandUrl,
   initialSelectedHref,
-  previewSize,
   loading = false,
   error = '',
 }: {
@@ -23,12 +24,14 @@ let {
   fallbackLocation?: string;
   bandUrl?: string;
   initialSelectedHref?: string;
-  previewSize?: ItemPreviewSizeStore;
   loading?: boolean;
   error?: string;
 } = $props();
 let bandAbout = $derived(
   about ?? treeData?.items.find((item) => item.aboutProfile),
+);
+let previewUrl = $derived(
+  createItemUrl(bandUrl ?? bandAbout?.aboutProfile?.url),
 );
 let catalog = $derived.by(() => {
   const roots = treeData?.items.filter((item) => !item.aboutProfile) ?? [];
@@ -72,7 +75,24 @@ let catalog = $derived.by(() => {
 </script>
 
 {#snippet aboutContent(item: TreeItem)}
-  <BcxBandDetails about={item} {fallbackLocation} {bandUrl} {loading} {error} />
+  <BcxBandDetails about={item} {fallbackLocation} {loading} {error} />
 {/snippet}
 
-<BcxRootSectionTabs {previewSize} treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} />
+{#snippet bandActions()}
+  {#if previewUrl}
+    <BcxPreviewItemActions url={previewUrl} image={bandAbout?.aboutProfile?.image} name={bandAbout?.aboutProfile?.name ?? 'Band'} kind="band" copyValue={bandAbout?.aboutProfile?.name ?? 'Band'} keepInPreviewTab={true} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
+  {/if}
+{/snippet}
+
+<div class="band-panel">
+  {#if previewUrl}
+    <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
+  {/if}
+  <div class="band-catalog">
+    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} />
+  </div>
+</div>
+
+<style>
+.band-panel, .band-catalog { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
+</style>

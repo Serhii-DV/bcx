@@ -3,9 +3,7 @@ import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { Snippet } from 'svelte';
-import type { ItemPreviewSizeStore } from '../stores/itemPreviewSize';
 import BcxBandDetails from './BcxBandDetails.svelte';
-import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import {
@@ -19,6 +17,12 @@ import {
 } from './rootSectionTabs';
 
 const tabDescriptions: Record<string, { label?: string; title: string }> = {
+  'Release Info': { title: 'View release information, artwork, and notes.' },
+  Credits: { title: 'View release credits and contributors.' },
+  'Related releases': {
+    title:
+      'Browse locally saved releases by this release’s artists across Bandcamp.',
+  },
   All: { title: 'Browse all items in this section.' },
   Artists: { title: 'Browse releases grouped by artist.' },
   Releases: { title: 'Browse releases in this section.' },
@@ -67,17 +71,39 @@ let {
   treeData,
   label,
   initialSelectedHref,
-  previewSize,
   sortBands = false,
   aboutContent,
+  sectionContent,
+  actions,
+  responsiveSidebar = false,
 }: {
   treeData: TreeData;
   label: string;
   initialSelectedHref?: string;
-  previewSize?: ItemPreviewSizeStore;
   sortBands?: boolean;
   aboutContent?: Snippet<[TreeItem]>;
+  sectionContent?: Snippet<[TreeItem]>;
+  actions?: Snippet;
+  responsiveSidebar?: boolean;
 } = $props();
+let container = $state<HTMLDivElement | null>(null);
+let containerWidth = $state(0);
+const orientation = $derived(
+  responsiveSidebar && containerWidth >= 640 ? 'vertical' : 'horizontal',
+);
+
+$effect(() => {
+  const element = container;
+  if (!responsiveSidebar || !element) return;
+  const measure = () => {
+    containerWidth = element.clientWidth;
+  };
+  const observer = new ResizeObserver(measure);
+  observer.observe(element);
+  measure();
+  return () => observer.disconnect();
+});
+
 let rootVersion = $state(0);
 let yearSort = $state<FollowingBandYearSort>('newest');
 let countrySort = $state<FollowingBandCountrySort>('az');
@@ -362,25 +388,21 @@ $effect(() => {
   if (selectedRoot) visitedRoots[selectedRoot] = true;
 });
 
-function usesItemPreview(path: string): boolean {
-  const root = displayedTreeData.items.find((item) => item.path === path);
-  return !!(root?.itemPreview || root?.releasePreview);
-}
-
 function refreshTabs() {
   rootVersion += 1;
 }
 </script>
 
 {#if tabs.length}
-  <Tabs.Root bind:value={selectedRoot} class="bcx-panel-body">
-    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} />
+  <Tabs.Root bind:ref={container} bind:value={selectedRoot} {orientation} class="bcx-panel-body bcx-root-sections">
+    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} {actions} vertical={orientation === 'vertical'} />
     {#each tabs as tab (tab.id)}
       <Tabs.Content value={tab.id} class="bcx-tab-content">
         {#if visitedRoots[tab.id]}
+          {@const root = displayedTreeData.items.find((item) => item.path === tab.id)}
           <div class="bcx-section-tree-browser">
-            {#if usesItemPreview(tab.id)}
-              <BcxItemPreviewPanel {previewSize} treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
+            {#if root && sectionContent}
+              {@render sectionContent(root)}
             {:else}
             {@const about = displayedTreeData.items.find((item) => item.path === tab.id)}
             {#if about?.aboutProfile}
@@ -397,8 +419,9 @@ function refreshTabs() {
                 initialRootPath={tab.id}
                 lockInitialRoot={true}
                 showBreadcrumb={false}
-                {initialSelectedHref}
+                initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
                 onRootLoaded={refreshTabs}
+                nativeTabNavigation={true}
               />
             {/if}
             {/if}
@@ -412,5 +435,8 @@ function refreshTabs() {
 {/if}
 
 <style>
+:global(.bcx-panel-body.bcx-root-sections[data-orientation='vertical']) { flex-direction: row; }
+:global(.bcx-root-sections > .bcx-tab-content) { margin-right: var(--bcx-preview-gutter, 8px); margin-bottom: 8px; }
+:global(.bcx-root-sections[data-orientation='horizontal'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
 .about-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
 </style>

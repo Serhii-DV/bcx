@@ -117,11 +117,139 @@ are still rebuilt from raw album data, and Collection release pagination is reta
 
 ## Shared item preview
 
-`BcxItemPreviewPanel` owns the shared selection, asynchronous loading, and
-resizable details area for releases and followed bands. Release details retain
-their existing renderer; band details read `BandcampStorage` only on selection.
+History, Wishlist, Collection, Following Bands, and Following Genres use the same
+responsive root-section navigation as the Band panel. At section widths of 640px
+or more, section tabs move to the left; narrower sections retain horizontal tabs
+and the overflow menu. The shared tabs component preserves selected sections,
+sorting controls, keyboard navigation, and mounted panel state when resizing.
+Root tab content uses the shared right gutter and an 8px bottom margin to align
+filters, lists, and scrollbars with the adjacent navigation panel.
+When navigation is horizontal, content also uses the shared left gutter to align
+with the tab bars on narrow screens.
+
+`BcxSidePanel` mounts one `BcxItemPreviewPanel` beneath the main navigation.
+It wraps the section panels and owns the resizable preview area, visible in
+sections containing release or band items. `BcxItemPreviewTabs` keeps both item
+types in one shared `BcxSectionTabs` / Bits UI Tabs row. The item-preview Svelte
+context routes main-list selection to the first, current-item tab; changing its
+item resets that panel and discards stale loading results. Hidden lists cannot
+replace the current preview. Inside previews, the context exposes only the
+explicit Preview action, so browsing a Band catalog or Related releases preserves
+the open preview and adds releases or bands to the same main tab strip.
+Explicit Preview icons in catalog, History, Following Bands, and fan-page lists,
+and Preview actions in release artist/label menus create additional
+tabs keyed by normalized Bandcamp URL. Previewing the current selection can keep
+it in an additional tab while normal selection continues updating the first tab.
+Matching additional tabs are reused. Each tab has artwork, a release title, and a
+full title/artist/URL hover description. The existing overflow menu handles narrow
+widths and extra tabs.
+Optional close callbacks add separate close controls beside each release tab and
+inside the overflow menu, including their widths in overflow measurements. Closing
+a tab unmounts its preview and discards pending loading results; the active tab falls back
+to the next tab or the previous one when closing the last tab in the row. Closing
+the final preview shows an empty state. Explicit main-list selection can reopen
+a closed release without immediately recreating it after dismissal. Keyboard
+focus returns to the active tab or the empty preview area.
+`BcxReleasePreview` and `BcxBandPreview` own cancellable loading independently
+for each tab and reuse the existing details and Band catalog renderers.
+Band previews load saved profiles and catalogs by ID or normalized Bandcamp URL.
 Following-list identity, artwork, and location provide the fallback when no band
-is saved. Saved catalog counts describe locally available releases.
+is saved. Band About shows a compact profile, full biography, saved release
+counts, catalog artist counts and years, currency, and the Bandcamp page creation
+date when available, using `relative-time-element` with the exact date on hover.
+External links render directly before Biography without a tree browser.
+A named band action dropdown includes Copy band name, Copy URL, and Search band in its own
+action bar above the catalog sections, matching the Release preview layout. Band
+catalog sections also use the shared responsive sidebar: About, Releases, Artists,
+Release years, and Tags move to the left at widths of 640px or more and remain
+horizontal in narrower panels. Release
+previews separate Release, Artist, and Label action dropdowns
+from navigation: the release tab row comes first, followed by a left-aligned
+action toolbar, then `BcxRootSectionTabs`. The default Release Info panel contains
+the shared `item-details-header` with artwork, original artist/title/year
+typography and metadata, followed by release notes. Its content scrolls
+together; other sections use the full height beneath the toolbar.
+Release sections opt into a responsive sidebar: at a preview width of 640px or
+more, Release Info, Credits, Tracks, Related releases, and Tags form a 12rem left-side menu;
+narrower previews use the horizontal tab row and its overflow menu. The shared
+Tabs root switches orientation with the layout, preserving keyboard navigation
+and mounted panel state. Previewed release tabs remain horizontal at the top.
+The side-panel shell provides the shared 1rem gutter for main navigation,
+section navigation, and preview action bars. The preview wrapper provides CSS
+variables for a 12rem sidebar column and 0.75rem column gap. The header and toolbars
+use the same gutter. Artwork is inside Release Info alongside the sidebar, using the
+shared layout’s image scale of 1.2: up to 14.4rem wide, capped at 48% of its container,
+with metadata wrapping below when needed. Preview-specific column widths and
+artwork sizing stay scoped to preview content.
+Release Info reuses `BcxItemDetailsLayout` in content-fitting mode, avoiding its
+standalone minimum height and tree area sizing. Other details retain their
+existing layout. The first Release Info tab opens by default. Tab panels fill the remaining resizable preview
+height, with independently scrolling content rather than a fixed minimum height.
+Credits has a separate scrolling tab after Release Info, omitted when credits
+are missing or blank. Tracks and Related releases follow, including an empty Tracks state
+when no tracks are saved. Stable root keys retain selection during preview loading.
+Artist page actions resolve from saved band names and saved Following Bands
+records; explicit release metadata can identify a matching local page but does not
+enable Open or Preview for unsaved artists. Additional release links match saved album title and
+artist values, ignoring case and repeated whitespace, exclude the current URL,
+and retain each distinct saved destination. They open the saved release page and
+show the hosting band's name and image, falling back to its subdomain and release
+artwork. These additional dropdowns follow the artist/label dropdowns.
+`BcxPreviewItemActions` groups each destination's actions in one flat menu: Open on
+Bandcamp with a wrapping URL, Preview, and separated copy actions with exact-text
+and success feedback. Release menus copy the full release title, release title,
+and release URL; artist, label, and band menus copy their names and available
+URLs. Each menu appends Search release, Search artist, Search label, or Search band
+with the query shown. Release search uses the full artist/title query and the
+existing album search type; artist, label, and band searches use the name and band
+search type. Search links preserve modified clicks and active-tab navigation.
+Release actions include every artist parsed from the release artist text. Each
+artist without a matching local record has an individually named menu for name
+copying and search, including while loading or after a storage error. Missing
+collaborators remain visible when other artists have saved profiles; missing names
+are deduplicated against saved menus case-insensitively. These menus omit Open, Preview, and URL copying. Open on Bandcamp and Search actions share
+the Bandcamp icon with a trailing external-link indicator. Release title copying also remains available without a URL.
+The current release or band
+uses Keep in preview tab, preserving the existing add-or-reuse behavior. Menu
+triggers retain artwork and names; real page links preserve modified clicks.
+The separate Copy and Search menus are removed from both panels.
+Copy actions show the exact clipboard
+text and briefly replace the item artwork with a checkmark after success.
+The Release Info header uses `relative-time-element` for Released
+and Modified dates, with ISO timestamps, exact-date hover titles, and a text
+fallback; missing or invalid dates are omitted. `BcxRootSectionTabs` accepts a
+custom section-content snippet while retaining its tab overflow, keyboard
+navigation, default selection, and lazy panel rendering. Tracks and Related
+releases use the shared TreeBrowser directly at their catalog roots, retaining
+filtering and pagination. Related releases reads the local album store only when
+its tab is opened.
+It matches any of the current release's parsed artist names across saved album
+pages, including solo releases and collaborations. A shared host or publisher
+alone does not qualify a release. It excludes the current page and deduplicates
+normalized URLs; Various Artists is not treated as a shared artist identity.
+Related releases and Band/Label catalogs use the same `AlbumTreeItemFactory`
+preview data and `BcxTreeItem` renderer for artwork, artist/title/year, destination
+URLs, and valid Released timestamps. The factory accepts optional release-date
+visibility and a stored date override; catalogs retain their Added/Released
+timestamp ordering. Related rows keep their own right-side controls, and shared
+Preview buttons precede external-link controls. The list retains pagination;
+an empty store shows a saved-data empty state. Related rows add an explicit Preview
+button through TreeBrowser without changing single-click selection or double-click
+link navigation. It adds and activates a release preview tab and moves keyboard
+focus to that tab. Previewing the same URL reuses its additional tab; different
+Bandcamp destinations remain distinct. Inactive panels stay mounted and hidden
+to preserve their selected section, filter, pagination, and scroll position.
+Related releases and Band catalogs in any preview can add further tabs, with
+independent cancellable loading and the shared preview height. Tabs stay mounted
+when navigating main sections and are not saved to storage. Loading failures show an error with
+Retry, and stale responses are discarded when switching releases. TreeBrowser link
+rows select on single-click and open on double-click or Enter, including links
+that also carry callbacks or filter queries. This runtime node is created with
+the release preview and does not change subtree cache keys, TTLs, or snapshots.
+
+Release tags are shown in a separate Tags section
+with a count, only when saved tags exist. Its scrolling panel shows every unique
+tag as a button that applies the existing music filter.
 
 Following Bands snapshots include serializable `bandPreview` identities rather
 than callbacks or copies of full cached catalogs. Snapshot version 11 invalidates

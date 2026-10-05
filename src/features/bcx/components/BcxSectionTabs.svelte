@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Check, ChevronDown, Ellipsis } from '@lucide/svelte';
+import { Check, ChevronDown, Ellipsis, X } from '@lucide/svelte';
 import { DropdownMenu, Tabs } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
 import { type Snippet, tick } from 'svelte';
@@ -14,6 +14,7 @@ interface SectionTab {
   sortValue?: string;
   sortLabel?: string;
   onSortChange?: (id: string) => void;
+  onClose?: () => void;
 }
 
 let {
@@ -22,12 +23,14 @@ let {
   label = 'Music Explorer sections',
   actions,
   wrapActions = false,
+  vertical = false,
 }: {
   tabs: SectionTab[];
   value: string;
   label?: string;
   actions?: Snippet;
   wrapActions?: boolean;
+  vertical?: boolean;
 } = $props();
 let bar = $state<HTMLDivElement>();
 let actionsElement = $state<HTMLDivElement>();
@@ -52,6 +55,10 @@ $effect(() => {
   const barElement = bar;
   if (!barElement) return;
   const currentTabs = tabs;
+  if (vertical) {
+    visibleIds = currentTabs.map((tab) => tab.id);
+    return;
+  }
   const currentActions = actionsElement;
   const activeId =
     currentTabs.find((tab) =>
@@ -124,7 +131,8 @@ async function handleCloseAutoFocus(event: Event) {
   <span class="bcx-tab-label">{tabLabelText(tab)}</span>
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs" class:wrap-actions={wrapActions}>
+<div bind:this={bar} class="bcx-section-tabs" class:vertical class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
+  {#if tabs.length}
   <Tabs.List class="bcx-visible-tabs" aria-label={label}>
     {#each visibleTabs as tab (tab.id)}
       {#if tab.sortOptions}
@@ -148,6 +156,13 @@ async function handleCloseAutoFocus(event: Event) {
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
         </div>
+      {:else if tab.onClose}
+        <div class="bcx-closable-tab-group" class:active={value === tab.id} role="group" aria-label={tab.label}>
+          <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
+            {@render tabLabel(tab)}
+          </Tabs.Trigger>
+          <button type="button" class="bcx-section-tab bcx-tab-close" aria-label={`Close ${tab.label}`} title={`Close ${tab.label}`} tabindex={value === tab.id ? 0 : -1} onclick={() => tab.onClose?.()}><X size={14} aria-hidden="true" /></button>
+        </div>
       {:else}
         <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
           {@render tabLabel(tab)}
@@ -155,6 +170,7 @@ async function handleCloseAutoFocus(event: Event) {
       {/if}
     {/each}
   </Tabs.List>
+  {/if}
   {#if hiddenTabs.length}
     <DropdownMenu.Root>
       <DropdownMenu.Trigger class="bcx-section-tab bcx-more-tabs" aria-label="More sections" title="More sections">
@@ -169,6 +185,13 @@ async function handleCloseAutoFocus(event: Event) {
                   {tab.label} · {option.label}
                 </DropdownMenu.Item>
               {/each}
+            {:else if tab.onClose}
+              <div class="bcx-overflow-tab-group">
+                <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectSortOption(tab, tab.id)}>
+                  {@render tabLabel(tab)}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item class="bcx-section-menu-item bcx-close-menu-item" aria-label={`Close ${tab.label}`} title={`Close ${tab.label}`} onSelect={() => { focusSelectedOnClose = true; tab.onClose?.(); }}><X size={14} aria-hidden="true" /></DropdownMenu.Item>
+              </div>
             {:else}
               <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectSortOption(tab, tab.id)}>
                 {@render tabLabel(tab)}
@@ -190,6 +213,11 @@ async function handleCloseAutoFocus(event: Event) {
             <span class="bcx-section-tab">{tab.label} · {selectedSortOption(tab)?.label ?? tab.sortOptions[0].label}</span>
             <span class="bcx-section-tab bcx-sort-button"><ChevronDown size={14} /></span>
           </span>
+        {:else if tab.onClose}
+          <span class="bcx-closable-tab-group" class:active={value === tab.id}>
+            <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
+            <span class="bcx-section-tab bcx-tab-close"><X size={14} /></span>
+          </span>
         {:else}
           <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
         {/if}
@@ -203,6 +231,7 @@ async function handleCloseAutoFocus(event: Event) {
   .bcx-section-actions { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
   .wrap-actions { container-type: inline-size; flex-wrap: wrap; }
   .wrap-actions .bcx-section-actions { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
+  .actions-only .bcx-section-actions { margin-left: 0; justify-content: flex-start; }
   @container (max-width: 620px) {
     .wrap-actions .bcx-section-actions { flex-basis: 100%; }
   }
@@ -213,7 +242,7 @@ async function handleCloseAutoFocus(event: Event) {
     align-items: center;
     gap: 4px;
     min-width: 0;
-    margin: 0 8px 8px;
+    margin: 0 var(--bcx-preview-gutter, 8px) 8px;
     padding: 4px;
     border: 1px solid #4b5563;
     border-radius: 8px;
@@ -271,6 +300,24 @@ async function handleCloseAutoFocus(event: Event) {
     flex: 0 1 auto;
     gap: 2px;
   }
+  .bcx-closable-tab-group {
+    display: inline-flex;
+    min-width: 0;
+    max-width: 224px;
+    flex: 0 1 auto;
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    background: rgb(17 24 39 / 60%);
+  }
+  .bcx-closable-tab-group.active { border-color: #6b7280; background: #374151; }
+  .bcx-closable-tab-group :global(.bcx-section-tab:not(.bcx-tab-close)) { flex: 1 1 auto; border-radius: 5px 0 0 5px; }
+  .bcx-closable-tab-group :global(.bcx-tab-close) { border-left: 1px solid #4b5563; border-radius: 0 5px 5px 0; }
+  .bcx-closable-tab-group.active :global(.bcx-section-tab) { color: #f9fafb; }
+  .bcx-closable-tab-group :global(.bcx-section-tab[data-state='active']) { box-shadow: none; }
+  :global(.bcx-tab-close) { flex: 0 0 24px; justify-content: center; padding-inline: 4px; }
+  .bcx-overflow-tab-group { display: flex; align-items: center; }
+  .bcx-overflow-tab-group :global(.bcx-section-menu-item:not(.bcx-close-menu-item)) { flex: 1 1 0%; min-width: 0; }
+  :global(.bcx-close-menu-item) { flex-shrink: 0; }
   :global(.bcx-sort-button) {
     flex: 0 0 24px;
     justify-content: center;
@@ -319,4 +366,14 @@ async function handleCloseAutoFocus(event: Event) {
     display: flex;
     width: max-content;
   }
+  .bcx-section-tabs.vertical {
+    flex: 0 0 var(--bcx-preview-column-width, 11rem);
+    margin-right: var(--bcx-preview-column-gap, 8px);
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .vertical :global(.bcx-visible-tabs) { flex-direction: column; flex-shrink: 0; overflow: visible; }
+  .vertical :global(.bcx-visible-tabs > .bcx-section-tab) { max-width: none; justify-content: flex-start; }
 </style>

@@ -4,9 +4,11 @@ import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import {
+  createReleaseDetailsTree,
   createReleaseInformation,
   releaseCollectionStatus,
 } from './ReleasePreview';
+import { TreeData } from './TreeData';
 
 function album() {
   return Album.create(
@@ -24,6 +26,7 @@ describe('release information', () => {
     const info = createReleaseInformation(album());
     expect(info.price).toBeUndefined();
     expect(info.date).toBeUndefined();
+    expect(info.modifiedDate).toBeUndefined();
     expect(info.duration).toBeUndefined();
     expect(info.collectionStatus).toEqual([]);
   });
@@ -34,7 +37,7 @@ describe('release information', () => {
       Price.create(5, 'EUR'),
       'Label',
       '2026-01-02',
-      '2026-01-02',
+      '2026-02-03',
       ['ambient', 'ambient'],
       {
         description: 'Liner notes',
@@ -60,6 +63,7 @@ describe('release information', () => {
     const info = createReleaseInformation(release);
     expect(info).toMatchObject({
       date: '2026-01-02',
+      modifiedDate: '2026-02-03',
       releaseYear: 2026,
       price: 'From 5 EUR',
       publisher: 'Label',
@@ -74,6 +78,33 @@ describe('release information', () => {
       'Second',
     ]);
     expect(release.tracks[0].title).toBe('Second');
+    const tree = createReleaseDetailsTree(
+      new TreeData([
+        { label: 'Copy' },
+        { label: 'Artists' },
+        { label: '2026' },
+        { label: 'Tags' },
+      ]),
+      info,
+      release.url.toString(),
+    );
+    expect(tree.items.map((item) => item.label)).toEqual([
+      'Tracks',
+      'Related releases',
+      'About this release',
+      'Credits',
+    ]);
+    expect(tree.items.map((item) => item.open)).toEqual([
+      true,
+      false,
+      false,
+      false,
+    ]);
+    expect(tree.items[1].loadChildren).toBeDefined();
+    expect(tree.items[1].children).toBeUndefined();
+    expect(tree.items[0].children?.[0].href).toBe(
+      'https://artist.bandcamp.com/track/first',
+    );
   });
 
   it('does not label incomplete track durations as a total', () => {
@@ -102,6 +133,7 @@ describe('release information', () => {
     expect(createReleaseInformation(release)).toMatchObject({
       price: undefined,
       date: undefined,
+      modifiedDate: undefined,
       artistUrl: undefined,
       publisherUrl: undefined,
     });

@@ -470,9 +470,9 @@ describe('release catalog previews', () => {
       assertPreview(artists?.children?.[0].children?.[0]);
       assertPreview(releases?.children?.[0]);
       expect(
-        (await artists?.children?.[0].children?.[0].loadPreview?.())?.items
-          .length,
-      ).toBeGreaterThan(0);
+        (await artists?.children?.[0].children?.[0].loadPreview?.())
+          ?.information.title,
+      ).toBe(artists?.children?.[0].children?.[0].previewInformation?.title);
       if (!artists || !releases) throw new Error('Missing catalog roots');
       if (label === 'Collection') {
         expect(artists.children?.[0].children?.[0].timestamp).toEqual({

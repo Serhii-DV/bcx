@@ -6,15 +6,13 @@ import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import type { TreeItem } from '../TreeItem';
 import {
-  copyable,
   items,
+  linkOpen,
   linkOpenPage,
   searchQuery,
   TreeItemBuilder,
-  text,
 } from '../TreeItemBuilder';
 import {
-  ICON_BANKNOTE,
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
   ICON_INFO,
@@ -26,7 +24,9 @@ import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 export class BandTreeItem {
   static create(band: Band, currentPageUrl: Url): TreeItem {
     const showAlbumsWithSummary = isBandcampMusicUrl(currentPageUrl);
-    const builder = new TreeItemBuilder(BandTreeItemFactory.create(band));
+    const builder = new TreeItemBuilder(
+      BandTreeItemFactory.createWithPreview(band),
+    );
     builder.withOpen(showAlbumsWithSummary).withoutHref();
 
     builder.add(linkOpenPage(band.name, band.url.toString()));
@@ -123,39 +123,14 @@ export class BandTreeItem {
 
   static createBandAbout(band: Band): TreeItem {
     const metadata = band.metadata;
-    const years = metadata.years.filter(Number.isFinite).sort((a, b) => a - b);
     const about = items('About', [
-      ...(metadata.location ? [text(`Location: ${metadata.location}`)] : []),
-      ...(metadata.biography ? [text(metadata.biography)] : []),
       ...(metadata.links.length
         ? [
             items(
-              'Websites & social links',
-              metadata.links.map((link) => linkOpenPage(link.label, link.url)),
-            ).withOpen(true),
-          ]
-        : []),
-      linkOpenPage('Open Bandcamp catalog', band.url.toString()),
-      copyable('Copy Bandcamp URL', band.url.toString()),
-      text(
-        `Loaded catalog: ${metadata.albums.length} albums, ${metadata.trackReleases.length} track releases`,
-      ),
-      ...(years.length
-        ? [
-            text(
-              `Release years: ${years[0]}${years.length > 1 ? `–${years[years.length - 1]}` : ''}`,
+              'Links',
+              metadata.links.map((link) => linkOpen(link.label, link.url)),
             ),
           ]
-        : []),
-      ...(Number.isFinite(metadata.created.getTime())
-        ? [
-            text(
-              `Bandcamp account created: ${metadata.created.toLocaleDateString()}`,
-            ).withImage(ICON_CALENDAR_DAYS),
-          ]
-        : []),
-      ...(band.metadata.currency
-        ? [text(`Currency: ${band.metadata.currency}`).withImage(ICON_BANKNOTE)]
         : []),
     ])
       .asTree()
@@ -166,8 +141,18 @@ export class BandTreeItem {
       ...about,
       aboutProfile: {
         name: band.name,
+        url: band.url.toString(),
         image: band.artwork.id > 0 ? band.artwork.mediumSizeUrl : undefined,
         location: metadata.location || undefined,
+        biography: metadata.biography || undefined,
+        albumCount: metadata.albums.length,
+        trackReleaseCount: metadata.trackReleases.length,
+        artistCount: metadata.artistNames.length,
+        releaseYears: metadata.years,
+        currency: metadata.currency || undefined,
+        createdDate: Number.isFinite(metadata.created.getTime())
+          ? metadata.created.toISOString().split('T')[0]
+          : undefined,
       },
     };
   }

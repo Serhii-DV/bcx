@@ -13,6 +13,7 @@ interface Props {
   onItemClick: (item: TreeItem, event: MouseEvent) => void | Promise<void>;
   onItemDoubleClick?: (item: TreeItem, event: MouseEvent) => void;
   getItemTitle?: (item: TreeItem) => string | undefined;
+  decorateItem?: (item: TreeItem) => TreeItem;
   onNodeClick: (item: TreeItem, event: MouseEvent) => void;
 }
 
@@ -25,6 +26,7 @@ let {
   onItemClick,
   onItemDoubleClick,
   getItemTitle = (item) => item.hint,
+  decorateItem = (item) => item,
   onNodeClick,
 }: Props = $props();
 
@@ -86,7 +88,7 @@ function getItemIndentStyle(item: TreeItem): string {
                 ondblclick={(event) => onItemDoubleClick?.(item, event)}
               >
                 <span class="tree-item-content">
-                  <BcxTreeItem item={withVisibleChildCount(item)} />
+                  <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} />
                 </span>
               </summary>
               {#if !item.isLoadingChildren}
@@ -109,7 +111,7 @@ function getItemIndentStyle(item: TreeItem): string {
               title={getItemTitle(item)}
             >
               <span class="tree-item-content">
-                <BcxTreeItem item={withVisibleChildCount(item)} />
+                <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} />
               </span>
             </a>
           {/if}

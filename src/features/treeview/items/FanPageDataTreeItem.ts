@@ -55,7 +55,7 @@ function createAlbumsTreeItemsFromItemsCache(items: any): TreeItem[] {
     if (hasOwnProperty(items, key)) {
       const item = items[key];
       const album = AlbumFactory.fromBandcampItem(item);
-      const treeItem = AlbumTreeItemFactory.create(album);
+      const treeItem = AlbumTreeItemFactory.createWithPreview(album);
       treeItems.push(treeItem);
     }
   }
@@ -77,7 +77,9 @@ function createFollowingBandsTreeItems(pageData: PageDataContext): TreeItem[] {
         ),
         item.image_id,
       );
-      const treeItem = BandTreeItemFactory.create(band);
+      const treeItem = BandTreeItemFactory.createWithPreview(band, {
+        following: true,
+      });
       treeItems.push(treeItem);
     }
   }
