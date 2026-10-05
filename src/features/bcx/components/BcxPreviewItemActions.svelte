@@ -1,12 +1,5 @@
 <script lang="ts">
-import {
-  Check,
-  ChevronDown,
-  Copy,
-  ExternalLink,
-  Eye,
-  Search,
-} from '@lucide/svelte';
+import { Check, ChevronDown, Copy, ExternalLink, Pin } from '@lucide/svelte';
 import { DropdownMenu } from 'bits-ui';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 import type { Url } from 'src/core/url';
@@ -142,7 +135,7 @@ async function copy(value: string) {
         {/if}
         {#if preview && previewItem}
           <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => { if (previewItem) { previewSelected = true; preview.show(previewItem); } }}>
-            <Eye size={14} class="shrink-0" aria-hidden="true" />
+            <Pin size={14} class="shrink-0" aria-hidden="true" />
             <span>{previewLabel}</span>
           </DropdownMenu.Item>
         {/if}
@@ -161,7 +154,7 @@ async function copy(value: string) {
           <DropdownMenu.Item class="preview-item-menu-action" title={`Search Bandcamp for ${option.query}\n${option.url}`}>
             {#snippet child({ props })}
               <a {...props} href={option.url} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); void openPage(event, option.url); }}>
-                <Search size={14} class="shrink-0" aria-hidden="true" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="shrink-0" aria-hidden="true"><path d="M0 18.6 7.2 5.4H24l-7.2 13.2Z" /></svg>
                 <span class="action-text"><span>{option.label}</span><span class="action-value">{option.query}</span></span>
                 <ExternalLink size={12} class="shrink-0" aria-hidden="true" />
               </a>
