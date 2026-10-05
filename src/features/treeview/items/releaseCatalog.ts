@@ -57,18 +57,13 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     const release = AlbumTreeItemFactory.createWithPreview(
       album,
       catalog.fanId,
+      {
+        showReleaseDate: catalog.showReleaseDate,
+        releaseDate: releaseDateByAlbum.get(album) ?? undefined,
+      },
     );
     const addedAt = addedAtByAlbum.get(album);
-    const published = album.metadata?.published;
-    const releaseDate =
-      releaseDateByAlbum.get(album) ??
-      (published && Number.isFinite(published.getTime())
-        ? published.toISOString()
-        : undefined);
-    const releasedTimestamp =
-      catalog.showReleaseDate && releaseDate
-        ? { label: 'Released', dateTime: releaseDate }
-        : undefined;
+    const releasedTimestamp = release.timestamp;
     return {
       ...release,
       timestamp: addedAt

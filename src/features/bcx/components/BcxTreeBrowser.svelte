@@ -340,12 +340,12 @@ function withPreviewButton(item: TreeItem): TreeItem {
   return {
     ...item,
     buttons: [
-      ...(item.buttons ?? []),
       {
         icon: Eye,
         title: `Preview ${item.previewInformation.title}`,
         onClick: (trigger) => onPreview?.(item, trigger),
       },
+      ...(item.buttons ?? []),
     ],
   };
 }

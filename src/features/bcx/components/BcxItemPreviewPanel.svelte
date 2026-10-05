@@ -5,7 +5,7 @@ import {
 } from 'src/features/treeview/BandPreview';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import { hasItemPreview, type TreeItem } from 'src/features/treeview/TreeItem';
-import { onMount, untrack } from 'svelte';
+import { onMount, tick, untrack } from 'svelte';
 import {
   bandReleasePreviewSize,
   DEFAULT_ITEM_PREVIEW_SIZE,
@@ -56,7 +56,16 @@ let resizeStartSize = DEFAULT_ITEM_PREVIEW_SIZE;
 function selectItem(item: TreeItem | null) {
   selectedItem = hasItemPreview(item) ? item : null;
   if (item?.previewInformation || item?.loadPreview)
-    untrack(() => releasePreviewTabs?.showPreview(item));
+    untrack(() => releasePreviewTabs?.selectPreview(item));
+}
+
+async function previewItem(item: TreeItem) {
+  if (!releasePreviewTabs) {
+    selectedItem = item;
+    await tick();
+    return;
+  }
+  await releasePreviewTabs.showPreview(item);
 }
 
 onMount(() => {
@@ -163,7 +172,7 @@ $effect(() => {
   style:grid-template-rows={`${100 - $previewSize}fr auto ${$previewSize}fr`}
 >
   <div id={itemListId} class="item-preview-panel-list">
-    <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={!!rootPath} {filterQuery} {showFilter} {isLoading} showBreadcrumb={false} initialSelectedHref={initialSelectedHref ?? treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} {onRootLoaded} nativeTabNavigation={true} />
+    <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={!!rootPath} {filterQuery} {showFilter} {isLoading} showBreadcrumb={false} initialSelectedHref={initialSelectedHref ?? treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} onPreview={previewItem} {onRootLoaded} nativeTabNavigation={true} />
   </div>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (ARIA separator is keyboard interactive) -->
   <div

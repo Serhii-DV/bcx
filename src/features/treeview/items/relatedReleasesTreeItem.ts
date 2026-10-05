@@ -60,7 +60,9 @@ export function createRelatedReleasesTreeItem(
             errorContext: '[Related releases]',
             withPreview: true,
             createPreviewItem: (album) => ({
-              ...AlbumTreeItemFactory.createWithPreview(album),
+              ...AlbumTreeItemFactory.createWithPreview(album, undefined, {
+                showReleaseDate: true,
+              }),
               buttons: undefined,
               actionIcon: ICON_EXTERNAL_LINK,
               hint: `Open release on Bandcamp\n${album.url}`,

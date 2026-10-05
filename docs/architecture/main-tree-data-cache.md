@@ -120,9 +120,14 @@ are still rebuilt from raw album data, and Collection release pagination is reta
 `BcxItemPreviewPanel` owns shared selection, asynchronous band loading, and
 the resizable details area for releases and followed bands. `BcxReleasePreviewTabs`
 keeps previewed releases in a shared `BcxSectionTabs` / Bits UI Tabs row above
-the release header. Main-list selection adds or activates a release tab, keyed by
-its normalized Bandcamp URL, with artwork, release title, and a full title/artist/URL
-hover description. The existing overflow menu handles narrow widths and extra tabs.
+the release header. Main-list selection reuses the first, current-release tab;
+changing its release resets that panel and discards stale loading results.
+Explicit Preview icons in Wishlist and other shared release lists create additional
+tabs keyed by normalized Bandcamp URL. Previewing the current selection can keep
+it in an additional tab while normal selection continues updating the first tab.
+Matching additional tabs are reused. Each tab has artwork, a release title, and a
+full title/artist/URL hover description. The existing overflow menu handles narrow
+widths and extra tabs.
 Optional close callbacks add separate close controls beside each release tab and
 inside the overflow menu, including their widths in overflow measurements. Closing
 a tab unmounts its preview and discards pending loading results; the active tab falls back
@@ -137,9 +142,11 @@ Following-list identity, artwork, and location provide the fallback when no band
 is saved. Band About shows a compact profile, expandable biography, and collapsed
 external links, with Bandcamp and Copy actions in the catalog tab bar. Release
 previews separate external Release, Artist, and Label links plus Search and Copy
-from navigation: the shared `item-details-header` keeps artwork, original
-artist/title/year typography, and metadata above a left-aligned action toolbar
-and shared `BcxRootSectionTabs` row. The first Release Info tab opens by default
+from navigation: the release tab row comes first, followed by a left-aligned
+action toolbar, the shared `item-details-header` with artwork, original
+artist/title/year typography and metadata, then the `BcxRootSectionTabs` row.
+Release details opt into actions before the header through the shared layout;
+other details retain their existing order. The first Release Info tab opens by default
 and contains notes and credits. Tab panels fill the remaining resizable preview
 height, with independently scrolling content rather than a fixed minimum height.
 The next tabs are Tracks and Related releases, including an empty Tracks state
@@ -165,11 +172,16 @@ It matches any of the current release's parsed artist names across saved album
 pages, including solo releases and collaborations. A shared host or publisher
 alone does not qualify a release. It excludes the current page and deduplicates
 normalized URLs; Various Artists is not treated as a shared artist identity.
-The list uses the shared paginated release rows with artwork and destination URLs;
+Related releases and Band/Label catalogs use the same `AlbumTreeItemFactory`
+preview data and `BcxTreeItem` renderer for artwork, artist/title/year, destination
+URLs, and valid Released timestamps. The factory accepts optional release-date
+visibility and a stored date override; catalogs retain their Added/Released
+timestamp ordering. Related rows keep their own right-side controls, and shared
+Preview buttons precede external-link controls. The list retains pagination;
 an empty store shows a saved-data empty state. Related rows add an explicit Preview
 button through TreeBrowser without changing single-click selection or double-click
 link navigation. It adds and activates a release preview tab and moves keyboard
-focus to that tab. Previewing the same URL reuses its existing tab; different
+focus to that tab. Previewing the same URL reuses its additional tab; different
 Bandcamp destinations remain distinct. Inactive panels stay mounted and hidden
 to preserve their selected section, filter, pagination, and scroll position.
 Related releases in any preview can add further tabs, with independent cancellable

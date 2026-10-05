@@ -50,14 +50,27 @@ export class AlbumTreeItemFactory {
       .build();
   }
 
-  static createWithPreview(album: Album, fanId?: number): TreeItem {
+  static createWithPreview(
+    album: Album,
+    fanId?: number,
+    options: { showReleaseDate?: boolean; releaseDate?: string } = {},
+  ): TreeItem {
+    const information = createReleaseInformation(album);
+    const releaseDate = options.releaseDate ?? information.date;
+    const published = releaseDate ? new Date(releaseDate) : undefined;
     return {
       ...this.create(album),
+      timestamp:
+        options.showReleaseDate &&
+        published &&
+        Number.isFinite(published.getTime())
+          ? { label: 'Released', dateTime: published.toISOString() }
+          : undefined,
       previewImage:
         album.artwork.id > 0
           ? (album.artwork.getUrl(ArtworkSize.LARGE) ?? undefined)
           : undefined,
-      previewInformation: createReleaseInformation(album),
+      previewInformation: information,
       actionIcon: undefined,
       buttons: [
         {

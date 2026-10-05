@@ -135,6 +135,8 @@ describe('release previews', () => {
       2,
       31,
       otherLabel.id,
+      [],
+      stored.metadata,
     );
     await BandcampStorage.saveAlbum(otherRelease);
     await BandcampStorage.saveAlbum(
@@ -254,6 +256,12 @@ describe('release previews', () => {
     ]);
     expect(related.children?.[0].previewInformation?.title).toBe(' release ');
     expect(related.children?.[0].image).toBe(otherRelease.artwork.tinySizeUrl);
+    expect(related.children?.[0].label).toBe(otherRelease.toString());
+    expect(related.children?.[0].timestamp).toEqual({
+      label: 'Released',
+      dateTime: otherRelease.metadata?.published.toISOString(),
+    });
+    expect(related.children?.[1].timestamp).toBeUndefined();
     expect(related.children?.[0].buttons).toBeUndefined();
     expect(related.children?.[0].actionIcon).toBe(ICON_EXTERNAL_LINK);
     expect(related.children?.[0].hint).toBe(

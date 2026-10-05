@@ -11,36 +11,65 @@ let { item }: { item: TreeItem } = $props();
 let previews = $state<{ id: string; item: TreeItem }[]>([]);
 let activeId = $state('');
 let container: HTMLDivElement;
+const CURRENT_RELEASE_TAB = 'current-release';
 let tabs = $derived(
-  previews.map(({ id, item }) => ({
-    id,
-    label: item.previewInformation?.title ?? item.label ?? 'Release',
-    image: item.image ?? ICON_DISC,
-    title: `${item.previewInformation?.title ?? item.label ?? 'Release'}${item.previewInformation?.artist ? ` by ${item.previewInformation.artist}` : ''}${item.href ? `\n${item.href}` : ''}`,
-    onClose: () => closePreview(id),
-  })),
+  previews.map(({ id, item }) => {
+    const label = previewTabLabel(item);
+    return {
+      id,
+      label,
+      image: item.image ?? ICON_DISC,
+      title: `${label}${item.href ? `\n${item.href}` : ''}`,
+      onClose: () => closePreview(id),
+    };
+  }),
 );
 
-export function showPreview(selected: TreeItem) {
-  const id =
+function previewTabLabel(item: TreeItem): string {
+  const information = item.previewInformation;
+  const title = information?.title ?? item.label ?? 'Release';
+  const year =
+    information?.releaseYear ??
+    (information?.date
+      ? new Date(information.date).getUTCFullYear()
+      : undefined);
+  return `${information?.artist ? `${information.artist} - ` : ''}${title}${year && Number.isFinite(year) ? ` (${year})` : ''}`;
+}
+
+function releaseId(selected: TreeItem): string {
+  return (
     createItemUrl(selected.href)?.toString() ??
     selected.id ??
-    `${selected.previewInformation?.artist ?? ''}:${selected.previewInformation?.title ?? selected.label ?? selected.path ?? 'release'}`;
+    `${selected.previewInformation?.artist ?? ''}:${selected.previewInformation?.title ?? selected.label ?? selected.path ?? 'release'}`
+  );
+}
+
+export function selectPreview(selected: TreeItem) {
+  const current = previews.find(
+    (preview) => preview.id === CURRENT_RELEASE_TAB,
+  );
+  const entry = { id: CURRENT_RELEASE_TAB, item: selected };
+  if (!current) previews = [entry, ...previews];
+  else if (releaseId(current.item) !== releaseId(selected))
+    previews = previews.map((preview) =>
+      preview.id === CURRENT_RELEASE_TAB ? entry : preview,
+    );
+  activeId = CURRENT_RELEASE_TAB;
+}
+
+export async function showPreview(selected: TreeItem) {
+  const id = releaseId(selected);
   if (!previews.some((preview) => preview.id === id)) {
     previews = [...previews, { id, item: selected }];
   }
   activeId = id;
+  await focusActiveTab();
 }
 
 $effect(() => {
   const selected = item;
-  untrack(() => showPreview(selected));
+  untrack(() => selectPreview(selected));
 });
-
-async function showRelatedPreview(selected: TreeItem) {
-  showPreview(selected);
-  await focusActiveTab();
-}
 
 async function closePreview(id: string) {
   const index = previews.findIndex((preview) => preview.id === id);
@@ -69,7 +98,9 @@ async function focusActiveTab() {
     {/if}
     {#each previews as preview (preview.id)}
       <Tabs.Content value={preview.id} class="bcx-tab-content">
-        <BcxReleasePreview item={preview.item} onPreview={showRelatedPreview} />
+        {#key releaseId(preview.item)}
+        <BcxReleasePreview item={preview.item} onPreview={showPreview} />
+        {/key}
       </Tabs.Content>
     {/each}
   </Tabs.Root>

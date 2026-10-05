@@ -17,6 +17,7 @@ let {
   compactImage = false,
   details,
   actions,
+  actionsBeforeHeader = false,
   panels,
   treeData,
   detailsLabel,
@@ -36,6 +37,7 @@ let {
   compactImage?: boolean;
   details?: Snippet;
   actions?: Snippet;
+  actionsBeforeHeader?: boolean;
   panels?: Snippet;
   treeData: TreeData;
   detailsLabel: string;
@@ -47,7 +49,12 @@ let {
 let failedImage = $state<string>();
 </script>
 
+{#snippet actionsToolbar()}
+  {#if actions}<BcxSectionTabs tabs={[]} value="" label={`${detailsLabel} actions`} {actions} wrapActions={true} />{/if}
+{/snippet}
+
 <div class="item-details" class:compact-image={compactImage} class:with-panels={!!panels} style:--item-heading-size={`${headingSize}rem`} style:--item-subheading-size={`${subheadingSize}rem`}>
+  {#if actionsBeforeHeader}{@render actionsToolbar()}{/if}
   <header class="item-details-header">
     {#if !compactImage || (image && image !== failedImage)}
       {#if image && image !== failedImage}
@@ -69,7 +76,7 @@ let failedImage = $state<string>();
     {#if loading}<p role="status">{loadingMessage}</p>{/if}
     {#if error}<p role="alert">{error}</p>{/if}
     {@render details?.()}
-    {#if actions}<BcxSectionTabs tabs={[]} value="" label={`${detailsLabel} actions`} {actions} wrapActions={true} />{/if}
+    {#if !actionsBeforeHeader}{@render actionsToolbar()}{/if}
     {@render panels?.()}
     {#if treeData.items.length}
       {#key treeData}

@@ -193,6 +193,7 @@ let dates = $derived(
   subheading={information.artist}
   subheadingSize={2.2}
   actions={releaseActions}
+  actionsBeforeHeader={true}
   panels={releasePanels}
   treeData={emptyTree}
   detailsLabel="Detailed release information"
