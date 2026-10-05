@@ -107,6 +107,6 @@ async function focusActiveTab() {
 </div>
 
 <style>
-.release-preview-tabs { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
+.release-preview-tabs { --bcx-preview-gutter: 1rem; --bcx-preview-column-width: 12rem; --bcx-preview-column-gap: 0.75rem; display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 p { margin: 0; padding: 0.5rem 1rem; font-size: 0.8125rem; color: #9ca3af; }
 </style>

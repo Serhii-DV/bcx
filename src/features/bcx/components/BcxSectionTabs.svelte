@@ -242,7 +242,7 @@ async function handleCloseAutoFocus(event: Event) {
     align-items: center;
     gap: 4px;
     min-width: 0;
-    margin: 0 8px 8px;
+    margin: 0 var(--bcx-preview-gutter, 8px) 8px;
     padding: 4px;
     border: 1px solid #4b5563;
     border-radius: 8px;
@@ -367,7 +367,8 @@ async function handleCloseAutoFocus(event: Event) {
     width: max-content;
   }
   .bcx-section-tabs.vertical {
-    flex: 0 0 11rem;
+    flex: 0 0 var(--bcx-preview-column-width, 11rem);
+    margin-right: var(--bcx-preview-column-gap, 8px);
     flex-direction: column;
     align-items: stretch;
     min-height: 0;

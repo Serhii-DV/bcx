@@ -146,10 +146,14 @@ from navigation: the release tab row comes first, followed by a left-aligned
 action toolbar, the shared `item-details-header` with artwork, original
 artist/title/year typography and metadata, then `BcxRootSectionTabs`.
 Release sections opt into a responsive sidebar: at a preview width of 640px or
-more, Release Info, Tracks, Related releases, and Tags form an 11rem left-side menu;
+more, Release Info, Tracks, Related releases, and Tags form a 12rem left-side menu;
 narrower previews use the horizontal tab row and its overflow menu. The shared
 Tabs root switches orientation with the layout, preserving keyboard navigation
 and mounted panel state. Previewed release tabs remain horizontal at the top.
+The release preview wrapper provides shared CSS variables for a 1rem gutter,
+12rem cover/sidebar column, and 0.75rem column gap. The header and toolbars use
+the same gutter, and the sidebar aligns with the cover above it. Shared components
+retain their existing spacing defaults outside release previews.
 Release details opt into actions before the header through the shared layout;
 other details retain their existing order. The first Release Info tab opens by default
 and contains notes and credits. Tab panels fill the remaining resizable preview

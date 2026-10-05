@@ -91,8 +91,8 @@ let failedImage = $state<string>();
 .item-details.with-panels { min-height: 0; overflow: hidden; }
 .with-panels .item-details-header { flex-shrink: 0; }
 .with-panels .item-details-tree { flex: 1 1 0%; min-height: 0; overflow: hidden; }
-.item-details-header { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; }
-.item-details-image { width: min(12rem, 40%); aspect-ratio: 1; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
+.item-details-header { display: flex; align-items: flex-start; gap: var(--bcx-preview-column-gap, 0.75rem); padding: 0.75rem var(--bcx-preview-gutter, 1rem); }
+.item-details-image { width: min(var(--bcx-preview-column-width, 12rem), 40%); aspect-ratio: 1; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
 .compact-image .item-details-image { width: min(5rem, 25%); }
 .item-details-placeholder { display: flex; align-items: center; justify-content: center; border: 1px dashed rgb(156 163 175 / 30%); background: #293548; color: #9ca3af; }
 .item-details-heading { min-width: 0; flex: 1 1 0%; overflow-wrap: anywhere; font-size: 0.8125rem; }
