@@ -136,8 +136,8 @@ item resets that panel and discards stale loading results. Hidden lists cannot
 replace the current preview. Inside previews, the context exposes only the
 explicit Preview action, so browsing a Band catalog or Related releases preserves
 the open preview and adds releases or bands to the same main tab strip.
-Explicit Preview icons in catalog, History, Following Bands, fan-page lists,
-and release artist/label links create additional
+Explicit Preview icons in catalog, History, Following Bands, and fan-page lists,
+and Preview actions in release artist/label menus create additional
 tabs keyed by normalized Bandcamp URL. Previewing the current selection can keep
 it in an additional tab while normal selection continues updating the first tab.
 Matching additional tabs are reused. Each tab has artwork, a release title, and a
@@ -158,11 +158,12 @@ is saved. Band About shows a compact profile, full biography, saved release
 counts, catalog artist counts and years, currency, and the Bandcamp page creation
 date when available, using `relative-time-element` with the exact date on hover.
 External links render directly before Biography without a tree browser.
-Bandcamp and Copy actions use their own action bar above the catalog sections,
-matching the Release preview layout. Band catalog sections also use the shared
-responsive sidebar: About, Releases, Artists, Release years, and Tags move to the
-left at widths of 640px or more and remain horizontal in narrower panels. Release
-previews separate external Release, Artist, and Label links plus Search and Copy
+A named band action dropdown includes Copy band name, Copy URL, and Search band in its own
+action bar above the catalog sections, matching the Release preview layout. Band
+catalog sections also use the shared responsive sidebar: About, Releases, Artists,
+Release years, and Tags move to the left at widths of 640px or more and remain
+horizontal in narrower panels. Release
+previews separate Release, Artist, and Label action dropdowns
 from navigation: the release tab row comes first, followed by a left-aligned
 action toolbar, then `BcxRootSectionTabs`. The default Release Info panel contains
 the shared `item-details-header` with artwork, original artist/title/year
@@ -192,11 +193,24 @@ Following Bands records. Additional release links match saved album title and
 artist values, ignoring case and repeated whitespace, exclude the current URL,
 and retain each distinct saved destination. They open the saved release page and
 show the hosting band's name and image, falling back to its subdomain and release
-artwork. These additional links follow the artist/label links, before Search.
-Search and Copy triggers show dropdown chevrons; the Bandcamp-branded Search menu
-offers artist and release searches. Copy
-menus show the exact clipboard text and briefly replace the copy icon with a
-checkmark after success. The Release Info header uses `relative-time-element` for Released
+artwork. These additional dropdowns follow the artist/label dropdowns.
+`BcxPreviewItemActions` groups each destination's actions in one flat menu: Open on
+Bandcamp with a wrapping URL, Preview, and separated copy actions with exact-text
+and success feedback. Release menus copy the full release title, release title,
+and release URL; artist, label, and band menus copy their names and available
+URLs. Each menu appends Search release, Search artist, Search label, or Search band
+with the query shown. Release search uses the full artist/title query and the
+existing album search type; artist, label, and band searches use the name and band
+search type. Search links preserve modified clicks and active-tab navigation.
+An artist without a detected page retains name copying and search without Open,
+Preview, or URL copying. Release title copying also remains available without a URL.
+The current release or band
+uses Keep in preview tab, preserving the existing add-or-reuse behavior. Menu
+triggers retain artwork and names; real page links preserve modified clicks.
+The separate Copy and Search menus are removed from both panels.
+Copy actions show the exact clipboard
+text and briefly replace the item artwork with a checkmark after success.
+The Release Info header uses `relative-time-element` for Released
 and Modified dates, with ISO timestamps, exact-date hover titles, and a text
 fallback; missing or invalid dates are omitted. `BcxRootSectionTabs` accepts a
 custom section-content snippet while retaining its tab overflow, keyboard

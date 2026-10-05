@@ -5,8 +5,7 @@ import {
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
 import BcxBandDetails from './BcxBandDetails.svelte';
-import BcxPreviewActions from './BcxPreviewActions.svelte';
-import BcxPreviewLink from './BcxPreviewLink.svelte';
+import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import { createItemUrl } from './itemUrl';
@@ -81,8 +80,7 @@ let catalog = $derived.by(() => {
 
 {#snippet bandActions()}
   {#if previewUrl}
-    <BcxPreviewLink url={previewUrl} name="Bandcamp" toolbar={true} title={`Open band page on Bandcamp: ${bandAbout?.aboutProfile?.name ?? 'Band'}`} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
-    <BcxPreviewActions label="Copy band URL" items={[{ label: 'Copy Bandcamp URL', value: previewUrl.toString() }]} />
+    <BcxPreviewItemActions url={previewUrl} image={bandAbout?.aboutProfile?.image} name={bandAbout?.aboutProfile?.name ?? 'Band'} kind="band" copyValue={bandAbout?.aboutProfile?.name ?? 'Band'} keepInPreviewTab={true} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
   {/if}
 {/snippet}
 

@@ -25,9 +25,7 @@ import {
 } from 'src/features/treeview/utils/icon';
 import { musicFilterStore } from '../stores/musicFilter';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
-import BcxPreviewActions from './BcxPreviewActions.svelte';
-import BcxPreviewLink from './BcxPreviewLink.svelte';
-import BcxReleaseSearch from './BcxReleaseSearch.svelte';
+import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxReleaseTreePanel from './BcxReleaseTreePanel.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
@@ -186,17 +184,6 @@ let summary = $derived(
     information.duration,
   ].filter((value): value is string => !!value),
 );
-let copyItems = $derived([
-  { label: 'Copy artist name', value: information.artist },
-  { label: 'Copy release title', value: information.title },
-  {
-    label: 'Copy full title',
-    value: `${information.artist} - ${information.title}`,
-  },
-  ...(releaseUrl
-    ? [{ label: 'Copy release URL', value: releaseUrl.toString() }]
-    : []),
-]);
 let dates = $derived(
   [
     { label: 'Released', value: information.date },
@@ -212,18 +199,19 @@ let dates = $derived(
 </script>
 
 {#snippet releaseActions()}
-  {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name="Release" toolbar={true} title={`Open release on Bandcamp: ${information.title} by ${information.artist}`} previewItem={item} />{/if}
+  <BcxPreviewItemActions url={releaseUrl} image={item.previewImage} name="Release" kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={item} keepInPreviewTab={true} />
   {#each bandLinks.artists as artist (artist.url.toString())}
-    <BcxPreviewLink url={artist.url} image={artist.image} name={artist.name} toolbar={true} title={`Open artist on Bandcamp: ${artist.name}`} previewItem={bandPreviewItem(artist)} />
+    <BcxPreviewItemActions url={artist.url} image={artist.image} name={artist.name} kind="artist" copyValue={artist.name} previewItem={bandPreviewItem(artist)} />
   {/each}
+  {#if !bandLinks.artists.length && information.artist.trim()}
+    <BcxPreviewItemActions name={information.artist} kind="artist" copyValue={information.artist} />
+  {/if}
   {#if bandLinks.publisher}
-    <BcxPreviewLink url={bandLinks.publisher.url} image={bandLinks.publisher.image} name={bandLinks.publisher.name} toolbar={true} title={`Open label on Bandcamp: ${bandLinks.publisher.name}`} previewItem={bandPreviewItem(bandLinks.publisher)} />
+    <BcxPreviewItemActions url={bandLinks.publisher.url} image={bandLinks.publisher.image} name={bandLinks.publisher.name} kind="label" copyValue={bandLinks.publisher.name} previewItem={bandPreviewItem(bandLinks.publisher)} />
   {/if}
   {#each bandLinks.releases as release (release.url.toString())}
-    <BcxPreviewLink url={release.url} image={release.image} name={`Release on ${release.name}`} toolbar={true} title={`Open ${information.title} on ${release.name}’s Bandcamp page`} previewItem={linkedReleaseItem(release)} />
+    <BcxPreviewItemActions url={release.url} image={release.image} name={`Release on ${release.name}`} kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={linkedReleaseItem(release)} />
   {/each}
-  <BcxReleaseSearch artist={information.artist} title={information.title} />
-  <BcxPreviewActions label="Copy release details" items={copyItems} />
 {/snippet}
 
 {#snippet releaseNotes()}
