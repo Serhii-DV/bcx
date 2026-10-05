@@ -169,12 +169,13 @@ more, Release Info, Credits, Tracks, Related releases, and Tags form a 12rem lef
 narrower previews use the horizontal tab row and its overflow menu. The shared
 Tabs root switches orientation with the layout, preserving keyboard navigation
 and mounted panel state. Previewed release tabs remain horizontal at the top.
-The release preview wrapper provides shared CSS variables for a 1rem gutter,
-12rem sidebar column, and 0.75rem column gap. The header and toolbars use
-the same gutter. Artwork is inside Release Info alongside the sidebar, using the
+The side-panel shell provides the shared 1rem gutter for main navigation,
+section navigation, and preview action bars. The preview wrapper provides CSS
+variables for a 12rem sidebar column and 0.75rem column gap. The header and toolbars
+use the same gutter. Artwork is inside Release Info alongside the sidebar, using the
 shared layout’s image scale of 1.2: up to 14.4rem wide, capped at 48% of its container,
-with metadata wrapping below when needed. Shared components
-retain their existing spacing defaults outside release previews.
+with metadata wrapping below when needed. Preview-specific column widths and
+artwork sizing stay scoped to preview content.
 Release Info reuses `BcxItemDetailsLayout` in content-fitting mode, avoiding its
 standalone minimum height and tree area sizing. Other details retain their
 existing layout. The first Release Info tab opens by default. Tab panels fill the remaining resizable preview

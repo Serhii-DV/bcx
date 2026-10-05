@@ -454,6 +454,7 @@ $effect(() => {
 <style>
   :global(.bcx-side-panel-shell) {
     --bcx-side-panel-width: 400px;
+    --bcx-preview-gutter: 1rem;
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 999999;

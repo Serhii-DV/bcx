@@ -159,7 +159,7 @@ function handleLostPointerCapture() {
 .item-preview-panel { display: grid; flex: 1 1 0%; min-height: 0; overflow: hidden; }
 .preview-hidden > [hidden] { display: none; }
 .item-preview-panel.resizing { cursor: row-resize; user-select: none; }
-.item-preview-panel-list, .item-preview-panel-details { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.item-preview-panel-list, .item-preview-panel-details { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding-top: 8px; padding-bottom: 8px; }
 .item-preview-panel-resizer { display: flex; align-items: center; justify-content: center; box-sizing: content-box; width: 100%; height: 0.625rem; padding: 0; border: 0; border-block: 1px solid #4b5563; border-radius: 0; background: transparent; cursor: row-resize; touch-action: none; }
 .item-preview-panel-resizer span { width: 2.5rem; height: 0.1875rem; border-radius: 9999px; background: #6b7280; }
 .item-preview-panel-resizer:hover, .item-preview-panel-resizer:focus-visible, .item-preview-panel.resizing .item-preview-panel-resizer { border-color: #38bdf8; background: rgb(56 189 248 / 0.12); outline: none; }
