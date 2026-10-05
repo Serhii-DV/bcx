@@ -64,22 +64,30 @@ export async function loadBandPreview(
 export async function loadBandDetails(
   fallback: BandPreview,
 ): Promise<{ about: TreeItem; treeData?: TreeData }> {
-  if (fallback.id !== undefined) {
-    const [band] = await BandcampStorage.getBands([fallback.id]);
-    if (band) {
-      const about = BandTreeItem.createBandAbout(band);
-      return {
-        about: {
-          ...about,
-          aboutProfile: {
-            ...about.aboutProfile,
-            name: band.name,
-            following: fallback.following,
-          },
+  const [saved] =
+    fallback.id !== undefined
+      ? await BandcampStorage.getBands([fallback.id])
+      : await BandcampStorage.getByUuids([
+          BandcampUrlFactory.createBandUrl(Url.create(fallback.url)).uuid,
+        ]);
+  if (saved instanceof Band) {
+    // URL lookup returns a profile; hydrate its saved releases for the catalog.
+    const band =
+      fallback.id !== undefined
+        ? saved
+        : ((await BandcampStorage.getBands([saved.id]))[0] ?? saved);
+    const about = BandTreeItem.createBandAbout(band);
+    return {
+      about: {
+        ...about,
+        aboutProfile: {
+          ...about.aboutProfile,
+          name: band.name,
+          following: fallback.following,
         },
-        treeData: createBandTreeData(band),
-      };
-    }
+      },
+      treeData: createBandTreeData(band),
+    };
   }
 
   return { about: createBandAboutFallback(fallback) };

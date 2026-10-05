@@ -24,7 +24,9 @@ import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 export class BandTreeItem {
   static create(band: Band, currentPageUrl: Url): TreeItem {
     const showAlbumsWithSummary = isBandcampMusicUrl(currentPageUrl);
-    const builder = new TreeItemBuilder(BandTreeItemFactory.create(band));
+    const builder = new TreeItemBuilder(
+      BandTreeItemFactory.createWithPreview(band),
+    );
     builder.withOpen(showAlbumsWithSummary).withoutHref();
 
     builder.add(linkOpenPage(band.name, band.url.toString()));

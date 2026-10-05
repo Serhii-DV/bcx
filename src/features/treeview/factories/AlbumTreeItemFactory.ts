@@ -117,6 +117,7 @@ export class AlbumTreeItemFactory {
 
   static createWithSummary(album: Album): TreeItem {
     const builder = this.builder(album)
+      .withId(album.url.toString())
       .withoutLink()
       .withoutChildrenCount()
       .asTree();
@@ -181,7 +182,9 @@ export class AlbumTreeItemFactory {
 
   static fromAlbums(albums: Album[], withSummary: boolean = false): TreeItem[] {
     return albums.map((album) =>
-      withSummary ? this.createWithSummary(album) : this.create(album),
+      withSummary
+        ? this.createWithSummary(album)
+        : this.createWithPreview(album),
     );
   }
 
@@ -300,7 +303,7 @@ export class AlbumTreeItemFactory {
   }
 
   private static builder(album: Album): TreeItemBuilder {
-    return builder(this.create(album));
+    return builder(this.createWithPreview(album));
   }
 
   private static detailsBuilder(details: AlbumDetails): TreeItemBuilder {

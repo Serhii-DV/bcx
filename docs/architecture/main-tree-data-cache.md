@@ -117,12 +117,17 @@ are still rebuilt from raw album data, and Collection release pagination is reta
 
 ## Shared item preview
 
-`BcxItemPreviewPanel` owns shared selection, asynchronous band loading, and
-the resizable details area for releases and followed bands. `BcxReleasePreviewTabs`
-keeps previewed releases in a shared `BcxSectionTabs` / Bits UI Tabs row above
-the release header. Main-list selection reuses the first, current-release tab;
-changing its release resets that panel and discards stale loading results.
-Explicit Preview icons in Wishlist and other shared release lists create additional
+`BcxSidePanel` mounts one `BcxItemPreviewPanel` beneath the main navigation.
+It wraps the section panels and owns the resizable preview area, visible in
+sections containing release or band items. `BcxItemPreviewTabs` keeps both item
+types in one shared `BcxSectionTabs` / Bits UI Tabs row. The item-preview Svelte
+context routes main-list selection to the first, current-item tab; changing its
+item resets that panel and discards stale loading results. Hidden lists cannot
+replace the current preview. Inside previews, the context exposes only the
+explicit Preview action, so browsing a Band catalog or Related releases preserves
+the open preview and adds releases or bands to the same main tab strip.
+Explicit Preview icons in catalog, History, Following Bands, fan-page lists,
+and release artist/label links create additional
 tabs keyed by normalized Bandcamp URL. Previewing the current selection can keep
 it in an additional tab while normal selection continues updating the first tab.
 Matching additional tabs are reused. Each tab has artwork, a release title, and a
@@ -135,9 +140,9 @@ to the next tab or the previous one when closing the last tab in the row. Closin
 the final preview shows an empty state. Explicit main-list selection can reopen
 a closed release without immediately recreating it after dismissal. Keyboard
 focus returns to the active tab or the empty preview area.
-`BcxReleasePreview` owns cancellable loading independently for each release tab
-and reuses the existing release details renderer;
-band details read `BandcampStorage` only on selection.
+`BcxReleasePreview` and `BcxBandPreview` own cancellable loading independently
+for each tab and reuse the existing details and Band catalog renderers.
+Band previews load saved profiles and catalogs by ID or normalized Bandcamp URL.
 Following-list identity, artwork, and location provide the fallback when no band
 is saved. Band About shows a compact profile, expandable biography, and collapsed
 external links, with Bandcamp and Copy actions in the catalog tab bar. Release
@@ -198,9 +203,9 @@ link navigation. It adds and activates a release preview tab and moves keyboard
 focus to that tab. Previewing the same URL reuses its additional tab; different
 Bandcamp destinations remain distinct. Inactive panels stay mounted and hidden
 to preserve their selected section, filter, pagination, and scroll position.
-Related releases in any preview can add further tabs, with independent cancellable
-loading and the existing preview height. Tabs live within the current release
-preview area and are not saved to storage. Loading failures show an error with
+Related releases and Band catalogs in any preview can add further tabs, with
+independent cancellable loading and the shared preview height. Tabs stay mounted
+when navigating main sections and are not saved to storage. Loading failures show an error with
 Retry, and stale responses are discarded when switching releases. TreeBrowser link
 rows select on single-click and open on double-click or Enter, including links
 that also carry callbacks or filter queries. This runtime node is created with

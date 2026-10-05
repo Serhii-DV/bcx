@@ -1,73 +1,51 @@
 <script lang="ts">
-import {
-  createBandAboutFallback,
-  loadBandDetails,
-} from 'src/features/treeview/BandPreview';
-import type { TreeData } from 'src/features/treeview/TreeData';
 import { hasItemPreview, type TreeItem } from 'src/features/treeview/TreeItem';
-import { onMount, tick, untrack } from 'svelte';
+import { onMount, type Snippet, setContext, untrack } from 'svelte';
 import {
-  bandReleasePreviewSize,
+  ITEM_PREVIEW_CONTEXT,
+  type ItemPreviewContext,
+} from '../stores/itemPreview';
+import {
   DEFAULT_ITEM_PREVIEW_SIZE,
   type ItemPreviewSizeStore,
   itemPreviewSize,
   MAX_ITEM_PREVIEW_SIZE,
   MIN_ITEM_PREVIEW_SIZE,
 } from '../stores/itemPreviewSize';
-import BcxBandPanel from './BcxBandPanel.svelte';
-import BcxReleasePreviewTabs from './BcxReleasePreviewTabs.svelte';
-import BcxTreeBrowser from './BcxTreeBrowser.svelte';
+import BcxItemPreviewTabs from './BcxItemPreviewTabs.svelte';
 
 const KEYBOARD_RESIZE_STEP = 5;
 
 let {
-  treeData,
-  rootPath,
-  initialSelectedHref,
-  filterQuery,
-  showFilter = true,
-  isLoading = false,
-  onRootLoaded,
+  children,
+  visible = true,
   previewSize = itemPreviewSize,
 }: {
-  treeData: TreeData;
-  rootPath?: string;
-  initialSelectedHref?: string;
-  filterQuery?: string;
-  showFilter?: boolean;
-  isLoading?: boolean;
-  onRootLoaded?: () => void;
+  children: Snippet;
+  visible?: boolean;
   previewSize?: ItemPreviewSizeStore;
 } = $props();
-let bandAbout: TreeItem | null = $state(null);
-let bandTreeData: TreeData | undefined = $state();
 const componentId = $props.id();
 const itemListId = `${componentId}-item-list`;
 const itemPreviewId = `${componentId}-item-preview`;
 let previewPanel: HTMLDivElement;
-let selectedItem: TreeItem | null = $state(null);
-let releasePreviewTabs = $state<BcxReleasePreviewTabs>();
-let error = $state('');
-let loading = $state(false);
+let previewTabs = $state<BcxItemPreviewTabs>();
 let isResizing = $state(false);
 let resizeStartY = 0;
 let resizeStartSize = DEFAULT_ITEM_PREVIEW_SIZE;
 
-function selectItem(item: TreeItem | null) {
-  selectedItem = hasItemPreview(item) ? item : null;
-  if (item?.previewInformation || item?.loadPreview)
-    untrack(() => releasePreviewTabs?.selectPreview(item));
+function selectItem(item: TreeItem) {
+  if (hasItemPreview(item)) untrack(() => previewTabs?.selectPreview(item));
 }
 
-async function previewItem(item: TreeItem) {
-  if (!releasePreviewTabs) {
-    selectedItem = item;
-    await tick();
-    return;
-  }
-  await releasePreviewTabs.showPreview(item);
+function previewItem(item: TreeItem) {
+  if (hasItemPreview(item)) void previewTabs?.showPreview(item);
 }
 
+setContext<ItemPreviewContext>(ITEM_PREVIEW_CONTEXT, {
+  select: selectItem,
+  show: previewItem,
+});
 onMount(() => {
   void previewSize.restore();
 });
@@ -136,47 +114,22 @@ function handleLostPointerCapture() {
   if (isResizing) previewSize.save($previewSize);
   isResizing = false;
 }
-
-$effect(() => {
-  const item = selectedItem;
-  let cancelled = false;
-  bandAbout = null;
-  bandTreeData = undefined;
-  error = '';
-  loading = !!item?.bandPreview;
-  if (item?.bandPreview) {
-    loadBandDetails(item.bandPreview)
-      .then((data) => {
-        if (!cancelled) {
-          bandAbout = data.about;
-          bandTreeData = data.treeData;
-        }
-      })
-      .catch(() => {
-        if (!cancelled) error = 'Could not read saved band details.';
-      })
-      .finally(() => {
-        if (!cancelled) loading = false;
-      });
-  }
-  return () => {
-    cancelled = true;
-  };
-});
 </script>
 
 <div
   bind:this={previewPanel}
   class:resizing={isResizing}
+  class:preview-hidden={!visible}
   class="item-preview-panel"
-  style:grid-template-rows={`${100 - $previewSize}fr auto ${$previewSize}fr`}
+  style:grid-template-rows={visible ? `${100 - $previewSize}fr auto ${$previewSize}fr` : '1fr'}
 >
   <div id={itemListId} class="item-preview-panel-list">
-    <BcxTreeBrowser {treeData} initialRootPath={rootPath} lockInitialRoot={!!rootPath} {filterQuery} {showFilter} {isLoading} showBreadcrumb={false} initialSelectedHref={initialSelectedHref ?? treeData.items.find((item) => item.path === rootPath)?.initialSelectedHref} onSelect={selectItem} onPreview={previewItem} {onRootLoaded} nativeTabNavigation={true} />
+    {@render children()}
   </div>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (ARIA separator is keyboard interactive) -->
   <div
     class="item-preview-panel-resizer"
+    hidden={!visible}
     role="separator"
     aria-label="Resize item details"
     aria-orientation="horizontal"
@@ -197,32 +150,18 @@ $effect(() => {
   >
     <span aria-hidden="true"></span>
   </div>
-  <section id={itemPreviewId} class="item-preview-panel-details" aria-label="Selected item details">
-    {#if selectedItem?.bandPreview}
-      {#key selectedItem}
-        <BcxBandPanel previewSize={bandReleasePreviewSize} treeData={bandTreeData} about={bandAbout ?? createBandAboutFallback(selectedItem.bandPreview)} fallbackLocation={selectedItem.bandPreview.location} bandUrl={selectedItem.bandPreview.url} {loading} {error} />
-      {/key}
-    {:else if selectedItem?.previewInformation || selectedItem?.loadPreview}
-      <div class="item-preview-panel-content release-preview-content">
-        <BcxReleasePreviewTabs bind:this={releasePreviewTabs} item={selectedItem} />
-      </div>
-    {:else}
-      <h3>Item details</h3>
-      <p>Select a release or band to view its details.</p>
-    {/if}
+  <section id={itemPreviewId} class="item-preview-panel-details" aria-label="Preview" hidden={!visible}>
+    <BcxItemPreviewTabs bind:this={previewTabs} />
   </section>
 </div>
 
 <style>
 .item-preview-panel { display: grid; flex: 1 1 0%; min-height: 0; overflow: hidden; }
+.preview-hidden > [hidden] { display: none; }
 .item-preview-panel.resizing { cursor: row-resize; user-select: none; }
 .item-preview-panel-list, .item-preview-panel-details { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .item-preview-panel-resizer { display: flex; align-items: center; justify-content: center; box-sizing: content-box; width: 100%; height: 0.625rem; padding: 0; border: 0; border-block: 1px solid #4b5563; border-radius: 0; background: transparent; cursor: row-resize; touch-action: none; }
 .item-preview-panel-resizer span { width: 2.5rem; height: 0.1875rem; border-radius: 9999px; background: #6b7280; }
 .item-preview-panel-resizer:hover, .item-preview-panel-resizer:focus-visible, .item-preview-panel.resizing .item-preview-panel-resizer { border-color: #38bdf8; background: rgb(56 189 248 / 0.12); outline: none; }
 .item-preview-panel-resizer:hover span, .item-preview-panel-resizer:focus-visible span, .item-preview-panel.resizing .item-preview-panel-resizer span { background: #7dd3fc; }
-.item-preview-panel-content { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
-.release-preview-content { flex: 1 1 0%; overflow: hidden; }
-h3 { margin: 0; padding: 0.5rem 1rem; font-size: 0.875rem; }
-p { padding: 0.5rem 1rem; font-size: 0.875rem; color: #d1d5db; }
 </style>

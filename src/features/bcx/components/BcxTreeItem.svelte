@@ -23,7 +23,7 @@ let itemImage = $derived(
 );
 let displayUrl = $derived.by(() => {
   if (!item.previewInformation && !item.bandPreview) return undefined;
-  const url = createItemUrl(item.bandPreview?.url ?? item.href);
+  const url = createItemUrl(item.bandPreview?.url ?? item.href ?? item.id);
   if (!url) return undefined;
   return item.bandPreview
     ? BandcampUrlFactory.createBandUrl(url).hostname
@@ -39,6 +39,7 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
     <a
       href={button.href}
       title={button.title}
+      aria-label={button.title}
       class="item-button inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
       onclick={(e) => {
         e.stopPropagation();
@@ -54,6 +55,7 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
     <button
       type="button"
       title={button.title}
+      aria-label={button.title}
       class="item-button cursor-pointer inline-flex items-center justify-center p-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors"
       onclick={(e) => {
         e.stopPropagation();
@@ -254,9 +256,11 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 
 :global(.tree-item:hover) .item-buttons,
 :global(.tree-item:focus) .item-buttons,
+:global(.tree-item:focus-within) .item-buttons,
 :global(.tree-item.focused) .item-buttons,
 :global(.tree-item:hover) .item-external-link-icon,
 :global(.tree-item:focus) .item-external-link-icon,
+:global(.tree-item:focus-within) .item-external-link-icon,
 :global(.tree-item.focused) .item-external-link-icon {
   opacity: 1;
 }

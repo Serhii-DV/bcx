@@ -3,9 +3,7 @@ import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { Snippet } from 'svelte';
-import type { ItemPreviewSizeStore } from '../stores/itemPreviewSize';
 import BcxBandDetails from './BcxBandDetails.svelte';
-import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import {
@@ -73,7 +71,6 @@ let {
   treeData,
   label,
   initialSelectedHref,
-  previewSize,
   sortBands = false,
   aboutContent,
   sectionContent,
@@ -83,7 +80,6 @@ let {
   treeData: TreeData;
   label: string;
   initialSelectedHref?: string;
-  previewSize?: ItemPreviewSizeStore;
   sortBands?: boolean;
   aboutContent?: Snippet<[TreeItem]>;
   sectionContent?: Snippet<[TreeItem]>;
@@ -392,11 +388,6 @@ $effect(() => {
   if (selectedRoot) visitedRoots[selectedRoot] = true;
 });
 
-function usesItemPreview(path: string): boolean {
-  const root = displayedTreeData.items.find((item) => item.path === path);
-  return !!(root?.itemPreview || root?.releasePreview);
-}
-
 function refreshTabs() {
   rootVersion += 1;
 }
@@ -412,8 +403,6 @@ function refreshTabs() {
           <div class="bcx-section-tree-browser">
             {#if root && sectionContent}
               {@render sectionContent(root)}
-            {:else if usesItemPreview(tab.id)}
-              <BcxItemPreviewPanel {previewSize} treeData={displayedTreeData} rootPath={tab.id} {initialSelectedHref} onRootLoaded={refreshTabs} />
             {:else}
             {@const about = displayedTreeData.items.find((item) => item.path === tab.id)}
             {#if about?.aboutProfile}
@@ -430,8 +419,9 @@ function refreshTabs() {
                 initialRootPath={tab.id}
                 lockInitialRoot={true}
                 showBreadcrumb={false}
-                {initialSelectedHref}
+                initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
                 onRootLoaded={refreshTabs}
+                nativeTabNavigation={true}
               />
             {/if}
             {/if}

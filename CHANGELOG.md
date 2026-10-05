@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Unified release and band previews in one resizable Preview Panel shared across release and band sections. Both item types use the same artwork tabs, overflow menu, close controls, and retained panel state. Preview icons in catalog, History, Following Bands, fan-page lists, and release artist/label links add or reuse tabs; releases opened from a Band preview join the main panel.
+
 - Added a minimal Activity log with timestamped Sync, availability, and Storage messages in a flat, newest-first list. Includes live progress, subtle warnings/errors, plain-text Copy, Clear, and Show automatic activity; Sync and Storage link to the general log. An info popover explains automatic cleanup, retention limits, and manual clearing; it uses native browser opening and viewport positioning to avoid invisible floating content when clicked. Logs stay local with seven-day, 200-operation, and 256 KB limits, preserve existing records, and do not trigger storage-history captures.
 
 - Shared the Band panel’s catalog tabs with Band previews, opening an "About [Band]" tab first, followed by Releases and the existing catalog tabs. Preserved filtering, sorting, release details, and an empty state for bands without saved releases. About shows a compact profile, location, expandable biography, and collapsed website/social links in both views, including for large catalogs; Bandcamp and Copy actions sit beside the catalog tabs.
@@ -19,8 +21,6 @@
 - Added an unknown-year music filter, accurate per-album year counts, and compact keyword badges with accessible popovers.
 
 ### Patch Changes
-
-- Release previews inside Band previews now remember their own height, so resizing them no longer resizes the parent Band preview.
 
 - Added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.
 

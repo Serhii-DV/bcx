@@ -4,7 +4,6 @@ import {
   TREE_ITEM_LAYOUT,
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
-import type { ItemPreviewSizeStore } from '../stores/itemPreviewSize';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxPreviewActions from './BcxPreviewActions.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
@@ -17,7 +16,6 @@ let {
   fallbackLocation,
   bandUrl,
   initialSelectedHref,
-  previewSize,
   loading = false,
   error = '',
 }: {
@@ -26,7 +24,6 @@ let {
   fallbackLocation?: string;
   bandUrl?: string;
   initialSelectedHref?: string;
-  previewSize?: ItemPreviewSizeStore;
   loading?: boolean;
   error?: string;
 } = $props();
@@ -83,9 +80,9 @@ let catalog = $derived.by(() => {
 
 {#snippet bandActions()}
   {#if previewUrl}
-    <BcxPreviewLink url={previewUrl} name="Bandcamp" toolbar={true} title={`Open band page on Bandcamp: ${bandAbout?.aboutProfile?.name ?? 'Band'}`} />
+    <BcxPreviewLink url={previewUrl} name="Bandcamp" toolbar={true} title={`Open band page on Bandcamp: ${bandAbout?.aboutProfile?.name ?? 'Band'}`} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
     <BcxPreviewActions label="Copy band URL" items={[{ label: 'Copy Bandcamp URL', value: previewUrl.toString() }]} />
   {/if}
 {/snippet}
 
-<BcxRootSectionTabs {previewSize} treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} actions={previewUrl ? bandActions : undefined} />
+<BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} actions={previewUrl ? bandActions : undefined} />

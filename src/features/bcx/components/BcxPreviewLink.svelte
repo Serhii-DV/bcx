@@ -1,7 +1,9 @@
 <script lang="ts">
-import { ExternalLink, ImageOff } from '@lucide/svelte';
+import { ExternalLink, Eye, ImageOff } from '@lucide/svelte';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 import type { Url } from 'src/core/url';
+import type { TreeItem } from 'src/features/treeview/TreeItem';
+import { getItemPreviewContext } from '../stores/itemPreview';
 
 let {
   url,
@@ -10,6 +12,7 @@ let {
   title,
   plain = false,
   toolbar = false,
+  previewItem,
 }: {
   url: Url;
   image?: string;
@@ -17,7 +20,9 @@ let {
   title?: string;
   plain?: boolean;
   toolbar?: boolean;
+  previewItem?: TreeItem;
 } = $props();
+const preview = getItemPreviewContext();
 let error = $state('');
 let failedImage = $state<string>();
 
@@ -41,6 +46,10 @@ async function openPage(event: MouseEvent) {
 }
 </script>
 
+<span class="preview-link-group">
+{#if preview && previewItem}
+  <button type="button" class="bcx-section-tab preview-button" aria-label={`Preview ${previewItem.bandPreview?.name ?? previewItem.previewInformation?.title ?? name ?? 'item'}`} title={`Preview ${previewItem.bandPreview?.name ?? previewItem.previewInformation?.title ?? name ?? 'item'}`} onclick={() => { if (previewItem) preview.show(previewItem); }}><Eye size={14} aria-hidden="true" /></button>
+{/if}
 <a class="preview-link text-gray-400 hover:text-sky-300" class:band-link={!!name && !plain && !toolbar} class:plain={plain && !toolbar} class:toolbar class:bcx-section-tab={toolbar} href={url.toString()} onclick={openPage} title={title ? `${title}\n${url}` : name ? `${name}\n${url}` : url.toString()}>
   {#if name}
     {#if !plain && (!toolbar || image)}
@@ -56,9 +65,12 @@ async function openPage(event: MouseEvent) {
   {/if}
   <ExternalLink size={12} class="shrink-0" aria-hidden="true" />
 </a>
+</span>
 {#if error}<p role="alert">{error}</p>{/if}
 
 <style>
+.preview-link-group { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
+.preview-button { flex-shrink: 0; }
 .preview-link { display: block; width: fit-content; max-width: 100%; overflow-wrap: anywhere; }
 .preview-link:hover { text-decoration: underline; }
 .preview-link.plain { display: inline-flex; align-items: baseline; gap: 0.25rem; }

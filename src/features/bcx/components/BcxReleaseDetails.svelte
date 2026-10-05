@@ -1,9 +1,15 @@
 <script lang="ts">
-import { loadReleaseBandLinks } from 'src/features/treeview/BandPreview';
+import { Album } from 'src/bandcamp/domain/album/album';
+import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import {
+  type BandLinkProfile,
+  loadReleaseBandLinks,
+} from 'src/features/treeview/BandPreview';
+import { AlbumTreeItemFactory } from 'src/features/treeview/factories/AlbumTreeItemFactory';
 import {
   createReleaseDetailsTree,
   type ReleaseInformation,
-  type ReleasePreview,
+  ReleasePreview,
 } from 'src/features/treeview/ReleasePreview';
 import { TreeData } from 'src/features/treeview/TreeData';
 import {
@@ -42,7 +48,44 @@ let {
   error: string;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
 } = $props();
-let releaseUrl = $derived(createItemUrl(item.href));
+let releaseUrl = $derived(createItemUrl(item.href ?? item.id));
+
+function bandPreviewItem(band: BandLinkProfile): TreeItem {
+  return {
+    label: band.name,
+    href: band.url.toString(),
+    image: band.image,
+    bandPreview: {
+      name: band.name,
+      url: band.url.toString(),
+      image: band.image,
+      cached: false,
+    },
+  };
+}
+
+function linkedReleaseItem(release: BandLinkProfile): TreeItem {
+  const fallback = information;
+  const href = release.url.toString();
+  return {
+    label: `${fallback.artist} - ${fallback.title}`,
+    href,
+    image: release.image,
+    previewImage: item.previewImage,
+    previewInformation: fallback,
+    loadPreview: async () => {
+      const [saved] = await BandcampStorage.getByUuids([release.url.uuid]);
+      if (saved instanceof Album) {
+        const load = AlbumTreeItemFactory.createWithPreview(saved).loadPreview;
+        if (load) return load();
+      }
+      return new ReleasePreview(
+        createReleaseDetailsTree(new TreeData(), fallback, href),
+        fallback,
+      );
+    },
+  };
+}
 let bandLinks = $state<Awaited<ReturnType<typeof loadReleaseBandLinks>>>({
   artists: [],
   releases: [],
@@ -68,7 +111,12 @@ $effect(() => {
   };
 });
 let releaseTree = $derived(
-  preview ?? createReleaseDetailsTree(new TreeData(), information, item.href),
+  preview ??
+    createReleaseDetailsTree(
+      new TreeData(),
+      information,
+      releaseUrl?.toString(),
+    ),
 );
 let tracks = $derived(
   releaseTree.items.find((item) => item.label === 'Tracks'),
@@ -164,15 +212,15 @@ let dates = $derived(
 </script>
 
 {#snippet releaseActions()}
-  {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name="Release" toolbar={true} title={`Open release on Bandcamp: ${information.title} by ${information.artist}`} />{/if}
+  {#if releaseUrl}<BcxPreviewLink url={releaseUrl} image={item.previewImage} name="Release" toolbar={true} title={`Open release on Bandcamp: ${information.title} by ${information.artist}`} previewItem={item} />{/if}
   {#each bandLinks.artists as artist (artist.url.toString())}
-    <BcxPreviewLink url={artist.url} image={artist.image} name={artist.name} toolbar={true} title={`Open artist on Bandcamp: ${artist.name}`} />
+    <BcxPreviewLink url={artist.url} image={artist.image} name={artist.name} toolbar={true} title={`Open artist on Bandcamp: ${artist.name}`} previewItem={bandPreviewItem(artist)} />
   {/each}
   {#if bandLinks.publisher}
-    <BcxPreviewLink url={bandLinks.publisher.url} image={bandLinks.publisher.image} name={bandLinks.publisher.name} toolbar={true} title={`Open label on Bandcamp: ${bandLinks.publisher.name}`} />
+    <BcxPreviewLink url={bandLinks.publisher.url} image={bandLinks.publisher.image} name={bandLinks.publisher.name} toolbar={true} title={`Open label on Bandcamp: ${bandLinks.publisher.name}`} previewItem={bandPreviewItem(bandLinks.publisher)} />
   {/if}
   {#each bandLinks.releases as release (release.url.toString())}
-    <BcxPreviewLink url={release.url} image={release.image} name={`Release on ${release.name}`} toolbar={true} title={`Open ${information.title} on ${release.name}’s Bandcamp page`} />
+    <BcxPreviewLink url={release.url} image={release.image} name={`Release on ${release.name}`} toolbar={true} title={`Open ${information.title} on ${release.name}’s Bandcamp page`} previewItem={linkedReleaseItem(release)} />
   {/each}
   <BcxReleaseSearch artist={information.artist} title={information.title} />
   <BcxPreviewActions label="Copy release details" items={copyItems} />

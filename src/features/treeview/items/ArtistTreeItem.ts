@@ -20,7 +20,7 @@ export class ArtistTreeItem {
         const band = bands.find((b) => b.id === bandId);
 
         if (band) {
-          return BandTreeItemFactory.create(band);
+          return BandTreeItemFactory.createWithPreview(band);
         }
       }
 
