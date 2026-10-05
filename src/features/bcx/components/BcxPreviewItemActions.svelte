@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Check, ChevronDown, Copy, ExternalLink, Pin } from '@lucide/svelte';
+import { Check, ChevronDown, Copy, ExternalLink, Eye } from '@lucide/svelte';
 import { DropdownMenu } from 'bits-ui';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 import type { Url } from 'src/core/url';
@@ -137,7 +137,7 @@ async function copy(value: string) {
         {/if}
         {#if preview && previewItem}
           <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => { if (previewItem) { previewSelected = true; preview.show(previewItem); } }}>
-            <Pin size={14} class="shrink-0" aria-hidden="true" />
+            <Eye size={14} class="shrink-0" aria-hidden="true" />
             <span>{previewLabel}</span>
           </DropdownMenu.Item>
         {/if}
