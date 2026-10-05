@@ -32,6 +32,8 @@ describe('Artist/Label release browser', () => {
   it('shows public profile details on catalog and release pages', async () => {
     const band = Band.create(9, 'Label', 'https://label.bandcamp.com', 1);
     Object.assign(band.metadata, {
+      created: new Date('2020-05-12T00:00:00.000Z'),
+      currency: 'EUR',
       location: 'Paris, France',
       biography: 'Independent label.',
       links: [{ label: 'Website', url: 'https://example.com/' }],
@@ -56,6 +58,12 @@ describe('Artist/Label release browser', () => {
         url: band.url.toString(),
         location: 'Paris, France',
         biography: 'Independent label.',
+        albumCount: 250,
+        trackReleaseCount: 0,
+        artistCount: 1,
+        releaseYears: [],
+        currency: 'EUR',
+        createdDate: '2020-05-12',
       });
       expect(
         about?.children?.find((item) => item.label === 'Links')?.children?.[0]
@@ -201,6 +209,12 @@ describe('Artist/Label release browser', () => {
       image: undefined,
       location: undefined,
       biography: undefined,
+      albumCount: 0,
+      trackReleaseCount: 0,
+      artistCount: 0,
+      releaseYears: [],
+      currency: undefined,
+      createdDate: band.metadata.created.toISOString().split('T')[0],
     });
     expect(
       createRootSectionTabs(data?.items ?? []).some(

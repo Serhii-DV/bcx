@@ -43,7 +43,7 @@ let {
   actions?: Snippet;
   actionsBeforeHeader?: boolean;
   panels?: Snippet;
-  treeData: TreeData;
+  treeData?: TreeData;
   detailsLabel: string;
   loading?: boolean;
   loadingMessage?: string;
@@ -82,7 +82,7 @@ let failedImage = $state<string>();
     {@render details?.()}
     {#if !actionsBeforeHeader}{@render actionsToolbar()}{/if}
     {@render panels?.()}
-    {#if treeData.items.length}
+    {#if treeData?.items.length}
       {#key treeData}
         <BcxTreeView {treeData} showFilter={false} />
       {/key}

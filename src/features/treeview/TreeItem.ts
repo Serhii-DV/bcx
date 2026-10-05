@@ -50,6 +50,12 @@ export interface TreeItem {
     location?: string;
     biography?: string;
     following?: boolean;
+    albumCount?: number;
+    trackReleaseCount?: number;
+    artistCount?: number;
+    releaseYears?: number[];
+    currency?: string;
+    createdDate?: string;
   };
   hint?: string;
   query?: string;

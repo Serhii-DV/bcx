@@ -125,6 +125,8 @@ export function createBandAboutFallback(fallback: BandPreview): TreeItem {
       location: fallback.location,
       biography: fallback.biography,
       following: fallback.following,
+      albumCount: fallback.albumCount,
+      trackReleaseCount: fallback.trackReleaseCount,
     },
   };
 }

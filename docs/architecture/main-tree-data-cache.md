@@ -144,8 +144,10 @@ focus returns to the active tab or the empty preview area.
 for each tab and reuse the existing details and Band catalog renderers.
 Band previews load saved profiles and catalogs by ID or normalized Bandcamp URL.
 Following-list identity, artwork, and location provide the fallback when no band
-is saved. Band About shows a compact profile, expandable biography, and collapsed
-external links, with Bandcamp and Copy actions in the catalog tab bar. Release
+is saved. Band About shows a compact profile, expandable biography, saved release
+counts, catalog artist counts and years, currency, and the Bandcamp page creation
+date when available. External links render directly without a tree browser, with
+Bandcamp and Copy actions in the catalog tab bar. Release
 previews separate external Release, Artist, and Label links plus Search and Copy
 from navigation: the release tab row comes first, followed by a left-aligned
 action toolbar, then `BcxRootSectionTabs`. The default Release Info panel contains

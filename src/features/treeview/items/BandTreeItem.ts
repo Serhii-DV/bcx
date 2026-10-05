@@ -145,6 +145,14 @@ export class BandTreeItem {
         image: band.artwork.id > 0 ? band.artwork.mediumSizeUrl : undefined,
         location: metadata.location || undefined,
         biography: metadata.biography || undefined,
+        albumCount: metadata.albums.length,
+        trackReleaseCount: metadata.trackReleases.length,
+        artistCount: metadata.artistNames.length,
+        releaseYears: metadata.years,
+        currency: metadata.currency || undefined,
+        createdDate: Number.isFinite(metadata.created.getTime())
+          ? metadata.created.toISOString().split('T')[0]
+          : undefined,
       },
     };
   }
