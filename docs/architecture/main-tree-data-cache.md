@@ -117,6 +117,12 @@ are still rebuilt from raw album data, and Collection release pagination is reta
 
 ## Shared item preview
 
+History, Wishlist, Collection, Following Bands, and Following Genres use the same
+responsive root-section navigation as the Band panel. At section widths of 640px
+or more, section tabs move to the left; narrower sections retain horizontal tabs
+and the overflow menu. The shared tabs component preserves selected sections,
+sorting controls, keyboard navigation, and mounted panel state when resizing.
+
 `BcxSidePanel` mounts one `BcxItemPreviewPanel` beneath the main navigation.
 It wraps the section panels and owns the resizable preview area, visible in
 sections containing release or band items. `BcxItemPreviewTabs` keeps both item

@@ -377,13 +377,13 @@ $effect(() => {
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#if section.fanSync || section.fanAccount}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} responsiveSidebar={true} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
                           <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} />
                         {:else}
-                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} />
+                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} responsiveSidebar={true} />
                         {/if}
                       {/key}
                       {/if}
