@@ -8,7 +8,6 @@ import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxPreviewActions from './BcxPreviewActions.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
-import BcxSectionTabs from './BcxSectionTabs.svelte';
 import { createItemUrl } from './itemUrl';
 
 let {
@@ -76,7 +75,7 @@ let catalog = $derived.by(() => {
 </script>
 
 {#snippet aboutContent(item: TreeItem)}
-  <BcxBandDetails about={item} {fallbackLocation} {loading} {error} />
+  <BcxBandDetails about={item} {fallbackLocation} {loading} {error} actions={previewUrl ? bandActions : undefined} />
 {/snippet}
 
 {#snippet bandActions()}
@@ -87,9 +86,6 @@ let catalog = $derived.by(() => {
 {/snippet}
 
 <div class="band-panel">
-  {#if previewUrl}
-    <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
-  {/if}
   <div class="band-catalog">
     <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} />
   </div>
