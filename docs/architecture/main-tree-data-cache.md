@@ -149,7 +149,9 @@ counts, catalog artist counts and years, currency, and the Bandcamp page creatio
 date when available, using `relative-time-element` with the exact date on hover.
 External links render directly before Biography without a tree browser.
 Bandcamp and Copy actions use their own action bar above the catalog tabs,
-matching the Release preview layout. Release
+matching the Release preview layout. Band catalog sections also use the shared
+responsive sidebar: About, Releases, Artists, Release years, and Tags move to the
+left at widths of 640px or more and remain horizontal in narrower panels. Release
 previews separate external Release, Artist, and Label links plus Search and Copy
 from navigation: the release tab row comes first, followed by a left-aligned
 action toolbar, then `BcxRootSectionTabs`. The default Release Info panel contains

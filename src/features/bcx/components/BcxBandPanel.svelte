@@ -91,7 +91,7 @@ let catalog = $derived.by(() => {
     <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
   {/if}
   <div class="band-catalog">
-    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} />
+    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} />
   </div>
 </div>
 
