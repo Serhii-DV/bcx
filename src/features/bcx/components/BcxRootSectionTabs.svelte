@@ -437,5 +437,6 @@ function refreshTabs() {
 <style>
 :global(.bcx-panel-body.bcx-root-sections[data-orientation='vertical']) { flex-direction: row; }
 :global(.bcx-root-sections > .bcx-tab-content) { margin-right: var(--bcx-preview-gutter, 8px); margin-bottom: 8px; }
+:global(.bcx-root-sections[data-orientation='horizontal'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
 .about-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
 </style>

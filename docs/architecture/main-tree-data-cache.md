@@ -124,6 +124,8 @@ and the overflow menu. The shared tabs component preserves selected sections,
 sorting controls, keyboard navigation, and mounted panel state when resizing.
 Root tab content uses the shared right gutter and an 8px bottom margin to align
 filters, lists, and scrollbars with the adjacent navigation panel.
+When navigation is horizontal, content also uses the shared left gutter to align
+with the tab bars on narrow screens.
 
 `BcxSidePanel` mounts one `BcxItemPreviewPanel` beneath the main navigation.
 It wraps the section panels and owns the resizable preview area, visible in
