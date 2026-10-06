@@ -12,12 +12,18 @@ import { Collapsible, DropdownMenu } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
 import { tick } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import BcxSidebarSection from './BcxSidebarSection.svelte';
+import type { SectionNavigation } from './sectionNavigation';
 
 interface NavigationSection {
   id: string;
   label: string;
   image?: string;
   title?: string;
+  hasSubsections?: boolean;
+  loaded?: boolean;
+  loading?: boolean;
+  error?: string;
 }
 
 let {
@@ -26,18 +32,21 @@ let {
   value = $bindable(),
   contentId,
   syncStatus,
+  subsections = {},
 }: {
   sections: NavigationSection[];
   tools: NavigationSection[];
   value: string;
   contentId: string;
   syncStatus?: 'running' | 'error';
+  subsections?: Record<string, SectionNavigation>;
 } = $props();
 
 const sidebar = Sidebar.useSidebar();
 const navigationId = $props.id();
 let navigation = $state<HTMLElement>();
 let toolsMenuOpen = $state(false);
+let sectionMenu = $state<string | null>(null);
 let toolsExpanded = $state(false);
 let focusSelectedOnClose = false;
 const contextSections = $derived(sections.filter(isContext));
@@ -101,7 +110,14 @@ function handleOutsidePointer(event: PointerEvent) {
     sidebar.open &&
     sidebar.overlay &&
     navigation &&
-    !event.composedPath().includes(navigation)
+    !event.composedPath().includes(navigation) &&
+    !event
+      .composedPath()
+      .some(
+        (target) =>
+          target instanceof Element &&
+          target.hasAttribute('data-bcx-sidebar-menu'),
+      )
   ) {
     sidebar.setOpen(false);
   }
@@ -123,9 +139,19 @@ function handleEscape(event: KeyboardEvent) {
 }
 
 $effect(() => {
-  if (sidebar.open) toolsMenuOpen = false;
+  if (sidebar.open) {
+    toolsMenuOpen = false;
+    sectionMenu = null;
+  }
   if (sidebar.open && toolsSelected) toolsExpanded = true;
 });
+
+async function selectSubsection(id: string) {
+  value = id;
+  if (sidebar.open && sidebar.overlay) sidebar.setOpen(false);
+  await tick();
+  focusSelected();
+}
 </script>
 
 <svelte:document onpointerdown={handleOutsidePointer} onkeydown={handleEscape} />
@@ -146,13 +172,28 @@ $effect(() => {
 {/snippet}
 
 {#snippet sectionButton(section: NavigationSection)}
+  {#if section.hasSubsections}
+    <BcxSidebarSection
+      {section}
+      subsections={subsections[section.id]}
+      active={value === section.id}
+      portal={navigation?.closest('.bcx-side-panel-shell') ?? undefined}
+      menuOpen={sectionMenu === section.id}
+      tooltipDisabled={toolsMenuOpen || sectionMenu !== null}
+      onActivate={() => { value = section.id; }}
+      onSelected={() => void selectSubsection(section.id)}
+      onMenuOpenChange={(open) => { sectionMenu = open ? section.id : sectionMenu === section.id ? null : sectionMenu; if (open) toolsMenuOpen = false; }}
+    >
+      {#snippet icon()}{@render sectionIcon(section)}{/snippet}
+    </BcxSidebarSection>
+  {:else}
   <Sidebar.MenuItem>
     <Sidebar.MenuButton
       isActive={value === section.id}
       aria-label={section.label}
       aria-current={value === section.id ? 'page' : undefined}
       aria-controls={`${contentId}-${section.id}`}
-      tooltipDisabled={toolsMenuOpen}
+      tooltipDisabled={toolsMenuOpen || sectionMenu !== null}
       tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined}
       onclick={() => void selectSection(section.id)}
     >
@@ -164,6 +205,7 @@ $effect(() => {
       <span data-sidebar-label class="bcx-navigation-label">{section.label}</span>
     </Sidebar.MenuButton>
   </Sidebar.MenuItem>
+  {/if}
 {/snippet}
 
 {#snippet toolsIcon()}
@@ -212,8 +254,8 @@ $effect(() => {
               </Collapsible.Content>
             </Collapsible.Root>
           {:else}
-            <DropdownMenu.Root bind:open={toolsMenuOpen}>
-              <Sidebar.MenuButton isActive={toolsSelected} aria-label={toolsTitle} aria-current={toolsSelected ? 'page' : undefined} tooltipDisabled={toolsMenuOpen} tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined}>
+            <DropdownMenu.Root bind:open={toolsMenuOpen} onOpenChange={(open) => { if (open) sectionMenu = null; }}>
+              <Sidebar.MenuButton isActive={toolsSelected} aria-label={toolsTitle} aria-current={toolsSelected ? 'page' : undefined} tooltipDisabled={toolsMenuOpen || sectionMenu !== null} tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined}>
                 {#snippet tooltipContent()}<strong>Tools</strong><p>{toolsDescription}</p>{/snippet}
                 {#snippet child({ props })}
                   <DropdownMenu.Trigger {...props}>{@render toolsIcon()}</DropdownMenu.Trigger>

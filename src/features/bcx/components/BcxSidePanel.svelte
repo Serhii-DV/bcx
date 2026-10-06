@@ -44,6 +44,10 @@ import BcxStoragePanel from './BcxStoragePanel.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
+import {
+  isSectionItemSelected,
+  type SectionNavigation,
+} from './sectionNavigation';
 
 interface Props {
   sections: SidePanelSection[];
@@ -69,6 +73,29 @@ onMount(() => {
 let mainNavigation = $state<BcxMainNavigation>();
 const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
+let sectionNavigationById: Record<string, SectionNavigation> = $state({});
+
+function usesSidebarNavigation(section: SidePanelSection): boolean {
+  return (
+    section.rootNavigation === 'tabs' &&
+    (section.id.startsWith('band-') ||
+      [
+        'History',
+        'Wishlist',
+        'Collection',
+        'Following Bands',
+        'Following Genres',
+      ].includes(section.label))
+  );
+}
+
+function updateSectionNavigation(
+  id: string,
+  navigation: SectionNavigation | undefined,
+) {
+  if (navigation) sectionNavigationById[id] = navigation;
+  else delete sectionNavigationById[id];
+}
 let sectionLoadingById: Record<string, boolean> = $state({});
 let sectionErrorById: Record<string, string> = $state({});
 let sectionRootPathById: Record<string, string | null> = $state({});
@@ -113,7 +140,14 @@ function getSectionTitle(section: SidePanelSection): string {
 }
 
 const navigationSections = $derived(
-  sections.map((section) => ({ ...section, title: getSectionTitle(section) })),
+  sections.map((section) => ({
+    ...section,
+    title: getSectionTitle(section),
+    hasSubsections: usesSidebarNavigation(section),
+    loaded: !!sectionTreeDataById[section.id],
+    loading: !!sectionLoadingById[section.id],
+    error: sectionErrorById[section.id],
+  })),
 );
 const navigationTools = $derived([
   ...(hasFanSync
@@ -148,6 +182,11 @@ const navigationTools = $derived([
 const selectedNavigationSection = $derived(
   [...navigationSections, ...navigationTools].find(
     (section) => section.id === selectedSectionId,
+  ),
+);
+const selectedSubsection = $derived(
+  sectionNavigationById[selectedSectionId]?.items.find((item) =>
+    isSectionItemSelected(item, sectionNavigationById[selectedSectionId].value),
   ),
 );
 const navigationSyncStatus = $derived(
@@ -371,6 +410,7 @@ $effect(() => {
   }
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
+  sectionNavigationById = {};
   sectionLoadingById = {};
   sectionErrorById = {};
   sectionRootPathById = {};
@@ -415,11 +455,12 @@ $effect(() => {
                 bind:value={selectedSectionId}
                 contentId={mainContentId}
                 syncStatus={navigationSyncStatus}
+                subsections={sectionNavigationById}
               />
               <div class="bcx-panel-body">
               <BcxSidePanelHeader {header} showCloseButton={!browserPanel} {onClose} />
               {#if selectedNavigationSection}
-                <h3 class="bcx-main-section-title" title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
+                <h3 class="bcx-main-section-title" title={selectedSubsection?.title ?? selectedNavigationSection.title}>{selectedNavigationSection.label}{#if selectedSubsection} · {selectedSubsection.label}{/if}</h3>
               {/if}
               <BcxItemPreviewPanel visible={showPreview}>
               {#each sections as section (section.id)}
@@ -436,13 +477,13 @@ $effect(() => {
                   {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#if section.fanSync || section.fanAccount}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} responsiveSidebar={true} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} responsiveSidebar={true} onNavigationChange={usesSidebarNavigation(section) ? (navigation) => updateSectionNavigation(section.id, navigation) : undefined} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
-                          <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} />
+                          <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} onNavigationChange={(navigation) => updateSectionNavigation(section.id, navigation)} />
                         {:else}
-                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} responsiveSidebar={true} />
+                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} responsiveSidebar={true} onNavigationChange={usesSidebarNavigation(section) ? (navigation) => updateSectionNavigation(section.id, navigation) : undefined} />
                         {/if}
                       {/key}
                       {/if}

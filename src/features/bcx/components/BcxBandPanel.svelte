@@ -9,6 +9,7 @@ import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import { createItemUrl } from './itemUrl';
+import type { SectionNavigation } from './sectionNavigation';
 
 let {
   treeData,
@@ -18,6 +19,7 @@ let {
   initialSelectedHref,
   loading = false,
   error = '',
+  onNavigationChange,
 }: {
   treeData?: TreeData;
   about?: TreeItem;
@@ -26,6 +28,7 @@ let {
   initialSelectedHref?: string;
   loading?: boolean;
   error?: string;
+  onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
 } = $props();
 let bandAbout = $derived(
   about ?? treeData?.items.find((item) => item.aboutProfile),
@@ -89,7 +92,7 @@ let catalog = $derived.by(() => {
     <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
   {/if}
   <div class="band-catalog">
-    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} />
+    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} {onNavigationChange} />
   </div>
 </div>
 

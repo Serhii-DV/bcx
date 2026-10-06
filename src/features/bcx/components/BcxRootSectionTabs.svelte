@@ -2,7 +2,7 @@
 import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
-import type { Snippet } from 'svelte';
+import { onDestroy, type Snippet, untrack } from 'svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
@@ -15,6 +15,12 @@ import {
   sortCatalogGroups,
   sortFollowingBandGroups,
 } from './rootSectionTabs';
+import type {
+  SectionNavigation,
+  SectionNavigationItem,
+} from './sectionNavigation';
+
+type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
 
 const tabDescriptions: Record<string, { label?: string; title: string }> = {
   'Release Info': { title: 'View release information, artwork, and notes.' },
@@ -76,6 +82,7 @@ let {
   sectionContent,
   actions,
   responsiveSidebar = false,
+  onNavigationChange,
 }: {
   treeData: TreeData;
   label: string;
@@ -85,7 +92,9 @@ let {
   sectionContent?: Snippet<[TreeItem]>;
   actions?: Snippet;
   responsiveSidebar?: boolean;
+  onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
 } = $props();
+const contentId = $props.id();
 let container = $state<HTMLDivElement | null>(null);
 let containerWidth = $state(0);
 const orientation = $derived(
@@ -94,7 +103,7 @@ const orientation = $derived(
 
 $effect(() => {
   const element = container;
-  if (!responsiveSidebar || !element) return;
+  if (onNavigationChange || !responsiveSidebar || !element) return;
   const measure = () => {
     containerWidth = element.clientWidth;
   };
@@ -126,7 +135,7 @@ const displayedTreeData = $derived.by(() => {
 const tabs = $derived.by(() => {
   return createRootSectionTabs(displayedTreeData.items);
 });
-const displayTabs = $derived.by(() => {
+const displayTabs = $derived.by<SectionTab[]>(() => {
   const labeledTabs = tabs.map((tab) => {
     const rootLabel = displayedTreeData.items.find(
       (item) => item.path === tab.id,
@@ -329,6 +338,7 @@ const displayTabs = $derived.by(() => {
   );
 });
 let selectedRoot = $state('');
+let lastRootSort = $state('');
 let visitedRoots: Record<string, boolean> = $state({});
 
 function setYearSort(id: string) {
@@ -391,20 +401,54 @@ $effect(() => {
 function refreshTabs() {
   rootVersion += 1;
 }
+
+function selectSidebarRoot(id: string) {
+  selectedRoot = id;
+}
+
+$effect(() => {
+  if (
+    displayTabs.some(
+      (tab) =>
+        !tab.onSortChange &&
+        tab.sortOptions?.some((option) => option.id === selectedRoot),
+    )
+  ) {
+    lastRootSort = selectedRoot;
+  }
+});
+
+$effect(() => {
+  if (!onNavigationChange) return;
+  const navigation: SectionNavigation = {
+    items: displayTabs.map((tab) => {
+      const sortValue =
+        tab.sortValue ??
+        tab.sortOptions?.find((option) => option.id === lastRootSort)?.id ??
+        tab.sortOptions?.[0]?.id;
+      return {
+        ...tab,
+        sortValue,
+        contentId: `${contentId}-${tab.sortOptions && !tab.onSortChange ? (sortValue ?? tab.id) : tab.id}`,
+      };
+    }),
+    value: selectedRoot,
+    select: selectSidebarRoot,
+  };
+  untrack(() => onNavigationChange?.(navigation));
+});
+
+onDestroy(() => onNavigationChange?.(undefined));
 </script>
 
-{#if tabs.length}
-  <Tabs.Root bind:ref={container} bind:value={selectedRoot} {orientation} class="bcx-panel-body bcx-root-sections">
-    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} {actions} vertical={orientation === 'vertical'} />
-    {#each tabs as tab (tab.id)}
-      <Tabs.Content value={tab.id} class="bcx-tab-content">
-        {#if visitedRoots[tab.id]}
-          {@const root = displayedTreeData.items.find((item) => item.path === tab.id)}
+{#snippet rootContent(tabId: string)}
+        {#if visitedRoots[tabId]}
+          {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
           <div class="bcx-section-tree-browser">
             {#if root && sectionContent}
               {@render sectionContent(root)}
             {:else}
-            {@const about = displayedTreeData.items.find((item) => item.path === tab.id)}
+            {@const about = displayedTreeData.items.find((item) => item.path === tabId)}
             {#if about?.aboutProfile}
               <div class="item-preview-panel-content about-content">
                 {#if aboutContent}
@@ -416,7 +460,7 @@ function refreshTabs() {
             {:else}
               <BcxTreeBrowser
                 treeData={displayedTreeData}
-                initialRootPath={tab.id}
+                initialRootPath={tabId}
                 lockInitialRoot={true}
                 showBreadcrumb={false}
                 initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
@@ -427,7 +471,22 @@ function refreshTabs() {
             {/if}
           </div>
         {/if}
-      </Tabs.Content>
+{/snippet}
+
+{#if tabs.length && onNavigationChange}
+  <div bind:this={container} class="bcx-panel-body bcx-root-sections" data-navigation="sidebar">
+    {#if actions}<BcxSectionTabs tabs={[]} value="" {label} {actions} />{/if}
+    {#each tabs as tab (tab.id)}
+      <div id={`${contentId}-${tab.id}`} role="region" aria-label={tab.label} hidden={selectedRoot !== tab.id} class="bcx-tab-content">
+        {@render rootContent(tab.id)}
+      </div>
+    {/each}
+  </div>
+{:else if tabs.length}
+  <Tabs.Root bind:ref={container} bind:value={selectedRoot} {orientation} class="bcx-panel-body bcx-root-sections">
+    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} {actions} vertical={orientation === 'vertical'} />
+    {#each tabs as tab (tab.id)}
+      <Tabs.Content value={tab.id} class="bcx-tab-content">{@render rootContent(tab.id)}</Tabs.Content>
     {/each}
   </Tabs.Root>
 {:else}
@@ -438,5 +497,6 @@ function refreshTabs() {
 :global(.bcx-panel-body.bcx-root-sections[data-orientation='vertical']) { flex-direction: row; }
 :global(.bcx-root-sections > .bcx-tab-content) { margin-right: var(--bcx-preview-gutter, 8px); margin-bottom: 8px; }
 :global(.bcx-root-sections[data-orientation='horizontal'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
+:global(.bcx-root-sections[data-navigation='sidebar'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
 .about-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
 </style>
