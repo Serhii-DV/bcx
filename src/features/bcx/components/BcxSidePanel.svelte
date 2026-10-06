@@ -25,6 +25,12 @@ import {
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
+import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import {
+  restoreSidebarExpanded,
+  saveSidebarExpanded,
+  sidebarExpanded,
+} from '../stores/sidebarExpanded';
 import BcxActivityLog from './BcxActivityLog.svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
@@ -57,6 +63,9 @@ let {
   onClose = () => {},
 }: Props = $props();
 let sectionsContainer: HTMLDivElement;
+onMount(() => {
+  void restoreSidebarExpanded();
+});
 let mainNavigation = $state<BcxMainNavigation>();
 const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
@@ -398,7 +407,7 @@ $effect(() => {
         <div class="bcx-panel-body">
 
           <div bind:this={sectionsContainer} class="bcx-sections">
-            <div class="bcx-panel-body bcx-main-layout">
+            <Sidebar.Provider class="bcx-panel-body bcx-main-layout" bind:open={$sidebarExpanded} onOpenChange={saveSidebarExpanded}>
               <BcxMainNavigation
                 bind:this={mainNavigation}
                 sections={navigationSections}
@@ -490,7 +499,7 @@ $effect(() => {
               </div>
               </BcxItemPreviewPanel>
               </div>
-            </div>
+            </Sidebar.Provider>
           </div>
         </div>
       </div>

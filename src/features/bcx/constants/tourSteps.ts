@@ -54,6 +54,6 @@ export const sidePanelTourSteps = [
     targetElement: '.bcx-main-navigation',
     title: 'Keyboard Shortcuts',
     message:
-      'Use the left navigation to explore each section. Open Tools, then Extension Info for keyboard shortcuts, including <kbd>Ctrl+Shift+X</kbd> to toggle the panel.',
+      'Use the left navigation to explore each section. The hamburger expands the icons into labeled navigation. Open Tools, then Extension Info for keyboard shortcuts, including <kbd>Ctrl+Shift+X</kbd> to toggle the panel.',
   },
 ];
