@@ -1,5 +1,4 @@
 <script lang="ts">
-import { Tabs } from 'bits-ui';
 import {
   fanStorage,
   libraryKey,
@@ -32,8 +31,8 @@ import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxExtensionInfo from './BcxExtensionInfo.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
+import BcxMainNavigation from './BcxMainNavigation.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
-import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxSidePanelHeader from './BcxSidePanelHeader.svelte';
 import BcxStoragePanel from './BcxStoragePanel.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
@@ -58,6 +57,8 @@ let {
   onClose = () => {},
 }: Props = $props();
 let sectionsContainer: HTMLDivElement;
+let mainNavigation = $state<BcxMainNavigation>();
+const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let sectionLoadingById: Record<string, boolean> = $state({});
 let sectionErrorById: Record<string, string> = $state({});
@@ -101,6 +102,54 @@ function getSectionTitle(section: SidePanelSection): string {
     return `Browse the collection and wishlist of ${section.label.replace(/^Fan: /, '')}.`;
   return sectionTitles[section.label] ?? `Browse ${section.label}.`;
 }
+
+const navigationSections = $derived(
+  sections.map((section) => ({ ...section, title: getSectionTitle(section) })),
+);
+const navigationTools = $derived([
+  ...(hasFanSync
+    ? [
+        {
+          id: syncTabId,
+          label: 'Sync',
+          image: ICON_REFRESH_CCW,
+          title: 'Sync your saved Bandcamp data and view sync progress.',
+        },
+      ]
+    : []),
+  {
+    id: storageTabId,
+    label: 'Storage',
+    image: ICON_DATABASE,
+    title: 'View extension storage usage, saved data, and daily history.',
+  },
+  {
+    id: activityTabId,
+    label: 'Activity log',
+    image: ICON_HISTORY,
+    title: 'View extension process progress, outcomes, and recent logs.',
+  },
+  {
+    id: infoTabId,
+    label: 'Extension Info',
+    image: ICON_INFO,
+    title: 'Learn about BCX features and keyboard shortcuts.',
+  },
+]);
+const selectedNavigationSection = $derived(
+  [...navigationSections, ...navigationTools].find(
+    (section) => section.id === selectedSectionId,
+  ),
+);
+const navigationSyncStatus = $derived(
+  hasFanSync
+    ? fanSyncError || accountSyncJob?.state === 'error'
+      ? 'error'
+      : fanSyncJob?.state === 'running'
+        ? 'running'
+        : undefined
+    : undefined,
+);
 
 function getTreeDataForSection(section: SidePanelSection): TreeData {
   return sectionTreeDataById[section.id] ?? new TreeData();
@@ -278,19 +327,19 @@ onMount(() => {
 
 function handleSectionFilterArrowDown() {
   sectionsContainer
-    ?.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden]) .tree-item')
+    ?.querySelector<HTMLElement>(
+      '[data-bcx-main-section]:not([hidden]) .tree-item',
+    )
     ?.focus();
 }
 
-function focusSelectedTab() {
+function focusSelectedSection() {
   if (
     sectionsContainer?.contains(document.activeElement) &&
     document.activeElement?.classList.contains('tree-item')
   )
     return;
-  sectionsContainer
-    ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
-    ?.focus();
+  mainNavigation?.focusSelected();
 }
 
 $effect(() => {
@@ -328,11 +377,11 @@ $effect(() => {
   }
 });
 
-// Focus the selected tab when the panel opens
+// Focus the selected navigation section when the panel opens.
 $effect(() => {
   if (open) {
     // Use setTimeout to ensure DOM is ready
-    const timeout = setTimeout(focusSelectedTab, 100);
+    const timeout = setTimeout(focusSelectedSection, 100);
     return () => clearTimeout(timeout);
   }
 });
@@ -351,20 +400,22 @@ $effect(() => {
         <div class="bcx-panel-body">
 
           <div bind:this={sectionsContainer} class="bcx-sections">
-            <Tabs.Root bind:value={selectedSectionId} class="bcx-panel-body">
-              <BcxSectionTabs
-                tabs={[
-                  ...sections.map((section) => ({ ...section, title: getSectionTitle(section) })),
-                  ...(hasFanSync ? [{ id: syncTabId, label: 'Sync', image: ICON_REFRESH_CCW, title: 'Sync your saved Bandcamp data and view sync progress.' }] : []),
-                  { id: storageTabId, label: 'Storage', image: ICON_DATABASE, title: 'View extension storage usage, saved data, and daily history.' },
-                  { id: activityTabId, label: 'Activity log', image: ICON_HISTORY, title: 'View extension process progress, outcomes, and recent logs.' },
-                  { id: infoTabId, label: 'Extension Info', image: ICON_INFO, title: 'Learn about BCX features and keyboard shortcuts.' },
-                ]}
+            <div class="bcx-panel-body bcx-main-layout">
+              <BcxMainNavigation
+                bind:this={mainNavigation}
+                sections={navigationSections}
+                tools={navigationTools}
                 bind:value={selectedSectionId}
+                contentId={mainContentId}
+                syncStatus={navigationSyncStatus}
               />
+              <div class="bcx-panel-body">
+              {#if selectedNavigationSection}
+                <h3 class="bcx-main-section-title" title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
+              {/if}
               <BcxItemPreviewPanel visible={showPreview}>
               {#each sections as section (section.id)}
-                <Tabs.Content value={section.id} class="bcx-tab-content">
+                <div id={`${mainContentId}-${section.id}`} data-bcx-main-section role="region" aria-label={section.label} hidden={selectedSectionId !== section.id} class="bcx-tab-content">
                   {#if section.fanSync && (fanSyncJob?.state === 'running' || accountSyncJob?.state === 'error')}
                     <div class="bcx-sync-indicator" role={accountSyncJob?.state === 'error' ? 'alert' : 'status'}>
                       <span>{accountSyncJob?.state === 'error' ? 'Sync needs attention.' : 'Sync in progress…'}</span>
@@ -418,28 +469,29 @@ $effect(() => {
                       </div>
                     {/if}
                   {/if}
-                </Tabs.Content>
+                </div>
               {/each}
 
               {#if hasFanSync}
-                <Tabs.Content value={syncTabId} class="bcx-tab-content bcx-info-scroll">
+                <div id={`${mainContentId}-${syncTabId}`} data-bcx-main-section role="region" aria-label="Sync" hidden={selectedSectionId !== syncTabId} class="bcx-tab-content bcx-info-scroll">
                   <BcxFanDataSync account={syncAccount} job={fanSyncJob} jobReadError={fanSyncError} onViewLog={viewActivity} />
-                </Tabs.Content>
+                </div>
               {/if}
 
-              <Tabs.Content value={storageTabId} class="bcx-tab-content">
+              <div id={`${mainContentId}-${storageTabId}`} data-bcx-main-section role="region" aria-label="Storage" hidden={selectedSectionId !== storageTabId} class="bcx-tab-content">
                 {#if selectedSectionId === storageTabId}<BcxStoragePanel onViewLog={viewActivity} />{/if}
-              </Tabs.Content>
+              </div>
 
-              <Tabs.Content value={activityTabId} class="bcx-tab-content">
+              <div id={`${mainContentId}-${activityTabId}`} data-bcx-main-section role="region" aria-label="Activity log" hidden={selectedSectionId !== activityTabId} class="bcx-tab-content">
                 {#if selectedSectionId === activityTabId}<BcxActivityLog />{/if}
-              </Tabs.Content>
+              </div>
 
-              <Tabs.Content value={infoTabId} class="bcx-tab-content bcx-info-scroll">
+              <div id={`${mainContentId}-${infoTabId}`} data-bcx-main-section role="region" aria-label="Extension Info" hidden={selectedSectionId !== infoTabId} class="bcx-tab-content bcx-info-scroll">
                 <BcxExtensionInfo />
-              </Tabs.Content>
+              </div>
               </BcxItemPreviewPanel>
-            </Tabs.Root>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -503,6 +555,22 @@ $effect(() => {
 
   :global(.bcx-side-panel-shell .bcx-tab-content[hidden]) {
     display: none;
+  }
+
+  :global(.bcx-side-panel-shell .bcx-main-layout) {
+    flex-direction: row;
+  }
+
+  .bcx-main-section-title {
+    flex-shrink: 0;
+    margin: 0 var(--bcx-preview-gutter, 16px);
+    padding: 4px 0;
+    overflow: hidden;
+    color: #f9fafb;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   :global(.bcx-side-panel-shell .bcx-tab-content.bcx-info-scroll:not([hidden])) {
