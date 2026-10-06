@@ -84,6 +84,7 @@ let {
   sectionContent,
   actions,
   responsiveSidebar = false,
+  sortInToolbar = false,
   onNavigationChange,
 }: {
   treeData: TreeData;
@@ -94,9 +95,11 @@ let {
   sectionContent?: Snippet<[TreeItem]>;
   actions?: Snippet;
   responsiveSidebar?: boolean;
+  sortInToolbar?: boolean;
   onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
 } = $props();
 const contentId = $props.id();
+const toolbarSorting = $derived(sortInToolbar || !!onNavigationChange);
 let container = $state<HTMLDivElement | null>(null);
 let containerWidth = $state(0);
 const orientation = $derived(
@@ -364,6 +367,16 @@ const navigationItems = $derived(
     };
   }),
 );
+const localNavigationTabs = $derived(
+  toolbarSorting
+    ? navigationItems.map((item) => ({
+        id: item.onSortChange ? item.id : (item.sortValue ?? item.id),
+        label: item.label,
+        image: item.image,
+        title: item.title,
+      }))
+    : displayTabs,
+);
 
 function setYearSort(id: string) {
   if (
@@ -505,8 +518,8 @@ onDestroy(() => onNavigationChange?.(undefined));
                 initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
                 onRootLoaded={refreshTabs}
                 nativeTabNavigation={true}
-                filterActions={onNavigationChange && navigationItem?.sortOptions?.length ? sortControl : undefined}
-                bind:filterQuery={() => onNavigationChange && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
+                filterActions={toolbarSorting && navigationItem?.sortOptions?.length ? sortControl : undefined}
+                bind:filterQuery={() => toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
               />
             {/if}
             {/if}
@@ -525,7 +538,7 @@ onDestroy(() => onNavigationChange?.(undefined));
   </div>
 {:else if tabs.length}
   <Tabs.Root bind:ref={container} bind:value={selectedRoot} {orientation} class="bcx-panel-body bcx-root-sections">
-    <BcxSectionTabs tabs={displayTabs} bind:value={selectedRoot} {label} {actions} vertical={orientation === 'vertical'} />
+    <BcxSectionTabs tabs={localNavigationTabs} bind:value={selectedRoot} {label} {actions} vertical={orientation === 'vertical'} />
     {#each tabs as tab (tab.id)}
       <Tabs.Content value={tab.id} class="bcx-tab-content">{@render rootContent(tab.id)}</Tabs.Content>
     {/each}
