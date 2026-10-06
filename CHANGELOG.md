@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Replaced the main side-panel tab row with a compact left navigation rail. Band/Fan, History, Wishlist, and Collection stay directly accessible; Following and Tools use grouped menus, and a labeled navigation menu lists every available section. The selected section stays visible above its content, Tools shows active or failed Sync status, and the rail scrolls independently in short panels.
+- Replaced the main side-panel tab row with a compact left navigation rail spanning the panel height, with the page header inside the content area. Band/Fan, History, Wishlist, Collection, Following Bands, and Following Genres stay directly accessible, with both Following items after Collection and a divider before the Tools menu. The hamburger opens a full-height labeled flyout without a scrollbar, using the same library order and divider before Tools. Hover and keyboard-focus cards show navigation titles and short descriptions. The selected section stays visible above its content, Tools shows active or failed Sync status, and the rail scrolls independently in short panels.
 
 - Unified release and band previews in one resizable Preview Panel shared across release and band sections. Both item types use the same artwork tabs, overflow menu, close controls, and retained panel state. The first tab uses a "Preview:" prefix to distinguish the current selection from additional previews. Preview controls in catalog, History, Following Bands, fan-page lists, and release artist/label menus add or reuse tabs; releases opened from a Band preview join the main panel.
 

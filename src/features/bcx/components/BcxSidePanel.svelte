@@ -393,8 +393,6 @@ $effect(() => {
 >
   <div class="bcx-side-panel-content fixed inset-y-0 left-0 z-[999998] backdrop-blur-md font-medium text-white dark:text-white transition-opacity duration-400">
     <div class="flex h-full flex-col">
-      <BcxSidePanelHeader {header} showCloseButton={!browserPanel} {onClose} />
-
       <!-- Content -->
       <div class="bcx-panel-body">
         <div class="bcx-panel-body">
@@ -410,6 +408,7 @@ $effect(() => {
                 syncStatus={navigationSyncStatus}
               />
               <div class="bcx-panel-body">
+              <BcxSidePanelHeader {header} showCloseButton={!browserPanel} {onClose} />
               {#if selectedNavigationSection}
                 <h3 class="bcx-main-section-title" title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
               {/if}
@@ -558,6 +557,7 @@ $effect(() => {
   }
 
   :global(.bcx-side-panel-shell .bcx-main-layout) {
+    position: relative;
     flex-direction: row;
   }
 
