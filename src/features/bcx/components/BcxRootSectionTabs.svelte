@@ -2,8 +2,9 @@
 import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
-import { onDestroy, type Snippet, untrack } from 'svelte';
+import { onDestroy, type Snippet, tick, untrack } from 'svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxSectionSort from './BcxSectionSort.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import {
@@ -15,9 +16,10 @@ import {
   sortCatalogGroups,
   sortFollowingBandGroups,
 } from './rootSectionTabs';
-import type {
-  SectionNavigation,
-  SectionNavigationItem,
+import {
+  isSectionItemSelected,
+  type SectionNavigation,
+  type SectionNavigationItem,
 } from './sectionNavigation';
 
 type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
@@ -331,7 +333,14 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
 
   return labeledTabs.flatMap((tab) =>
     tab.id === sortOptions[0].id
-      ? [{ ...tab, label: count ? `Bands (${count})` : 'Bands', sortOptions }]
+      ? [
+          {
+            ...tab,
+            label: count ? `Bands (${count})` : 'Bands',
+            sortLabel: 'Sort followed bands',
+            sortOptions,
+          },
+        ]
       : sortIds.has(tab.id)
         ? []
         : [tab],
@@ -339,7 +348,22 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
 });
 let selectedRoot = $state('');
 let lastRootSort = $state('');
+let focusSortOnClose = false;
 let visitedRoots: Record<string, boolean> = $state({});
+let filterQueryById: Record<string, string> = $state({});
+const navigationItems = $derived(
+  displayTabs.map((tab) => {
+    const sortValue =
+      tab.sortValue ??
+      tab.sortOptions?.find((option) => option.id === lastRootSort)?.id ??
+      tab.sortOptions?.[0]?.id;
+    return {
+      ...tab,
+      sortValue,
+      contentId: `${contentId}-${tab.sortOptions && !tab.onSortChange ? (sortValue ?? tab.id) : tab.id}`,
+    };
+  }),
+);
 
 function setYearSort(id: string) {
   if (
@@ -406,6 +430,25 @@ function selectSidebarRoot(id: string) {
   selectedRoot = id;
 }
 
+function selectSortOption(item: SectionNavigationItem, id: string) {
+  focusSortOnClose = true;
+  item.onSortChange?.(id);
+  selectedRoot = item.onSortChange ? item.id : id;
+}
+
+async function handleSortCloseAutoFocus(event: Event) {
+  if (!focusSortOnClose) return;
+  event.preventDefault();
+  focusSortOnClose = false;
+  await tick();
+  if (container?.closest('[hidden]')) return;
+  container
+    ?.querySelector<HTMLButtonElement>(
+      ':scope > .bcx-tab-content:not([hidden]) [data-bcx-section-sort]',
+    )
+    ?.focus();
+}
+
 $effect(() => {
   if (
     displayTabs.some(
@@ -421,17 +464,7 @@ $effect(() => {
 $effect(() => {
   if (!onNavigationChange) return;
   const navigation: SectionNavigation = {
-    items: displayTabs.map((tab) => {
-      const sortValue =
-        tab.sortValue ??
-        tab.sortOptions?.find((option) => option.id === lastRootSort)?.id ??
-        tab.sortOptions?.[0]?.id;
-      return {
-        ...tab,
-        sortValue,
-        contentId: `${contentId}-${tab.sortOptions && !tab.onSortChange ? (sortValue ?? tab.id) : tab.id}`,
-      };
-    }),
+    items: navigationItems,
     value: selectedRoot,
     select: selectSidebarRoot,
   };
@@ -444,6 +477,12 @@ onDestroy(() => onNavigationChange?.(undefined));
 {#snippet rootContent(tabId: string)}
         {#if visitedRoots[tabId]}
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
+          {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
+          {#snippet sortControl()}
+            {#if navigationItem}
+              <BcxSectionSort item={navigationItem} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleSortCloseAutoFocus} />
+            {/if}
+          {/snippet}
           <div class="bcx-section-tree-browser">
             {#if root && sectionContent}
               {@render sectionContent(root)}
@@ -466,6 +505,8 @@ onDestroy(() => onNavigationChange?.(undefined));
                 initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
                 onRootLoaded={refreshTabs}
                 nativeTabNavigation={true}
+                filterActions={onNavigationChange && navigationItem?.sortOptions?.length ? sortControl : undefined}
+                bind:filterQuery={() => onNavigationChange && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
               />
             {/if}
             {/if}
