@@ -19,6 +19,7 @@ let {
   initialSelectedHref,
   loading = false,
   error = '',
+  navigationInFilter = false,
   onNavigationChange,
 }: {
   treeData?: TreeData;
@@ -28,6 +29,7 @@ let {
   initialSelectedHref?: string;
   loading?: boolean;
   error?: string;
+  navigationInFilter?: boolean;
   onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
 } = $props();
 let bandAbout = $derived(
@@ -92,7 +94,7 @@ let catalog = $derived.by(() => {
     <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
   {/if}
   <div class="band-catalog">
-    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} sortInToolbar={true} {onNavigationChange} />
+    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} sortInToolbar={true} {navigationInFilter} {onNavigationChange} />
   </div>
 </div>
 

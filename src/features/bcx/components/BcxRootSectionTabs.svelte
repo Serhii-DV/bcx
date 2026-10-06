@@ -4,6 +4,7 @@ import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { onDestroy, type Snippet, tick, untrack } from 'svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxSectionFilter from './BcxSectionFilter.svelte';
 import BcxSectionSort from './BcxSectionSort.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
@@ -85,6 +86,7 @@ let {
   actions,
   responsiveSidebar = false,
   sortInToolbar = false,
+  navigationInFilter = false,
   onNavigationChange,
 }: {
   treeData: TreeData;
@@ -96,10 +98,13 @@ let {
   actions?: Snippet;
   responsiveSidebar?: boolean;
   sortInToolbar?: boolean;
+  navigationInFilter?: boolean;
   onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
 } = $props();
 const contentId = $props.id();
-const toolbarSorting = $derived(sortInToolbar || !!onNavigationChange);
+const toolbarSorting = $derived(
+  sortInToolbar || navigationInFilter || !!onNavigationChange,
+);
 let container = $state<HTMLDivElement | null>(null);
 let containerWidth = $state(0);
 const orientation = $derived(
@@ -108,7 +113,13 @@ const orientation = $derived(
 
 $effect(() => {
   const element = container;
-  if (onNavigationChange || !responsiveSidebar || !element) return;
+  if (
+    onNavigationChange ||
+    navigationInFilter ||
+    !responsiveSidebar ||
+    !element
+  )
+    return;
   const measure = () => {
     containerWidth = element.clientWidth;
   };
@@ -351,9 +362,10 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
 });
 let selectedRoot = $state('');
 let lastRootSort = $state('');
-let focusSortOnClose = false;
+let focusControlOnClose: string | null = null;
 let visitedRoots: Record<string, boolean> = $state({});
 let filterQueryById: Record<string, string> = $state({});
+let sharedFilterQuery = $state('');
 const navigationItems = $derived(
   displayTabs.map((tab) => {
     const sortValue =
@@ -444,20 +456,27 @@ function selectSidebarRoot(id: string) {
 }
 
 function selectSortOption(item: SectionNavigationItem, id: string) {
-  focusSortOnClose = true;
+  focusControlOnClose = '[data-bcx-section-sort]';
   item.onSortChange?.(id);
   selectedRoot = item.onSortChange ? item.id : id;
 }
 
-async function handleSortCloseAutoFocus(event: Event) {
-  if (!focusSortOnClose) return;
+function selectFilterRoot(id: string) {
+  focusControlOnClose = '[data-bcx-section-filter]';
+  const item = navigationItems.find((item) => item.id === id);
+  selectedRoot = item?.onSortChange ? item.id : (item?.sortValue ?? id);
+}
+
+async function handleControlCloseAutoFocus(event: Event) {
+  if (!focusControlOnClose) return;
   event.preventDefault();
-  focusSortOnClose = false;
+  const selector = focusControlOnClose;
+  focusControlOnClose = null;
   await tick();
   if (container?.closest('[hidden]')) return;
   container
     ?.querySelector<HTMLButtonElement>(
-      ':scope > .bcx-tab-content:not([hidden]) [data-bcx-section-sort]',
+      `:scope > .bcx-tab-content:not([hidden]) ${selector}`,
     )
     ?.focus();
 }
@@ -491,12 +510,18 @@ onDestroy(() => onNavigationChange?.(undefined));
         {#if visitedRoots[tabId]}
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
-          {#snippet sortControl()}
-            {#if navigationItem}
-              <BcxSectionSort item={navigationItem} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleSortCloseAutoFocus} />
+          {#snippet filterControls()}
+            {#if navigationInFilter}
+              <BcxSectionFilter items={navigationItems} {label} value={selectedRoot} onValueChange={selectFilterRoot} onCloseAutoFocus={handleControlCloseAutoFocus} />
+            {/if}
+            {#if toolbarSorting && navigationItem?.sortOptions?.length}
+              <BcxSectionSort item={navigationItem} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
           {/snippet}
           <div class="bcx-section-tree-browser">
+            {#if navigationInFilter && (root?.aboutProfile || sectionContent)}
+              <div class="bcx-section-view-toolbar">{@render filterControls()}</div>
+            {/if}
             {#if root && sectionContent}
               {@render sectionContent(root)}
             {:else}
@@ -518,8 +543,8 @@ onDestroy(() => onNavigationChange?.(undefined));
                 initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
                 onRootLoaded={refreshTabs}
                 nativeTabNavigation={true}
-                filterActions={toolbarSorting && navigationItem?.sortOptions?.length ? sortControl : undefined}
-                bind:filterQuery={() => toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
+                filterActions={navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
+                bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
               />
             {/if}
             {/if}
@@ -527,8 +552,8 @@ onDestroy(() => onNavigationChange?.(undefined));
         {/if}
 {/snippet}
 
-{#if tabs.length && onNavigationChange}
-  <div bind:this={container} class="bcx-panel-body bcx-root-sections" data-navigation="sidebar">
+{#if tabs.length && (onNavigationChange || navigationInFilter)}
+  <div bind:this={container} class="bcx-panel-body bcx-root-sections" data-navigation={navigationInFilter ? 'filter' : 'sidebar'}>
     {#if actions}<BcxSectionTabs tabs={[]} value="" {label} {actions} />{/if}
     {#each tabs as tab (tab.id)}
       <div id={`${contentId}-${tab.id}`} role="region" aria-label={tab.label} hidden={selectedRoot !== tab.id} class="bcx-tab-content">
@@ -552,5 +577,7 @@ onDestroy(() => onNavigationChange?.(undefined));
 :global(.bcx-root-sections > .bcx-tab-content) { margin-right: var(--bcx-preview-gutter, 8px); margin-bottom: 8px; }
 :global(.bcx-root-sections[data-orientation='horizontal'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
 :global(.bcx-root-sections[data-navigation='sidebar'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
+:global(.bcx-root-sections[data-navigation='filter'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
+.bcx-section-view-toolbar { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 8px; min-width: 0; margin-bottom: 8px; }
 .about-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
 </style>
