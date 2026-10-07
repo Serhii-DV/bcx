@@ -67,7 +67,11 @@ const toolsDescription = $derived(
 );
 
 function isContext(section: NavigationSection) {
-  return section.id.startsWith('band-') || section.id.startsWith('fan-');
+  return (
+    section.id.startsWith('band-') ||
+    section.id.startsWith('album-') ||
+    section.id.startsWith('fan-')
+  );
 }
 
 function isFollowing(section: NavigationSection) {

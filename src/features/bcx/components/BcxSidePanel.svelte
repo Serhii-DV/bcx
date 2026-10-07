@@ -38,6 +38,7 @@ import BcxExtensionInfo from './BcxExtensionInfo.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxMainNavigation from './BcxMainNavigation.svelte';
+import BcxReleasePreview from './BcxReleasePreview.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSidePanelHeader from './BcxSidePanelHeader.svelte';
 import BcxStoragePanel from './BcxStoragePanel.svelte';
@@ -69,6 +70,8 @@ onMount(() => {
 let mainNavigation = $state<BcxMainNavigation>();
 const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
+let releaseVisitedById: Record<string, boolean> = $state({});
+let requestedPreviewSectionId = $state('');
 
 function usesFilterNavigation(section: SidePanelSection): boolean {
   return (
@@ -120,6 +123,8 @@ const sectionTitles: Record<string, string> = {
 };
 
 function getSectionTitle(section: SidePanelSection): string {
+  if (section.releasePreview)
+    return `View release information for ${section.label}.`;
   if (section.id.startsWith('band-'))
     return `Browse releases and artist or label information for ${section.label}.`;
   if (section.id.startsWith('fan-'))
@@ -200,6 +205,7 @@ function containsPreviewItems(items: TreeItem[]): boolean {
 const showPreview = $derived.by(() => {
   const section = sections.find((section) => section.id === selectedSectionId);
   if (!section || section.label === 'Following Genres') return false;
+  if (section.releasePreview) return requestedPreviewSectionId === section.id;
   const data = sectionTreeDataById[section.id];
   return data ? containsPreviewItems(data.items) : true;
 });
@@ -242,6 +248,7 @@ function shouldShowBreadcrumb(section: SidePanelSection): boolean {
 }
 
 async function loadSectionTreeData(section: SidePanelSection, force = false) {
+  if (section.releasePreview) return;
   if (
     !force &&
     (sectionTreeDataById[section.id] || sectionLoadingById[section.id])
@@ -377,8 +384,14 @@ $effect(() => {
     return;
   }
 
+  const previousReleaseId = currentSections?.find(
+    (section) => section.releasePreview,
+  )?.id;
+  const releaseSection = sections.find((section) => section.releasePreview);
   currentSections = sections;
-  if (
+  if (releaseSection && releaseSection.id !== previousReleaseId) {
+    selectedSectionId = releaseSection.id;
+  } else if (
     selectedSectionId !== infoTabId &&
     selectedSectionId !== storageTabId &&
     selectedSectionId !== activityTabId &&
@@ -392,6 +405,8 @@ $effect(() => {
   }
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
+  releaseVisitedById = {};
+  requestedPreviewSectionId = '';
   sectionLoadingById = {};
   sectionErrorById = {};
   sectionRootPathById = {};
@@ -403,6 +418,7 @@ $effect(() => {
 $effect(() => {
   const section = sections.find((section) => section.id === selectedSectionId);
   if (section) {
+    if (section.releasePreview) releaseVisitedById[section.id] = true;
     untrack(() => void loadSectionTreeData(section));
   }
 });
@@ -442,7 +458,7 @@ $effect(() => {
               {#if selectedNavigationSection}
                 <h3 class="bcx-main-section-title" title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
               {/if}
-              <BcxItemPreviewPanel visible={showPreview}>
+              <BcxItemPreviewPanel visible={showPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
               {#each sections as section (section.id)}
                 <div id={`${mainContentId}-${section.id}`} data-bcx-main-section role="region" aria-label={section.label} hidden={selectedSectionId !== section.id} class="bcx-tab-content">
                   {#if section.fanSync && (fanSyncJob?.state === 'running' || accountSyncJob?.state === 'error')}
@@ -454,7 +470,11 @@ $effect(() => {
                   {#if section.fanSync}
                     {#if sectionErrorById[section.id]}<p role="alert" class="bcx-section-content">{sectionErrorById[section.id]}</p>{/if}
                   {/if}
-                  {#if sectionTreeDataById[section.id] || selectedSectionId === section.id}
+                  {#if section.releasePreview}
+                    {#if releaseVisitedById[section.id]}
+                      <BcxReleasePreview item={section.releasePreview} />
+                    {/if}
+                  {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#if section.fanSync || section.fanAccount}
                         <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} navigationInFilter={usesFilterNavigation(section)} responsiveSidebar={true} />
