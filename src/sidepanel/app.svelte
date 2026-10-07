@@ -1,7 +1,9 @@
 <script lang="ts">
 import { SIDE_PANEL_TOUR_COMPLETE_KEY } from 'src/bandcamp/domain/storageKey';
+import { isBandcampAlbumUrl } from 'src/bandcamp/domain/url/helper';
 import { MessageType } from 'src/core/message';
 import { storage } from 'src/core/shared';
+import { Url } from 'src/core/url';
 import { BcxSidePanel, BcxTour } from 'src/features/bcx/components';
 import { sidePanelTourSteps } from 'src/features/bcx/constants/tourSteps';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
@@ -13,7 +15,7 @@ import {
   type ActiveBandcampTab,
   createActiveTabSidePanelData,
   getActiveBandcampTab,
-  getActiveTabHeader,
+  getActiveTabPageContext,
 } from './services/activeTabTreeData';
 import { shouldReloadActiveTab } from './services/activeTabUpdates';
 
@@ -48,7 +50,7 @@ onMount(() => {
     } else if (activeTab?.id === tabId) {
       if (changeInfo.url) activeTab = { ...activeTab, url: changeInfo.url };
       if (changeInfo.url || changeInfo.status === 'complete') {
-        void refreshHeader(activeTab);
+        void refreshPageContext(activeTab);
       }
     }
   };
@@ -66,14 +68,24 @@ onMount(() => {
   };
 });
 
-async function refreshHeader(tab: ActiveBandcampTab) {
+async function refreshPageContext(tab: ActiveBandcampTab) {
   const generation = ++headerGeneration;
   header = null;
   try {
-    const nextHeader = await getActiveTabHeader(tab);
-    if (generation === headerGeneration) header = nextHeader;
+    const context = await getActiveTabPageContext(tab);
+    if (generation !== headerGeneration) return;
+    header = context.header;
+    if (
+      sidePanelSections &&
+      (context.releaseSection || !isBandcampAlbumUrl(Url.create(tab.url)))
+    ) {
+      sidePanelSections = [
+        ...(context.releaseSection ? [context.releaseSection] : []),
+        ...sidePanelSections.filter((section) => !section.releasePreview),
+      ];
+    }
   } catch (error) {
-    console.warn('BCX: Failed to load page header:', error);
+    console.warn('BCX: Failed to load page context:', error);
   }
 }
 

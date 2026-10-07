@@ -27,6 +27,7 @@ import {
 } from 'src/features/bcx/sidePanelHeader';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
+import { AlbumSidePanelSection } from 'src/features/treeview/sections/AlbumSidePanelSection';
 import type { PageDataContext } from 'src/features/treeview/sections/types';
 
 export interface ActiveBandcampTab {
@@ -112,13 +113,23 @@ export async function createActiveTabSidePanelData(
 export async function getActiveTabHeader(
   tab: ActiveBandcampTab,
 ): Promise<SidePanelHeader | null> {
+  return (await getActiveTabPageContext(tab)).header;
+}
+
+export async function getActiveTabPageContext(tab: ActiveBandcampTab): Promise<{
+  header: SidePanelHeader | null;
+  releaseSection: SidePanelSection | null;
+}> {
   const url = Url.create(tab.url);
   const pageData = await getActiveBandcampPageData(url);
-  return createSidePanelHeader(
-    url,
-    await createBandPage(url, pageData),
-    pageData?.trackSchema,
-  );
+  const page = await createBandPage(url, pageData);
+  return {
+    header: createSidePanelHeader(url, page, pageData?.trackSchema),
+    releaseSection: AlbumSidePanelSection.create(
+      page?.album ?? null,
+      page?.albumDetails ?? null,
+    ),
+  };
 }
 
 async function getActiveBandcampPageData(
@@ -144,7 +155,11 @@ async function createBandPage(
   currentPageUrl: Url,
   pageData: ActiveBandcampPageData | null,
 ): Promise<BandPage | null> {
-  if (isBandcampAlbumUrl(currentPageUrl) && pageData?.albumSchema) {
+  if (
+    isBandcampAlbumUrl(currentPageUrl) &&
+    pageData?.albumSchema?.mainEntityOfPage ===
+      currentPageUrl.withoutSearchAndHash.toString()
+  ) {
     const album = AlbumFactory.createFromSchema(pageData.albumSchema);
     const [band] = await BandcampStorage.getBands([album.bandId]);
 

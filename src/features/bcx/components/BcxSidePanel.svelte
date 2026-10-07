@@ -388,7 +388,26 @@ $effect(() => {
     (section) => section.releasePreview,
   )?.id;
   const releaseSection = sections.find((section) => section.releasePreview);
+  const previousCatalogSections = currentSections?.filter(
+    (section) => !section.releasePreview,
+  );
+  const catalogSections = sections.filter((section) => !section.releasePreview);
+  const catalogUnchanged =
+    previousCatalogSections?.length === catalogSections.length &&
+    catalogSections.every(
+      (section, index) => section === previousCatalogSections?.[index],
+    );
   currentSections = sections;
+  if (catalogUnchanged) {
+    if (selectedSectionId === previousReleaseId) {
+      selectedSectionId =
+        releaseSection?.id ??
+        catalogSections.find((section) => section.defaultOpen)?.id ??
+        catalogSections[0]?.id ??
+        infoTabId;
+    }
+    return;
+  }
   if (releaseSection && releaseSection.id !== previousReleaseId) {
     selectedSectionId = releaseSection.id;
   } else if (
