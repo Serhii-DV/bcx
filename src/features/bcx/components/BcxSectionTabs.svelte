@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Check, ChevronDown, Ellipsis, X } from '@lucide/svelte';
-import { DropdownMenu, Tabs } from 'bits-ui';
+import { DropdownMenu, Tabs, Tooltip } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
 import { type Snippet, tick } from 'svelte';
 import { getVisibleSectionTabIds } from './sectionTabOverflow';
@@ -24,6 +24,7 @@ let {
   actions,
   wrapActions = false,
   vertical = false,
+  compactWhenOverflowing = false,
 }: {
   tabs: SectionTab[];
   value: string;
@@ -31,12 +32,15 @@ let {
   actions?: Snippet;
   wrapActions?: boolean;
   vertical?: boolean;
+  compactWhenOverflowing?: boolean;
 } = $props();
 let bar = $state<HTMLDivElement>();
 let actionsElement = $state<HTMLDivElement>();
 let measurements: HTMLDivElement;
+let iconMeasurements = $state<HTMLDivElement>();
 let moreMeasurement: HTMLSpanElement;
 let visibleIds = $state<string[]>([]);
+let compact = $state(false);
 let focusSelectedOnClose = false;
 let lastSortId = $state('');
 const visibleTabs = $derived(tabs.filter((tab) => visibleIds.includes(tab.id)));
@@ -56,10 +60,15 @@ $effect(() => {
   if (!barElement) return;
   const currentTabs = tabs;
   if (vertical) {
+    compact = false;
     visibleIds = currentTabs.map((tab) => tab.id);
     return;
   }
   const currentActions = actionsElement;
+  const currentIconMeasurements = iconMeasurements;
+  const canCompact =
+    compactWhenOverflowing &&
+    currentTabs.every((tab) => tab.image && !tab.sortOptions && !tab.onClose);
   const activeId =
     currentTabs.find((tab) =>
       tab.sortOptions?.some((option) => option.id === value),
@@ -69,20 +78,44 @@ $effect(() => {
       measurements.children,
       (element) => element.getBoundingClientRect().width,
     );
-    visibleIds = getVisibleSectionTabIds(
+    const availableWidth =
+      barElement.clientWidth -
+      8 -
+      (currentActions && getComputedStyle(currentActions).flexBasis !== '100%'
+        ? currentActions.getBoundingClientRect().width + 4
+        : 0);
+    const labelledIds = getVisibleSectionTabIds(
       currentTabs.map((tab, index) => ({ ...tab, width: widths[index] ?? 0 })),
       activeId,
-      barElement.clientWidth -
-        8 -
-        (currentActions && getComputedStyle(currentActions).flexBasis !== '100%'
-          ? currentActions.getBoundingClientRect().width + 4
-          : 0),
+      availableWidth,
+      moreMeasurement.getBoundingClientRect().width,
+    );
+    compact =
+      canCompact &&
+      !!currentIconMeasurements &&
+      labelledIds.length < currentTabs.length;
+    if (!compact || !currentIconMeasurements) {
+      visibleIds = labelledIds;
+      return;
+    }
+    const iconWidths = Array.from(
+      currentIconMeasurements.children,
+      (element) => element.getBoundingClientRect().width,
+    );
+    visibleIds = getVisibleSectionTabIds(
+      currentTabs.map((tab, index) => ({
+        ...tab,
+        width: iconWidths[index] ?? 0,
+      })),
+      activeId,
+      availableWidth,
       moreMeasurement.getBoundingClientRect().width,
     );
   };
   const observer = new ResizeObserver(measure);
   observer.observe(barElement);
   observer.observe(measurements);
+  if (currentIconMeasurements) observer.observe(currentIconMeasurements);
   if (currentActions) observer.observe(currentActions);
   measure();
   return () => observer.disconnect();
@@ -131,7 +164,7 @@ async function handleCloseAutoFocus(event: Event) {
   <span class="bcx-tab-label">{tabLabelText(tab)}</span>
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs" class:vertical class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
+<div bind:this={bar} class="bcx-section-tabs" class:vertical class:compact class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
   {#if tabs.length}
   <Tabs.List class="bcx-visible-tabs" aria-label={label}>
     {#each visibleTabs as tab (tab.id)}
@@ -163,6 +196,22 @@ async function handleCloseAutoFocus(event: Event) {
           </Tabs.Trigger>
           <button type="button" class="bcx-section-tab bcx-tab-close" aria-label={`Close ${tab.label}`} title={`Close ${tab.label}`} tabindex={value === tab.id ? 0 : -1} onclick={() => tab.onClose?.()}><X size={14} aria-hidden="true" /></button>
         </div>
+      {:else if compactWhenOverflowing}
+        <Tooltip.Root disabled={!compact} ignoreNonKeyboardFocus>
+          <Tooltip.Trigger>
+            {#snippet child({ props })}
+              <Tabs.Trigger {...props} value={tab.id} class="bcx-section-tab" aria-label={tabLabelText(tab)} title={compact ? undefined : tabTitle(tab)}>
+                {@render tabLabel(tab)}
+              </Tabs.Trigger>
+            {/snippet}
+          </Tooltip.Trigger>
+          <Tooltip.Portal to={bar?.closest('.bcx-side-panel-shell') ?? undefined}>
+            <Tooltip.Content class="sidebar-tooltip" side="bottom" align="start" sideOffset={8} collisionPadding={8} strategy="fixed">
+              <strong>{tabLabelText(tab)}</strong>
+              {#if tab.title}<p>{tab.title}</p>{/if}
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
       {:else}
         <Tabs.Trigger value={tab.id} class="bcx-section-tab" title={tabTitle(tab)}>
           {@render tabLabel(tab)}
@@ -223,6 +272,13 @@ async function handleCloseAutoFocus(event: Event) {
         {/if}
       {/each}
     </div>
+    {#if compactWhenOverflowing}
+      <div bind:this={iconMeasurements} class="bcx-tab-measurement-list bcx-tab-icon-measurements">
+        {#each tabs as tab (tab.id)}
+          <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
+        {/each}
+      </div>
+    {/if}
     <span bind:this={moreMeasurement} class="bcx-section-tab bcx-more-tabs"><Ellipsis size={16} /></span>
   </div>
 </div>
@@ -275,6 +331,17 @@ async function handleCloseAutoFocus(event: Event) {
   .bcx-tab-label {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .compact :global(.bcx-visible-tabs .bcx-tab-label),
+  .bcx-tab-icon-measurements .bcx-tab-label { display: none; }
+  .compact :global(.bcx-visible-tabs > .bcx-section-tab),
+  .bcx-tab-icon-measurements :global(.bcx-section-tab) {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    justify-content: center;
+    width: 32px;
+    min-height: 32px;
+    padding: 8px;
   }
   :global(.bcx-section-tab:hover),
   :global(.bcx-section-tab[data-state='active']),

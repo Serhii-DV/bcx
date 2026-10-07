@@ -85,6 +85,7 @@ let {
   sectionContent,
   actions,
   responsiveSidebar = false,
+  compactWhenOverflowing = false,
   sortInToolbar = false,
   navigationInFilter = false,
   onNavigationChange,
@@ -97,6 +98,7 @@ let {
   sectionContent?: Snippet<[TreeItem]>;
   actions?: Snippet;
   responsiveSidebar?: boolean;
+  compactWhenOverflowing?: boolean;
   sortInToolbar?: boolean;
   navigationInFilter?: boolean;
   onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
@@ -563,7 +565,7 @@ onDestroy(() => onNavigationChange?.(undefined));
   </div>
 {:else if tabs.length}
   <Tabs.Root bind:ref={container} bind:value={selectedRoot} {orientation} class="bcx-panel-body bcx-root-sections">
-    <BcxSectionTabs tabs={localNavigationTabs} bind:value={selectedRoot} {label} {actions} vertical={orientation === 'vertical'} />
+    <BcxSectionTabs tabs={localNavigationTabs} bind:value={selectedRoot} {label} {actions} {compactWhenOverflowing} vertical={orientation === 'vertical'} />
     {#each tabs as tab (tab.id)}
       <Tabs.Content value={tab.id} class="bcx-tab-content">{@render rootContent(tab.id)}</Tabs.Content>
     {/each}
