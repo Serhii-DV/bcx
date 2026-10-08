@@ -11,6 +11,7 @@ export interface PinnedPage {
   title: string;
   artistName?: string;
   entityId?: number;
+  image?: string;
 }
 export interface PinnedNavigation {
   version: 1;
@@ -19,7 +20,13 @@ export interface PinnedNavigation {
 export type PinCommand =
   | { action: 'pin'; page: PinnedPage }
   | { action: 'unpin'; page: PinnedPage }
-  | { action: 'move'; id: string; direction: 'up' | 'down' };
+  | { action: 'move'; id: string; direction: 'up' | 'down' }
+  | {
+      action: 'reorder';
+      id: string;
+      targetId: string;
+      position: 'before' | 'after';
+    };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
@@ -65,6 +72,7 @@ export function createPinnedPage(
   title: string,
   artistName?: string,
   entityId?: number,
+  image?: string,
 ): PinnedPage | undefined {
   const destination = pinnedPageDestination(url);
   if (!destination || !title.trim()) return undefined;
@@ -72,13 +80,29 @@ export function createPinnedPage(
     Number.isSafeInteger(entityId) && (entityId ?? 0) > 0
       ? entityId
       : undefined;
+  const validImage = pinnedPageImage(image);
   return {
     ...destination,
     id: `${destination.kind}:${validId ?? destination.url}`,
     title: title.trim(),
     ...(artistName?.trim() ? { artistName: artistName.trim() } : {}),
     ...(validId ? { entityId: validId } : {}),
+    ...(validImage ? { image: validImage } : {}),
   };
+}
+
+export function pinnedPageImage(value?: string): string | undefined {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    return ['https:', 'http:'].includes(url.protocol) &&
+      !url.username &&
+      !url.password
+      ? url.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function samePinnedPage(a: PinnedPage, b: PinnedPage): boolean {
@@ -97,6 +121,8 @@ function parsePage(value: unknown): PinnedPage {
     typeof value.url !== 'string' ||
     typeof value.title !== 'string' ||
     (value.artistName !== undefined && typeof value.artistName !== 'string') ||
+    (value.image !== undefined &&
+      (typeof value.image !== 'string' || !pinnedPageImage(value.image))) ||
     (value.entityId !== undefined &&
       (typeof value.entityId !== 'number' ||
         !Number.isSafeInteger(value.entityId) ||
@@ -108,6 +134,7 @@ function parsePage(value: unknown): PinnedPage {
     value.title,
     value.artistName,
     value.entityId,
+    value.image,
   );
   if (
     !page ||
@@ -201,6 +228,22 @@ async function applyCommand(value: unknown): Promise<void> {
         { ...page, id: `${page.kind}:${page.entityId ?? page.url}` },
       ];
     }
+  } else if (
+    value.action === 'reorder' &&
+    typeof value.id === 'string' &&
+    typeof value.targetId === 'string' &&
+    (value.position === 'before' || value.position === 'after')
+  ) {
+    const page = items.find((page) => page.id === value.id);
+    if (!page || value.id === value.targetId) return;
+    const remaining = items.filter((page) => page.id !== value.id);
+    const target = remaining.findIndex((page) => page.id === value.targetId);
+    // Apply relative to the latest saved list, including concurrent changes.
+    if (target < 0) return;
+    const index = target + (value.position === 'after' ? 1 : 0);
+    remaining.splice(index, 0, page);
+    if (remaining.every((page, index) => page.id === items[index].id)) return;
+    items = remaining;
   } else if (
     value.action === 'move' &&
     typeof value.id === 'string' &&

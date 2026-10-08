@@ -78,7 +78,7 @@ let pinPage = $derived(pinnedPageFromItem(item));
   {#each item.buttons ?? [] as button}
     {@render treeItemButton(button)}
   {/each}
-  {#if pinPage}<BcxPinButton page={pinPage} menu={true} />{/if}
+  {#if pinPage}<BcxPinButton page={pinPage} iconOnly />{/if}
 </div>
   {/if}
 {/snippet}

@@ -57,7 +57,9 @@ let copyLabel = $derived(
 let pageUrl = $derived(url?.toString());
 let pinPage = $derived(
   pinnedPageFromItem(previewItem) ??
-    (pageUrl ? createPinnedPage(pageUrl, name) : undefined),
+    (pageUrl
+      ? createPinnedPage(pageUrl, name, undefined, undefined, image)
+      : undefined),
 );
 let savedPin = $derived(
   pinPage &&
