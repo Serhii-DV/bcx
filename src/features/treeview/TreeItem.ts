@@ -29,6 +29,7 @@ export interface TreeItemFilterSearchResult {
 
 export interface TreeItem {
   id?: string;
+  entityId?: number;
   label?: string;
   children?: TreeItem[];
   childrenCount?: number;
@@ -44,6 +45,7 @@ export interface TreeItem {
   image?: string; // image URL or icon name
   flagCode?: string;
   aboutProfile?: {
+    id?: number;
     name: string;
     url?: string;
     image?: string;

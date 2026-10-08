@@ -6,9 +6,11 @@ import {
 } from 'src/features/treeview/BandPreview';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
+import type { Snippet } from 'svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
 
-let { band }: { band: BandPreview } = $props();
+let { band, leadingActions }: { band: BandPreview; leadingActions?: Snippet } =
+  $props();
 let about = $state<TreeItem>();
 let treeData = $state<TreeData>();
 let loading = $state(false);
@@ -40,4 +42,4 @@ $effect(() => {
 });
 </script>
 
-<BcxBandPanel {treeData} about={about ?? createBandAboutFallback(band)} fallbackLocation={band.location} bandUrl={band.url} {loading} {error} />
+<BcxBandPanel {treeData} about={about ?? createBandAboutFallback(band)} fallbackLocation={band.location} bandUrl={band.url} {loading} {error} {leadingActions} />

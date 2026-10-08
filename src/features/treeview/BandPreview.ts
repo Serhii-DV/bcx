@@ -119,6 +119,7 @@ export function createBandAboutFallback(fallback: BandPreview): TreeItem {
       .asTree()
       .build(),
     aboutProfile: {
+      id: fallback.id,
       name: fallback.name,
       url: fallback.url,
       image: fallback.image,

@@ -29,6 +29,34 @@ flowchart TB
 
 The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers, while Chrome storage keeps data available across extension contexts.
 
+## Pinned navigation
+
+Band, release, and track shortcuts are stored separately from music data and
+catalog caches in `/ui/pinned-navigation` in `chrome.storage.local`. The versioned
+document contains an ordered list of canonical destinations, display names,
+artwork URLs, and entity IDs when known. Artwork is optional for compatibility
+with existing pins; their icons use locally saved music data when available.
+Album and track IDs have separate namespaces. A URL-only
+pin keeps its navigation identity when a saved entity ID becomes available; known
+aliases merge without moving the original shortcut.
+
+Only the background worker writes the document. Pin, unpin, and reorder commands
+read durable state inside a serialized queue, and errors are returned to the
+caller. Panels subscribe to storage changes and show confirmed saves. Invalid
+records and unsupported schema versions block writes while preserving the stored
+document. Selecting a pin reuses BCX's saved band/release/track views; unavailable
+saved details show Retry and Open on Bandcamp. Opened destinations stay mounted
+when switching navigation, including after their shortcut is removed.
+
+Pinned rows use artwork icons without native title tooltips. Like Tools, clicking
+the item opens an actions popup in collapsed navigation or toggles an inline
+submenu in expanded navigation. Both expose Open in BCX, Open on Bandcamp, and
+Unpin. Double-clicking a pinned row opens its page in the browser in either
+navigation mode. Catalog rows offer a direct Pin/Unpin icon instead of a separate menu.
+Drag-and-drop reorders a shortcut before or after another
+shortcut in the latest saved list, preserving concurrent additions and removals.
+Alt + Arrow Up/Down provides the same ordering controls from the keyboard.
+
 ## Activity log
 
 The Activity log presents Sync, availability checks, current storage measurements,

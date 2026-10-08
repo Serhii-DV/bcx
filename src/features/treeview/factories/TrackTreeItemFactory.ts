@@ -12,6 +12,7 @@ export class TrackTreeItemFactory {
   static createWithPreview(track: Track): TreeItem {
     return {
       ...this.create(track),
+      entityId: track.id,
       previewImage:
         track.artwork.id > 0
           ? (track.artwork.getUrl(ArtworkSize.LARGE) ?? undefined)

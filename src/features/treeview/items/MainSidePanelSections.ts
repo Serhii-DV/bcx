@@ -12,6 +12,7 @@ import { FanSidePanelSection } from '../sections/FanSidePanelSection';
 import { FollowingBandsSidePanelSection } from '../sections/FollowingBandsSidePanelSection';
 import { FollowingGenresSidePanelSection } from '../sections/FollowingGenresSidePanelSection';
 import { HistorySidePanelSection } from '../sections/HistorySidePanelSection';
+import { TrackSidePanelSection } from '../sections/TrackSidePanelSection';
 import type { PageDataContext } from '../sections/types';
 import { WishlistSidePanelSection } from '../sections/WishlistSidePanelSection';
 
@@ -65,6 +66,12 @@ export class MainSidePanelSections {
           )
         : band;
     addSection(AlbumSidePanelSection.create(album, albumDetails));
+    addSection(
+      await TrackSidePanelSection.create(
+        currentPageUrl,
+        options.pageData?.trackSchema,
+      ),
+    );
     addSection(BandSidePanelSection.create(sectionBand, currentPageUrl));
     if (includePageData && pageDataContext) {
       addSections(

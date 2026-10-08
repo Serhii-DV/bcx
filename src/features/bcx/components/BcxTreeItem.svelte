@@ -4,9 +4,14 @@ import { ImageOff } from '@lucide/svelte';
 import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
 import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
+import { openUrlInActiveTab } from 'src/core/extensionActions';
+import { TreeItemButtonFactory } from 'src/features/treeview/buttons/factory';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';
+import { getErrorMessage } from 'src/utils/getErrorMessage';
+import { pinnedPageFromItem } from '../pinnedPage';
+import BcxPinButton from './BcxPinButton.svelte';
 import { createItemUrl } from './itemUrl';
 
 interface Props {
@@ -31,6 +36,37 @@ let displayUrl = $derived.by(() => {
 });
 let failedImage = $state<string>();
 let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
+let pinPage = $derived(pinnedPageFromItem(item));
+let primaryButtons = $derived(
+  (item.buttons ?? []).filter((button) => !pinPage || !button.href),
+);
+let browserButtons = $derived(
+  pinPage ? (item.buttons ?? []).filter((button) => !!button.href) : [],
+);
+let browserButton = $derived.by(() => {
+  const page = pinPage;
+  if (
+    !page ||
+    browserButtons.some(
+      (button) => button.href === item.href || button.href === page.url,
+    )
+  )
+    return undefined;
+  return {
+    ...TreeItemButtonFactory.createExternalLink(`Open\n${page.url}`, page.url),
+    onClick: () => void openBrowserPage(page.url),
+  };
+});
+let error = $state('');
+
+async function openBrowserPage(url: string) {
+  error = '';
+  try {
+    if (!(await openUrlInActiveTab(url))) window.location.assign(url);
+  } catch (reason) {
+    error = getErrorMessage(reason, 'Could not open the Bandcamp page.');
+  }
+}
 </script>
 
 {#snippet treeItemButton(button: TreeItemButton)}
@@ -69,12 +105,17 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
   {/if}
 {/snippet}
 
-{#snippet treeItemButtons(item: TreeItem)}
-  {#if item.buttons && item.buttons.length > 0}
+{#snippet treeItemButtons()}
+  {#if primaryButtons.length || pinPage}
 <div class="item-buttons">
-  {#each item.buttons as button}
+  {#each primaryButtons as button}
     {@render treeItemButton(button)}
   {/each}
+  {#if pinPage}<BcxPinButton page={pinPage} iconOnly />{/if}
+  {#each browserButtons as button}
+    {@render treeItemButton(button)}
+  {/each}
+  {#if browserButton}{@render treeItemButton(browserButton)}{/if}
 </div>
   {/if}
 {/snippet}
@@ -86,7 +127,7 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
     aria-live="polite"
     aria-atomic="true"
   ></span>
-  {#if Icon}
+  {#if Icon && !(pinPage && item.actionIcon === ICON_EXTERNAL_LINK)}
   <span
     class="item-action-icon text-gray-300"
     class:item-external-link-icon={item.actionIcon === ICON_EXTERNAL_LINK}
@@ -139,12 +180,13 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 </span>
 {#if showActions}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
-  {@render treeItemButtons(item)}
+  {@render treeItemButtons()}
   {#if childrenCount > 0}
     <span class="item-count text-gray-400">{childrenCount}</span>
   {/if}
 </div>
 {@render treeItemActionIcon(item)}
+{#if error}<span role="alert" class="text-red-300 text-xs">{error}</span>{/if}
 {/if}
 
 <style>
@@ -245,6 +287,9 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 }
 
 .item-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
 }

@@ -6,6 +6,7 @@ import {
   Disc,
   ExternalLink,
   Eye,
+  Pin,
 } from '@lucide/svelte';
 import { DropdownMenu } from 'bits-ui';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
@@ -14,7 +15,11 @@ import type { TreeItem } from 'src/features/treeview/TreeItem';
 import BandcampIcon from 'src/lib/components/BandcampIcon.svelte';
 import { copyToClipboard } from 'src/utils/clipboard';
 import { onDestroy } from 'svelte';
+import { createPinnedPage, samePinnedPage } from '../pinnedNavigation';
+import { pinnedPageFromItem } from '../pinnedPage';
 import { getItemPreviewContext } from '../stores/itemPreview';
+import { changePin, pinnedNavigation } from '../stores/pinnedNavigation';
+import BcxPinButton from './BcxPinButton.svelte';
 
 let {
   url,
@@ -50,6 +55,34 @@ let copyLabel = $derived(
   kind === 'release' ? 'Copy full release title' : `Copy ${kind} name`,
 );
 let pageUrl = $derived(url?.toString());
+let pinPage = $derived(
+  pinnedPageFromItem(previewItem) ??
+    (pageUrl
+      ? createPinnedPage(pageUrl, name, undefined, undefined, image)
+      : undefined),
+);
+let savedPin = $derived(
+  pinPage &&
+    $pinnedNavigation.items.find((page) => samePinnedPage(page, pinPage)),
+);
+let pinSaving = $state(false);
+
+async function pinPageFromMenu() {
+  if (!pinPage || pinSaving) return;
+  pinSaving = true;
+  error = '';
+  try {
+    await changePin(
+      savedPin
+        ? { action: 'unpin', page: savedPin }
+        : { action: 'pin', page: pinPage },
+    );
+  } catch {
+    if (!destroyed) error = 'Could not save this pin. Please try again.';
+  } finally {
+    if (!destroyed) pinSaving = false;
+  }
+}
 let copyItems = $derived([
   { label: copyLabel, value: copyValue },
   ...(kind === 'release' && releaseTitle
@@ -150,6 +183,11 @@ async function copy(value: string) {
             <span>{previewLabel}</span>
           </DropdownMenu.Item>
         {/if}
+        {#if pinPage}
+          <DropdownMenu.Item class="preview-item-menu-action" disabled={pinSaving || $pinnedNavigation.loading || !!$pinnedNavigation.error} onSelect={() => void pinPageFromMenu()}>
+            <Pin size={14} fill={savedPin ? 'currentColor' : 'none'} aria-hidden="true" /><span>{savedPin ? 'Unpin' : 'Pin'} {pinPage.kind}</span>
+          </DropdownMenu.Item>
+        {/if}
         {#if pageUrl || (preview && previewItem)}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
         {/if}
@@ -175,6 +213,7 @@ async function copy(value: string) {
       </DropdownMenu.Content>
     </DropdownMenu.Portal>
   </DropdownMenu.Root>
+  {#if keepInPreviewTab && pinPage}<BcxPinButton page={pinPage} />{/if}
   <span role="status" class="sr-only">{copied ? 'Copied' : ''}</span>
   {#if error}<span role="alert">{error}</span>{/if}
 </div>
