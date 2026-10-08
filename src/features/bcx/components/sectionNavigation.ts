@@ -1,6 +1,7 @@
 export interface SectionNavigationItem {
   id: string;
   label: string;
+  count?: number;
   image?: string;
   title?: string;
   contentId: string;

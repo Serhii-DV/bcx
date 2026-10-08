@@ -47,6 +47,12 @@ describe('createRootSectionTabs', () => {
       { id: '1', label: 'Artists (91)', image: 'mic' },
       { id: '3', label: 'Release years (2)', image: undefined },
     ]);
+    expect(createRootSectionTabs(items, true)).toEqual([
+      { id: '4', label: 'About Example Band', image: undefined },
+      { id: '2', label: 'Releases', image: undefined, count: 322 },
+      { id: '1', label: 'Artists', image: 'mic', count: 91 },
+      { id: '3', label: 'Release years', image: undefined, count: 2 },
+    ]);
 
     expect(
       createRootSectionTabs([

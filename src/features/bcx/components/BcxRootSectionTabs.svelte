@@ -86,6 +86,7 @@ let {
   actions,
   responsiveSidebar = false,
   compactWhenOverflowing = false,
+  countBadges = false,
   sortInToolbar = false,
   navigationInFilter = false,
   showFilterNavigation = true,
@@ -100,6 +101,7 @@ let {
   actions?: Snippet;
   responsiveSidebar?: boolean;
   compactWhenOverflowing?: boolean;
+  countBadges?: boolean;
   sortInToolbar?: boolean;
   navigationInFilter?: boolean;
   showFilterNavigation?: boolean;
@@ -153,7 +155,7 @@ const displayedTreeData = $derived.by(() => {
       : treeData;
 });
 const tabs = $derived.by(() => {
-  return createRootSectionTabs(displayedTreeData.items);
+  return createRootSectionTabs(displayedTreeData.items, countBadges);
 });
 const displayTabs = $derived.by<SectionTab[]>(() => {
   const labeledTabs = tabs.map((tab) => {
@@ -388,6 +390,7 @@ const localNavigationTabs = $derived(
     ? navigationItems.map((item) => ({
         id: item.onSortChange ? item.id : (item.sortValue ?? item.id),
         label: item.label,
+        count: item.count,
         image: item.image,
         title: item.title,
       }))

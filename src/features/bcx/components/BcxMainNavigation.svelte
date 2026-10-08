@@ -10,7 +10,7 @@ import {
 } from '@lucide/svelte';
 import { Collapsible, DropdownMenu } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
-import { tick } from 'svelte';
+import { type Snippet, tick } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import BcxSidebarSection from './BcxSidebarSection.svelte';
 import type { SectionNavigation } from './sectionNavigation';
@@ -33,6 +33,7 @@ let {
   contentId,
   syncStatus,
   subsections = {},
+  headerActions,
 }: {
   sections: NavigationSection[];
   tools: NavigationSection[];
@@ -40,6 +41,7 @@ let {
   contentId: string;
   syncStatus?: 'running' | 'error';
   subsections?: Record<string, SectionNavigation>;
+  headerActions?: Snippet;
 } = $props();
 
 const sidebar = Sidebar.useSidebar();
@@ -222,11 +224,14 @@ async function selectSubsection(id: string) {
 <Sidebar.Root collapsible="icon">
   <nav bind:this={navigation} class="bcx-main-navigation" aria-label="Music Explorer sections">
     <Sidebar.Header class="bcx-navigation-top">
-      <Sidebar.MenuButton data-sidebar="trigger" aria-label={sidebar.open ? 'Collapse navigation' : 'Expand navigation'} aria-expanded={sidebar.open} aria-controls={navigationId} tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} onclick={sidebar.toggle}>
-        {#snippet tooltipContent()}<strong>Expand navigation</strong><p>Show navigation icons and labels.</p>{/snippet}
-        <Menu size={16} aria-hidden="true" />
-        <span data-sidebar-label>Navigation</span>
-      </Sidebar.MenuButton>
+      <div class="bcx-navigation-controls">
+        <Sidebar.MenuButton data-sidebar="trigger" aria-label={sidebar.open ? 'Collapse navigation' : 'Expand navigation'} aria-expanded={sidebar.open} aria-controls={navigationId} tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} onclick={sidebar.toggle}>
+          {#snippet tooltipContent()}<strong>Expand navigation</strong><p>Show navigation icons and labels.</p>{/snippet}
+          <Menu size={16} aria-hidden="true" />
+          <span data-sidebar-label>Navigation</span>
+        </Sidebar.MenuButton>
+        {#if sidebar.open && headerActions}{@render headerActions()}{/if}
+      </div>
     </Sidebar.Header>
     <Sidebar.Content id={navigationId} class="bcx-navigation-scroll">
       <Sidebar.Menu>
@@ -287,6 +292,7 @@ async function selectSubsection(id: string) {
 </Sidebar.Root>
 
 <style>
+.bcx-navigation-controls { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .bcx-main-navigation { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; }
 :global(.bcx-navigation-top) { border-bottom: 1px solid #4b5563; }
 :global(.bcx-navigation-scroll) { scrollbar-width: thin; scrollbar-color: rgb(156 163 175 / 0.45) transparent; }

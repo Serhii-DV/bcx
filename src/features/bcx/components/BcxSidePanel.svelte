@@ -1,4 +1,5 @@
 <script lang="ts">
+import { X } from '@lucide/svelte';
 import {
   fanStorage,
   libraryKey,
@@ -40,7 +41,6 @@ import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxMainNavigation from './BcxMainNavigation.svelte';
 import BcxReleasePreview from './BcxReleasePreview.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
-import BcxSidePanelHeader from './BcxSidePanelHeader.svelte';
 import BcxStoragePanel from './BcxStoragePanel.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
@@ -57,7 +57,6 @@ interface Props {
 
 let {
   sections,
-  header = null,
   open = false,
   browserPanel = false,
   onToggle = () => {},
@@ -452,6 +451,12 @@ $effect(() => {
 });
 </script>
 
+{#snippet closeAction()}
+  <Sidebar.MenuButton class="bcx-side-panel-close-button" aria-label="Close BCX side panel" title="Close side panel" onclick={onClose}>
+    <X size={16} aria-hidden="true" />
+  </Sidebar.MenuButton>
+{/snippet}
+
 <div
   id="bcx-side-panel"
   class="bcx-side-panel-shell {open ? 'open' : ''} {browserPanel ? 'browser-panel' : ''}"
@@ -471,11 +476,16 @@ $effect(() => {
                 bind:value={selectedSectionId}
                 contentId={mainContentId}
                 syncStatus={navigationSyncStatus}
+                headerActions={browserPanel ? undefined : closeAction}
               />
               <div class="bcx-panel-body">
-              <BcxSidePanelHeader {header} showCloseButton={!browserPanel} {onClose} />
-              {#if selectedNavigationSection}
-                <h3 class="bcx-main-section-title" title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
+              {#if selectedNavigationSection || (!browserPanel && !$sidebarExpanded)}
+                <div class="bcx-main-heading" class:injected={!browserPanel} class:with-close={!browserPanel && !$sidebarExpanded}>
+                  {#if !browserPanel && !$sidebarExpanded}{@render closeAction()}{/if}
+                  {#if selectedNavigationSection}
+                    <h3 class="bcx-main-section-title" title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
+                  {/if}
+                </div>
               {/if}
               <BcxItemPreviewPanel visible={showPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
               {#each sections as section (section.id)}
@@ -630,10 +640,35 @@ $effect(() => {
     flex-direction: row;
   }
 
-  .bcx-main-section-title {
+  .bcx-main-heading {
+    display: flex;
     flex-shrink: 0;
-    margin: 0 var(--bcx-preview-gutter, 16px);
-    padding: 4px 0;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 4px var(--bcx-preview-gutter, 16px);
+  }
+
+  .bcx-main-heading.injected {
+    box-sizing: border-box;
+    min-height: 46px;
+  }
+
+  .bcx-main-heading.with-close {
+    padding-left: 5px;
+  }
+
+  .bcx-side-panel-shell :global(.bcx-side-panel-close-button) {
+    flex: 0 0 36px;
+    justify-content: center;
+    width: 36px;
+    padding-inline: 0;
+  }
+
+  .bcx-main-section-title {
+    min-width: 0;
+    flex: 1 1 0%;
+    margin: 0;
     overflow: hidden;
     color: #f9fafb;
     font-size: 0.875rem;

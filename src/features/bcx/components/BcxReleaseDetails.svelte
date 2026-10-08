@@ -312,7 +312,7 @@ let dates = $derived(
   {#if loading}<p class="release-status" role="status">Loading release details…</p>{/if}
   {#if error}<p class="band-links-error" role="alert">{error}</p>{/if}
   <div class="release-preview-tabs">
-    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} responsiveSidebar={true} compactWhenOverflowing={true} />
+    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} responsiveSidebar={true} compactWhenOverflowing={true} countBadges={true} />
   </div>
 {/snippet}
 

@@ -42,13 +42,16 @@ let {
 } = $props();
 let catalogNavigation = $state<SectionNavigation>();
 const viewActions = $derived(
-  catalogNavigation?.items.map(({ id, label, image, title, contentId }) => ({
-    id,
-    label,
-    image: image ?? ICON_MENU,
-    title,
-    contentId,
-  })) ?? [],
+  catalogNavigation?.items.map(
+    ({ id, label, count, image, title, contentId }) => ({
+      id,
+      label,
+      count,
+      image: image ?? ICON_MENU,
+      title,
+      contentId,
+    }),
+  ) ?? [],
 );
 const selectedView = $derived.by(() => {
   const navigation = catalogNavigation;
@@ -139,7 +142,7 @@ let catalog = $derived.by(() => {
     <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
   {/if}
   <div class="band-catalog">
-    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} sortInToolbar={true} {navigationInFilter} showFilterNavigation={!navigationInFilter} onNavigationChange={navigationInFilter ? updateNavigation : onNavigationChange} />
+    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} sortInToolbar={true} countBadges={true} {navigationInFilter} showFilterNavigation={!navigationInFilter} onNavigationChange={navigationInFilter ? updateNavigation : onNavigationChange} />
   </div>
 </div>
 
