@@ -29,6 +29,23 @@ flowchart TB
 
 The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers, while Chrome storage keeps data available across extension contexts.
 
+## Pinned navigation
+
+Band, release, and track shortcuts are stored separately from music data and
+catalog caches in `/ui/pinned-navigation` in `chrome.storage.local`. The versioned
+document contains an ordered list of canonical destinations, display names, and
+entity IDs when known. Album and track IDs have separate namespaces. A URL-only
+pin keeps its navigation identity when a saved entity ID becomes available; known
+aliases merge without moving the original shortcut.
+
+Only the background worker writes the document. Pin, unpin, and move commands
+read durable state inside a serialized queue, and errors are returned to the
+caller. Panels subscribe to storage changes and show confirmed saves. Invalid
+records and unsupported schema versions block writes while preserving the stored
+document. Selecting a pin reuses BCX's saved band/release/track views; unavailable
+saved details show Retry and Open on Bandcamp. Opened destinations stay mounted
+when switching navigation, including after their shortcut is removed.
+
 ## Activity log
 
 The Activity log presents Sync, availability checks, current storage measurements,

@@ -3,7 +3,9 @@ import type {
   FanDataset,
 } from 'src/bandcamp/domain/fanData/library';
 import type { FanSyncAction } from 'src/bandcamp/domain/fanData/sync';
+import type { PinCommand } from 'src/features/bcx/pinnedNavigation';
 export enum MessageType {
+  UPDATE_PINNED_NAVIGATION = 'UPDATE_PINNED_NAVIGATION',
   MEASURE_STORAGE = 'MEASURE_STORAGE',
   CLEAR_ACTIVITY_LOG = 'CLEAR_ACTIVITY_LOG',
   CAPTURE_STORAGE_HISTORY = 'CAPTURE_STORAGE_HISTORY',
@@ -48,6 +50,7 @@ export interface ToggleSidePanelMessage {
 }
 
 export type Message =
+  | { type: MessageType.UPDATE_PINNED_NAVIGATION; command: PinCommand }
   | { type: MessageType.MEASURE_STORAGE }
   | { type: MessageType.CLEAR_ACTIVITY_LOG }
   | { type: MessageType.CAPTURE_STORAGE_HISTORY }

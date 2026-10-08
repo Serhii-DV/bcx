@@ -28,6 +28,7 @@ import {
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import type { PinnedPage } from '../pinnedNavigation';
 import {
   restoreSidebarExpanded,
   saveSidebarExpanded,
@@ -40,6 +41,7 @@ import BcxExtensionInfo from './BcxExtensionInfo.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxMainNavigation from './BcxMainNavigation.svelte';
+import BcxPinnedPage from './BcxPinnedPage.svelte';
 import BcxReleasePreview from './BcxReleasePreview.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxStoragePanel from './BcxStoragePanel.svelte';
@@ -72,6 +74,24 @@ const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let releaseVisitedById: Record<string, boolean> = $state({});
 let requestedPreviewSectionId = $state('');
+let openedPinnedPages = $state<PinnedPage[]>([]);
+const selectedPinnedPage = $derived(
+  openedPinnedPages.find((page) => `__pin__${page.id}` === selectedSectionId),
+);
+
+function openPinnedPage(page: PinnedPage) {
+  const existing = openedPinnedPages.find((other) => other.id === page.id);
+  if (!existing) openedPinnedPages = [...openedPinnedPages, page];
+  else if (
+    existing.url !== page.url ||
+    existing.title !== page.title ||
+    existing.artistName !== page.artistName ||
+    existing.entityId !== page.entityId
+  )
+    openedPinnedPages = openedPinnedPages.map((other) =>
+      other.id === page.id ? page : other,
+    );
+}
 
 function usesToolbarNavigation(section: SidePanelSection): boolean {
   return (
@@ -223,6 +243,11 @@ function containsPreviewItems(items: TreeItem[]): boolean {
 }
 
 const showPreview = $derived.by(() => {
+  if (selectedPinnedPage)
+    return (
+      selectedPinnedPage.kind === 'band' ||
+      requestedPreviewSectionId === selectedSectionId
+    );
   const section = sections.find((section) => section.id === selectedSectionId);
   if (!section || section.label === 'Following Genres') return false;
   if (section.releasePreview) return requestedPreviewSectionId === section.id;
@@ -428,12 +453,17 @@ $effect(() => {
     }
     return;
   }
-  if (releaseSection && releaseSection.id !== previousReleaseId) {
+  if (
+    !selectedSectionId.startsWith('__pin__') &&
+    releaseSection &&
+    releaseSection.id !== previousReleaseId
+  ) {
     selectedSectionId = releaseSection.id;
   } else if (
     selectedSectionId !== infoTabId &&
     selectedSectionId !== storageTabId &&
     selectedSectionId !== activityTabId &&
+    !selectedSectionId.startsWith('__pin__') &&
     !(selectedSectionId === syncTabId && hasFanSync) &&
     !sections.some((section) => section.id === selectedSectionId)
   ) {
@@ -517,9 +547,10 @@ $effect(() => {
                 contentId={mainContentId}
                 syncStatus={navigationSyncStatus}
                 headerActions={browserPanel ? undefined : closeAction}
+                onPinSelect={openPinnedPage}
               />
               <div class="bcx-panel-body">
-              {#if !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('album-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
+              {#if !selectedPinnedPage && !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
                 {#if selectedNavigationSection}
                   {@render sectionHeading(selectedNavigationSection)}
                 {:else}
@@ -527,6 +558,11 @@ $effect(() => {
                 {/if}
               {/if}
               <BcxItemPreviewPanel visible={showPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
+              {#each openedPinnedPages as page (page.id)}
+                <div id={`${mainContentId}-__pin__${page.id}`} data-bcx-main-section role="region" aria-label={page.title} hidden={selectedSectionId !== `__pin__${page.id}`} class="bcx-tab-content">
+                  <BcxPinnedPage {page} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                </div>
+              {/each}
               {#each sections as section (section.id)}
                 {#snippet panelHeading()}
                   {@render sectionHeading({ label: section.label, image: section.image, title: getSectionTitle(section) }, true)}

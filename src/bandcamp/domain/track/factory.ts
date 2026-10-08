@@ -59,7 +59,10 @@ export class TrackFactory {
     );
   }
 
-  static fromSchema(schema: MusicRecordingSchema): Track {
+  static fromSchema(
+    schema: MusicRecordingSchema,
+    options?: { albumId?: number },
+  ): Track {
     const trackId =
       (getPropertyValueByName(
         schema.additionalProperty,
@@ -74,7 +77,9 @@ export class TrackFactory {
     );
     const time = TrackTime.fromDuration(schema.duration);
     // albumId is not available in schema, try to get it from pagedata
-    const albumId = bandcampPageData.data?.album_id || undefined;
+    const albumId = options
+      ? options.albumId
+      : bandcampPageData.data?.album_id || undefined;
     const artId =
       (getPropertyValueByName(schema.additionalProperty, 'art_id') as number) ||
       0;

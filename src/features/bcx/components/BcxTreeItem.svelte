@@ -7,6 +7,8 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';
+import { pinnedPageFromItem } from '../pinnedPage';
+import BcxPinButton from './BcxPinButton.svelte';
 import { createItemUrl } from './itemUrl';
 
 interface Props {
@@ -31,6 +33,7 @@ let displayUrl = $derived.by(() => {
 });
 let failedImage = $state<string>();
 let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
+let pinPage = $derived(pinnedPageFromItem(item));
 </script>
 
 {#snippet treeItemButton(button: TreeItemButton)}
@@ -70,11 +73,12 @@ let childrenCount = $derived(item.childrenCount ?? item.children?.length ?? 0);
 {/snippet}
 
 {#snippet treeItemButtons(item: TreeItem)}
-  {#if item.buttons && item.buttons.length > 0}
+  {#if (item.buttons && item.buttons.length > 0) || pinPage}
 <div class="item-buttons">
-  {#each item.buttons as button}
+  {#each item.buttons ?? [] as button}
     {@render treeItemButton(button)}
   {/each}
+  {#if pinPage}<BcxPinButton page={pinPage} menu={true} />{/if}
 </div>
   {/if}
 {/snippet}

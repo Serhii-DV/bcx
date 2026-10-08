@@ -60,6 +60,7 @@ export class AlbumTreeItemFactory {
     const published = releaseDate ? new Date(releaseDate) : undefined;
     return {
       ...this.create(album),
+      entityId: album.id,
       timestamp:
         options.showReleaseDate &&
         published &&

@@ -2,6 +2,7 @@ import {
   clearActivityLog,
   recoverActivityLog,
 } from 'src/features/bcx/activityLog';
+import { updatePinnedNavigation } from 'src/features/bcx/pinnedNavigation';
 import { measureStorageActivity } from 'src/features/bcx/storageActivity';
 import { captureStorageHistory } from 'src/features/bcx/storageHistory';
 import { initializeStorageHistory } from 'src/features/bcx/storageHistoryBackground';
@@ -119,6 +120,17 @@ async function getActiveBandcampTab(): Promise<chrome.tabs.Tab | null> {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.UPDATE_PINNED_NAVIGATION) {
+      updatePinnedNavigation(message.command).then(
+        () => sendResponse({ ok: true }),
+        (error) =>
+          sendResponse({
+            ok: false,
+            error: getErrorMessage(error, 'Could not save pinned navigation.'),
+          }),
+      );
+      return true;
+    }
     if (message.type === MessageType.CLEAR_ACTIVITY_LOG) {
       clearActivityLog().then(
         () => sendResponse({ ok: true }),

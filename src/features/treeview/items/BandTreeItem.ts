@@ -140,6 +140,7 @@ export class BandTreeItem {
     return {
       ...about,
       aboutProfile: {
+        id: band.id,
         name: band.name,
         url: band.url.toString(),
         image: band.artwork.id > 0 ? band.artwork.mediumSizeUrl : undefined,

@@ -12,6 +12,8 @@ import { Collapsible, DropdownMenu } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
 import { type Snippet, tick } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+import type { PinnedPage } from '../pinnedNavigation';
+import BcxPinnedNavigation from './BcxPinnedNavigation.svelte';
 import BcxSidebarSection from './BcxSidebarSection.svelte';
 import type { SectionNavigation } from './sectionNavigation';
 
@@ -34,6 +36,7 @@ let {
   syncStatus,
   subsections = {},
   headerActions,
+  onPinSelect,
 }: {
   sections: NavigationSection[];
   tools: NavigationSection[];
@@ -42,6 +45,7 @@ let {
   syncStatus?: 'running' | 'error';
   subsections?: Record<string, SectionNavigation>;
   headerActions?: Snippet;
+  onPinSelect?: (page: PinnedPage) => void;
 } = $props();
 
 const sidebar = Sidebar.useSidebar();
@@ -72,6 +76,7 @@ function isContext(section: NavigationSection) {
   return (
     section.id.startsWith('band-') ||
     section.id.startsWith('album-') ||
+    section.id.startsWith('track-') ||
     section.id.startsWith('fan-')
   );
 }
@@ -242,6 +247,7 @@ async function selectSubsection(id: string) {
         {#each librarySections as section (section.id)}{@render sectionButton(section)}{/each}
         {#each followingSections as section (section.id)}{@render sectionButton(section)}{/each}
       </Sidebar.Menu>
+      <BcxPinnedNavigation {value} {contentId} portal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} onSelect={(page) => { onPinSelect?.(page); void selectSection(`__pin__${page.id}`); }} />
       <Sidebar.Separator />
       <Sidebar.Menu>
         <Sidebar.MenuItem>

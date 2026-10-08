@@ -204,6 +204,7 @@ describe('Artist/Label release browser', () => {
     )?.createTreeData();
     const about = data?.items.find((item) => item.label === 'About');
     expect(about?.aboutProfile).toEqual({
+      id: band.id,
       name: 'Label',
       url: band.url.toString(),
       image: undefined,

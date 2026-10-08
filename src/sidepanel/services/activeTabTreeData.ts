@@ -28,6 +28,7 @@ import {
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { AlbumSidePanelSection } from 'src/features/treeview/sections/AlbumSidePanelSection';
+import { TrackSidePanelSection } from 'src/features/treeview/sections/TrackSidePanelSection';
 import type { PageDataContext } from 'src/features/treeview/sections/types';
 
 export interface ActiveBandcampTab {
@@ -125,10 +126,11 @@ export async function getActiveTabPageContext(tab: ActiveBandcampTab): Promise<{
   const page = await createBandPage(url, pageData);
   return {
     header: createSidePanelHeader(url, page, pageData?.trackSchema),
-    releaseSection: AlbumSidePanelSection.create(
-      page?.album ?? null,
-      page?.albumDetails ?? null,
-    ),
+    releaseSection:
+      AlbumSidePanelSection.create(
+        page?.album ?? null,
+        page?.albumDetails ?? null,
+      ) ?? (await TrackSidePanelSection.create(url, pageData?.trackSchema)),
   };
 }
 
