@@ -128,7 +128,7 @@ let catalog = $derived.by(() => {
 
 {#snippet bandActions()}
   {#if previewUrl}
-    <BcxPreviewItemActions url={previewUrl} image={bandAbout?.aboutProfile?.image} name={bandAbout?.aboutProfile?.name ?? 'Band'} kind="band" copyValue={bandAbout?.aboutProfile?.name ?? 'Band'} keepInPreviewTab={true} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
+    <BcxPreviewItemActions url={previewUrl} name={bandAbout?.aboutProfile?.name ?? 'Band'} kind="band" copyValue={bandAbout?.aboutProfile?.name ?? 'Band'} keepInPreviewTab={true} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
   {/if}
   {#if previewUrl && navigationInFilter && viewActions.length}
     <span class="band-actions-divider" role="separator" aria-orientation="vertical"></span>

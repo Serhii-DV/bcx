@@ -24,6 +24,7 @@ import {
   ICON_LIST_MUSIC,
   ICON_TAGS,
 } from 'src/features/treeview/utils/icon';
+import type { Snippet } from 'svelte';
 import { musicFilterStore } from '../stores/musicFilter';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
@@ -39,6 +40,7 @@ let {
   loading,
   error,
   onPreview,
+  leadingActions,
 }: {
   item: TreeItem;
   information: ReleaseInformation;
@@ -46,6 +48,7 @@ let {
   loading: boolean;
   error: string;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
+  leadingActions?: Snippet;
 } = $props();
 let releaseUrl = $derived(createItemUrl(item.href ?? item.id));
 
@@ -215,7 +218,8 @@ let dates = $derived(
 </script>
 
 {#snippet releaseActions()}
-  <BcxPreviewItemActions url={releaseUrl} image={item.previewImage} name="Release" kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={item} keepInPreviewTab={true} />
+  {@render leadingActions?.()}
+  <BcxPreviewItemActions url={releaseUrl} image={item.previewImage} name={`${information.artist} - ${information.title}`} kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={item} keepInPreviewTab={true} />
   {#each bandLinks.artists as artist (artist.url.toString())}
     <BcxPreviewItemActions url={artist.url} image={artist.image} name={artist.name} kind="artist" copyValue={artist.name} previewItem={bandPreviewItem(artist)} />
   {/each}
@@ -245,30 +249,30 @@ let dates = $derived(
 <BcxItemDetailsLayout
   image={item.previewImage}
   imageAlt={`Cover art for ${information.title}`}
-  imageScale={1.2}
+  compactHeader={true}
   heading={information.title}
-  headingSize={1.75}
+  headingSize={1.5}
   subheading={information.artist}
-  subheadingSize={2.2}
+  subheadingSize={1.125}
   details={releaseNotes}
   fitContent={true}
   treeData={emptyTree}
   detailsLabel="Detailed release information"
 >
-  {#if releaseYear}
-    <div class="release-year">
-      {#if information.date}
-        <!-- svelte-ignore a11y_no_noninteractive_tabindex (allows keyboard access to the exact release date) -->
-        <time datetime={information.date} tabindex="0" title={`Released on ${information.date}`} aria-label={`Released on ${information.date}`}>{releaseYear}</time>
-      {:else}
-        <span>{releaseYear}</span>
-      {/if}
-    </div>
-  {/if}
-  {#if summary.length}
+  {#if releaseYear || summary.length}
     <div class="release-summary">
+      {#if releaseYear}
+        <span class="release-year">
+          {#if information.date}
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex (allows keyboard access to the exact release date) -->
+            <time datetime={information.date} tabindex="0" title={`Released on ${information.date}`} aria-label={`Released on ${information.date}`}>{releaseYear}</time>
+          {:else}
+            <span>{releaseYear}</span>
+          {/if}
+        </span>
+      {/if}
       {#each summary as value, index}
-        {#if index > 0}<span aria-hidden="true">·</span>{/if}
+        {#if releaseYear || index > 0}<span aria-hidden="true">·</span>{/if}
         <span>{value}</span>
       {/each}
     </div>
@@ -317,11 +321,15 @@ let dates = $derived(
 {/snippet}
 
 <div class="release-details">
-  <BcxSectionTabs tabs={[]} value="" label="Release actions" actions={releaseActions} wrapActions={true} />
+  <div class="release-actions">
+    <BcxSectionTabs tabs={[]} value="" label="Release actions" actions={releaseActions} wrapActions={true} />
+  </div>
   {@render releasePanels()}
 </div>
 
 <style>
+.release-actions { flex-shrink: 0; }
+.release-actions :global(.bcx-section-tabs) { border-color: transparent; background: transparent; box-shadow: none; }
 .release-details { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-preview-tabs { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-info-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
@@ -331,7 +339,6 @@ let dates = $derived(
 .release-status { margin: 0; padding: 0.5rem 1rem; font-size: 0.8125rem; color: #9ca3af; }
 .release-summary, .release-badges, .release-tags { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; }
 .release-tags { padding: 0.5rem 1rem 1rem; }
-.release-year { margin-bottom: 0.5rem; font-size: 1.75rem; font-weight: 300; line-height: 1.2; letter-spacing: 0.01em; }
 .release-summary { color: #9ca3af; }
 .release-year time { position: relative; }
 .release-year time:is(:hover, :focus)::after { content: attr(aria-label); position: absolute; top: calc(100% + 0.25rem); left: 0; z-index: 1; width: max-content; max-width: 14rem; padding: 0.375rem 0.5rem; border: 1px solid #4b5563; border-radius: 0.25rem; background: #111827; color: #e5e7eb; font-size: 0.75rem; pointer-events: none; }

@@ -15,6 +15,7 @@ let {
   subheadingPrefix,
   subheadingContent,
   compactImage = false,
+  compactHeader = false,
   imageScale = 1,
   fitContent = false,
   details,
@@ -37,6 +38,7 @@ let {
   subheadingPrefix?: Snippet;
   subheadingContent?: Snippet;
   compactImage?: boolean;
+  compactHeader?: boolean;
   imageScale?: number;
   fitContent?: boolean;
   details?: Snippet;
@@ -57,7 +59,7 @@ let failedImage = $state<string>();
   {#if actions}<BcxSectionTabs tabs={[]} value="" label={`${detailsLabel} actions`} {actions} wrapActions={true} />{/if}
 {/snippet}
 
-<div class="item-details" class:compact-image={compactImage} class:scaled-image={imageScale !== 1} style:--item-image-scale={imageScale} class:fit-content={fitContent} class:with-panels={!!panels} style:--item-heading-size={`${headingSize}rem`} style:--item-subheading-size={`${subheadingSize}rem`}>
+<div class="item-details" class:compact-image={compactImage} class:compact-header={compactHeader} class:scaled-image={imageScale !== 1} style:--item-image-scale={imageScale} class:fit-content={fitContent} class:with-panels={!!panels} style:--item-heading-size={`${headingSize}rem`} style:--item-subheading-size={`${subheadingSize}rem`}>
   {#if actionsBeforeHeader}{@render actionsToolbar()}{/if}
   <header class="item-details-header">
     {#if !compactImage || (image && image !== failedImage)}
@@ -102,6 +104,13 @@ let failedImage = $state<string>();
 .compact-image .item-details-image { width: min(5rem, 25%); }
 .scaled-image .item-details-header { flex-wrap: wrap; }
 .scaled-image .item-details-heading { flex-basis: 14rem; }
+.compact-header { container-type: inline-size; }
+.compact-header .item-details-header { flex-wrap: wrap; }
+.compact-header .item-details-image { width: min(10rem, 35%); }
+.compact-header .item-details-heading { flex-basis: 10rem; }
+@container (max-width: 480px) {
+  .compact-header .item-details-image { width: min(8rem, 35%); }
+}
 .item-details-placeholder { display: flex; align-items: center; justify-content: center; border: 1px dashed rgb(156 163 175 / 30%); background: #293548; color: #9ca3af; }
 .item-details-heading { min-width: 0; flex: 1 1 0%; overflow-wrap: anywhere; font-size: 0.8125rem; }
 .item-details-primary { margin: 0 0 0.5rem; font-size: var(--item-heading-size); font-weight: 300; line-height: 1.1; letter-spacing: 0.01em; }

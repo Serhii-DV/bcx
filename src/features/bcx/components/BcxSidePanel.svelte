@@ -1,5 +1,5 @@
 <script lang="ts">
-import { X } from '@lucide/svelte';
+import { Disc, X } from '@lucide/svelte';
 import {
   fanStorage,
   libraryKey,
@@ -97,6 +97,7 @@ function viewActivity() {
   selectedSectionId = activityTabId;
 }
 let selectedSectionId = $state('');
+let failedHeadingImage = $state<string>();
 let fanSyncJob = $state<FanSyncJob>();
 let fanSyncError = $state('');
 const hasFanSync = $derived(sections.some((section) => !!section.fanSync));
@@ -479,11 +480,19 @@ $effect(() => {
                 headerActions={browserPanel ? undefined : closeAction}
               />
               <div class="bcx-panel-body">
-              {#if selectedNavigationSection || (!browserPanel && !$sidebarExpanded)}
+              {#if !selectedNavigationSection?.id.startsWith('album-') && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
                 <div class="bcx-main-heading" class:injected={!browserPanel} class:with-close={!browserPanel && !$sidebarExpanded}>
                   {#if !browserPanel && !$sidebarExpanded}{@render closeAction()}{/if}
                   {#if selectedNavigationSection}
-                    <h3 class="bcx-main-section-title" title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
+                    {@const musicSection = selectedNavigationSection.id.startsWith('album-') || selectedNavigationSection.id.startsWith('band-')}
+                    {#if selectedNavigationSection.id.startsWith('band-')}
+                      {#if selectedNavigationSection.image && selectedNavigationSection.image !== failedHeadingImage}
+                        <img src={selectedNavigationSection.image} alt="" class="bcx-main-section-image" onerror={() => { failedHeadingImage = selectedNavigationSection.image; }} />
+                      {:else}
+                        <Disc size={24} class="shrink-0" aria-hidden="true" />
+                      {/if}
+                    {/if}
+                    <h3 class="bcx-main-section-title" class:music-section={musicSection} title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
                   {/if}
                 </div>
               {/if}
@@ -501,7 +510,7 @@ $effect(() => {
                   {/if}
                   {#if section.releasePreview}
                     {#if releaseVisitedById[section.id]}
-                      <BcxReleasePreview item={section.releasePreview} />
+                      <BcxReleasePreview item={section.releasePreview} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
                     {/if}
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
@@ -663,6 +672,19 @@ $effect(() => {
     justify-content: center;
     width: 36px;
     padding-inline: 0;
+  }
+
+  .bcx-main-section-image {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    object-fit: cover;
+  }
+
+  .bcx-main-section-title.music-section {
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .bcx-main-section-title {
