@@ -44,16 +44,16 @@ export const sidePanelTourSteps = [
   {
     id: 'tree-browser-filter',
     targetElement:
-      '[role="tabpanel"]:not([hidden]) input[id^="bcx-tree-browser-filter-"]:not([hidden] *)',
+      '[data-bcx-main-section]:not([hidden]) input[id^="bcx-tree-browser-filter-"]:not([hidden] *)',
     title: 'Quick Filtering',
     message:
       'Type here to narrow the current level of the navigator. The list updates as you search, and the arrow keys let you move through matching items quickly.',
   },
   {
     id: 'keyboard-shortcuts',
-    targetElement: '.bcx-section-tabs',
+    targetElement: '.bcx-main-navigation',
     title: 'Keyboard Shortcuts',
     message:
-      'Switch tabs to explore each section. The Extension Info tab lists keyboard shortcuts, including <kbd>Ctrl+Shift+X</kbd> to toggle the panel.',
+      'Use the left navigation to explore each section. The hamburger expands the icons into labeled navigation. Open Tools, then Extension Info for keyboard shortcuts, including <kbd>Ctrl+Shift+X</kbd> to toggle the panel.',
   },
 ];

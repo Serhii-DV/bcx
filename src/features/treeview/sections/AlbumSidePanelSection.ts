@@ -18,6 +18,8 @@ export class AlbumSidePanelSection {
       id: `album-${album.id}`,
       label: album.fullTitle,
       image: album.artwork.tinySizeUrl,
+      defaultOpen: true,
+      releasePreview: AlbumTreeItemFactory.createWithPreview(album),
       createTreeData: async () => {
         const albumTreeItem = await AlbumTreeItemFactory.createWithDetails(
           albumDetails || AlbumDetails.fromAlbum(album),

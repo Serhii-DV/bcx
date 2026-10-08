@@ -251,7 +251,7 @@ describe('Artist/Label release browser', () => {
     ).toBe(false);
   });
 
-  it('replaces the standalone release tab and retains a release missing from the catalog', async () => {
+  it('opens the current release before Band/Label and retains it when missing from the catalog', async () => {
     const band = Band.create(1, 'Artist', 'https://artist.bandcamp.com', 1);
     const sections = await MainSidePanelSections.create(
       album.url,
@@ -259,12 +259,21 @@ describe('Artist/Label release browser', () => {
       { includePageData: false },
     );
     expect(sections.map((section) => section.id)).toEqual([
+      'album-1',
       'band-1',
       'history',
     ]);
     expect(sections[0].defaultOpen).toBe(true);
-    expect(sections[0].navigationUrls).toContain(album.url.toString());
-    const data = await sections[0].createTreeData();
+    expect(sections.find((section) => section.defaultOpen)?.id).toBe('album-1');
+    expect(sections[1].navigationUrls).toContain(album.url.toString());
+    expect(sections[0].label).toBe(album.fullTitle);
+    expect(sections[0].image).toBe(album.artwork.tinySizeUrl);
+    expect(sections[0].releasePreview?.href).toBe(album.url.toString());
+    expect(sections[0].releasePreview?.previewInformation?.title).toBe(
+      album.title,
+    );
+    expect(sections[0].releasePreview?.loadPreview).toBeDefined();
+    const data = await sections[1].createTreeData();
     const releases = data.items.find((item) => item.label === 'Releases');
     expect(releases?.children?.[0].href).toBe(album.url.toString());
     expect(releases?.children?.[0].loadPreview).toBeDefined();

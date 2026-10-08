@@ -21,7 +21,7 @@ import {
   ICON_CHEVRON_RIGHT,
   ICON_CORNER_RIGHT_UP,
 } from 'src/features/treeview/utils/icon';
-import { onDestroy, onMount, tick, untrack } from 'svelte';
+import { onDestroy, onMount, type Snippet, tick, untrack } from 'svelte';
 import { getItemPreviewContext } from '../stores/itemPreview';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
@@ -60,6 +60,7 @@ interface Props {
   rootPath?: string | null;
   showBreadcrumb?: boolean;
   showFilter?: boolean;
+  filterActions?: Snippet;
   isLoading?: boolean;
   loadingMessage?: string;
 }
@@ -73,12 +74,13 @@ let {
   onRootLoaded,
   nativeTabNavigation = false,
   initialSelectedHref,
-  filterQuery: externalFilterQuery = null,
+  filterQuery: externalFilterQuery = $bindable(null),
   initialRootPath = null,
   lockInitialRoot = false,
   rootPath = $bindable(),
   showBreadcrumb = true,
   showFilter = true,
+  filterActions,
   isLoading = false,
   loadingMessage = 'Loading',
 }: Props = $props();
@@ -773,6 +775,11 @@ function handleFilterArrowDown() {
   focusTreeItem(getNavigableItems()[0]);
 }
 
+function setFilterQuery(query: string) {
+  if (externalFilterQuery === null) localFilterQuery = query;
+  else externalFilterQuery = query;
+}
+
 async function handleUnmatchedFilterSubmit(query: string) {
   const rootItem = currentRootItem;
   const normalizedQuery = query.trim();
@@ -1021,13 +1028,18 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 
 <div class="flex min-h-0 flex-1 flex-col h-full gap-2">
   {#if showFilter}
+    <div class="bcx-browser-toolbar">
+    <div class="bcx-browser-filter">
     <BcxTreeBrowserFilter
       bind:this={filterRef}
-      bind:value={localFilterQuery}
+      bind:value={() => effectiveFilterQuery, setFilterQuery}
       suggestions={filterSuggestions}
       onArrowDown={handleFilterArrowDown}
       onUnmatchedSubmit={handleUnmatchedFilterSubmit}
     />
+    </div>
+    {@render filterActions?.()}
+    </div>
   {/if}
   {#if showBreadcrumb}
     <BcxTreeBreadcrumb
@@ -1055,6 +1067,20 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
 </div>
 
 <style>
+.bcx-browser-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bcx-browser-filter {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
 .bcx-tree-view {
   flex: 1 1 0%;
   min-height: 0;

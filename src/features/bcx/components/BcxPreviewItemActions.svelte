@@ -1,5 +1,12 @@
 <script lang="ts">
-import { Check, ChevronDown, Copy, ExternalLink, Eye } from '@lucide/svelte';
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  Disc,
+  ExternalLink,
+  Eye,
+} from '@lucide/svelte';
 import { DropdownMenu } from 'bits-ui';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 import type { Url } from 'src/core/url';
@@ -110,13 +117,15 @@ async function copy(value: string) {
 }
 </script>
 
-<div bind:this={container} class="preview-item-actions">
+<div bind:this={container} class="preview-item-actions" class:named-title={kind === 'band' || (kind === 'release' && keepInPreviewTab)}>
   <DropdownMenu.Root>
     <DropdownMenu.Trigger class="bcx-section-tab" aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`}>
       {#if copied}
         <Check size={14} class="shrink-0 text-emerald-300" aria-hidden="true" />
       {:else if image && image !== failedImage}
         <img src={image} alt="" class="item-image" onerror={() => { failedImage = image; }} />
+      {:else if kind === 'band'}
+        <Disc size={14} class="shrink-0" aria-hidden="true" />
       {/if}
       <span class="item-name">{name}</span>
       <ChevronDown size={14} class="shrink-0" aria-hidden="true" />
@@ -172,7 +181,9 @@ async function copy(value: string) {
 
 <style>
 .preview-item-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; min-width: 0; max-width: 100%; }
-.item-image { width: 1rem; height: 1rem; flex-shrink: 0; border-radius: 0.125rem; object-fit: cover; }
+.named-title :global(.bcx-section-tab) { max-width: 100%; }
+.named-title .item-name { overflow: visible; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.item-image { width: 16px; height: 16px; flex-shrink: 0; border-radius: 0.125rem; object-fit: cover; }
 .item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 :global(.preview-item-menu) { z-index: 1000000; max-width: min(20rem, calc(100vw - 24px)); max-height: var(--bits-dropdown-menu-content-available-height); overflow-y: auto; padding: 0.25rem; border: 1px solid #4b5563; border-radius: 0.375rem; background: #111827; color: #f9fafb; box-shadow: 0 4px 12px rgb(0 0 0 / 25%); }
 :global(.preview-item-menu-action) { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.25rem; font-size: 0.8125rem; cursor: pointer; }

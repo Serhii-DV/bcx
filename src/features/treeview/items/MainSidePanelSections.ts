@@ -5,6 +5,7 @@ import { bandcampPageData } from 'src/bandcamp/domain/shared';
 import type { Url } from 'src/core/url';
 import { console } from 'src/utils/console';
 import type { SidePanelSection } from '../SidePanelSection';
+import { AlbumSidePanelSection } from '../sections/AlbumSidePanelSection';
 import { BandSidePanelSection } from '../sections/BandSidePanelSection';
 import { CollectionSidePanelSection } from '../sections/CollectionSidePanelSection';
 import { FanSidePanelSection } from '../sections/FanSidePanelSection';
@@ -63,6 +64,7 @@ export class MainSidePanelSections {
             ),
           )
         : band;
+    addSection(AlbumSidePanelSection.create(album, albumDetails));
     addSection(BandSidePanelSection.create(sectionBand, currentPageUrl));
     if (includePageData && pageDataContext) {
       addSections(

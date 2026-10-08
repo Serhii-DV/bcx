@@ -12,6 +12,11 @@ export function readBandMetadata(
     biography
       .querySelectorAll('.peekaboo-link, script, style')
       .forEach((node) => node.remove());
+    biography.querySelectorAll('br').forEach((node) => node.replaceWith('\n'));
+    biography.querySelectorAll('p, div, li, blockquote').forEach((node) => {
+      node.before('\n\n');
+      node.after('\n\n');
+    });
   }
   const clean = (value: string | null | undefined) =>
     value?.replace(/\s+/g, ' ').trim() || undefined;
@@ -37,7 +42,12 @@ export function readBandMetadata(
     location: clean(
       document.querySelector('#band-name-location .location')?.textContent,
     ),
-    biography: clean(biography?.textContent),
+    biography:
+      biography?.textContent
+        ?.replace(/[^\S\n]+/g, ' ')
+        .replace(/ *\n */g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim() || undefined,
     links,
   };
 }

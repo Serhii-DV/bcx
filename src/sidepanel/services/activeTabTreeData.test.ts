@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
+import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { libraryKey } from 'src/bandcamp/domain/fanData/library';
 import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
@@ -10,6 +11,7 @@ import { TreeItemCache } from 'src/features/treeview/items/TreeItemCache';
 import {
   createActiveTabSidePanelData,
   getActiveTabHeader,
+  getActiveTabPageContext,
 } from './activeTabTreeData';
 
 afterEach(() => {
@@ -259,18 +261,21 @@ describe('active tab public profile', () => {
   });
 });
 
-describe('active tab header refresh', () => {
-  it('refreshes the header without rebuilding catalog sections', async () => {
+describe('active tab page context refresh', () => {
+  it('refreshes the header and opened release without rebuilding catalog sections or using stale page metadata', async () => {
     const band = Band.create(
       903,
       'Current Artist',
       'https://header-test.bandcamp.com',
       123,
     );
-    rs.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async () => ({
+    const sendMessage = rs.spyOn(chrome.runtime, 'sendMessage');
+    sendMessage.mockImplementation(async () => ({
       pageData: null,
     }));
-    rs.spyOn(BandcampStorage, 'getByUuids').mockResolvedValue([band]);
+    const getEntities = rs.spyOn(BandcampStorage, 'getByUuids');
+    getEntities.mockResolvedValue([band]);
+    const getAlbums = rs.spyOn(BandcampStorage, 'getAlbums');
     rs.spyOn(BandcampStorage, 'getBands').mockResolvedValue([band]);
     const createSections = rs.spyOn(MainSidePanelSections, 'create');
     const header = await getActiveTabHeader({
@@ -282,6 +287,51 @@ describe('active tab header refresh', () => {
       title: band.name,
       imageUrl: band.artwork.smallSizeUrl,
     });
+    const tab = { id: 1, windowId: 1, url: band.url.toString() };
+    const musicContext = await getActiveTabPageContext(tab);
+    expect(musicContext.releaseSection).toBeNull();
+    let previousReleaseUrl = new URL('/album/previous', band.url).toString();
+    for (const [index, title] of [
+      'First Release',
+      'Second Release',
+    ].entries()) {
+      const album = Album.create(
+        new URL(`/album/release-${index}`, band.url).toString(),
+        band.name,
+        title,
+        904 + index,
+        124 + index,
+        band.id,
+      );
+      // During navigation, the previous page can still be returned from cache.
+      sendMessage.mockImplementation(async () => ({
+        pageData: {
+          data: {},
+          fanData: {},
+          albumSchema: { mainEntityOfPage: previousReleaseUrl },
+        },
+      }));
+      getEntities.mockResolvedValue([album]);
+      getAlbums.mockResolvedValue([album]);
+      const context = await getActiveTabPageContext({
+        ...tab,
+        url: `${album.url}?from=music#tracks`,
+      });
+      expect(context.header?.title).toBe(album.title);
+      expect(context.releaseSection?.id).toBe(`album-${album.id}`);
+      expect(context.releaseSection?.label).toBe(album.fullTitle);
+      expect(context.releaseSection?.image).toBe(album.artwork.tinySizeUrl);
+      expect(context.releaseSection?.releasePreview?.href).toBe(
+        album.url.toString(),
+      );
+      expect(
+        context.releaseSection?.releasePreview?.previewInformation?.title,
+      ).toBe(album.title);
+      expect(context.releaseSection?.releasePreview?.loadPreview).toBeDefined();
+      previousReleaseUrl = album.url.toString();
+    }
+    getEntities.mockResolvedValue([band]);
+    expect((await getActiveTabPageContext(tab)).releaseSection).toBeNull();
     expect(createSections).not.toHaveBeenCalled();
   });
 });

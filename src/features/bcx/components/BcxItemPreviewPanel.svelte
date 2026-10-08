@@ -20,10 +20,12 @@ let {
   children,
   visible = true,
   previewSize = itemPreviewSize,
+  onShowPreview,
 }: {
   children: Snippet;
   visible?: boolean;
   previewSize?: ItemPreviewSizeStore;
+  onShowPreview?: () => void;
 } = $props();
 const componentId = $props.id();
 const itemListId = `${componentId}-item-list`;
@@ -35,11 +37,15 @@ let resizeStartY = 0;
 let resizeStartSize = DEFAULT_ITEM_PREVIEW_SIZE;
 
 function selectItem(item: TreeItem) {
-  if (hasItemPreview(item)) untrack(() => previewTabs?.selectPreview(item));
+  if (!hasItemPreview(item)) return;
+  onShowPreview?.();
+  untrack(() => previewTabs?.selectPreview(item));
 }
 
 function previewItem(item: TreeItem) {
-  if (hasItemPreview(item)) void previewTabs?.showPreview(item);
+  if (!hasItemPreview(item)) return;
+  onShowPreview?.();
+  void previewTabs?.showPreview(item);
 }
 
 setContext<ItemPreviewContext>(ITEM_PREVIEW_CONTEXT, {
