@@ -11,7 +11,7 @@ describe('public band profile', () => {
     const profile = readBandMetadata(
       parse(`
       <p id="band-name-location"><span class="location">Copenhagen, Denmark</span></p>
-      <p id="bio-text">Independent <span class="peekaboo-text">record label.</span><span class="peekaboo-link">... more</span></p>
+      <p id="bio-text">Independent <span class="peekaboo-text">record label.<br><br>Based in Copenhagen.</span><span class="peekaboo-link">... more</span></p>
       <ol id="band-links">
         <li><a href="https://instagram.com/example">Instagram</a></li>
         <li><a href="https://instagram.com/example">Duplicate</a></li>
@@ -22,7 +22,7 @@ describe('public band profile', () => {
     );
     expect(profile).toEqual({
       location: 'Copenhagen, Denmark',
-      biography: 'Independent record label.',
+      biography: 'Independent record label.\n\nBased in Copenhagen.',
       links: [
         { label: 'Instagram', url: 'https://instagram.com/example' },
         { label: 'Contact', url: 'https://example.bandcamp.com/contact' },

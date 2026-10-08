@@ -12,6 +12,7 @@ interface SectionTab {
   image?: string;
   title?: string;
   contentId?: string;
+  keepLabelWhenCompact?: boolean;
   sortOptions?: { id: string; label: string; title?: string }[];
   sortValue?: string;
   sortLabel?: string;
@@ -29,6 +30,7 @@ let {
   wrapActions = false,
   vertical = false,
   compactWhenOverflowing = false,
+  hideCountsWhenOverflowing = false,
 }: {
   tabs: SectionTab[];
   value: string;
@@ -39,15 +41,19 @@ let {
   wrapActions?: boolean;
   vertical?: boolean;
   compactWhenOverflowing?: boolean;
+  hideCountsWhenOverflowing?: boolean;
 } = $props();
 let bar = $state<HTMLDivElement>();
 let actionsElement = $state<HTMLDivElement>();
 let leadingActionsElement = $state<HTMLDivElement>();
 let measurements: HTMLDivElement;
 let iconMeasurements = $state<HTMLDivElement>();
+let iconCountMeasurements = $state<HTMLDivElement>();
 let moreMeasurement: HTMLSpanElement;
 let visibleIds = $state<string[]>([]);
 let compact = $state(false);
+let iconOnly = $state(false);
+let hideCounts = $state(false);
 let focusSelectedOnClose = false;
 let lastSortId = $state('');
 const visibleTabs = $derived(tabs.filter((tab) => visibleIds.includes(tab.id)));
@@ -68,6 +74,8 @@ $effect(() => {
   const currentTabs = tabs;
   if (vertical) {
     compact = false;
+    iconOnly = false;
+    hideCounts = false;
     visibleIds = currentTabs.map((tab) => tab.id);
     return;
   }
@@ -75,6 +83,8 @@ $effect(() => {
   const currentLeadingActions = leadingActionsElement;
   const useActionButtons = !!onValueChange;
   const currentIconMeasurements = iconMeasurements;
+  const currentIconCountMeasurements = iconCountMeasurements;
+  const canHideCounts = hideCountsWhenOverflowing;
   const canCompact =
     compactWhenOverflowing &&
     currentTabs.every((tab) => tab.image && !tab.sortOptions && !tab.onClose);
@@ -102,15 +112,35 @@ $effect(() => {
       availableWidth,
       moreMeasurement.getBoundingClientRect().width,
     );
-    compact =
+    const shouldCompact =
       canCompact &&
       !!currentIconMeasurements &&
       labelledIds.length < currentTabs.length;
-    if (compact && useActionButtons) {
+    compact = shouldCompact;
+    iconOnly = false;
+    hideCounts = false;
+    if (shouldCompact && useActionButtons && currentIconMeasurements) {
+      const compactWidth =
+        Array.from(currentIconMeasurements.children).reduce(
+          (total, element) => total + element.getBoundingClientRect().width,
+          0,
+        ) +
+        4 * (currentTabs.length - 1);
+      const shouldUseIconsOnly = compactWidth > availableWidth;
+      iconOnly = shouldUseIconsOnly;
+      if (shouldUseIconsOnly && canHideCounts && currentIconCountMeasurements) {
+        const iconCountWidth =
+          Array.from(currentIconCountMeasurements.children).reduce(
+            (total, element) => total + element.getBoundingClientRect().width,
+            0,
+          ) +
+          4 * (currentTabs.length - 1);
+        hideCounts = iconCountWidth > availableWidth;
+      }
       visibleIds = currentTabs.map((tab) => tab.id);
       return;
     }
-    if (!compact || !currentIconMeasurements) {
+    if (!shouldCompact || !currentIconMeasurements) {
       visibleIds = labelledIds;
       return;
     }
@@ -132,6 +162,8 @@ $effect(() => {
   observer.observe(barElement);
   observer.observe(measurements);
   if (currentIconMeasurements) observer.observe(currentIconMeasurements);
+  if (currentIconCountMeasurements)
+    observer.observe(currentIconCountMeasurements);
   if (currentActions) observer.observe(currentActions);
   if (currentLeadingActions) observer.observe(currentLeadingActions);
   measure();
@@ -190,7 +222,7 @@ async function handleCloseAutoFocus(event: Event) {
   {:else if tab.image}
     <img src={tab.image} alt="" class="size-4 shrink-0 rounded-sm object-cover" />
   {/if}
-  <span class="bcx-tab-label">{tabLabelText(tab)}</span>
+  <span class="bcx-tab-label" class:keep-label={tab.keepLabelWhenCompact}>{tabLabelText(tab)}</span>
   {@render countBadge(tab.count)}
 {/snippet}
 
@@ -254,7 +286,7 @@ async function handleCloseAutoFocus(event: Event) {
     {/each}
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs" class:vertical class:compact class:action-navigation={!!onValueChange} class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
+<div bind:this={bar} class="bcx-section-tabs" class:vertical class:compact class:icon-only={iconOnly} class:hide-counts={hideCounts} class:action-navigation={!!onValueChange} class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
   {#if leadingActions}
     <div bind:this={leadingActionsElement} class="bcx-section-leading-actions">{@render leadingActions()}</div>
   {/if}
@@ -323,6 +355,13 @@ async function handleCloseAutoFocus(event: Event) {
           <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
         {/each}
       </div>
+      {#if hideCountsWhenOverflowing}
+        <div bind:this={iconCountMeasurements} class="bcx-tab-measurement-list bcx-tab-icon-measurements bcx-tab-icon-count-measurements">
+          {#each tabs as tab (tab.id)}
+            <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
+          {/each}
+        </div>
+      {/if}
     {/if}
     <span bind:this={moreMeasurement} class="bcx-section-tab bcx-more-tabs"><Ellipsis size={16} /></span>
   </div>
@@ -383,8 +422,11 @@ async function handleCloseAutoFocus(event: Event) {
   .bcx-section-count { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; box-sizing: border-box; min-width: 20px; padding: 0 6px; color: #e5e7eb; font-size: 0.6875rem; font-weight: 600; line-height: 18px; font-variant-numeric: tabular-nums; }
   .bcx-tooltip-heading { display: flex; align-items: flex-start; gap: 8px; }
   .bcx-tooltip-heading strong { flex: 1; min-width: 0; }
-  .compact :global(.bcx-visible-tabs .bcx-tab-label),
-  .bcx-tab-icon-measurements .bcx-tab-label { display: none; }
+  .hide-counts :global(.bcx-visible-tabs .bcx-section-count) { display: none; }
+  .bcx-tab-icon-count-measurements .bcx-tab-label,
+  .icon-only :global(.bcx-visible-tabs .bcx-tab-label),
+  .compact :global(.bcx-visible-tabs .bcx-tab-label:not(.keep-label)),
+  .bcx-tab-icon-measurements .bcx-tab-label:not(.keep-label) { display: none; }
   .compact :global(.bcx-visible-tabs > .bcx-section-tab),
   .bcx-tab-icon-measurements :global(.bcx-section-tab) {
     box-sizing: border-box;
@@ -492,6 +534,6 @@ async function handleCloseAutoFocus(event: Event) {
     min-height: 0;
     overflow-y: auto;
   }
-  .vertical :global(.bcx-visible-tabs) { flex-direction: column; flex-shrink: 0; overflow: visible; }
+  .vertical :global(.bcx-visible-tabs) { flex: 0 0 auto; flex-direction: column; min-width: 0; overflow: visible; }
   .vertical :global(.bcx-visible-tabs > .bcx-section-tab) { max-width: none; justify-content: flex-start; }
 </style>

@@ -9,6 +9,7 @@ import {
   ICON_INFO,
   ICON_MENU,
 } from 'src/features/treeview/utils/icon';
+import type { Snippet } from 'svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
@@ -29,6 +30,7 @@ let {
   error = '',
   navigationInFilter = false,
   onNavigationChange,
+  leadingActions,
 }: {
   treeData?: TreeData;
   about?: TreeItem;
@@ -39,14 +41,38 @@ let {
   error?: string;
   navigationInFilter?: boolean;
   onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
+  leadingActions?: Snippet;
 } = $props();
+let content = $state<HTMLDivElement>();
+let verticalNavigation = $state(false);
+
+$effect(() => {
+  const element = content;
+  if (!element) return;
+  const measure = () => {
+    verticalNavigation = element.clientWidth >= 640;
+  };
+  const observer = new ResizeObserver(measure);
+  observer.observe(element);
+  measure();
+  return () => observer.disconnect();
+});
+
 let catalogNavigation = $state<SectionNavigation>();
 const viewActions = $derived(
   catalogNavigation?.items.map(
     ({ id, label, count, image, title, contentId }) => ({
       id,
-      label,
+      label: label.startsWith('About')
+        ? 'About'
+        : label === 'Release years'
+          ? 'Years'
+          : label,
       count,
+      keepLabelWhenCompact:
+        label.startsWith('About') ||
+        label === 'Releases' ||
+        label === 'Artists',
       image: image ?? ICON_MENU,
       title,
       contentId,
@@ -127,26 +153,32 @@ let catalog = $derived.by(() => {
 {/snippet}
 
 {#snippet bandActions()}
+  {@render leadingActions?.()}
   {#if previewUrl}
-    <BcxPreviewItemActions url={previewUrl} name={bandAbout?.aboutProfile?.name ?? 'Band'} kind="band" copyValue={bandAbout?.aboutProfile?.name ?? 'Band'} keepInPreviewTab={true} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
-  {/if}
-  {#if previewUrl && navigationInFilter && viewActions.length}
-    <span class="band-actions-divider" role="separator" aria-orientation="vertical"></span>
+    <BcxPreviewItemActions url={previewUrl} image={bandAbout?.aboutProfile?.image} name={bandAbout?.aboutProfile?.name ?? 'Band'} kind="band" copyValue={bandAbout?.aboutProfile?.name ?? 'Band'} keepInPreviewTab={true} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
   {/if}
 {/snippet}
 
 <div class="band-panel">
-  {#if navigationInFilter}
-    <BcxSectionTabs tabs={viewActions} value={selectedView} label="Band catalog sections" leadingActions={bandActions} onValueChange={selectView} compactWhenOverflowing={true} />
-  {:else if previewUrl}
-    <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
+  {#if previewUrl || leadingActions}
+    <div class="band-actions">
+      <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
+    </div>
   {/if}
-  <div class="band-catalog">
-    <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} responsiveSidebar={true} sortInToolbar={true} countBadges={true} {navigationInFilter} showFilterNavigation={!navigationInFilter} onNavigationChange={navigationInFilter ? updateNavigation : onNavigationChange} />
+  <div bind:this={content} class="band-content" class:vertical-navigation={verticalNavigation}>
+    {#if viewActions.length}
+      <BcxSectionTabs tabs={viewActions} value={selectedView} label="Band catalog sections" onValueChange={selectView} compactWhenOverflowing={true} hideCountsWhenOverflowing={true} vertical={verticalNavigation} />
+    {/if}
+    <div class="band-catalog">
+      <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} sortInToolbar={true} countBadges={true} {navigationInFilter} showFilterNavigation={!navigationInFilter} onNavigationChange={updateNavigation} />
+    </div>
   </div>
 </div>
 
 <style>
-.band-panel, .band-catalog { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
-.band-actions-divider { flex: 0 0 1px; width: 1px; height: 24px; background: #4b5563; }
+.band-panel, .band-content, .band-catalog { display: flex; flex: 1 1 0%; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.band-content.vertical-navigation { flex-direction: row; }
+.vertical-navigation > :global(.bcx-section-tabs) { margin-left: var(--bcx-preview-gutter, 16px); margin-right: var(--bcx-preview-column-gap, 12px); }
+.band-actions { flex-shrink: 0; }
+.band-actions :global(.bcx-section-tabs) { border-color: transparent; background: transparent; box-shadow: none; }
 </style>
