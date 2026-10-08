@@ -183,7 +183,7 @@ async function copy(value: string) {
 .preview-item-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; min-width: 0; max-width: 100%; }
 .named-title :global(.bcx-section-tab) { max-width: 100%; }
 .named-title .item-name { overflow: visible; white-space: normal; overflow-wrap: anywhere; text-align: left; }
-.item-image { width: 1rem; height: 1rem; flex-shrink: 0; border-radius: 0.125rem; object-fit: cover; }
+.item-image { width: 16px; height: 16px; flex-shrink: 0; border-radius: 0.125rem; object-fit: cover; }
 .item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 :global(.preview-item-menu) { z-index: 1000000; max-width: min(20rem, calc(100vw - 24px)); max-height: var(--bits-dropdown-menu-content-available-height); overflow-y: auto; padding: 0.25rem; border: 1px solid #4b5563; border-radius: 0.375rem; background: #111827; color: #f9fafb; box-shadow: 0 4px 12px rgb(0 0 0 / 25%); }
 :global(.preview-item-menu-action) { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.25rem; font-size: 0.8125rem; cursor: pointer; }

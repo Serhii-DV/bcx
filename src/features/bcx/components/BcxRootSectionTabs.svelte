@@ -2,6 +2,12 @@
 import { Tabs } from 'bits-ui';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
+import {
+  ICON_HEADPHONES,
+  ICON_HISTORY,
+  ICON_INFO,
+  ICON_MENU,
+} from 'src/features/treeview/utils/icon';
 import { onDestroy, type Snippet, tick, untrack } from 'svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxSectionFilter from './BcxSectionFilter.svelte';
@@ -25,14 +31,17 @@ import {
 
 type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
 
-const tabDescriptions: Record<string, { label?: string; title: string }> = {
+const tabDescriptions: Record<
+  string,
+  { label?: string; title: string; image?: string }
+> = {
   'Release Info': { title: 'View release information, artwork, and notes.' },
   Credits: { title: 'View release credits and contributors.' },
   'Related releases': {
     title:
       'Browse locally saved releases by this release’s artists across Bandcamp.',
   },
-  All: { title: 'Browse all items in this section.' },
+  All: { title: 'Browse all items in this section.', image: ICON_MENU },
   Artists: { title: 'Browse releases grouped by artist.' },
   Releases: { title: 'Browse releases in this section.' },
   'Releases: Reverse': { title: 'Browse releases in reverse catalog order.' },
@@ -50,6 +59,7 @@ const tabDescriptions: Record<string, { label?: string; title: string }> = {
   },
   'Latest added': {
     title: 'Browse followed bands, most recently followed first.',
+    image: ICON_HEADPHONES,
   },
   'Earliest followed': {
     title: 'Browse followed bands, earliest followed first.',
@@ -67,12 +77,15 @@ const tabDescriptions: Record<string, { label?: string; title: string }> = {
   Tags: { title: 'Browse releases grouped by tag.' },
   Unavailable: {
     title: 'Browse saved items whose Bandcamp pages are unavailable.',
+    image: ICON_INFO,
   },
   'No longer listed': {
     title: 'Browse saved items missing from the latest Bandcamp sync.',
+    image: ICON_HISTORY,
   },
   'No longer followed': {
     title: 'Browse genres you no longer follow.',
+    image: ICON_HISTORY,
   },
 };
 
@@ -84,6 +97,7 @@ let {
   aboutContent,
   sectionContent,
   actions,
+  heading,
   responsiveSidebar = false,
   compactWhenOverflowing = false,
   countBadges = false,
@@ -100,6 +114,7 @@ let {
   aboutContent?: Snippet<[TreeItem]>;
   sectionContent?: Snippet<[TreeItem]>;
   actions?: Snippet;
+  heading?: Snippet;
   responsiveSidebar?: boolean;
   compactWhenOverflowing?: boolean;
   countBadges?: boolean;
@@ -170,6 +185,7 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
     const description = rootLabel ? tabDescriptions[rootLabel] : undefined;
     const labeledTab = {
       ...tab,
+      image: tab.image ?? description?.image,
       label: description?.label
         ? tab.label.replace(rootLabel ?? '', description.label)
         : tab.label,
@@ -361,7 +377,7 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
       ? [
           {
             ...tab,
-            label: count ? `Bands (${count})` : 'Bands',
+            label: count && !countBadges ? `Bands (${count})` : 'Bands',
             sortLabel: 'Sort followed bands',
             sortOptions,
           },
@@ -392,13 +408,18 @@ const navigationItems = $derived(
 );
 const localNavigationTabs = $derived(
   toolbarSorting
-    ? navigationItems.map((item) => ({
+    ? navigationItems.map((item, index) => ({
         id: item.onSortChange ? item.id : (item.sortValue ?? item.id),
         label: item.label,
         count: item.count,
         image: item.image,
         title: item.title,
         contentId: item.contentId,
+        keepLabelWhenCompact: navigationInToolbar && index < 3,
+        compactLabel:
+          navigationInToolbar && item.label === 'By Release Year'
+            ? 'Years'
+            : undefined,
       }))
     : displayTabs,
 );
@@ -566,9 +587,14 @@ onDestroy(() => onNavigationChange?.(undefined));
 {/snippet}
 
 {#if tabs.length && (onNavigationChange || navigationInFilter || navigationInToolbar)}
-  <div bind:this={container} class="bcx-panel-body bcx-root-sections" data-navigation={navigationInToolbar ? 'toolbar' : navigationInFilter ? 'filter' : 'sidebar'} data-orientation={navigationInToolbar ? orientation : undefined}>
+  <div bind:this={container} class="bcx-panel-body bcx-root-sections" class:has-heading={!!heading} class:stacked-heading={!!heading && orientation === 'horizontal' && containerWidth <= 480} data-navigation={navigationInToolbar ? 'toolbar' : navigationInFilter ? 'filter' : 'sidebar'} data-orientation={navigationInToolbar ? orientation : undefined}>
+    {#if heading}
+      <div class="bcx-root-section-heading">{@render heading()}</div>
+    {/if}
     {#if navigationInToolbar}
-      <BcxSectionTabs tabs={localNavigationTabs} value={selectedRoot} {label} {actions} onValueChange={selectSidebarRoot} {compactWhenOverflowing} hideCountsWhenOverflowing={true} vertical={orientation === 'vertical'} />
+      <div class="bcx-root-section-navigation">
+        <BcxSectionTabs tabs={localNavigationTabs} value={selectedRoot} {label} {actions} onValueChange={selectSidebarRoot} {compactWhenOverflowing} hideCountsWhenOverflowing={true} vertical={orientation === 'vertical'} />
+      </div>
     {:else if actions}
       <BcxSectionTabs tabs={[]} value="" {label} {actions} />
     {/if}
@@ -586,10 +612,46 @@ onDestroy(() => onNavigationChange?.(undefined));
     {/each}
   </Tabs.Root>
 {:else}
+  {#if heading}<div class="bcx-root-section-empty-heading">{@render heading()}</div>{/if}
   <BcxTreeBrowser {treeData} />
 {/if}
 
 <style>
+.bcx-root-section-navigation { display: contents; }
+.bcx-root-sections.has-heading {
+  display: grid;
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.bcx-root-section-heading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0 0 8px var(--bcx-preview-gutter, 8px);
+}
+.has-heading > .bcx-root-section-navigation {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  grid-column: 2;
+  grid-row: 1;
+}
+.has-heading > .bcx-root-section-navigation :global(.bcx-section-tabs) { flex: 1 1 0%; }
+.has-heading > .bcx-tab-content { grid-column: 1 / -1; grid-row: 2; }
+.bcx-root-sections.has-heading[data-orientation='vertical'] {
+  grid-template-columns: calc(var(--bcx-preview-gutter, 8px) + var(--bcx-preview-column-width, 11rem) + var(--bcx-preview-column-gap, 8px)) minmax(0, 1fr);
+}
+.has-heading[data-orientation='vertical'] > .bcx-root-section-heading { grid-column: 1 / -1; margin-right: var(--bcx-preview-gutter, 8px); }
+.has-heading[data-orientation='vertical'] > .bcx-root-section-navigation { grid-column: 1; grid-row: 2; }
+.has-heading[data-orientation='vertical'] > .bcx-tab-content { grid-column: 2; }
+.bcx-root-sections.has-heading.stacked-heading { grid-template-rows: auto auto minmax(0, 1fr); }
+.has-heading.stacked-heading > .bcx-root-section-heading { grid-column: 1 / -1; margin-right: var(--bcx-preview-gutter, 8px); }
+.has-heading.stacked-heading > .bcx-root-section-navigation { grid-column: 1 / -1; grid-row: 2; }
+.has-heading.stacked-heading > .bcx-tab-content { grid-row: 3; }
+.bcx-root-section-empty-heading { margin: 0 var(--bcx-preview-gutter, 8px) 8px; }
+
 :global(.bcx-panel-body.bcx-root-sections[data-orientation='vertical']) { flex-direction: row; }
 :global(.bcx-root-sections > .bcx-tab-content) { margin-right: var(--bcx-preview-gutter, 8px); margin-bottom: 8px; }
 :global(.bcx-root-sections[data-orientation='horizontal'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }

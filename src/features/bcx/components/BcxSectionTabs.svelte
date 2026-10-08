@@ -13,6 +13,7 @@ interface SectionTab {
   title?: string;
   contentId?: string;
   keepLabelWhenCompact?: boolean;
+  compactLabel?: string;
   sortOptions?: { id: string; label: string; title?: string }[];
   sortValue?: string;
   sortLabel?: string;
@@ -215,14 +216,14 @@ async function handleCloseAutoFocus(event: Event) {
   {#if count !== undefined}<span class="bcx-section-count">{count}</span>{/if}
 {/snippet}
 
-{#snippet tabLabel(tab: SectionTab)}
+{#snippet tabLabel(tab: SectionTab, useCompactLabel = false)}
   {@const Icon = makeIcon(tab.image?.includes('/') ? undefined : tab.image)}
   {#if Icon}
     <Icon size={16} class="shrink-0" aria-hidden="true" />
   {:else if tab.image}
-    <img src={tab.image} alt="" class="size-4 shrink-0 rounded-sm object-cover" />
+    <img src={tab.image} alt="" class="bcx-tab-image shrink-0 rounded-sm object-cover" />
   {/if}
-  <span class="bcx-tab-label" class:keep-label={tab.keepLabelWhenCompact}>{tabLabelText(tab)}</span>
+  <span class="bcx-tab-label" class:keep-label={tab.keepLabelWhenCompact}>{useCompactLabel ? (tab.compactLabel ?? tabLabelText(tab)) : tabLabelText(tab)}</span>
   {@render countBadge(tab.count)}
 {/snippet}
 
@@ -231,7 +232,7 @@ async function handleCloseAutoFocus(event: Event) {
       {#if tab.sortOptions}
         <div class="bcx-sort-tab-group">
           <Tabs.Trigger value={tab.onSortChange ? tab.id : selectedSortOption(tab)?.id ?? tab.id} class="bcx-section-tab" aria-label={tabAccessibleLabel(tab)} title={tabTitle(tab)}>
-            {@render tabLabel(tab)}
+            {@render tabLabel(tab, compact)}
           </Tabs.Trigger>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger class="bcx-section-tab bcx-sort-button" aria-label={tab.sortLabel ?? 'Sort followed bands'} title={tab.sortLabel ?? 'Choose how followed bands are ordered'}>
@@ -252,7 +253,7 @@ async function handleCloseAutoFocus(event: Event) {
       {:else if tab.onClose}
         <div class="bcx-closable-tab-group" class:active={value === tab.id} role="group" aria-label={tab.label}>
           <Tabs.Trigger value={tab.id} class="bcx-section-tab" aria-label={tabAccessibleLabel(tab)} title={tabTitle(tab)}>
-            {@render tabLabel(tab)}
+            {@render tabLabel(tab, compact)}
           </Tabs.Trigger>
           <button type="button" class="bcx-section-tab bcx-tab-close" aria-label={`Close ${tab.label}`} title={`Close ${tab.label}`} tabindex={value === tab.id ? 0 : -1} onclick={() => tab.onClose?.()}><X size={14} aria-hidden="true" /></button>
         </div>
@@ -262,11 +263,11 @@ async function handleCloseAutoFocus(event: Event) {
             {#snippet child({ props })}
               {#if onValueChange}
                 <button {...props} type="button" class="bcx-section-tab" aria-label={tabAccessibleLabel(tab)} aria-pressed={value === tab.id} aria-controls={tab.contentId} data-state={value === tab.id ? 'active' : 'inactive'} title={compact ? undefined : tabTitle(tab)} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); onValueChange?.(tab.id); }}>
-                  {@render tabLabel(tab)}
+                  {@render tabLabel(tab, compact)}
                 </button>
               {:else}
               <Tabs.Trigger {...props} value={tab.id} class="bcx-section-tab" aria-label={tabAccessibleLabel(tab)} title={compact ? undefined : tabTitle(tab)}>
-                {@render tabLabel(tab)}
+                {@render tabLabel(tab, compact)}
               </Tabs.Trigger>
               {/if}
             {/snippet}
@@ -280,7 +281,7 @@ async function handleCloseAutoFocus(event: Event) {
         </Tooltip.Root>
       {:else}
         <Tabs.Trigger value={tab.id} class="bcx-section-tab" aria-label={tabAccessibleLabel(tab)} title={tabTitle(tab)}>
-          {@render tabLabel(tab)}
+          {@render tabLabel(tab, compact)}
         </Tabs.Trigger>
       {/if}
     {/each}
@@ -314,13 +315,13 @@ async function handleCloseAutoFocus(event: Event) {
             {:else if tab.onClose}
               <div class="bcx-overflow-tab-group">
                 <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectSortOption(tab, tab.id)}>
-                  {@render tabLabel(tab)}
+                  {@render tabLabel(tab, compact)}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item class="bcx-section-menu-item bcx-close-menu-item" aria-label={`Close ${tab.label}`} title={`Close ${tab.label}`} onSelect={() => { focusSelectedOnClose = true; tab.onClose?.(); }}><X size={14} aria-hidden="true" /></DropdownMenu.Item>
               </div>
             {:else}
               <DropdownMenu.Item class="bcx-section-menu-item" title={tabTitle(tab)} onSelect={() => onSelectSortOption(tab, tab.id)}>
-                {@render tabLabel(tab)}
+                {@render tabLabel(tab, compact)}
               </DropdownMenu.Item>
             {/if}
           {/each}
@@ -352,13 +353,13 @@ async function handleCloseAutoFocus(event: Event) {
     {#if compactWhenOverflowing}
       <div bind:this={iconMeasurements} class="bcx-tab-measurement-list bcx-tab-icon-measurements">
         {#each tabs as tab (tab.id)}
-          <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
+          <span class="bcx-section-tab">{@render tabLabel(tab, true)}</span>
         {/each}
       </div>
       {#if hideCountsWhenOverflowing}
         <div bind:this={iconCountMeasurements} class="bcx-tab-measurement-list bcx-tab-icon-measurements bcx-tab-icon-count-measurements">
           {#each tabs as tab (tab.id)}
-            <span class="bcx-section-tab">{@render tabLabel(tab)}</span>
+            <span class="bcx-section-tab">{@render tabLabel(tab, true)}</span>
           {/each}
         </div>
       {/if}
@@ -409,17 +410,19 @@ async function handleCloseAutoFocus(event: Event) {
     border-radius: 6px;
     min-height: 28px;
     padding: 4px 8px;
-    font-size: 0.875rem;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
     font-weight: 500;
-    line-height: 1.25rem;
+    line-height: 20px;
     color: #d1d5db;
     cursor: pointer;
   }
+  .bcx-tab-image { width: 16px; height: 16px; }
   .bcx-tab-label {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .bcx-section-count { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; box-sizing: border-box; min-width: 20px; padding: 0 6px; color: #e5e7eb; font-size: 0.6875rem; font-weight: 600; line-height: 18px; font-variant-numeric: tabular-nums; }
+  .bcx-section-count { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; box-sizing: border-box; min-width: 20px; padding: 0 6px; color: #e5e7eb; font-size: 11px; font-weight: 600; line-height: 18px; font-variant-numeric: tabular-nums; }
   .bcx-tooltip-heading { display: flex; align-items: flex-start; gap: 8px; }
   .bcx-tooltip-heading strong { flex: 1; min-width: 0; }
   .hide-counts :global(.bcx-visible-tabs .bcx-section-count) { display: none; }
@@ -530,10 +533,11 @@ async function handleCloseAutoFocus(event: Event) {
     flex: 0 0 var(--bcx-preview-column-width, 11rem);
     margin-right: var(--bcx-preview-column-gap, 8px);
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: stretch;
     min-height: 0;
     overflow-y: auto;
   }
-  .vertical :global(.bcx-visible-tabs) { flex: 0 0 auto; flex-direction: column; min-width: 0; overflow: visible; }
+  .vertical :global(.bcx-visible-tabs) { flex: 0 0 auto; flex-direction: column; flex-wrap: nowrap; min-width: 0; overflow: visible; }
   .vertical :global(.bcx-visible-tabs > .bcx-section-tab) { max-width: none; justify-content: flex-start; }
 </style>

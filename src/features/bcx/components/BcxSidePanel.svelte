@@ -1,5 +1,5 @@
 <script lang="ts">
-import { X } from '@lucide/svelte';
+import { Info, X } from '@lucide/svelte';
 import {
   fanStorage,
   libraryKey,
@@ -23,6 +23,7 @@ import {
   ICON_HISTORY,
   ICON_INFO,
   ICON_REFRESH_CCW,
+  makeIcon,
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, untrack } from 'svelte';
@@ -72,17 +73,23 @@ let sectionTreeDataById: Record<string, TreeData> = $state({});
 let releaseVisitedById: Record<string, boolean> = $state({});
 let requestedPreviewSectionId = $state('');
 
-function usesFilterNavigation(section: SidePanelSection): boolean {
+function usesToolbarNavigation(section: SidePanelSection): boolean {
   return (
     section.rootNavigation === 'tabs' &&
-    (section.id.startsWith('band-') ||
-      [
-        'History',
-        'Wishlist',
-        'Collection',
-        'Following Bands',
-        'Following Genres',
-      ].includes(section.label))
+    [
+      'History',
+      'Wishlist',
+      'Collection',
+      'Following Bands',
+      'Following Genres',
+    ].includes(section.label)
+  );
+}
+
+function usesFilterNavigation(section: SidePanelSection): boolean {
+  return (
+    (section.rootNavigation === 'tabs' && section.id.startsWith('band-')) ||
+    usesToolbarNavigation(section)
   );
 }
 
@@ -173,6 +180,14 @@ const navigationTools = $derived([
 const selectedNavigationSection = $derived(
   [...navigationSections, ...navigationTools].find(
     (section) => section.id === selectedSectionId,
+  ),
+);
+const selectedSectionHasNavigationHeader = $derived(
+  sections.some(
+    (section) =>
+      section.id === selectedSectionId &&
+      usesToolbarNavigation(section) &&
+      !!sectionTreeDataById[section.id],
   ),
 );
 const selectedBandHasActions = $derived(
@@ -463,6 +478,25 @@ $effect(() => {
   </Sidebar.MenuButton>
 {/snippet}
 
+{#snippet sectionHeading(section: { label: string; image?: string; title?: string }, inline = false)}
+  {@const HeadingIcon = makeIcon(section.image?.includes('/') ? undefined : section.image)}
+  <div class="bcx-main-heading" class:inline={inline} class:with-close={!browserPanel && !$sidebarExpanded}>
+    {#if !browserPanel && !$sidebarExpanded}{@render closeAction()}{/if}
+    <div class="bcx-main-heading-identity">
+      <span class="bcx-main-heading-icon" aria-hidden="true">
+        {#if HeadingIcon}
+          <HeadingIcon size={22} />
+        {:else if section.image}
+          <img src={section.image} alt="" />
+        {:else}
+          <Info size={22} />
+        {/if}
+      </span>
+      <h3 class="bcx-main-section-title" title={`${section.label}\n${section.title ?? ''}`}>{section.label}</h3>
+    </div>
+  </div>
+{/snippet}
+
 <div
   id="bcx-side-panel"
   class="bcx-side-panel-shell {open ? 'open' : ''} {browserPanel ? 'browser-panel' : ''}"
@@ -485,16 +519,18 @@ $effect(() => {
                 headerActions={browserPanel ? undefined : closeAction}
               />
               <div class="bcx-panel-body">
-              {#if !selectedNavigationSection?.id.startsWith('album-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
-                <div class="bcx-main-heading" class:injected={!browserPanel} class:with-close={!browserPanel && !$sidebarExpanded}>
-                  {#if !browserPanel && !$sidebarExpanded}{@render closeAction()}{/if}
-                  {#if selectedNavigationSection}
-                    <h3 class="bcx-main-section-title" title={selectedNavigationSection.title}>{selectedNavigationSection.label}</h3>
-                  {/if}
-                </div>
+              {#if !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('album-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
+                {#if selectedNavigationSection}
+                  {@render sectionHeading(selectedNavigationSection)}
+                {:else}
+                  {@render closeAction()}
+                {/if}
               {/if}
               <BcxItemPreviewPanel visible={showPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
               {#each sections as section (section.id)}
+                {#snippet panelHeading()}
+                  {@render sectionHeading({ label: section.label, image: section.image, title: getSectionTitle(section) }, true)}
+                {/snippet}
                 <div id={`${mainContentId}-${section.id}`} data-bcx-main-section role="region" aria-label={section.label} hidden={selectedSectionId !== section.id} class="bcx-tab-content">
                   {#if section.fanSync && (fanSyncJob?.state === 'running' || accountSyncJob?.state === 'error')}
                     <div class="bcx-sync-indicator" role={accountSyncJob?.state === 'error' ? 'alert' : 'status'}>
@@ -512,13 +548,13 @@ $effect(() => {
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#if section.fanSync || section.fanAccount}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={section.id === 'history'} compactWhenOverflowing={section.id === 'history'} countBadges={section.id === 'history'} responsiveSidebar={true} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
                           <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} navigationInFilter={true} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
                         {:else}
-                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={section.id === 'history'} compactWhenOverflowing={section.id === 'history'} countBadges={section.id === 'history'} responsiveSidebar={true} />
+                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                         {/if}
                       {/key}
                       {/if}
@@ -647,21 +683,52 @@ $effect(() => {
   }
 
   .bcx-main-heading {
+    box-sizing: border-box;
     display: flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     min-width: 0;
-    padding: 4px var(--bcx-preview-gutter, 16px);
-  }
-
-  .bcx-main-heading.injected {
-    box-sizing: border-box;
-    min-height: 46px;
+    min-height: 40px;
+    margin: 0 var(--bcx-preview-gutter, 16px) 8px;
+    padding: 4px 0;
   }
 
   .bcx-main-heading.with-close {
+    margin-left: 0;
     padding-left: 5px;
+  }
+
+  .bcx-main-heading.inline {
+    flex: 1 1 0%;
+    margin: 0;
+    padding: 0;
+    min-height: 32px;
+  }
+
+  .bcx-main-heading-identity {
+    display: flex;
+    flex: 1 1 0%;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .bcx-main-heading-icon {
+    box-sizing: border-box;
+    display: grid;
+    flex: 0 0 24px;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+  }
+
+  .bcx-main-heading-icon img {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    object-fit: cover;
   }
 
   .bcx-side-panel-shell :global(.bcx-side-panel-close-button) {
@@ -677,8 +744,10 @@ $effect(() => {
     margin: 0;
     overflow: hidden;
     color: #f9fafb;
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -736,7 +805,7 @@ $effect(() => {
   }
 
   .bcx-sync-indicator button {
-    color: #7dd3fc;
+    color: #fff;
     cursor: pointer;
     text-decoration: underline;
   }
