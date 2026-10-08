@@ -10,6 +10,7 @@ interface SectionTab {
   label: string;
   image?: string;
   title?: string;
+  contentId?: string;
   sortOptions?: { id: string; label: string; title?: string }[];
   sortValue?: string;
   sortLabel?: string;
@@ -22,6 +23,8 @@ let {
   value = $bindable(),
   label = 'Music Explorer sections',
   actions,
+  leadingActions,
+  onValueChange,
   wrapActions = false,
   vertical = false,
   compactWhenOverflowing = false,
@@ -30,12 +33,15 @@ let {
   value: string;
   label?: string;
   actions?: Snippet;
+  leadingActions?: Snippet;
+  onValueChange?: (id: string) => void;
   wrapActions?: boolean;
   vertical?: boolean;
   compactWhenOverflowing?: boolean;
 } = $props();
 let bar = $state<HTMLDivElement>();
 let actionsElement = $state<HTMLDivElement>();
+let leadingActionsElement = $state<HTMLDivElement>();
 let measurements: HTMLDivElement;
 let iconMeasurements = $state<HTMLDivElement>();
 let moreMeasurement: HTMLSpanElement;
@@ -65,6 +71,8 @@ $effect(() => {
     return;
   }
   const currentActions = actionsElement;
+  const currentLeadingActions = leadingActionsElement;
+  const useActionButtons = !!onValueChange;
   const currentIconMeasurements = iconMeasurements;
   const canCompact =
     compactWhenOverflowing &&
@@ -81,6 +89,9 @@ $effect(() => {
     const availableWidth =
       barElement.clientWidth -
       8 -
+      (currentLeadingActions
+        ? currentLeadingActions.getBoundingClientRect().width + 4
+        : 0) -
       (currentActions && getComputedStyle(currentActions).flexBasis !== '100%'
         ? currentActions.getBoundingClientRect().width + 4
         : 0);
@@ -94,6 +105,10 @@ $effect(() => {
       canCompact &&
       !!currentIconMeasurements &&
       labelledIds.length < currentTabs.length;
+    if (compact && useActionButtons) {
+      visibleIds = currentTabs.map((tab) => tab.id);
+      return;
+    }
     if (!compact || !currentIconMeasurements) {
       visibleIds = labelledIds;
       return;
@@ -117,6 +132,7 @@ $effect(() => {
   observer.observe(measurements);
   if (currentIconMeasurements) observer.observe(currentIconMeasurements);
   if (currentActions) observer.observe(currentActions);
+  if (currentLeadingActions) observer.observe(currentLeadingActions);
   measure();
   return () => observer.disconnect();
 });
@@ -125,6 +141,7 @@ function onSelectSortOption(tab: SectionTab, id: string) {
   focusSelectedOnClose = true;
   tab.onSortChange?.(id);
   value = tab.onSortChange ? tab.id : id;
+  onValueChange?.(value);
 }
 
 function selectedSortOption(tab: SectionTab) {
@@ -149,7 +166,9 @@ async function handleCloseAutoFocus(event: Event) {
   focusSelectedOnClose = false;
   await tick();
   bar
-    ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+    ?.querySelector<HTMLElement>(
+      '[role="tab"][aria-selected="true"], button[aria-pressed="true"]',
+    )
     ?.focus();
 }
 </script>
@@ -164,9 +183,7 @@ async function handleCloseAutoFocus(event: Event) {
   <span class="bcx-tab-label">{tabLabelText(tab)}</span>
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs" class:vertical class:compact class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
-  {#if tabs.length}
-  <Tabs.List class="bcx-visible-tabs" aria-label={label}>
+{#snippet navigationButtons()}
     {#each visibleTabs as tab (tab.id)}
       {#if tab.sortOptions}
         <div class="bcx-sort-tab-group">
@@ -196,13 +213,19 @@ async function handleCloseAutoFocus(event: Event) {
           </Tabs.Trigger>
           <button type="button" class="bcx-section-tab bcx-tab-close" aria-label={`Close ${tab.label}`} title={`Close ${tab.label}`} tabindex={value === tab.id ? 0 : -1} onclick={() => tab.onClose?.()}><X size={14} aria-hidden="true" /></button>
         </div>
-      {:else if compactWhenOverflowing}
+      {:else if compactWhenOverflowing || onValueChange}
         <Tooltip.Root disabled={!compact} ignoreNonKeyboardFocus>
           <Tooltip.Trigger>
             {#snippet child({ props })}
+              {#if onValueChange}
+                <button {...props} type="button" class="bcx-section-tab" aria-label={tabLabelText(tab)} aria-pressed={value === tab.id} aria-controls={tab.contentId} data-state={value === tab.id ? 'active' : 'inactive'} title={compact ? undefined : tabTitle(tab)} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); onValueChange?.(tab.id); }}>
+                  {@render tabLabel(tab)}
+                </button>
+              {:else}
               <Tabs.Trigger {...props} value={tab.id} class="bcx-section-tab" aria-label={tabLabelText(tab)} title={compact ? undefined : tabTitle(tab)}>
                 {@render tabLabel(tab)}
               </Tabs.Trigger>
+              {/if}
             {/snippet}
           </Tooltip.Trigger>
           <Tooltip.Portal to={bar?.closest('.bcx-side-panel-shell') ?? undefined}>
@@ -218,7 +241,18 @@ async function handleCloseAutoFocus(event: Event) {
         </Tabs.Trigger>
       {/if}
     {/each}
-  </Tabs.List>
+{/snippet}
+
+<div bind:this={bar} class="bcx-section-tabs" class:vertical class:compact class:action-navigation={!!onValueChange} class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
+  {#if leadingActions}
+    <div bind:this={leadingActionsElement} class="bcx-section-leading-actions">{@render leadingActions()}</div>
+  {/if}
+  {#if tabs.length}
+    {#if onValueChange}
+      <div class="bcx-visible-tabs" role="group" aria-label={label}>{@render navigationButtons()}</div>
+    {:else}
+      <Tabs.List class="bcx-visible-tabs" aria-label={label}>{@render navigationButtons()}</Tabs.List>
+    {/if}
   {/if}
   {#if hiddenTabs.length}
     <DropdownMenu.Root>
@@ -284,6 +318,9 @@ async function handleCloseAutoFocus(event: Event) {
 </div>
 
 <style>
+  .bcx-section-leading-actions { display: flex; flex-shrink: 0; align-items: center; gap: 8px; max-width: 100%; }
+  .action-navigation { flex-wrap: wrap; }
+  .action-navigation :global(.bcx-visible-tabs) { flex: 1 1 0%; min-width: 32px; flex-wrap: wrap; overflow: visible; }
   .bcx-section-actions { margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
   .wrap-actions { container-type: inline-size; flex-wrap: wrap; }
   .wrap-actions .bcx-section-actions { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }

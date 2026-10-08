@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Moved Band catalog views into individual actions after a divider beside the Band dropdown, using a consistent button style and active selection. About, Releases, Artists, and other available views switch to icons with hover and keyboard-focus popups when labels no longer fit, wrapping at very narrow widths. The controls retain shared search, per-view sorting, and view state.
+
 - Release subnavigation switches to icons when the horizontal labels no longer fit, keeping tabs directly accessible and showing their full titles and descriptions on hover or keyboard focus. Wider panels retain labelled tabs or the existing left navigation.
 
 - Added the opened release directly above Band/Label in the main navigation, with its cover artwork and full artist/title/year name. Release pages open this panel by default. Opening another release from a loaded catalog updates its navigation item and information while preserving the active catalog view, filters, sorting, scroll position, and previews; an active Release panel follows the newly opened release. Cached page metadata is used only for its matching release URL. Its view reuses Release Preview information, actions, credits, tracks, related releases, and tags, retains its selected tab when switching sections, and opens the shared Preview Panel when selecting or previewing related items.

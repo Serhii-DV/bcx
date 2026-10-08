@@ -88,6 +88,7 @@ let {
   compactWhenOverflowing = false,
   sortInToolbar = false,
   navigationInFilter = false,
+  showFilterNavigation = true,
   onNavigationChange,
 }: {
   treeData: TreeData;
@@ -101,6 +102,7 @@ let {
   compactWhenOverflowing?: boolean;
   sortInToolbar?: boolean;
   navigationInFilter?: boolean;
+  showFilterNavigation?: boolean;
   onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
 } = $props();
 const contentId = $props.id();
@@ -513,7 +515,7 @@ onDestroy(() => onNavigationChange?.(undefined));
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
           {#snippet filterControls()}
-            {#if navigationInFilter}
+            {#if navigationInFilter && showFilterNavigation}
               <BcxSectionFilter items={navigationItems} {label} value={selectedRoot} onValueChange={selectFilterRoot} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
             {#if toolbarSorting && navigationItem?.sortOptions?.length}
@@ -521,7 +523,7 @@ onDestroy(() => onNavigationChange?.(undefined));
             {/if}
           {/snippet}
           <div class="bcx-section-tree-browser">
-            {#if navigationInFilter && (root?.aboutProfile || sectionContent)}
+            {#if navigationInFilter && (root?.aboutProfile || sectionContent) && (showFilterNavigation || navigationItem?.sortOptions?.length)}
               <div class="bcx-section-view-toolbar">{@render filterControls()}</div>
             {/if}
             {#if root && sectionContent}
