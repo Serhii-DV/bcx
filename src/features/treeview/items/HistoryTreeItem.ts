@@ -19,6 +19,12 @@ import { DateTreeItemFactory } from '../factories/DateTreeItemFactory';
 import { HistoryEntryTreeItemFactory } from '../factories/HistoryEntryTreeItemFactory';
 import { TrackTreeItemFactory } from '../factories/TrackTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
+import {
+  ICON_DISC,
+  ICON_HISTORY,
+  ICON_LIST_MUSIC,
+  ICON_MIC,
+} from '../utils/icon';
 
 type HistoryPageType = 'band' | 'release' | 'track' | 'other';
 
@@ -34,12 +40,13 @@ const SHOW_MORE_LABEL = 'Show more';
 
 const HISTORY_TABS: {
   label: string;
+  image: string;
   type?: HistoryPageType;
 }[] = [
-  { label: 'All' },
-  { label: 'Bands', type: 'band' },
-  { label: 'Releases', type: 'release' },
-  { label: 'Tracks', type: 'track' },
+  { label: 'All', image: ICON_HISTORY },
+  { label: 'Bands', image: ICON_MIC, type: 'band' },
+  { label: 'Releases', image: ICON_DISC, type: 'release' },
+  { label: 'Tracks', image: ICON_LIST_MUSIC, type: 'track' },
 ];
 
 export class HistoryTreeItem {
@@ -129,8 +136,9 @@ export class HistoryTreeItem {
   ): Promise<TreeItem> {
     try {
       const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages();
-      const tabPages = HISTORY_TABS.map(({ label, type }) => ({
+      const tabPages = HISTORY_TABS.map(({ label, image, type }) => ({
         label,
+        image,
         type,
         pages: type ? pages.filter((page) => page.type === type) : pages,
       }));
@@ -143,9 +151,10 @@ export class HistoryTreeItem {
       const initialItems =
         await HistoryTreeItem.createUuidTreeItemsMap(uniqueInitialPages);
       const children = await Promise.all(
-        tabPages.map(async ({ label, type, pages: pagesForTab }) => {
+        tabPages.map(async ({ label, image, type, pages: pagesForTab }) => {
           return {
             label,
+            image,
             childrenCount: pagesForTab.length,
             hasChildren: true,
             children: await HistoryTreeItem.createLatestVisitedChildren(

@@ -89,6 +89,7 @@ let {
   countBadges = false,
   sortInToolbar = false,
   navigationInFilter = false,
+  navigationInToolbar = false,
   showFilterNavigation = true,
   onNavigationChange,
 }: {
@@ -104,12 +105,16 @@ let {
   countBadges?: boolean;
   sortInToolbar?: boolean;
   navigationInFilter?: boolean;
+  navigationInToolbar?: boolean;
   showFilterNavigation?: boolean;
   onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
 } = $props();
 const contentId = $props.id();
 const toolbarSorting = $derived(
-  sortInToolbar || navigationInFilter || !!onNavigationChange,
+  sortInToolbar ||
+    navigationInFilter ||
+    navigationInToolbar ||
+    !!onNavigationChange,
 );
 let container = $state<HTMLDivElement | null>(null);
 let containerWidth = $state(0);
@@ -121,7 +126,7 @@ $effect(() => {
   const element = container;
   if (
     onNavigationChange ||
-    navigationInFilter ||
+    (navigationInFilter && !navigationInToolbar) ||
     !responsiveSidebar ||
     !element
   )
@@ -393,6 +398,7 @@ const localNavigationTabs = $derived(
         count: item.count,
         image: item.image,
         title: item.title,
+        contentId: item.contentId,
       }))
     : displayTabs,
 );
@@ -518,7 +524,7 @@ onDestroy(() => onNavigationChange?.(undefined));
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
           {#snippet filterControls()}
-            {#if navigationInFilter && showFilterNavigation}
+            {#if navigationInFilter && showFilterNavigation && !navigationInToolbar}
               <BcxSectionFilter items={navigationItems} {label} value={selectedRoot} onValueChange={selectFilterRoot} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
             {#if toolbarSorting && navigationItem?.sortOptions?.length}
@@ -526,7 +532,7 @@ onDestroy(() => onNavigationChange?.(undefined));
             {/if}
           {/snippet}
           <div class="bcx-section-tree-browser">
-            {#if navigationInFilter && (root?.aboutProfile || sectionContent) && (showFilterNavigation || navigationItem?.sortOptions?.length)}
+            {#if navigationInFilter && (root?.aboutProfile || sectionContent) && ((showFilterNavigation && !navigationInToolbar) || navigationItem?.sortOptions?.length)}
               <div class="bcx-section-view-toolbar">{@render filterControls()}</div>
             {/if}
             {#if root && sectionContent}
@@ -559,9 +565,13 @@ onDestroy(() => onNavigationChange?.(undefined));
         {/if}
 {/snippet}
 
-{#if tabs.length && (onNavigationChange || navigationInFilter)}
-  <div bind:this={container} class="bcx-panel-body bcx-root-sections" data-navigation={navigationInFilter ? 'filter' : 'sidebar'}>
-    {#if actions}<BcxSectionTabs tabs={[]} value="" {label} {actions} />{/if}
+{#if tabs.length && (onNavigationChange || navigationInFilter || navigationInToolbar)}
+  <div bind:this={container} class="bcx-panel-body bcx-root-sections" data-navigation={navigationInToolbar ? 'toolbar' : navigationInFilter ? 'filter' : 'sidebar'} data-orientation={navigationInToolbar ? orientation : undefined}>
+    {#if navigationInToolbar}
+      <BcxSectionTabs tabs={localNavigationTabs} value={selectedRoot} {label} {actions} onValueChange={selectSidebarRoot} {compactWhenOverflowing} hideCountsWhenOverflowing={true} vertical={orientation === 'vertical'} />
+    {:else if actions}
+      <BcxSectionTabs tabs={[]} value="" {label} {actions} />
+    {/if}
     {#each tabs as tab (tab.id)}
       <div id={`${contentId}-${tab.id}`} role="region" aria-label={tab.label} hidden={selectedRoot !== tab.id} class="bcx-tab-content">
         {@render rootContent(tab.id)}
