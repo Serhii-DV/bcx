@@ -231,8 +231,8 @@ async function openPage(event: MouseEvent, url: string) {
 {/snippet}
 
 {#snippet pinButton(page: PinnedPage, index: number)}
-  <Sidebar.MenuButton data-pinned-page={page.id} isActive={value === `__pin__${page.id}`} aria-current={value === `__pin__${page.id}` && (!sidebar.open || !expandedPages[page.id]) ? 'page' : undefined} aria-label={`${page.title}${page.artistName ? ` by ${page.artistName}` : ''}`} aria-describedby={`${contentId}-pin-reordering`} tooltipDisabled={tooltipDisabled || !!dragging} tooltipPortal={portal} draggable={!saving && !$pinnedNavigation.error} ondragstart={(event) => startDrag(event, page)} ondragend={endDrag} onkeydown={(event) => reorderWithKeyboard(event, index)}>
-    {#snippet tooltipContent()}<strong>{page.title}</strong>{#if page.artistName}<p>{page.artistName}</p>{/if}<p>{page.kind} · {page.url}</p>{/snippet}
+  <Sidebar.MenuButton data-pinned-page={page.id} isActive={value === `__pin__${page.id}`} aria-current={value === `__pin__${page.id}` && (!sidebar.open || !expandedPages[page.id]) ? 'page' : undefined} aria-label={`${page.title}${page.artistName ? ` by ${page.artistName}` : ''}`} aria-describedby={`${contentId}-pin-reordering`} tooltipDisabled={tooltipDisabled || !!dragging} tooltipPortal={portal} draggable={!saving && !$pinnedNavigation.error} ondragstart={(event) => startDrag(event, page)} ondragend={endDrag} onkeydown={(event) => reorderWithKeyboard(event, index)} ondblclick={(event) => { event.stopPropagation(); onMenuOpenChange(page.id, false); void openPage(event, page.url); }}>
+    {#snippet tooltipContent()}<strong>{page.title}</strong>{#if page.artistName}<p>{page.artistName}</p>{/if}<p>{page.kind} · {page.url}</p><p>Double-click to open on Bandcamp.</p>{/snippet}
     {#snippet child({ props })}
       {#if sidebar.open}
         <Collapsible.Trigger {...props}>{@render pinContents(page)}</Collapsible.Trigger>
@@ -246,7 +246,7 @@ async function openPage(event: MouseEvent, url: string) {
 {#if $pinnedNavigation.items.length || $pinnedNavigation.error}
   <Sidebar.Separator />
   <div class="pinned-heading" aria-hidden="true"><Pin size={12} /><span data-sidebar-label>Pinned</span></div>
-  <span id={`${contentId}-pin-reordering`} class="sr-only">Drag to reorder pinned pages, or use Alt + Arrow Up or Arrow Down when focused.</span>
+  <span id={`${contentId}-pin-reordering`} class="sr-only">Double-click to open on Bandcamp. Drag to reorder pinned pages, or use Alt + Arrow Up or Arrow Down when focused.</span>
   <Sidebar.Menu bind:ref={pinnedMenu} aria-label="Pinned pages">
     {#each $pinnedNavigation.items as page, index (page.id)}
       {@const id = `__pin__${page.id}`}

@@ -51,7 +51,8 @@ when switching navigation, including after their shortcut is removed.
 Pinned rows use artwork icons without native title tooltips. Like Tools, clicking
 the item opens an actions popup in collapsed navigation or toggles an inline
 submenu in expanded navigation. Both expose Open in BCX, Open on Bandcamp, and
-Unpin. Catalog rows offer a direct Pin/Unpin icon instead of a separate menu.
+Unpin. Double-clicking a pinned row opens its page in the browser in either
+navigation mode. Catalog rows offer a direct Pin/Unpin icon instead of a separate menu.
 Drag-and-drop reorders a shortcut before or after another
 shortcut in the latest saved list, preserving concurrent additions and removals.
 Alt + Arrow Up/Down provides the same ordering controls from the keyboard.
