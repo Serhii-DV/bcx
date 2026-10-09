@@ -42,27 +42,25 @@ async function loadRecentPages() {
 
 onMount(() => {
   void loadRecentPages();
+  const history = chrome.history;
   const visited = (item: chrome.history.HistoryItem) => {
     if (item.url && pinnedPageDestination(item.url)) void loadRecentPages();
   };
   const removed = () => {
     void loadRecentPages();
   };
-  chrome.history.onVisited.addListener(visited);
-  chrome.history.onVisitRemoved.addListener(removed);
+  history?.onVisited.addListener(visited);
+  history?.onVisitRemoved.addListener(removed);
   return () => {
     generation++;
-    chrome.history.onVisited.removeListener(visited);
-    chrome.history.onVisitRemoved.removeListener(removed);
+    history?.onVisited.removeListener(visited);
+    history?.onVisitRemoved.removeListener(removed);
   };
 });
 </script>
 
-<main class="sidepanel-home">
-  <header>
-    <h1>Music Explorer</h1>
-    <p>Return to your music.</p>
-  </header>
+<div class="dashboard">
+  <p class="description">Return to your music.</p>
   {#if errorMessage}<p class="error" role="alert">{errorMessage}</p>{/if}
   <section aria-labelledby="return-pins-heading">
     <h2 id="return-pins-heading"><Pin size={16} aria-hidden="true" />Pinned <span class="count">{$pinnedNavigation.items.length}</span></h2>
@@ -93,13 +91,11 @@ onMount(() => {
   {#if !$pinnedNavigation.loading && !loading && !$pinnedNavigation.error && !historyError && !$pinnedNavigation.items.length && !recent.length}
     <a class="explore" href="https://bandcamp.com/discover" target="_blank" rel="noopener noreferrer"><Compass size={16} aria-hidden="true" />Explore Bandcamp</a>
   {/if}
-</main>
+</div>
 
 <style>
-  .sidepanel-home { box-sizing: border-box; height: 100vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 15%) transparent; padding: 20px 16px; background: rgb(31 41 55); color: #f9fafb; }
-  header { margin-bottom: 24px; }
-  h1 { margin: 0 0 4px; font-size: 1.25rem; font-weight: 600; }
-  header p { margin: 0; color: #9ca3af; font-size: 0.875rem; }
+  .dashboard { box-sizing: border-box; padding: 0 16px 16px; color: #f9fafb; }
+  .description { margin: 0 0 24px; color: #9ca3af; font-size: 0.875rem; }
   section { margin-bottom: 24px; }
   h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 0.875rem; font-weight: 600; }
   .count { padding: 1px 6px; border-radius: 4px; background: rgb(255 255 255 / 8%); color: #9ca3af; font-size: 0.6875rem; }

@@ -56,9 +56,17 @@ let sectionMenu = $state<string | null>(null);
 let toolsExpanded = $state(false);
 let focusSelectedOnClose = false;
 const contextSections = $derived(sections.filter(isContext));
+const dashboardSection = $derived(
+  sections.find((section) => section.id === '__dashboard__'),
+);
 const followingSections = $derived(sections.filter(isFollowing));
 const librarySections = $derived(
-  sections.filter((section) => !isContext(section) && !isFollowing(section)),
+  sections.filter(
+    (section) =>
+      section !== dashboardSection &&
+      !isContext(section) &&
+      !isFollowing(section),
+  ),
 );
 const toolsSelected = $derived(tools.some((section) => section.id === value));
 const toolsTitle = $derived(
@@ -239,6 +247,10 @@ async function selectSubsection(id: string) {
       </div>
     </Sidebar.Header>
     <Sidebar.Content id={navigationId} class="bcx-navigation-scroll">
+      {#if dashboardSection}
+        <Sidebar.Menu>{@render sectionButton(dashboardSection)}</Sidebar.Menu>
+        <Sidebar.Separator />
+      {/if}
       <Sidebar.Menu>
         {#each contextSections as section (section.id)}{@render sectionButton(section)}{/each}
       </Sidebar.Menu>
