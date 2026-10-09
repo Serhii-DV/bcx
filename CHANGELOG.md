@@ -44,6 +44,8 @@
 
 ### Patch Changes
 
+- Temporarily remove `.b2d-widget-container` widgets injected by another extension on Bandcamp pages, including widgets added after page load.
+
 - Matched Release Info scrollbar styling to TreeBrowser, using the shared thin scrollbar with a transparent track and hover highlight.
 
 - Added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.

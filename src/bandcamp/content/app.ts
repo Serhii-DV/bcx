@@ -31,6 +31,7 @@ import {
   isBandcampUrl,
 } from '../domain/url/helper';
 import { initAppPageMusic } from './pages/app.pageMusic';
+import { removeB2dWidget } from './removeB2dWidget';
 
 interface ActiveMusicBandData {
   id: number;
@@ -46,6 +47,10 @@ interface ActiveMusicBandData {
 }
 
 let activePageMusic: PageMusic | null = null;
+
+if (isBandcampUrl(currentPageUrl)) {
+  removeB2dWidget();
+}
 
 onDOMReady(async () => {
   if (!isBandcampUrl(currentPageUrl)) {
