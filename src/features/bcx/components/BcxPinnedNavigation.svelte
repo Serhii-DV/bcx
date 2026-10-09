@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Disc,
   ExternalLink,
+  Eye,
   Music2,
   Pin,
   UserRound,
@@ -27,7 +28,8 @@ let {
   menuOpen,
   tooltipDisabled,
   onMenuOpenChange,
-  onSelect,
+  onPreview,
+  selectedPreviewUrl,
 }: {
   value: string;
   contentId: string;
@@ -35,7 +37,8 @@ let {
   menuOpen?: string;
   tooltipDisabled: boolean;
   onMenuOpenChange: (id: string, open: boolean) => void;
-  onSelect: (page: PinnedPage) => void;
+  onPreview: (page: PinnedPage) => void;
+  selectedPreviewUrl?: string;
 } = $props();
 const sidebar = Sidebar.useSidebar();
 let pinnedMenu = $state<HTMLUListElement | null>(null);
@@ -48,14 +51,14 @@ let dragging = $state<string>();
 let dropTarget = $state<{ id: string; position: 'before' | 'after' }>();
 
 $effect(() => {
-  if (sidebar.open) {
-    if (value.startsWith('__pin__')) {
-      const id = value.slice('__pin__'.length);
-      untrack(() => {
-        expandedPages = { ...expandedPages, [id]: true };
-      });
-    }
-  }
+  if (!sidebar.open) return;
+  const page = $pinnedNavigation.items.find(
+    (page) => page.url === selectedPreviewUrl,
+  );
+  if (page)
+    untrack(() => {
+      expandedPages = { ...expandedPages, [page.id]: true };
+    });
 });
 
 $effect(() => {
@@ -168,7 +171,7 @@ async function change(command: Parameters<typeof changePin>[0]) {
     if (command.action === 'unpin') {
       await tick();
       const selectedAction =
-        value === `__pin__${command.page.id}`
+        selectedPreviewUrl === command.page.url
           ? document
               .getElementById(`${contentId}-${value}`)
               ?.querySelector<HTMLButtonElement>('button[aria-pressed]')
@@ -231,7 +234,7 @@ async function openPage(event: MouseEvent, url: string) {
 {/snippet}
 
 {#snippet pinButton(page: PinnedPage, index: number)}
-  <Sidebar.MenuButton data-pinned-page={page.id} isActive={value === `__pin__${page.id}`} aria-current={value === `__pin__${page.id}` && (!sidebar.open || !expandedPages[page.id]) ? 'page' : undefined} aria-label={`${page.title}${page.artistName ? ` by ${page.artistName}` : ''}`} aria-describedby={`${contentId}-pin-reordering`} tooltipDisabled={tooltipDisabled || !!dragging} tooltipPortal={portal} draggable={!saving && !$pinnedNavigation.error} ondragstart={(event) => startDrag(event, page)} ondragend={endDrag} onkeydown={(event) => reorderWithKeyboard(event, index)} ondblclick={(event) => { event.stopPropagation(); onMenuOpenChange(page.id, false); void openPage(event, page.url); }}>
+  <Sidebar.MenuButton data-pinned-page={page.id} isActive={selectedPreviewUrl === page.url} aria-current={selectedPreviewUrl === page.url && (!sidebar.open || !expandedPages[page.id]) ? 'page' : undefined} aria-label={`${page.title}${page.artistName ? ` by ${page.artistName}` : ''}`} aria-describedby={`${contentId}-pin-reordering`} tooltipDisabled={tooltipDisabled || !!dragging} tooltipPortal={portal} draggable={!saving && !$pinnedNavigation.error} ondragstart={(event) => startDrag(event, page)} ondragend={endDrag} onkeydown={(event) => reorderWithKeyboard(event, index)} ondblclick={(event) => { event.stopPropagation(); onMenuOpenChange(page.id, false); void openPage(event, page.url); }}>
     {#snippet tooltipContent()}<strong>{page.title}</strong>{#if page.artistName}<p>{page.artistName}</p>{/if}<p>{page.kind} · {page.url}</p><p>Double-click to open on Bandcamp.</p>{/snippet}
     {#snippet child({ props })}
       {#if sidebar.open}
@@ -249,7 +252,6 @@ async function openPage(event: MouseEvent, url: string) {
   <span id={`${contentId}-pin-reordering`} class="sr-only">Double-click to open on Bandcamp. Drag to reorder pinned pages, or use Alt + Arrow Up or Arrow Down when focused.</span>
   <Sidebar.Menu bind:ref={pinnedMenu} aria-label="Pinned pages">
     {#each $pinnedNavigation.items as page, index (page.id)}
-      {@const id = `__pin__${page.id}`}
       <Sidebar.MenuItem class={`pinned-row${dragging === page.id ? ' dragging' : ''}`} data-drop-position={dropTarget?.id === page.id ? dropTarget.position : undefined} ondragover={(event) => dragOver(event, page)} ondrop={(event) => drop(event, page)}>
         {#if sidebar.open}
           <Collapsible.Root open={!!expandedPages[page.id]} onOpenChange={(open) => { expandedPages = { ...expandedPages, [page.id]: open }; }}>
@@ -257,7 +259,7 @@ async function openPage(event: MouseEvent, url: string) {
             <Collapsible.Content>
               <Sidebar.Menu class="bcx-navigation-tools" aria-label={`Actions for pinned ${page.title}`}>
                 <Sidebar.MenuItem>
-                  <Sidebar.MenuButton isActive={value === id} aria-current={value === id ? 'page' : undefined} aria-controls={`${contentId}-${id}`} onclick={() => onSelect(page)}><span>Open in BCX</span></Sidebar.MenuButton>
+                  <Sidebar.MenuButton isActive={selectedPreviewUrl === page.url} aria-current={selectedPreviewUrl === page.url ? 'page' : undefined} aria-controls={selectedPreviewUrl === page.url ? `${contentId}-${value}` : undefined} onclick={() => onPreview(page)}><Eye size={14} aria-hidden="true" /><span>Preview</span></Sidebar.MenuButton>
                 </Sidebar.MenuItem>
                 <Sidebar.MenuItem>
                   <Sidebar.MenuButton>
@@ -275,7 +277,7 @@ async function openPage(event: MouseEvent, url: string) {
             {@render pinButton(page, index)}
             <DropdownMenu.Portal to={portal}>
               <DropdownMenu.Content class="bcx-navigation-menu" data-bcx-sidebar-menu aria-label={`Actions for pinned ${page.title}`} side="right" align="start" sideOffset={8} collisionPadding={8} strategy="fixed">
-                <DropdownMenu.Item class="bcx-navigation-menu-item" aria-current={value === id ? 'page' : undefined} onSelect={() => onSelect(page)}>Open in BCX</DropdownMenu.Item>
+                <DropdownMenu.Item class="bcx-navigation-menu-item" aria-current={selectedPreviewUrl === page.url ? 'page' : undefined} onSelect={() => onPreview(page)}><Eye size={14} aria-hidden="true" />Preview</DropdownMenu.Item>
                 <DropdownMenu.Item class="bcx-navigation-menu-item">
                   {#snippet child({ props })}<a {...props} href={page.url} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); void openPage(event, page.url); }}>Open on Bandcamp</a>{/snippet}
                 </DropdownMenu.Item>

@@ -39,7 +39,8 @@ let {
   syncStatus,
   subsections = {},
   headerActions,
-  onPinSelect,
+  onPinPreview,
+  selectedPreviewUrl,
 }: {
   sections: NavigationSection[];
   tools: NavigationSection[];
@@ -48,7 +49,8 @@ let {
   syncStatus?: 'running' | 'error';
   subsections?: Record<string, SectionNavigation>;
   headerActions?: Snippet;
-  onPinSelect?: (page: PinnedPage) => void;
+  onPinPreview?: (page: PinnedPage) => string;
+  selectedPreviewUrl?: string;
 } = $props();
 
 const sidebar = Sidebar.useSidebar();
@@ -280,7 +282,7 @@ async function selectSubsection(id: string) {
         {#each librarySections as section (section.id)}{@render sectionButton(section)}{/each}
         {#each followingSections as section (section.id)}{@render sectionButton(section)}{/each}
       </Sidebar.Menu>
-      <BcxPinnedNavigation {value} {contentId} portal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} menuOpen={sectionMenu?.startsWith('__pin__') ? sectionMenu.slice('__pin__'.length) : undefined} tooltipDisabled={toolsMenuOpen || sectionMenu !== null} onMenuOpenChange={(id, open) => { const key = `__pin__${id}`; sectionMenu = open ? key : sectionMenu === key ? null : sectionMenu; if (open) toolsMenuOpen = false; }} onSelect={(page) => { onPinSelect?.(page); void selectSection(`__pin__${page.id}`); }} />
+      <BcxPinnedNavigation {value} {contentId} {selectedPreviewUrl} portal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} menuOpen={sectionMenu?.startsWith('__pin__') ? sectionMenu.slice('__pin__'.length) : undefined} tooltipDisabled={toolsMenuOpen || sectionMenu !== null} onMenuOpenChange={(id, open) => { const key = `__pin__${id}`; sectionMenu = open ? key : sectionMenu === key ? null : sectionMenu; if (open) toolsMenuOpen = false; }} onPreview={(page) => { const id = onPinPreview?.(page); if (id) void selectSection(id); }} />
       <Sidebar.Separator />
       <Sidebar.Menu>
         <Sidebar.MenuItem>
