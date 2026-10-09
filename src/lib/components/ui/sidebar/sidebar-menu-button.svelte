@@ -3,7 +3,6 @@ import { mergeProps, Tooltip } from 'bits-ui';
 import type { Snippet } from 'svelte';
 import type { HTMLButtonAttributes } from 'svelte/elements';
 import { cn, type WithElementRef } from '$lib/utils.js';
-import { useSidebar } from './context.svelte.js';
 
 let {
   ref = $bindable(null),
@@ -23,10 +22,9 @@ let {
   tooltipPortal?: Element;
 } = $props();
 
-const sidebar = useSidebar();
 let tooltipOpen = $state(false);
 $effect(() => {
-  if (sidebar.open || tooltipDisabled) tooltipOpen = false;
+  if (tooltipDisabled) tooltipOpen = false;
 });
 const buttonProps = $derived({
   type: 'button' as const,
@@ -48,7 +46,7 @@ const buttonProps = $derived({
 {/snippet}
 
 {#if tooltipContent}
-  <Tooltip.Root bind:open={tooltipOpen} disabled={sidebar.open || tooltipDisabled} ignoreNonKeyboardFocus>
+  <Tooltip.Root bind:open={tooltipOpen} disabled={tooltipDisabled} ignoreNonKeyboardFocus>
     <Tooltip.Trigger>
       {#snippet child({ props })}{@render button(props)}{/snippet}
     </Tooltip.Trigger>

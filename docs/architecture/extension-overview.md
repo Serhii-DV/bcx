@@ -45,6 +45,16 @@ through the existing background history request when Dashboard is selected.
 Title links ask the background worker to navigate the active browser tab; a
 separate link opens a new tab. Same-tab returns to Bandcamp reload the explorer.
 
+## Main navigation interaction
+
+Mouse hover temporarily expands the collapsed rail; leaving the navigation
+collapses that temporary expansion. Selecting a destination keeps hover-expanded
+navigation open until the mouse leaves. Hover state belongs to the mounted panel
+and does not update the saved hamburger preference. Manual expansion still uses
+extension storage and retains narrow-panel dismissal after selection, outside
+clicks, or Escape. Touch and keyboard users retain the hamburger toggle. Popup
+hints show destination titles and descriptions in both navigation states.
+
 ## Pinned navigation
 
 Band, release, and track shortcuts are stored separately from music data and

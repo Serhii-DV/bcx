@@ -41,6 +41,7 @@ let {
   headerActions,
   onPinPreview,
   selectedPinId,
+  hoverExpanded = $bindable(false),
 }: {
   sections: NavigationSection[];
   tools: NavigationSection[];
@@ -51,6 +52,7 @@ let {
   headerActions?: Snippet;
   onPinPreview?: (page: PinnedPage) => string;
   selectedPinId?: string;
+  hoverExpanded?: boolean;
 } = $props();
 
 const sidebar = Sidebar.useSidebar();
@@ -116,7 +118,7 @@ export function focusSelected() {
 
 async function selectSection(id: string) {
   value = id;
-  if (sidebar.open && sidebar.overlay) {
+  if (sidebar.open && sidebar.overlay && !hoverExpanded) {
     sidebar.setOpen(false);
     await tick();
     focusSelected();
@@ -134,6 +136,14 @@ async function handleCloseAutoFocus(event: Event) {
   focusSelectedOnClose = false;
   await tick();
   focusSelected();
+}
+
+function handlePointerEnter(event: PointerEvent) {
+  if (event.pointerType === 'mouse' && !sidebar.open) hoverExpanded = true;
+}
+
+function handlePointerLeave(event: PointerEvent) {
+  if (event.pointerType === 'mouse') hoverExpanded = false;
 }
 
 function handleOutsidePointer(event: PointerEvent) {
@@ -179,7 +189,7 @@ $effect(() => {
 
 async function selectSubsection(id: string) {
   value = id;
-  if (sidebar.open && sidebar.overlay) sidebar.setOpen(false);
+  if (sidebar.open && sidebar.overlay && !hoverExpanded) sidebar.setOpen(false);
   await tick();
   focusSelected();
 }
@@ -252,11 +262,11 @@ async function selectSubsection(id: string) {
 {/snippet}
 
 <Sidebar.Root collapsible="icon">
-  <nav bind:this={navigation} class="bcx-main-navigation" aria-label="Music Explorer sections">
+  <nav bind:this={navigation} class="bcx-main-navigation" aria-label="Music Explorer sections" onpointerenter={handlePointerEnter} onpointerleave={handlePointerLeave}>
     <Sidebar.Header class="bcx-navigation-top">
       <div class="bcx-navigation-controls">
         <Sidebar.MenuButton data-sidebar="trigger" aria-label={sidebar.open ? 'Collapse navigation' : 'Expand navigation'} aria-expanded={sidebar.open} aria-controls={navigationId} tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} onclick={sidebar.toggle}>
-          {#snippet tooltipContent()}<strong>Expand navigation</strong><p>Show navigation icons and labels.</p>{/snippet}
+          {#snippet tooltipContent()}<strong>{sidebar.open ? 'Collapse navigation' : 'Expand navigation'}</strong><p>{sidebar.open ? 'Show navigation icons only.' : 'Show navigation icons and labels.'}</p>{/snippet}
           <Menu size={16} aria-hidden="true" />
           <span data-sidebar-label>Navigation</span>
         </Sidebar.MenuButton>
@@ -288,7 +298,8 @@ async function selectSubsection(id: string) {
         <Sidebar.MenuItem>
           {#if sidebar.open}
             <Collapsible.Root bind:open={toolsExpanded}>
-              <Sidebar.MenuButton isActive={toolsSelected} aria-label={toolsTitle} aria-current={toolsSelected && !toolsExpanded ? 'page' : undefined}>
+              <Sidebar.MenuButton isActive={toolsSelected} aria-label={toolsTitle} aria-current={toolsSelected && !toolsExpanded ? 'page' : undefined} tooltipDisabled={toolsMenuOpen || sectionMenu !== null} tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined}>
+                {#snippet tooltipContent()}<strong>Tools</strong><p>{toolsDescription}</p>{/snippet}
                 {#snippet child({ props })}
                   <Collapsible.Trigger {...props}>
                     {@render toolsIcon()}

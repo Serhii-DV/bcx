@@ -69,7 +69,8 @@ function handleCloseAutoFocus(event: Event) {
 <Sidebar.MenuItem>
   {#if sidebar.open}
     <Collapsible.Root bind:open={expanded}>
-      <Sidebar.MenuButton isActive={active} aria-label={section.label} aria-current={active && !expanded ? 'page' : undefined}>
+      <Sidebar.MenuButton isActive={active} aria-label={section.label} aria-current={active && !expanded ? 'page' : undefined} {tooltipDisabled} tooltipPortal={portal}>
+        {#snippet tooltipContent()}<strong>{section.label}</strong>{#if section.title}<p>{section.title}</p>{/if}{/snippet}
         {#snippet child({ props })}
           <Collapsible.Trigger {...props} onclick={onActivate}>
             {@render icon()}

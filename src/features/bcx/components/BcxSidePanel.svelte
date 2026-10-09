@@ -87,6 +87,13 @@ onMount(() => {
   void restoreSidebarExpanded();
 });
 let mainNavigation = $state<BcxMainNavigation>();
+let hoverExpanded = $state(false);
+const navigationExpanded = $derived($sidebarExpanded || hoverExpanded);
+
+function setNavigationExpanded(expanded: boolean) {
+  hoverExpanded = false;
+  saveSidebarExpanded(expanded);
+}
 const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let releaseVisitedById: Record<string, boolean> = $state({});
@@ -698,8 +705,8 @@ $effect(() => {
 
 {#snippet sectionHeading(section: { label: string; image?: string; title?: string }, inline = false)}
   {@const HeadingIcon = makeIcon(section.image?.includes('/') ? undefined : section.image)}
-  <div class="bcx-main-heading" class:inline={inline} class:with-close={!browserPanel && !$sidebarExpanded}>
-    {#if !browserPanel && !$sidebarExpanded}{@render closeAction()}{/if}
+  <div class="bcx-main-heading" class:inline={inline} class:with-close={!browserPanel && !navigationExpanded}>
+    {#if !browserPanel && !navigationExpanded}{@render closeAction()}{/if}
     <div class="bcx-main-heading-identity">
       <span class="bcx-main-heading-icon" aria-hidden="true">
         {#if HeadingIcon}
@@ -726,9 +733,10 @@ $effect(() => {
         <div class="bcx-panel-body">
 
           <div bind:this={sectionsContainer} class="bcx-sections">
-            <Sidebar.Provider class="bcx-panel-body bcx-main-layout" bind:open={$sidebarExpanded} onOpenChange={saveSidebarExpanded}>
+            <Sidebar.Provider class="bcx-panel-body bcx-main-layout" open={navigationExpanded} onOpenChange={setNavigationExpanded}>
               <BcxMainNavigation
                 bind:this={mainNavigation}
+                bind:hoverExpanded
                 sections={navigationSections}
                 tools={navigationTools}
                 bind:value={selectedSectionId}
@@ -739,7 +747,7 @@ $effect(() => {
                 {selectedPinId}
               />
               <div class="bcx-panel-body">
-              {#if !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('__preview__') && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
+              {#if !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('__preview__') && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !navigationExpanded))}
                 {#if selectedNavigationSection}
                   {@render sectionHeading(selectedNavigationSection)}
                 {:else}
@@ -754,11 +762,11 @@ $effect(() => {
                 <div id={`${mainContentId}-${preview.id}`} data-bcx-main-section role="region" aria-label={getItemPreviewLabel(preview.item)} hidden={selectedSectionId !== preview.id} class="bcx-tab-content">
                   {#if previewVisitedById[preview.id]}
                     {#if preview.pinnedPage}
-                      <BcxPinnedPage page={preview.pinnedPage} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                      <BcxPinnedPage page={preview.pinnedPage} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
                     {:else if preview.item.bandPreview}
-                      <BcxBandPreview band={preview.item.bandPreview} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                      <BcxBandPreview band={preview.item.bandPreview} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
                     {:else}
-                      <BcxReleasePreview item={preview.item} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                      <BcxReleasePreview item={preview.item} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
                     {/if}
                   {/if}
                 </div>
@@ -779,7 +787,7 @@ $effect(() => {
                   {/if}
                   {#if section.releasePreview}
                     {#if releaseVisitedById[section.id]}
-                      <BcxReleasePreview item={section.releasePreview} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                      <BcxReleasePreview item={section.releasePreview} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
                     {/if}
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
@@ -788,7 +796,7 @@ $effect(() => {
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
-                          <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} navigationInFilter={true} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                          <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} navigationInFilter={true} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
                         {:else}
                           <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                         {/if}
