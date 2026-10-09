@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Compass, History } from '@lucide/svelte';
+import { ArrowRight, Compass, History } from '@lucide/svelte';
 import type { PinnedPage } from 'src/features/bcx/pinnedNavigation';
 import { pinnedPageDestination } from 'src/features/bcx/pinnedNavigation';
 import { pinnedPageFromItem } from 'src/features/bcx/pinnedPage';
@@ -8,7 +8,10 @@ import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount } from 'svelte';
 import BcxReturnPage from './BcxReturnPage.svelte';
 
-let { errorMessage = '' }: { errorMessage?: string } = $props();
+let {
+  errorMessage = '',
+  onViewHistory,
+}: { errorMessage?: string; onViewHistory?: () => void } = $props();
 let recent = $state<{ page: PinnedPage; visitTime?: string }[]>([]);
 let loading = $state(true);
 let historyError = $state('');
@@ -69,6 +72,9 @@ onMount(() => {
     {:else if !historyError}
       <p class="empty">Your recently visited Bandcamp pages will appear here.</p>
     {/if}
+    {#if onViewHistory}
+      <button type="button" class="view-history" onclick={onViewHistory}>View history <ArrowRight size={14} aria-hidden="true" /></button>
+    {/if}
   </section>
   {#if !loading && !historyError && !recent.length}
     <a class="explore" href="https://bandcamp.com/discover" target="_blank" rel="noopener noreferrer"><Compass size={16} aria-hidden="true" />Explore Bandcamp</a>
@@ -85,6 +91,8 @@ onMount(() => {
   .empty { margin: 0; color: #9ca3af; font-size: 0.875rem; line-height: 1.5; }
   .error { color: #fca5a5; font-size: 0.875rem; line-height: 1.5; }
   button { padding: 2px 6px; border: 0; border-radius: 4px; background: rgb(255 255 255 / 8%); color: inherit; cursor: pointer; }
+  button.view-history { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 0; background: transparent; color: #d1d5db; font-size: 0.875rem; }
+  button.view-history:hover { background: transparent; color: #f9fafb; text-decoration: underline; }
   .explore { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid rgb(255 255 255 / 15%); border-radius: 6px; color: #f9fafb; font-size: 0.875rem; text-decoration: none; }
   .explore:hover, button:hover { background: rgb(255 255 255 / 10%); }
   .explore:focus-visible, button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }

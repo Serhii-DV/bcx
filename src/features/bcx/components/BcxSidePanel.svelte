@@ -27,7 +27,7 @@ import {
   makeIcon,
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
-import { onMount, untrack } from 'svelte';
+import { onMount, tick, untrack } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import type { PinnedPage } from '../pinnedNavigation';
 import {
@@ -129,6 +129,11 @@ const syncTabId = '__fan-sync__';
 const activityTabId = '__activity-log__';
 function viewActivity() {
   selectedSectionId = activityTabId;
+}
+async function viewHistory() {
+  selectedSectionId = 'history';
+  await tick();
+  mainNavigation?.focusSelected();
 }
 let selectedSectionId = $state('');
 const defaultSectionId = $derived(
@@ -574,7 +579,7 @@ $effect(() => {
               {/if}
               <BcxItemPreviewPanel visible={showPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
               <div id={`${mainContentId}-${dashboardTabId}`} data-bcx-main-section role="region" aria-label="Dashboard" hidden={selectedSectionId !== dashboardTabId} class="bcx-tab-content bcx-info-scroll">
-                {#if selectedSectionId === dashboardTabId}<BcxDashboard errorMessage={dashboardError} />{/if}
+                {#if selectedSectionId === dashboardTabId}<BcxDashboard errorMessage={dashboardError} onViewHistory={sections.some((section) => section.id === 'history') ? viewHistory : undefined} />{/if}
               </div>
               {#each openedPinnedPages as page (page.id)}
                 <div id={`${mainContentId}-__pin__${page.id}`} data-bcx-main-section role="region" aria-label={page.title} hidden={selectedSectionId !== `__pin__${page.id}`} class="bcx-tab-content">
