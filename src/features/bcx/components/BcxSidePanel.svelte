@@ -177,8 +177,7 @@ const navigationSections = $derived([
     id: dashboardTabId,
     label: 'Dashboard',
     image: ICON_LAYOUT_DASHBOARD,
-    title:
-      'Return to pinned pages and your 10 most recently visited bands and releases.',
+    title: 'Return to your 10 most recently visited bands and releases.',
   },
   ...sections.map((section) => ({
     ...section,

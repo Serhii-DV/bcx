@@ -36,11 +36,10 @@ browser side panel opens Dashboard with the same navigation. Both paths use
 Sync; outside Bandcamp, the last known account remains available without carrying
 over the previously viewed Band, Release, or Fan page. Before account context is
 available, the same shared sections browse saved lists without an account.
-Dashboard shows saved pins
-and the ten most recent unique band or release destinations
+Dashboard shows the ten most recent unique band or release destinations
 from Chrome history. It reuses saved music details when available and does not
 store another visit log. Canonical URLs merge band homepage, music, and artists
-visits. Pin storage changes refresh the lists; browser side-panel history events
+visits. Pinned items remain in the main navigation; browser side-panel history events
 refresh recent visits while Dashboard is open. Injected panels load recent visits
 through the existing background history request when Dashboard is selected.
 Title links ask the background worker to navigate the active browser tab; a
