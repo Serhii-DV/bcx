@@ -62,41 +62,47 @@ onMount(() => {
 <div class="dashboard">
   <p class="description">Return to your music.</p>
   {#if errorMessage}<p class="error" role="alert">{errorMessage}</p>{/if}
-  <section aria-labelledby="return-pins-heading">
-    <h2 id="return-pins-heading"><Pin size={16} aria-hidden="true" />Pinned <span class="count">{$pinnedNavigation.items.length}</span></h2>
-    {#if $pinnedNavigation.error}
-      <p class="error" role="alert">{$pinnedNavigation.error} <button type="button" onclick={() => void refreshPinnedNavigation()}>Retry</button></p>
-    {/if}
-    {#if $pinnedNavigation.items.length}
-      <ul>{#each $pinnedNavigation.items as page (page.id)}<BcxReturnPage {page} />{/each}</ul>
-    {:else if $pinnedNavigation.loading}
-      <p class="empty" role="status">Loading pinned pages...</p>
-    {:else if !$pinnedNavigation.error}
-      <p class="empty">Pin bands and releases to keep them close.</p>
-    {/if}
-  </section>
-  <section aria-labelledby="return-history-heading" aria-busy={loading}>
-    <h2 id="return-history-heading"><History size={16} aria-hidden="true" />Recently visited <span class="count">{recent.length}</span></h2>
-    {#if historyError}
-      <p class="error" role="alert">{historyError} <button type="button" onclick={() => void loadRecentPages()}>Retry</button></p>
-    {/if}
-    {#if recent.length}
-      <ul>{#each recent as { page, visitTime } (page.url)}<BcxReturnPage {page} {visitTime} />{/each}</ul>
-    {:else if loading}
-      <p class="empty" role="status">Loading recently visited pages...</p>
-    {:else if !historyError}
-      <p class="empty">Your recently visited Bandcamp pages will appear here.</p>
-    {/if}
-  </section>
+  <div class="dashboard-sections">
+    <section aria-labelledby="return-pins-heading">
+      <h2 id="return-pins-heading"><Pin size={16} aria-hidden="true" />Pinned <span class="count">{$pinnedNavigation.items.length}</span></h2>
+      {#if $pinnedNavigation.error}
+        <p class="error" role="alert">{$pinnedNavigation.error} <button type="button" onclick={() => void refreshPinnedNavigation()}>Retry</button></p>
+      {/if}
+      {#if $pinnedNavigation.items.length}
+        <ul>{#each $pinnedNavigation.items as page (page.id)}<BcxReturnPage {page} />{/each}</ul>
+      {:else if $pinnedNavigation.loading}
+        <p class="empty" role="status">Loading pinned pages...</p>
+      {:else if !$pinnedNavigation.error}
+        <p class="empty">Pin bands and releases to keep them close.</p>
+      {/if}
+    </section>
+    <section aria-labelledby="return-history-heading" aria-busy={loading}>
+      <h2 id="return-history-heading"><History size={16} aria-hidden="true" />Recently visited <span class="count">{recent.length}</span></h2>
+      {#if historyError}
+        <p class="error" role="alert">{historyError} <button type="button" onclick={() => void loadRecentPages()}>Retry</button></p>
+      {/if}
+      {#if recent.length}
+        <ul>{#each recent as { page, visitTime } (page.url)}<BcxReturnPage {page} {visitTime} />{/each}</ul>
+      {:else if loading}
+        <p class="empty" role="status">Loading recently visited pages...</p>
+      {:else if !historyError}
+        <p class="empty">Your recently visited Bandcamp pages will appear here.</p>
+      {/if}
+    </section>
+  </div>
   {#if !$pinnedNavigation.loading && !loading && !$pinnedNavigation.error && !historyError && !$pinnedNavigation.items.length && !recent.length}
     <a class="explore" href="https://bandcamp.com/discover" target="_blank" rel="noopener noreferrer"><Compass size={16} aria-hidden="true" />Explore Bandcamp</a>
   {/if}
 </div>
 
 <style>
-  .dashboard { box-sizing: border-box; padding: 0 16px 16px; color: #f9fafb; }
+  .dashboard { box-sizing: border-box; container-type: inline-size; padding: 0 16px 16px; color: #f9fafb; }
   .description { margin: 0 0 24px; color: #9ca3af; font-size: 0.875rem; }
-  section { margin-bottom: 24px; }
+  .dashboard-sections { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 24px; margin-bottom: 24px; }
+  section { min-width: 0; }
+  @container (min-width: 640px) {
+    .dashboard-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 0.875rem; font-weight: 600; }
   .count { padding: 1px 6px; border-radius: 4px; background: rgb(255 255 255 / 8%); color: #9ca3af; font-size: 0.6875rem; }
   ul { list-style: none; margin: 0; padding: 0; }
