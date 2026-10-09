@@ -32,8 +32,14 @@ import {
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, tick, untrack } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-import type { PinnedPage } from '../pinnedNavigation';
+import {
+  createPinnedPage,
+  type PinnedPage,
+  samePinnedPage,
+} from '../pinnedNavigation';
+import { pinnedPageFromItem } from '../pinnedPage';
 import { getItemPreviewId, getItemPreviewLabel } from '../stores/itemPreview';
+import { pinnedNavigation } from '../stores/pinnedNavigation';
 import {
   restoreSidebarExpanded,
   saveSidebarExpanded,
@@ -90,9 +96,40 @@ let openedPreviews = $state<
 >([]);
 let previewVisitedById: Record<string, boolean> = $state({});
 let selectedPreviewItem = $state<TreeItem>();
+let closedPageSectionIds = $state<string[]>([]);
 const additionalPreviews = $derived(
   openedPreviews.filter(({ item }) => !findPagePreviewSection(item)),
 );
+
+const navigationPreviews = $derived(
+  additionalPreviews.filter(({ item }) => !findPin(pinnedPageFromItem(item))),
+);
+
+function findPin(page?: PinnedPage): PinnedPage | undefined {
+  return page
+    ? $pinnedNavigation.items.find((pin) => samePinnedPage(pin, page))
+    : undefined;
+}
+
+function pageForSection(section: SidePanelSection): PinnedPage | undefined {
+  if (section.releasePreview) return pinnedPageFromItem(section.releasePreview);
+  if (!section.id.startsWith('band-')) return undefined;
+  for (const url of section.navigationUrls ?? []) {
+    const page = createPinnedPage(
+      url,
+      section.label,
+      undefined,
+      Number(section.id.slice('band-'.length)),
+      section.image,
+    );
+    if (page?.kind === 'band') return page;
+  }
+  return undefined;
+}
+
+function isPagePreviewSection(section: SidePanelSection): boolean {
+  return !!section.releasePreview || section.id.startsWith('band-');
+}
 
 function findPagePreviewSection(item: TreeItem): SidePanelSection | undefined {
   const id = getItemPreviewId(item);
@@ -116,36 +153,51 @@ function keepPreview(item: TreeItem, pinnedPage?: PinnedPage): string {
     openedPreviews = openedPreviews.map((preview) =>
       preview.id === id ? { ...preview, pinnedPage } : preview,
     );
-  return findPagePreviewSection(item)?.id ?? id;
+  const pageSection = findPagePreviewSection(item);
+  if (pageSection)
+    closedPageSectionIds = closedPageSectionIds.filter(
+      (id) => id !== pageSection.id,
+    );
+  return pageSection?.id ?? id;
 }
 
 async function closePreview(id: string) {
-  const index = additionalPreviews.findIndex((preview) => preview.id === id);
-  const closed = additionalPreviews[index];
-  if (!closed) return;
-  openedPreviews = openedPreviews.filter((preview) => preview.id !== id);
+  const destinations = navigationSections.filter(
+    (section) => 'onClose' in section && !!section.onClose,
+  );
+  const index = destinations.findIndex((section) => section.id === id);
+  const pageSection = sections.find((section) => section.id === id);
+  const closed = openedPreviews.find((preview) => preview.id === id);
+  if (pageSection) {
+    closedPageSectionIds = [...closedPageSectionIds, id];
+    openedPreviews = openedPreviews.filter(
+      ({ item }) => findPagePreviewSection(item)?.id !== id,
+    );
+  } else {
+    openedPreviews = openedPreviews.filter((preview) => preview.id !== id);
+  }
   delete previewVisitedById[id];
-  const next =
-    additionalPreviews[Math.min(index, additionalPreviews.length - 1)];
-  if (selectedSectionId === id)
-    selectedSectionId = next?.id ?? defaultSectionId;
+  const remaining = destinations.filter((section) => section.id !== id);
+  const next = remaining[Math.min(index, remaining.length - 1)];
+  if (selectedSectionId === id) selectedSectionId = next?.id ?? dashboardTabId;
+  const closedItem = pageSection?.releasePreview ?? closed?.item;
   if (
     selectedPreviewItem &&
-    getItemPreviewId(selectedPreviewItem) === getItemPreviewId(closed.item)
+    (closedItem
+      ? getItemPreviewId(selectedPreviewItem) === getItemPreviewId(closedItem)
+      : pageSection && findPagePreviewSection(selectedPreviewItem)?.id === id)
   )
-    selectedPreviewItem =
-      next && hasItemPreview(next.item) ? next.item : undefined;
+    selectedPreviewItem = undefined;
   await tick();
   mainNavigation?.focusSelected();
 }
 
-const selectedPreviewUrl = $derived.by(() => {
-  const preview = openedPreviews.find(
-    ({ id, item }) =>
-      id === selectedSectionId ||
-      findPagePreviewSection(item)?.id === selectedSectionId,
-  );
-  return preview ? getItemPreviewId(preview.item) : undefined;
+const selectedPinId = $derived.by(() => {
+  const section = sections.find((section) => section.id === selectedSectionId);
+  const preview = openedPreviews.find(({ id }) => id === selectedSectionId);
+  return findPin(
+    section ? pageForSection(section) : pinnedPageFromItem(preview?.item),
+  )?.id;
 });
 
 function previewPinnedPage(page: PinnedPage): string {
@@ -259,14 +311,23 @@ const navigationSections = $derived([
     image: ICON_LAYOUT_DASHBOARD,
     title: 'Return to your 10 most recently visited bands and releases.',
   },
-  ...sections.map((section) => ({
-    ...section,
-    title: getSectionTitle(section),
-    loaded: !!sectionTreeDataById[section.id],
-    loading: !!sectionLoadingById[section.id],
-    error: sectionErrorById[section.id],
-  })),
-  ...additionalPreviews.map(({ id, item }) => ({
+  ...sections
+    .filter(
+      (section) =>
+        !closedPageSectionIds.includes(section.id) &&
+        !findPin(pageForSection(section)),
+    )
+    .map((section) => ({
+      ...section,
+      title: getSectionTitle(section),
+      loaded: !!sectionTreeDataById[section.id],
+      loading: !!sectionLoadingById[section.id],
+      error: sectionErrorById[section.id],
+      onClose: isPagePreviewSection(section)
+        ? () => void closePreview(section.id)
+        : undefined,
+    })),
+  ...navigationPreviews.map(({ id, item }) => ({
     id,
     label: getItemPreviewLabel(item),
     image:
@@ -313,7 +374,7 @@ const navigationTools = $derived([
   },
 ]);
 const selectedNavigationSection = $derived(
-  [...navigationSections, ...navigationTools].find(
+  [...navigationSections, ...navigationTools, ...sections].find(
     (section) => section.id === selectedSectionId,
   ),
 );
@@ -555,6 +616,7 @@ $effect(() => {
       (section, index) => section === previousCatalogSections?.[index],
     );
   currentSections = sections;
+  closedPageSectionIds = [];
   if (catalogUnchanged) {
     if (selectedSectionId === previousReleaseId) {
       selectedSectionId = releaseSection?.id ?? defaultSectionId;
@@ -605,6 +667,17 @@ $effect(() => {
     if (section.releasePreview) releaseVisitedById[section.id] = true;
     untrack(() => void loadSectionTreeData(section));
   }
+});
+
+let activatedPageSectionId = '';
+$effect(() => {
+  const section = defaultToDashboard
+    ? undefined
+    : sections.find((section) => section.defaultOpen);
+  const id = section?.id ?? '';
+  if (id === activatedPageSectionId) return;
+  activatedPageSectionId = id;
+  if (section) selectedSectionId = section.id;
 });
 
 // Focus the selected navigation section when the panel opens.
@@ -663,7 +736,7 @@ $effect(() => {
                 syncStatus={navigationSyncStatus}
                 headerActions={browserPanel ? undefined : closeAction}
                 onPinPreview={previewPinnedPage}
-                {selectedPreviewUrl}
+                {selectedPinId}
               />
               <div class="bcx-panel-body">
               {#if !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('__preview__') && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}

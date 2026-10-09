@@ -64,12 +64,21 @@ document. Selecting a pin reuses BCX's saved band/release/track views; unavailab
 saved details show Retry and Open on Bandcamp. Opened destinations stay mounted
 when switching navigation, including after their shortcut is removed.
 
-Pinned rows use artwork icons without native title tooltips. Like Tools, clicking
-the item opens an actions popup in collapsed navigation or toggles an inline
-submenu in expanded navigation. Preview adds or reuses a destination in the main
-Preview navigation, including the current page when it matches. Both expose
-Preview with an Eye icon, Open on Bandcamp, and Unpin. Double-clicking a pinned
-row opens its page in the browser in either navigation mode. Catalog rows offer a direct Pin/Unpin icon instead of a separate menu.
+Pinned navigation sits after Dashboard and before Preview, with a separator
+between them. Rows use artwork
+icons without native title tooltips. Clicking a row directly shows its saved
+band, release, or track information in the main panel, without subitems or an
+actions popup. Expanded rows have a right-side Unpin button. Double-clicking
+opens the Bandcamp page in either navigation mode. Current-page sections and
+opened previews share their views with matching pins by canonical destination
+or entity identity, so pinned pages do not also appear under Preview. Page
+navigation selects the current band, release, or track destination regardless
+of its pin status, including moves within an already loaded catalog. Repeated
+updates for the same destination preserve subsequent manual navigation. Every
+Preview row, including current-page entries, has a close button when expanded;
+closing the active row selects a neighbouring Preview or Dashboard. Closing a
+current-page row hides its shortcut until the page changes or it is previewed
+again. Catalog rows offer a direct Pin/Unpin icon.
 Drag-and-drop reorders a shortcut before or after another
 shortcut in the latest saved list, preserving concurrent additions and removals.
 Alt + Arrow Up/Down provides the same ordering controls from the keyboard.
