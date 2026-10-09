@@ -86,11 +86,11 @@ export async function getActiveBandcampTab(): Promise<ActiveBandcampTab | null> 
 }
 
 export async function createActiveTabSidePanelData(
-  tab: ActiveBandcampTab,
+  tab: ActiveBandcampTab | null,
 ): Promise<{ sections: SidePanelSection[]; header: SidePanelHeader | null }> {
-  const currentPageUrl = Url.create(tab.url);
-  const pageData = await getActiveBandcampPageData(currentPageUrl);
-  const page = await createBandPage(currentPageUrl, pageData);
+  const currentPageUrl = Url.create(tab?.url ?? 'https://bandcamp.com/');
+  const pageData = tab ? await getActiveBandcampPageData(currentPageUrl) : null;
+  const page = tab ? await createBandPage(currentPageUrl, pageData) : null;
   if (page?.band && pageData?.bandProfile) {
     Object.assign(page.band.metadata, pageData.bandProfile);
   }
@@ -100,11 +100,18 @@ export async function createActiveTabSidePanelData(
   if (pageData) {
     lastFanPageContext = { data: pageData.data, fanData: pageData.fanData };
   }
-  const fanPageContext = pageData ?? lastFanPageContext;
+  const fanPageContext = pageData ??
+    (tab ? lastFanPageContext : null) ?? {
+      data: {},
+      fanData: lastFanPageContext?.fanData ?? {
+        username: '',
+        name: '',
+        fan_id: 0,
+      },
+    };
 
   return {
     sections: await MainSidePanelSections.create(currentPageUrl, page, {
-      includePageData: !!fanPageContext,
       pageData: fanPageContext,
     }),
     header: createSidePanelHeader(currentPageUrl, page, pageData?.trackSchema),

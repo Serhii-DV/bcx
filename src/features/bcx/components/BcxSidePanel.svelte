@@ -56,6 +56,7 @@ interface Props {
   header?: SidePanelHeader | null;
   open?: boolean;
   browserPanel?: boolean;
+  defaultToDashboard?: boolean;
   dashboardError?: string;
   onToggle?: () => void;
   onClose?: () => void;
@@ -65,6 +66,7 @@ let {
   sections,
   open = false,
   browserPanel = false,
+  defaultToDashboard = false,
   dashboardError = '',
   onToggle = () => {},
   onClose = () => {},
@@ -129,6 +131,13 @@ function viewActivity() {
   selectedSectionId = activityTabId;
 }
 let selectedSectionId = $state('');
+const defaultSectionId = $derived(
+  defaultToDashboard
+    ? dashboardTabId
+    : (sections.find((section) => section.defaultOpen)?.id ??
+        sections[0]?.id ??
+        dashboardTabId),
+);
 let fanSyncJob = $state<FanSyncJob>();
 let fanSyncError = $state('');
 const hasFanSync = $derived(sections.some((section) => !!section.fanSync));
@@ -457,11 +466,7 @@ $effect(() => {
   currentSections = sections;
   if (catalogUnchanged) {
     if (selectedSectionId === previousReleaseId) {
-      selectedSectionId =
-        releaseSection?.id ??
-        catalogSections.find((section) => section.defaultOpen)?.id ??
-        catalogSections[0]?.id ??
-        dashboardTabId;
+      selectedSectionId = releaseSection?.id ?? defaultSectionId;
     }
     return;
   }
@@ -481,10 +486,7 @@ $effect(() => {
     !(selectedSectionId === syncTabId && hasFanSync) &&
     !sections.some((section) => section.id === selectedSectionId)
   ) {
-    selectedSectionId =
-      sections.find((section) => section.defaultOpen)?.id ??
-      sections[0]?.id ??
-      dashboardTabId;
+    selectedSectionId = defaultSectionId;
   }
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};

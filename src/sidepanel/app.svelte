@@ -112,11 +112,6 @@ async function loadSidePanelSections() {
     activeBrowserTabId = browserTabs[0]?.id;
     activeTab = tab;
 
-    if (!tab) {
-      sidePanelSections = null;
-      return;
-    }
-
     const data = await createActiveTabSidePanelData(tab);
     if (generation !== sectionLoadGeneration) return;
     sidePanelSections = data.sections;
@@ -179,8 +174,8 @@ async function toggleBrowserSidePanel() {
 <svelte:document onkeydown={handleKeydown} />
 
 {#if sidePanelSections || !isLoading}
-  <BcxSidePanel {header} sections={sidePanelSections ?? emptySections} dashboardError={errorMessage} open={true} browserPanel={true} />
-  {#if sidePanelSections && sidePanelTourStateLoaded}
+  <BcxSidePanel {header} sections={sidePanelSections ?? emptySections} defaultToDashboard={!activeTab} dashboardError={errorMessage} open={true} browserPanel={true} />
+  {#if activeTab && sidePanelSections && sidePanelTourStateLoaded}
     {#key sidePanelTourVersion}
       <BcxTour
         steps={sidePanelTourSteps}

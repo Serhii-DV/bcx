@@ -31,7 +31,12 @@ The content scripts work within Bandcamp tabs. The side panel presents the colle
 
 Dashboard is the first item in the shared main navigation. Bandcamp pages retain
 their contextual default view; when the active tab is outside Bandcamp, the
-browser side panel opens Dashboard with the same navigation. It shows saved pins
+browser side panel opens Dashboard with the same navigation. Both paths use
+`MainSidePanelSections` for History, saved library lists, following lists, and
+Sync; outside Bandcamp, the last known account remains available without carrying
+over the previously viewed Band, Release, or Fan page. Before account context is
+available, the same shared sections browse saved lists without an account.
+Dashboard shows saved pins
 and the ten most recent unique band or release destinations
 from Chrome history. It reuses saved music details when available and does not
 store another visit log. Canonical URLs merge band homepage, music, and artists

@@ -23,6 +23,20 @@ describe('active tab fan sections during navigation', () => {
     rs.spyOn(BandcampStorage, 'getByUuids').mockResolvedValue([]);
     rs.spyOn(BandcampStorage, 'getBands').mockResolvedValue([]);
     const createSections = rs.spyOn(MainSidePanelSections, 'create');
+    const sharedLabels = [
+      'History',
+      'Wishlist',
+      'Collection',
+      'Following Bands',
+      'Following Genres',
+    ];
+    const { sections: initial, header: initialHeader } =
+      await createActiveTabSidePanelData(null);
+    expect(initial.map((section) => section.label)).toEqual(sharedLabels);
+    expect(initialHeader).toBeNull();
+    expect(
+      initial.find((section) => section.fanSync)?.fanSync?.account,
+    ).toBeUndefined();
     const data = {
       identities: { fan: { id: 42, username: 'listener', name: 'Listener' } },
     };
@@ -140,6 +154,21 @@ describe('active tab fan sections during navigation', () => {
     expect(next.map((section) => section.id)).toContain('collection-listener');
     expect(createSections.mock.calls.at(-1)?.[1]).toBeNull();
     expect(createSections.mock.calls.at(-1)?.[2]?.pageData).toEqual(fanContext);
+
+    const requestCount = sendMessage.mock.calls.length;
+    const { sections: outside, header: outsideHeader } =
+      await createActiveTabSidePanelData(null);
+    expect(outside.map((section) => section.label)).toEqual(sharedLabels);
+    expect(outsideHeader).toBeNull();
+    expect(
+      outside.find((section) => section.fanSync)?.fanSync?.account,
+    ).toEqual({
+      fanId: 42,
+      username: 'listener',
+    });
+    expect(createSections.mock.calls.at(-1)?.[1]).toBeNull();
+    expect(createSections.mock.calls.at(-1)?.[2]?.pageData?.data).toEqual({});
+    expect(sendMessage.mock.calls).toHaveLength(requestCount);
 
     const anonymous = await MainSidePanelSections.create(
       Url.create('https://second-test.bandcamp.com/music'),
