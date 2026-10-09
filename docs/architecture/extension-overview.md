@@ -29,6 +29,14 @@ flowchart TB
 
 The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers, while Chrome storage keeps data available across extension contexts.
 
+When the active tab is outside Bandcamp, the browser side panel shows a compact
+home with saved pins and the ten most recent unique band or release destinations
+from Chrome history. It reuses saved music details when available and does not
+store another visit log. Canonical URLs merge band homepage, music, and artists
+visits. Pin storage and history events refresh the lists while the home is open.
+Title links ask the background worker to navigate the active browser tab; a
+separate link opens a new tab. Same-tab returns to Bandcamp reload the explorer.
+
 ## Pinned navigation
 
 Band, release, and track shortcuts are stored separately from music data and

@@ -24,10 +24,26 @@ export async function openUrlInActiveTab(url: string): Promise<boolean> {
     return false;
   }
 
-  await chrome.runtime.sendMessage({
+  const response: unknown = await chrome.runtime.sendMessage({
     type: MessageType.OPEN_ACTIVE_TAB_URL,
     url,
   });
+
+  if (
+    !response ||
+    typeof response !== 'object' ||
+    !('ok' in response) ||
+    response.ok !== true
+  ) {
+    throw new Error(
+      response &&
+        typeof response === 'object' &&
+        'error' in response &&
+        typeof response.error === 'string'
+        ? response.error
+        : 'Could not open the page in the active tab.',
+    );
+  }
 
   return true;
 }

@@ -13,6 +13,7 @@ import {
 } from 'src/bandcamp/domain/url/helper';
 import { History } from 'src/core/history';
 import { Url } from 'src/core/url';
+import { pinnedPageDestination } from 'src/features/bcx/pinnedNavigation';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
 import { DateTreeItemFactory } from '../factories/DateTreeItemFactory';
@@ -50,6 +51,41 @@ const HISTORY_TABS: {
 ];
 
 export class HistoryTreeItem {
+  static async createRecentMusicPages(): Promise<TreeItem[]> {
+    const visited = await History.search({
+      text: 'bandcamp.com',
+      maxResults: 1000,
+      startTime: 0,
+    });
+    visited.sort((a, b) => (b.lastVisitTime ?? 0) - (a.lastVisitTime ?? 0));
+    const destinations = new Set<string>();
+    const pages: VisitedBandcampPage[] = [];
+
+    for (const item of visited) {
+      const destination = item.url
+        ? pinnedPageDestination(item.url)
+        : undefined;
+      if (
+        !destination ||
+        destination.kind === 'track' ||
+        destinations.has(destination.url)
+      )
+        continue;
+      destinations.add(destination.url);
+      pages.push({
+        item: { ...item, url: destination.url },
+        uuid: Url.create(destination.url).uuid,
+        type: destination.kind,
+      });
+      if (pages.length === 10) break;
+    }
+
+    const savedItems = await HistoryTreeItem.createUuidTreeItemsMap(pages);
+    return pages.map(({ item, uuid }) =>
+      HistoryTreeItem.createHistoryTreeItem(savedItems, uuid, item),
+    );
+  }
+
   static async createGroupedByDays(): Promise<TreeItem> {
     try {
       const pages = await HistoryTreeItem.getUniqueVisitedBandcampPages();
