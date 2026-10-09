@@ -1,7 +1,8 @@
 <script lang="ts">
 import { hasItemPreview, type TreeItem } from 'src/features/treeview/TreeItem';
-import { onMount, type Snippet, setContext, untrack } from 'svelte';
+import { onMount, type Snippet, setContext, tick, untrack } from 'svelte';
 import {
+  getItemPreviewId,
   ITEM_PREVIEW_CONTEXT,
   type ItemPreviewContext,
 } from '../stores/itemPreview';
@@ -12,7 +13,7 @@ import {
   MAX_ITEM_PREVIEW_SIZE,
   MIN_ITEM_PREVIEW_SIZE,
 } from '../stores/itemPreviewSize';
-import BcxItemPreviewTabs from './BcxItemPreviewTabs.svelte';
+import BcxItemPreview from './BcxItemPreview.svelte';
 
 const KEYBOARD_RESIZE_STEP = 5;
 
@@ -21,17 +22,21 @@ let {
   visible = true,
   previewSize = itemPreviewSize,
   onShowPreview,
+  onPreview,
+  selectedItem = $bindable(),
 }: {
   children: Snippet;
   visible?: boolean;
   previewSize?: ItemPreviewSizeStore;
   onShowPreview?: () => void;
+  onPreview?: (item: TreeItem) => void;
+  selectedItem?: TreeItem;
 } = $props();
 const componentId = $props.id();
 const itemListId = `${componentId}-item-list`;
 const itemPreviewId = `${componentId}-item-preview`;
 let previewPanel: HTMLDivElement;
-let previewTabs = $state<BcxItemPreviewTabs>();
+let preview = $state<BcxItemPreview>();
 let isResizing = $state(false);
 let resizeStartY = 0;
 let resizeStartSize = DEFAULT_ITEM_PREVIEW_SIZE;
@@ -39,18 +44,27 @@ let resizeStartSize = DEFAULT_ITEM_PREVIEW_SIZE;
 function selectItem(item: TreeItem) {
   if (!hasItemPreview(item)) return;
   onShowPreview?.();
-  untrack(() => previewTabs?.selectPreview(item));
+  untrack(() => {
+    if (
+      !selectedItem ||
+      getItemPreviewId(selectedItem) !== getItemPreviewId(item)
+    )
+      selectedItem = item;
+  });
 }
 
-function previewItem(item: TreeItem) {
+async function previewItem(item: TreeItem) {
   if (!hasItemPreview(item)) return;
   onShowPreview?.();
-  void previewTabs?.showPreview(item);
+  onPreview?.(item);
+  selectedItem = item;
+  await tick();
+  preview?.focus();
 }
 
 setContext<ItemPreviewContext>(ITEM_PREVIEW_CONTEXT, {
   select: selectItem,
-  show: previewItem,
+  show: (item) => void previewItem(item),
 });
 onMount(() => {
   void previewSize.restore();
@@ -157,7 +171,7 @@ function handleLostPointerCapture() {
     <span aria-hidden="true"></span>
   </div>
   <section id={itemPreviewId} class="item-preview-panel-details" aria-label="Preview" hidden={!visible}>
-    <BcxItemPreviewTabs bind:this={previewTabs} />
+    <BcxItemPreview bind:this={preview} item={selectedItem} onPreview={previewItem} />
   </section>
 </div>
 

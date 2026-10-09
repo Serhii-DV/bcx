@@ -20,9 +20,12 @@ import {
 import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
 import {
   ICON_DATABASE,
+  ICON_DISC,
+  ICON_HEADPHONES,
   ICON_HISTORY,
   ICON_INFO,
   ICON_LAYOUT_DASHBOARD,
+  ICON_MIC,
   ICON_REFRESH_CCW,
   makeIcon,
 } from 'src/features/treeview/utils/icon';
@@ -30,6 +33,7 @@ import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, tick, untrack } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import type { PinnedPage } from '../pinnedNavigation';
+import { getItemPreviewId, getItemPreviewLabel } from '../stores/itemPreview';
 import {
   restoreSidebarExpanded,
   saveSidebarExpanded,
@@ -37,6 +41,7 @@ import {
 } from '../stores/sidebarExpanded';
 import BcxActivityLog from './BcxActivityLog.svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
+import BcxBandPreview from './BcxBandPreview.svelte';
 import BcxDashboard from './BcxDashboard.svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxExtensionInfo from './BcxExtensionInfo.svelte';
@@ -81,6 +86,52 @@ let sectionTreeDataById: Record<string, TreeData> = $state({});
 let releaseVisitedById: Record<string, boolean> = $state({});
 let requestedPreviewSectionId = $state('');
 let openedPinnedPages = $state<PinnedPage[]>([]);
+let openedPreviews = $state<{ id: string; item: TreeItem }[]>([]);
+let previewVisitedById: Record<string, boolean> = $state({});
+let selectedPreviewItem = $state<TreeItem>();
+const additionalPreviews = $derived(
+  openedPreviews.filter(({ item }) => !findPagePreviewSection(item)),
+);
+
+function findPagePreviewSection(item: TreeItem): SidePanelSection | undefined {
+  const id = getItemPreviewId(item);
+  return sections.find((section) =>
+    section.releasePreview
+      ? getItemPreviewId(section.releasePreview) === id
+      : !!item.bandPreview &&
+        section.id.startsWith('band-') &&
+        (section.id === `band-${item.bandPreview.id}` ||
+          section.navigationUrls?.some(
+            (url) => getItemPreviewId({ href: url }) === id,
+          )),
+  );
+}
+
+function keepPreview(item: TreeItem) {
+  const id = `__preview__${getItemPreviewId(item)}`;
+  if (!openedPreviews.some((preview) => preview.id === id))
+    openedPreviews = [...openedPreviews, { id, item }];
+}
+
+async function closePreview(id: string) {
+  const index = additionalPreviews.findIndex((preview) => preview.id === id);
+  const closed = additionalPreviews[index];
+  if (!closed) return;
+  openedPreviews = openedPreviews.filter((preview) => preview.id !== id);
+  delete previewVisitedById[id];
+  const next =
+    additionalPreviews[Math.min(index, additionalPreviews.length - 1)];
+  if (selectedSectionId === id)
+    selectedSectionId = next?.id ?? defaultSectionId;
+  if (
+    selectedPreviewItem &&
+    getItemPreviewId(selectedPreviewItem) === getItemPreviewId(closed.item)
+  )
+    selectedPreviewItem = next?.item;
+  await tick();
+  mainNavigation?.focusSelected();
+}
+
 const selectedPinnedPage = $derived(
   openedPinnedPages.find((page) => `__pin__${page.id}` === selectedSectionId),
 );
@@ -191,6 +242,21 @@ const navigationSections = $derived([
     loading: !!sectionLoadingById[section.id],
     error: sectionErrorById[section.id],
   })),
+  ...additionalPreviews.map(({ id, item }) => ({
+    id,
+    label: getItemPreviewLabel(item),
+    image:
+      item.image ??
+      item.bandPreview?.image ??
+      item.previewImage ??
+      (item.bandPreview
+        ? ICON_MIC
+        : item.previewInformation?.releaseType === 'Track'
+          ? ICON_HEADPHONES
+          : ICON_DISC),
+    title: `View ${getItemPreviewLabel(item)}.\n${getItemPreviewId(item)}`,
+    onClose: () => void closePreview(id),
+  })),
 ]);
 const navigationTools = $derived([
   ...(hasFanSync
@@ -268,6 +334,8 @@ function containsPreviewItems(items: TreeItem[]): boolean {
 }
 
 const showPreview = $derived.by(() => {
+  if (additionalPreviews.some((preview) => preview.id === selectedSectionId))
+    return requestedPreviewSectionId === selectedSectionId;
   if (selectedPinnedPage)
     return (
       selectedPinnedPage.kind === 'band' ||
@@ -477,6 +545,7 @@ $effect(() => {
   if (
     selectedSectionId !== dashboardTabId &&
     !selectedSectionId.startsWith('__pin__') &&
+    !selectedSectionId.startsWith('__preview__') &&
     releaseSection &&
     releaseSection.id !== previousReleaseId
   ) {
@@ -487,6 +556,7 @@ $effect(() => {
     selectedSectionId !== storageTabId &&
     selectedSectionId !== activityTabId &&
     !selectedSectionId.startsWith('__pin__') &&
+    !selectedSectionId.startsWith('__preview__') &&
     !(selectedSectionId === syncTabId && hasFanSync) &&
     !sections.some((section) => section.id === selectedSectionId)
   ) {
@@ -505,6 +575,14 @@ $effect(() => {
 });
 
 $effect(() => {
+  const preview = openedPreviews.find(
+    (preview) => preview.id === selectedSectionId,
+  );
+  if (preview) {
+    const pageSection = findPagePreviewSection(preview.item);
+    if (pageSection) selectedSectionId = pageSection.id;
+    else previewVisitedById[preview.id] = true;
+  }
   const section = sections.find((section) => section.id === selectedSectionId);
   if (section) {
     if (section.releasePreview) releaseVisitedById[section.id] = true;
@@ -570,17 +648,28 @@ $effect(() => {
                 onPinSelect={openPinnedPage}
               />
               <div class="bcx-panel-body">
-              {#if !selectedPinnedPage && !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
+              {#if !selectedPinnedPage && !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('__preview__') && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
                 {#if selectedNavigationSection}
                   {@render sectionHeading(selectedNavigationSection)}
                 {:else}
                   {@render closeAction()}
                 {/if}
               {/if}
-              <BcxItemPreviewPanel visible={showPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
+              <BcxItemPreviewPanel visible={showPreview} bind:selectedItem={selectedPreviewItem} onPreview={keepPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
               <div id={`${mainContentId}-${dashboardTabId}`} data-bcx-main-section role="region" aria-label="Dashboard" hidden={selectedSectionId !== dashboardTabId} class="bcx-tab-content bcx-info-scroll">
                 {#if selectedSectionId === dashboardTabId}<BcxDashboard errorMessage={dashboardError} onViewHistory={sections.some((section) => section.id === 'history') ? viewHistory : undefined} />{/if}
               </div>
+              {#each additionalPreviews as preview (preview.id)}
+                <div id={`${mainContentId}-${preview.id}`} data-bcx-main-section role="region" aria-label={getItemPreviewLabel(preview.item)} hidden={selectedSectionId !== preview.id} class="bcx-tab-content">
+                  {#if previewVisitedById[preview.id]}
+                    {#if preview.item.bandPreview}
+                      <BcxBandPreview band={preview.item.bandPreview} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                    {:else}
+                      <BcxReleasePreview item={preview.item} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                    {/if}
+                  {/if}
+                </div>
+              {/each}
               {#each openedPinnedPages as page (page.id)}
                 <div id={`${mainContentId}-__pin__${page.id}`} data-bcx-main-section role="region" aria-label={page.title} hidden={selectedSectionId !== `__pin__${page.id}`} class="bcx-tab-content">
                   <BcxPinnedPage {page} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />

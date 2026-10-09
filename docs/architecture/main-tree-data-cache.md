@@ -128,30 +128,26 @@ When navigation is horizontal, content also uses the shared left gutter to align
 with the tab bars on narrow screens.
 
 `BcxSidePanel` mounts one `BcxItemPreviewPanel` beneath the main navigation.
-It wraps the section panels and owns the resizable preview area, visible in
-sections containing release or band items. `BcxItemPreviewTabs` keeps both item
-types in one shared `BcxSectionTabs` / Bits UI Tabs row. The item-preview Svelte
-context routes main-list selection to the first, current-item tab; changing its
-item resets that panel and discards stale loading results. Hidden lists cannot
-replace the current preview. Inside previews, the context exposes only the
-explicit Preview action, so browsing a Band catalog or Related releases preserves
-the open preview and adds releases or bands to the same main tab strip.
-Explicit Preview icons in catalog, History, Following Bands, and fan-page lists,
-and Preview actions in release artist/label menus create additional
-tabs keyed by normalized Bandcamp URL. Previewing the current selection can keep
-it in an additional tab while normal selection continues updating the first tab.
-Matching additional tabs are reused. Each tab has artwork, a release title, and a
-full title/artist/URL hover description. The existing overflow menu handles narrow
-widths and extra tabs.
-Optional close callbacks add separate close controls beside each release tab and
-inside the overflow menu, including their widths in overflow measurements. Closing
-a tab unmounts its preview and discards pending loading results; the active tab falls back
-to the next tab or the previous one when closing the last tab in the row. Closing
-the final preview shows an empty state. Explicit main-list selection can reopen
-a closed release without immediately recreating it after dismissal. Keyboard
-focus returns to the active tab or the empty preview area.
-`BcxReleasePreview` and `BcxBandPreview` own cancellable loading independently
-for each tab and reuse the existing details and Band catalog renderers.
+It wraps the section panels and owns the resizable preview area. `BcxItemPreview`
+renders a single selected Release, Band, or Track, without an item tab strip.
+The item-preview Svelte context routes main-list selection to this area; changing
+the item resets its content and discards stale loading results. Hidden lists cannot
+replace the current preview. Inside the preview area, only explicit Preview actions
+are exposed, so nested catalogs cannot replace it automatically.
+
+Explicit eye buttons and Keep in Preview menu actions also register session-local
+destinations in `BcxSidePanel`. The main navigation groups these with current
+Bandcamp page destinations under Preview. Entries use normalized Bandcamp URLs;
+matching entries and current pages are reused. Ordinary row selection does not
+register a destination. Additional destinations load on first navigation, remain
+mounted while inactive to retain section, filter, pagination, and scroll state,
+and have separate accessible removal buttons on the right when navigation is expanded.
+Removing the active destination selects another destination and restores navigation
+focus. Removing the item shown in the resizable area replaces it with a remaining
+preview or the empty state. Additional destinations survive active-page changes
+while this side panel is mounted and are not stored persistently.
+`BcxReleasePreview` and `BcxBandPreview` retain their cancellable loading and reuse
+the existing details and Band catalog renderers.
 Band previews load saved profiles and catalogs by ID or normalized Bandcamp URL.
 Following-list identity, artwork, and location provide the fallback when no band
 is saved. Band About shows a compact profile, full biography, saved release
@@ -164,8 +160,8 @@ catalog sections also use the shared responsive sidebar: About, Releases, Artist
 Release years, and Tags move to the left at widths of 640px or more and remain
 horizontal in narrower panels. Release
 previews separate Release, Artist, and Label action dropdowns
-from navigation: the release tab row comes first, followed by a left-aligned
-action toolbar, then `BcxRootSectionTabs`. The default Release Info panel contains
+from navigation: a left-aligned action toolbar precedes `BcxRootSectionTabs`.
+The default Release Info panel contains
 the shared `item-details-header` with artwork, original artist/title/year
 typography and metadata, followed by release notes. Its content scrolls
 together; other sections use the full height beneath the toolbar.
@@ -173,7 +169,8 @@ Release sections opt into a responsive sidebar: at a preview width of 640px or
 more, Release Info, Credits, Tracks, Related releases, and Tags form a 12rem left-side menu;
 narrower previews use the horizontal tab row and its overflow menu. The shared
 Tabs root switches orientation with the layout, preserving keyboard navigation
-and mounted panel state. Previewed release tabs remain horizontal at the top.
+and mounted panel state. The selected item fills the preview area without item
+navigation.
 The side-panel shell provides the shared 1rem gutter for main navigation,
 section navigation, and preview action bars. The preview wrapper provides CSS
 variables for a 12rem sidebar column and 0.75rem column gap. The header and toolbars
@@ -210,7 +207,7 @@ collaborators remain visible when other artists have saved profiles; missing nam
 are deduplicated against saved menus case-insensitively. These menus omit Open, Preview, and URL copying. Open on Bandcamp and Search actions share
 the Bandcamp icon with a trailing external-link indicator. Release title copying also remains available without a URL.
 The current release or band
-uses Keep in preview tab, preserving the existing add-or-reuse behavior. Menu
+uses Keep in Preview to add or reuse a destination in the main navigation. Menu
 triggers retain artwork and names; real page links preserve modified clicks.
 The separate Copy and Search menus are removed from both panels.
 Copy actions show the exact clipboard
@@ -235,13 +232,11 @@ timestamp ordering. Related rows keep their own right-side controls, and shared
 Preview buttons precede external-link controls. The list retains pagination;
 an empty store shows a saved-data empty state. Related rows add an explicit Preview
 button through TreeBrowser without changing single-click selection or double-click
-link navigation. It adds and activates a release preview tab and moves keyboard
-focus to that tab. Previewing the same URL reuses its additional tab; different
-Bandcamp destinations remain distinct. Inactive panels stay mounted and hidden
-to preserve their selected section, filter, pagination, and scroll position.
-Related releases and Band catalogs in any preview can add further tabs, with
-independent cancellable loading and the shared preview height. Tabs stay mounted
-when navigating main sections and are not saved to storage. Loading failures show an error with
+link navigation. It updates the single preview area, adds or reuses a main Preview
+navigation entry,
+and moves keyboard focus to the preview content. Different Bandcamp destinations
+remain distinct. Related releases and Band catalogs can preview further items
+through the same context and shared preview height. Loading failures show an error with
 Retry, and stale responses are discarded when switching releases. TreeBrowser link
 rows select on single-click and open on double-click or Enter, including links
 that also carry callbacks or filter queries. This runtime node is created with

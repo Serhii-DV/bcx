@@ -3,10 +3,12 @@ import {
   Check,
   ChevronDown,
   Disc,
+  Eye,
   Folder,
   Menu,
   Settings2,
   UserRound,
+  X,
 } from '@lucide/svelte';
 import { Collapsible, DropdownMenu } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
@@ -26,6 +28,7 @@ interface NavigationSection {
   loaded?: boolean;
   loading?: boolean;
   error?: string;
+  onClose?: () => void;
 }
 
 let {
@@ -56,6 +59,12 @@ let sectionMenu = $state<string | null>(null);
 let toolsExpanded = $state(false);
 let focusSelectedOnClose = false;
 const contextSections = $derived(sections.filter(isContext));
+const previewSections = $derived(
+  contextSections.filter((section) => !section.id.startsWith('fan-')),
+);
+const fanSections = $derived(
+  contextSections.filter((section) => section.id.startsWith('fan-')),
+);
 const dashboardSection = $derived(
   sections.find((section) => section.id === '__dashboard__'),
 );
@@ -82,6 +91,7 @@ const toolsDescription = $derived(
 
 function isContext(section: NavigationSection) {
   return (
+    section.id.startsWith('__preview__') ||
     section.id.startsWith('band-') ||
     section.id.startsWith('album-') ||
     section.id.startsWith('track-') ||
@@ -206,7 +216,7 @@ async function selectSubsection(id: string) {
       {#snippet icon()}{@render sectionIcon(section)}{/snippet}
     </BcxSidebarSection>
   {:else}
-  <Sidebar.MenuItem>
+  <Sidebar.MenuItem class={section.onClose && sidebar.open ? 'bcx-navigation-closable' : undefined}>
     <Sidebar.MenuButton
       isActive={value === section.id}
       aria-label={section.label}
@@ -223,6 +233,11 @@ async function selectSubsection(id: string) {
       {@render sectionIcon(section)}
       <span data-sidebar-label class="bcx-navigation-label">{section.label}</span>
     </Sidebar.MenuButton>
+    {#if section.onClose && sidebar.open}
+      <button type="button" class="bcx-navigation-close" aria-label={`Remove ${section.label} from Preview`} title={`Remove ${section.label} from Preview`} onclick={section.onClose}>
+        <X size={14} aria-hidden="true" />
+      </button>
+    {/if}
   </Sidebar.MenuItem>
   {/if}
 {/snippet}
@@ -251,8 +266,14 @@ async function selectSubsection(id: string) {
         <Sidebar.Menu>{@render sectionButton(dashboardSection)}</Sidebar.Menu>
         <Sidebar.Separator />
       {/if}
+      {#if previewSections.length}
+        <div class="bcx-navigation-preview-heading" aria-hidden="true"><Eye size={12} /><span data-sidebar-label>Preview</span></div>
+      {/if}
+      <Sidebar.Menu aria-label="Preview">
+        {#each previewSections as section (section.id)}{@render sectionButton(section)}{/each}
+      </Sidebar.Menu>
       <Sidebar.Menu>
-        {#each contextSections as section (section.id)}{@render sectionButton(section)}{/each}
+        {#each fanSections as section (section.id)}{@render sectionButton(section)}{/each}
       </Sidebar.Menu>
       {#if contextSections.length && (librarySections.length || followingSections.length)}<Sidebar.Separator />{/if}
       <Sidebar.Menu>
@@ -310,6 +331,11 @@ async function selectSubsection(id: string) {
 </Sidebar.Root>
 
 <style>
+.bcx-navigation-preview-heading { display: flex; align-items: center; gap: 8px; padding: 4px 10px; color: #9ca3af; font-size: 0.6875rem; }
+:global(.bcx-navigation-closable > .sidebar-menu-button) { padding-right: 36px; }
+.bcx-navigation-close { position: absolute; top: 50%; right: 4px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; transform: translateY(-50%); border: 0; border-radius: 4px; color: #9ca3af; background: transparent; cursor: pointer; }
+.bcx-navigation-close:hover { color: #f9fafb; background: #4b5563; }
+.bcx-navigation-close:focus-visible { outline: 2px solid #04b1fe; outline-offset: -2px; }
 .bcx-navigation-controls { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .bcx-main-navigation { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; }
 :global(.bcx-navigation-top) { border-bottom: 1px solid #4b5563; }
