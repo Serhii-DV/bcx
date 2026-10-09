@@ -22,11 +22,12 @@ import {
   ICON_DATABASE,
   ICON_HISTORY,
   ICON_INFO,
+  ICON_LAYOUT_DASHBOARD,
   ICON_REFRESH_CCW,
   makeIcon,
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
-import { onMount, untrack } from 'svelte';
+import { onMount, tick, untrack } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import type { PinnedPage } from '../pinnedNavigation';
 import {
@@ -36,6 +37,7 @@ import {
 } from '../stores/sidebarExpanded';
 import BcxActivityLog from './BcxActivityLog.svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
+import BcxDashboard from './BcxDashboard.svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxExtensionInfo from './BcxExtensionInfo.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
@@ -54,6 +56,8 @@ interface Props {
   header?: SidePanelHeader | null;
   open?: boolean;
   browserPanel?: boolean;
+  defaultToDashboard?: boolean;
+  dashboardError?: string;
   onToggle?: () => void;
   onClose?: () => void;
 }
@@ -62,6 +66,8 @@ let {
   sections,
   open = false,
   browserPanel = false,
+  defaultToDashboard = false,
+  dashboardError = '',
   onToggle = () => {},
   onClose = () => {},
 }: Props = $props();
@@ -117,13 +123,26 @@ let sectionLoadingById: Record<string, boolean> = $state({});
 let sectionErrorById: Record<string, string> = $state({});
 let sectionRootPathById: Record<string, string | null> = $state({});
 const infoTabId = '__extension-info__';
+const dashboardTabId = '__dashboard__';
 const storageTabId = '__storage__';
 const syncTabId = '__fan-sync__';
 const activityTabId = '__activity-log__';
 function viewActivity() {
   selectedSectionId = activityTabId;
 }
+async function viewHistory() {
+  selectedSectionId = 'history';
+  await tick();
+  mainNavigation?.focusSelected();
+}
 let selectedSectionId = $state('');
+const defaultSectionId = $derived(
+  defaultToDashboard
+    ? dashboardTabId
+    : (sections.find((section) => section.defaultOpen)?.id ??
+        sections[0]?.id ??
+        dashboardTabId),
+);
 let fanSyncJob = $state<FanSyncJob>();
 let fanSyncError = $state('');
 const hasFanSync = $derived(sections.some((section) => !!section.fanSync));
@@ -158,15 +177,21 @@ function getSectionTitle(section: SidePanelSection): string {
   return sectionTitles[section.label] ?? `Browse ${section.label}.`;
 }
 
-const navigationSections = $derived(
-  sections.map((section) => ({
+const navigationSections = $derived([
+  {
+    id: dashboardTabId,
+    label: 'Dashboard',
+    image: ICON_LAYOUT_DASHBOARD,
+    title: 'Return to your 10 most recently visited bands and releases.',
+  },
+  ...sections.map((section) => ({
     ...section,
     title: getSectionTitle(section),
     loaded: !!sectionTreeDataById[section.id],
     loading: !!sectionLoadingById[section.id],
     error: sectionErrorById[section.id],
   })),
-);
+]);
 const navigationTools = $derived([
   ...(hasFanSync
     ? [
@@ -445,21 +470,19 @@ $effect(() => {
   currentSections = sections;
   if (catalogUnchanged) {
     if (selectedSectionId === previousReleaseId) {
-      selectedSectionId =
-        releaseSection?.id ??
-        catalogSections.find((section) => section.defaultOpen)?.id ??
-        catalogSections[0]?.id ??
-        infoTabId;
+      selectedSectionId = releaseSection?.id ?? defaultSectionId;
     }
     return;
   }
   if (
+    selectedSectionId !== dashboardTabId &&
     !selectedSectionId.startsWith('__pin__') &&
     releaseSection &&
     releaseSection.id !== previousReleaseId
   ) {
     selectedSectionId = releaseSection.id;
   } else if (
+    selectedSectionId !== dashboardTabId &&
     selectedSectionId !== infoTabId &&
     selectedSectionId !== storageTabId &&
     selectedSectionId !== activityTabId &&
@@ -467,10 +490,7 @@ $effect(() => {
     !(selectedSectionId === syncTabId && hasFanSync) &&
     !sections.some((section) => section.id === selectedSectionId)
   ) {
-    selectedSectionId =
-      sections.find((section) => section.defaultOpen)?.id ??
-      sections[0]?.id ??
-      infoTabId;
+    selectedSectionId = defaultSectionId;
   }
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
@@ -558,6 +578,9 @@ $effect(() => {
                 {/if}
               {/if}
               <BcxItemPreviewPanel visible={showPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
+              <div id={`${mainContentId}-${dashboardTabId}`} data-bcx-main-section role="region" aria-label="Dashboard" hidden={selectedSectionId !== dashboardTabId} class="bcx-tab-content bcx-info-scroll">
+                {#if selectedSectionId === dashboardTabId}<BcxDashboard errorMessage={dashboardError} onViewHistory={sections.some((section) => section.id === 'history') ? viewHistory : undefined} />{/if}
+              </div>
               {#each openedPinnedPages as page (page.id)}
                 <div id={`${mainContentId}-__pin__${page.id}`} data-bcx-main-section role="region" aria-label={page.title} hidden={selectedSectionId !== `__pin__${page.id}`} class="bcx-tab-content">
                   <BcxPinnedPage {page} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />

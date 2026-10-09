@@ -29,11 +29,19 @@ flowchart TB
 
 The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers, while Chrome storage keeps data available across extension contexts.
 
-When the active tab is outside Bandcamp, the browser side panel shows a compact
-home with saved pins and the ten most recent unique band or release destinations
+Dashboard is the first item in the shared main navigation. Bandcamp pages retain
+their contextual default view; when the active tab is outside Bandcamp, the
+browser side panel opens Dashboard with the same navigation. Both paths use
+`MainSidePanelSections` for History, saved library lists, following lists, and
+Sync; outside Bandcamp, the last known account remains available without carrying
+over the previously viewed Band, Release, or Fan page. Before account context is
+available, the same shared sections browse saved lists without an account.
+Dashboard shows the ten most recent unique band or release destinations
 from Chrome history. It reuses saved music details when available and does not
 store another visit log. Canonical URLs merge band homepage, music, and artists
-visits. Pin storage and history events refresh the lists while the home is open.
+visits. Pinned items remain in the main navigation; browser side-panel history events
+refresh recent visits while Dashboard is open. Injected panels load recent visits
+through the existing background history request when Dashboard is selected.
 Title links ask the background worker to navigate the active browser tab; a
 separate link opens a new tab. Same-tab returns to Bandcamp reload the explorer.
 

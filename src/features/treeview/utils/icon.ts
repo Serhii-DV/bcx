@@ -20,6 +20,7 @@ import {
   Heart,
   History,
   Info,
+  LayoutDashboard,
   Library,
   Link,
   ListMusic,
@@ -48,6 +49,7 @@ export const ICON_GLOBE = 'globe';
 export const ICON_HEART = 'heart';
 export const ICON_HISTORY = 'history';
 export const ICON_INFO = 'info';
+export const ICON_LAYOUT_DASHBOARD = 'layout-dashboard';
 export const ICON_LIBRARY = 'library';
 export const ICON_LIST_MUSIC = 'list-music';
 export const ICON_MAP_PIN = 'map-pin';
@@ -98,6 +100,8 @@ export function makeIcon(iconName?: string): any {
       return History;
     case ICON_INFO:
       return Info;
+    case ICON_LAYOUT_DASHBOARD:
+      return LayoutDashboard;
     case ICON_LIBRARY:
       return Library;
     case ICON_LIST_MUSIC:

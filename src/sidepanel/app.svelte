@@ -11,7 +11,6 @@ import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { console } from 'src/utils/console';
 import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
-import BcxSidePanelHome from './components/BcxSidePanelHome.svelte';
 import {
   type ActiveBandcampTab,
   createActiveTabSidePanelData,
@@ -21,6 +20,7 @@ import {
 import { shouldReloadActiveTab } from './services/activeTabUpdates';
 
 let sidePanelSections: SidePanelSection[] | null = $state(null);
+const emptySections: SidePanelSection[] = [];
 let activeTab: ActiveBandcampTab | null = $state(null);
 let activeBrowserTabId: number | undefined;
 let errorMessage = $state('');
@@ -112,11 +112,6 @@ async function loadSidePanelSections() {
     activeBrowserTabId = browserTabs[0]?.id;
     activeTab = tab;
 
-    if (!tab) {
-      sidePanelSections = null;
-      return;
-    }
-
     const data = await createActiveTabSidePanelData(tab);
     if (generation !== sectionLoadGeneration) return;
     sidePanelSections = data.sections;
@@ -178,9 +173,9 @@ async function toggleBrowserSidePanel() {
 
 <svelte:document onkeydown={handleKeydown} />
 
-{#if sidePanelSections}
-  <BcxSidePanel {header} sections={sidePanelSections} open={true} browserPanel={true} />
-  {#if sidePanelTourStateLoaded}
+{#if sidePanelSections || !isLoading}
+  <BcxSidePanel {header} sections={sidePanelSections ?? emptySections} defaultToDashboard={!activeTab} dashboardError={errorMessage} open={true} browserPanel={true} />
+  {#if activeTab && sidePanelSections && sidePanelTourStateLoaded}
     {#key sidePanelTourVersion}
       <BcxTour
         steps={sidePanelTourSteps}
@@ -198,8 +193,6 @@ async function toggleBrowserSidePanel() {
       />
     {/key}
   {/if}
-{:else if !isLoading}
-  <BcxSidePanelHome {errorMessage} />
 {:else}
   <main class="bcx-sidepanel-empty">
     <div class="bcx-sidepanel-empty-content">
