@@ -54,6 +54,11 @@ and does not update the saved hamburger preference. Manual expansion still uses
 extension storage and retains narrow-panel dismissal after selection, outside
 clicks, or Escape. Touch and keyboard users retain the hamburger toggle. Popup
 hints show destination titles and descriptions in both navigation states.
+Expansion and collapse animate width over 180 ms with an ease-out curve; wide
+panels animate their reserved navigation space too. Icons remain anchored while
+labels and row controls fade in. Labels truncate instead of rewrapping during
+the width change, with full titles available in hints. Reduced-motion users get
+immediate state changes.
 
 ## Pinned navigation
 

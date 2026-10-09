@@ -246,7 +246,7 @@ async function selectSubsection(id: string) {
       <span data-sidebar-label class="bcx-navigation-label">{section.label}</span>
     </Sidebar.MenuButton>
     {#if section.onClose && sidebar.open}
-      <button type="button" class="bcx-navigation-close" aria-label={`Remove ${section.label} from Preview`} title={`Remove ${section.label} from Preview`} onclick={section.onClose}>
+      <button type="button" data-sidebar-action class="bcx-navigation-close" aria-label={`Remove ${section.label} from Preview`} title={`Remove ${section.label} from Preview`} onclick={section.onClose}>
         <X size={14} aria-hidden="true" />
       </button>
     {/if}

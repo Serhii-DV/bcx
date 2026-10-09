@@ -217,7 +217,7 @@ async function openPage(event: MouseEvent, url: string) {
           {@render pinContents(page)}
         </Sidebar.MenuButton>
         {#if sidebar.open}
-          <button type="button" class="pinned-unpin" aria-label={`Unpin ${page.title}`} title={`Unpin ${page.title}`} disabled={saving || !!$pinnedNavigation.error} onclick={() => void change({ action: 'unpin', page })}>
+          <button type="button" data-sidebar-action class="pinned-unpin" aria-label={`Unpin ${page.title}`} title={`Unpin ${page.title}`} disabled={saving || !!$pinnedNavigation.error} onclick={() => void change({ action: 'unpin', page })}>
             <PinOff size={14} aria-hidden="true" />
           </button>
         {/if}
