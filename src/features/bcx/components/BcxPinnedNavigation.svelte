@@ -1,16 +1,8 @@
 <script lang="ts">
-import {
-  ChevronDown,
-  Disc,
-  ExternalLink,
-  Music2,
-  Pin,
-  UserRound,
-} from '@lucide/svelte';
-import { Collapsible, DropdownMenu } from 'bits-ui';
+import { Disc, Music2, Pin, PinOff, UserRound } from '@lucide/svelte';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
-import { tick, untrack } from 'svelte';
+import { tick } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 import type { PinnedPage } from '../pinnedNavigation';
 import { loadPinnedPageImage } from '../pinnedPage';
@@ -24,39 +16,25 @@ let {
   value,
   contentId,
   portal,
-  menuOpen,
   tooltipDisabled,
-  onMenuOpenChange,
-  onSelect,
+  onPreview,
+  selectedPinId,
 }: {
   value: string;
   contentId: string;
   portal?: Element;
-  menuOpen?: string;
   tooltipDisabled: boolean;
-  onMenuOpenChange: (id: string, open: boolean) => void;
-  onSelect: (page: PinnedPage) => void;
+  onPreview: (page: PinnedPage) => void;
+  selectedPinId?: string;
 } = $props();
 const sidebar = Sidebar.useSidebar();
 let pinnedMenu = $state<HTMLUListElement | null>(null);
-let expandedPages = $state<Record<string, boolean>>({});
 let saving = $state(false);
 let error = $state('');
 let images = $state<Record<string, string | undefined>>({});
 let failedImages = $state<Record<string, string | undefined>>({});
 let dragging = $state<string>();
 let dropTarget = $state<{ id: string; position: 'before' | 'after' }>();
-
-$effect(() => {
-  if (sidebar.open) {
-    if (value.startsWith('__pin__')) {
-      const id = value.slice('__pin__'.length);
-      untrack(() => {
-        expandedPages = { ...expandedPages, [id]: true };
-      });
-    }
-  }
-});
 
 $effect(() => {
   const pages = $pinnedNavigation.items.filter((page) => !page.image);
@@ -95,7 +73,6 @@ function startDrag(event: DragEvent, page: PinnedPage) {
     event.preventDefault();
     return;
   }
-  if (menuOpen) onMenuOpenChange(menuOpen, false);
   dragging = page.id;
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('application/x-bcx-pinned-page', page.id);
@@ -168,7 +145,7 @@ async function change(command: Parameters<typeof changePin>[0]) {
     if (command.action === 'unpin') {
       await tick();
       const selectedAction =
-        value === `__pin__${command.page.id}`
+        selectedPinId === command.page.id
           ? document
               .getElementById(`${contentId}-${value}`)
               ?.querySelector<HTMLButtonElement>('button[aria-pressed]')
@@ -227,62 +204,22 @@ async function openPage(event: MouseEvent, url: string) {
     <Icon size={16} aria-hidden="true" />
   {/if}
   <span data-sidebar-label class="pinned-identity"><span>{page.title}</span>{#if page.artistName}<small>{page.artistName}</small>{/if}</span>
-  {#if sidebar.open}<ChevronDown size={14} class={expandedPages[page.id] ? 'rotate-180' : ''} aria-hidden="true" />{/if}
-{/snippet}
-
-{#snippet pinButton(page: PinnedPage, index: number)}
-  <Sidebar.MenuButton data-pinned-page={page.id} isActive={value === `__pin__${page.id}`} aria-current={value === `__pin__${page.id}` && (!sidebar.open || !expandedPages[page.id]) ? 'page' : undefined} aria-label={`${page.title}${page.artistName ? ` by ${page.artistName}` : ''}`} aria-describedby={`${contentId}-pin-reordering`} tooltipDisabled={tooltipDisabled || !!dragging} tooltipPortal={portal} draggable={!saving && !$pinnedNavigation.error} ondragstart={(event) => startDrag(event, page)} ondragend={endDrag} onkeydown={(event) => reorderWithKeyboard(event, index)} ondblclick={(event) => { event.stopPropagation(); onMenuOpenChange(page.id, false); void openPage(event, page.url); }}>
-    {#snippet tooltipContent()}<strong>{page.title}</strong>{#if page.artistName}<p>{page.artistName}</p>{/if}<p>{page.kind} · {page.url}</p><p>Double-click to open on Bandcamp.</p>{/snippet}
-    {#snippet child({ props })}
-      {#if sidebar.open}
-        <Collapsible.Trigger {...props}>{@render pinContents(page)}</Collapsible.Trigger>
-      {:else}
-        <DropdownMenu.Trigger {...props}>{@render pinContents(page)}</DropdownMenu.Trigger>
-      {/if}
-    {/snippet}
-  </Sidebar.MenuButton>
 {/snippet}
 
 {#if $pinnedNavigation.items.length || $pinnedNavigation.error}
-  <Sidebar.Separator />
   <div class="pinned-heading" aria-hidden="true"><Pin size={12} /><span data-sidebar-label>Pinned</span></div>
   <span id={`${contentId}-pin-reordering`} class="sr-only">Double-click to open on Bandcamp. Drag to reorder pinned pages, or use Alt + Arrow Up or Arrow Down when focused.</span>
   <Sidebar.Menu bind:ref={pinnedMenu} aria-label="Pinned pages">
     {#each $pinnedNavigation.items as page, index (page.id)}
-      {@const id = `__pin__${page.id}`}
-      <Sidebar.MenuItem class={`pinned-row${dragging === page.id ? ' dragging' : ''}`} data-drop-position={dropTarget?.id === page.id ? dropTarget.position : undefined} ondragover={(event) => dragOver(event, page)} ondrop={(event) => drop(event, page)}>
+      <Sidebar.MenuItem class={`pinned-row${sidebar.open ? ' with-unpin' : ''}${dragging === page.id ? ' dragging' : ''}`} data-drop-position={dropTarget?.id === page.id ? dropTarget.position : undefined} ondragover={(event) => dragOver(event, page)} ondrop={(event) => drop(event, page)}>
+        <Sidebar.MenuButton data-pinned-page={page.id} isActive={selectedPinId === page.id} aria-current={selectedPinId === page.id ? 'page' : undefined} aria-controls={selectedPinId === page.id ? `${contentId}-${value}` : undefined} aria-label={`${page.title}${page.artistName ? ` by ${page.artistName}` : ''}`} aria-describedby={`${contentId}-pin-reordering`} tooltipDisabled={tooltipDisabled || !!dragging} tooltipPortal={portal} draggable={!saving && !$pinnedNavigation.error} onclick={() => onPreview(page)} ondragstart={(event) => startDrag(event, page)} ondragend={endDrag} onkeydown={(event) => reorderWithKeyboard(event, index)} ondblclick={(event) => { event.stopPropagation(); void openPage(event, page.url); }}>
+          {#snippet tooltipContent()}<strong>{page.title}</strong>{#if page.artistName}<p>{page.artistName}</p>{/if}<p>{page.kind} · {page.url}</p><p>Click to view details. Double-click to open on Bandcamp.</p>{/snippet}
+          {@render pinContents(page)}
+        </Sidebar.MenuButton>
         {#if sidebar.open}
-          <Collapsible.Root open={!!expandedPages[page.id]} onOpenChange={(open) => { expandedPages = { ...expandedPages, [page.id]: open }; }}>
-            {@render pinButton(page, index)}
-            <Collapsible.Content>
-              <Sidebar.Menu class="bcx-navigation-tools" aria-label={`Actions for pinned ${page.title}`}>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton isActive={value === id} aria-current={value === id ? 'page' : undefined} aria-controls={`${contentId}-${id}`} onclick={() => onSelect(page)}><span>Open in BCX</span></Sidebar.MenuButton>
-                </Sidebar.MenuItem>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton>
-                    {#snippet child({ props })}<a {...props} href={page.url} onclick={(event) => { void openPage(event, page.url); }}><ExternalLink size={14} aria-hidden="true" /><span>Open on Bandcamp</span></a>{/snippet}
-                  </Sidebar.MenuButton>
-                </Sidebar.MenuItem>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton disabled={saving || !!$pinnedNavigation.error} onclick={() => void change({ action: 'unpin', page })}><Pin size={14} aria-hidden="true" /><span>Unpin {page.kind}</span></Sidebar.MenuButton>
-                </Sidebar.MenuItem>
-              </Sidebar.Menu>
-            </Collapsible.Content>
-          </Collapsible.Root>
-        {:else}
-          <DropdownMenu.Root open={menuOpen === page.id} onOpenChange={(open) => onMenuOpenChange(page.id, open)}>
-            {@render pinButton(page, index)}
-            <DropdownMenu.Portal to={portal}>
-              <DropdownMenu.Content class="bcx-navigation-menu" data-bcx-sidebar-menu aria-label={`Actions for pinned ${page.title}`} side="right" align="start" sideOffset={8} collisionPadding={8} strategy="fixed">
-                <DropdownMenu.Item class="bcx-navigation-menu-item" aria-current={value === id ? 'page' : undefined} onSelect={() => onSelect(page)}>Open in BCX</DropdownMenu.Item>
-                <DropdownMenu.Item class="bcx-navigation-menu-item">
-                  {#snippet child({ props })}<a {...props} href={page.url} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); void openPage(event, page.url); }}>Open on Bandcamp</a>{/snippet}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item class="bcx-navigation-menu-item" disabled={saving || !!$pinnedNavigation.error} onSelect={() => void change({ action: 'unpin', page })}><Pin size={14} aria-hidden="true" />Unpin {page.kind}</DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+          <button type="button" data-sidebar-action class="pinned-unpin" aria-label={`Unpin ${page.title}`} title={`Unpin ${page.title}`} disabled={saving || !!$pinnedNavigation.error} onclick={() => void change({ action: 'unpin', page })}>
+            <PinOff size={14} aria-hidden="true" />
+          </button>
         {/if}
       </Sidebar.MenuItem>
     {/each}
@@ -293,6 +230,7 @@ async function openPage(event: MouseEvent, url: string) {
       <button type="button" onclick={() => { error = ''; failedImages = {}; void refreshPinnedNavigation(); }}>Retry</button>
     </div>
   {/if}
+  <Sidebar.Separator />
 {/if}
 
 <style>
@@ -309,5 +247,9 @@ async function openPage(event: MouseEvent, url: string) {
 .pinned-error button:focus-visible { outline: 2px solid #38bdf8; }
 .pinned-error { padding: 4px; color: #fca5a5; font-size: 0.6875rem; overflow-wrap: anywhere; }
 .pinned-error button { display: block; text-decoration: underline; cursor: pointer; }
-:global(.bcx-navigation-menu-item[data-disabled]) { opacity: 0.4; cursor: default; }
+:global(.pinned-row.with-unpin > .sidebar-menu-button) { padding-right: 36px; }
+.pinned-unpin { position: absolute; top: 50%; right: 4px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; transform: translateY(-50%); border: 0; border-radius: 4px; color: #9ca3af; background: transparent; cursor: pointer; }
+.pinned-unpin:hover { color: #f9fafb; background: #4b5563; }
+.pinned-unpin:focus-visible { outline: 2px solid #04b1fe; outline-offset: -2px; }
+.pinned-unpin:disabled { opacity: 0.4; cursor: default; }
 </style>

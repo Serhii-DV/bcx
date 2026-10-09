@@ -219,7 +219,7 @@ let dates = $derived(
 
 {#snippet releaseActions()}
   {@render leadingActions?.()}
-  <BcxPreviewItemActions url={releaseUrl} image={item.previewImage} name={`${information.artist} - ${information.title}`} kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={item} keepInPreviewTab={true} />
+  <BcxPreviewItemActions url={releaseUrl} image={item.previewImage} name={`${information.artist} - ${information.title}`} kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={item} keepInPreview={true} />
   {#each bandLinks.artists as artist (artist.url.toString())}
     <BcxPreviewItemActions url={artist.url} image={artist.image} name={artist.name} kind="artist" copyValue={artist.name} previewItem={bandPreviewItem(artist)} />
   {/each}

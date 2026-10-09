@@ -3,10 +3,12 @@ import {
   Check,
   ChevronDown,
   Disc,
+  Eye,
   Folder,
   Menu,
   Settings2,
   UserRound,
+  X,
 } from '@lucide/svelte';
 import { Collapsible, DropdownMenu } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
@@ -26,6 +28,7 @@ interface NavigationSection {
   loaded?: boolean;
   loading?: boolean;
   error?: string;
+  onClose?: () => void;
 }
 
 let {
@@ -36,7 +39,9 @@ let {
   syncStatus,
   subsections = {},
   headerActions,
-  onPinSelect,
+  onPinPreview,
+  selectedPinId,
+  hoverExpanded = $bindable(false),
 }: {
   sections: NavigationSection[];
   tools: NavigationSection[];
@@ -45,7 +50,9 @@ let {
   syncStatus?: 'running' | 'error';
   subsections?: Record<string, SectionNavigation>;
   headerActions?: Snippet;
-  onPinSelect?: (page: PinnedPage) => void;
+  onPinPreview?: (page: PinnedPage) => string;
+  selectedPinId?: string;
+  hoverExpanded?: boolean;
 } = $props();
 
 const sidebar = Sidebar.useSidebar();
@@ -56,6 +63,12 @@ let sectionMenu = $state<string | null>(null);
 let toolsExpanded = $state(false);
 let focusSelectedOnClose = false;
 const contextSections = $derived(sections.filter(isContext));
+const previewSections = $derived(
+  contextSections.filter((section) => !section.id.startsWith('fan-')),
+);
+const fanSections = $derived(
+  contextSections.filter((section) => section.id.startsWith('fan-')),
+);
 const dashboardSection = $derived(
   sections.find((section) => section.id === '__dashboard__'),
 );
@@ -82,6 +95,7 @@ const toolsDescription = $derived(
 
 function isContext(section: NavigationSection) {
   return (
+    section.id.startsWith('__preview__') ||
     section.id.startsWith('band-') ||
     section.id.startsWith('album-') ||
     section.id.startsWith('track-') ||
@@ -104,7 +118,7 @@ export function focusSelected() {
 
 async function selectSection(id: string) {
   value = id;
-  if (sidebar.open && sidebar.overlay) {
+  if (sidebar.open && sidebar.overlay && !hoverExpanded) {
     sidebar.setOpen(false);
     await tick();
     focusSelected();
@@ -122,6 +136,14 @@ async function handleCloseAutoFocus(event: Event) {
   focusSelectedOnClose = false;
   await tick();
   focusSelected();
+}
+
+function handlePointerEnter(event: PointerEvent) {
+  if (event.pointerType === 'mouse' && !sidebar.open) hoverExpanded = true;
+}
+
+function handlePointerLeave(event: PointerEvent) {
+  if (event.pointerType === 'mouse') hoverExpanded = false;
 }
 
 function handleOutsidePointer(event: PointerEvent) {
@@ -167,7 +189,7 @@ $effect(() => {
 
 async function selectSubsection(id: string) {
   value = id;
-  if (sidebar.open && sidebar.overlay) sidebar.setOpen(false);
+  if (sidebar.open && sidebar.overlay && !hoverExpanded) sidebar.setOpen(false);
   await tick();
   focusSelected();
 }
@@ -206,7 +228,7 @@ async function selectSubsection(id: string) {
       {#snippet icon()}{@render sectionIcon(section)}{/snippet}
     </BcxSidebarSection>
   {:else}
-  <Sidebar.MenuItem>
+  <Sidebar.MenuItem class={section.onClose && sidebar.open ? 'bcx-navigation-closable' : undefined}>
     <Sidebar.MenuButton
       isActive={value === section.id}
       aria-label={section.label}
@@ -223,6 +245,11 @@ async function selectSubsection(id: string) {
       {@render sectionIcon(section)}
       <span data-sidebar-label class="bcx-navigation-label">{section.label}</span>
     </Sidebar.MenuButton>
+    {#if section.onClose && sidebar.open}
+      <button type="button" data-sidebar-action class="bcx-navigation-close" aria-label={`Remove ${section.label} from Preview`} title={`Remove ${section.label} from Preview`} onclick={section.onClose}>
+        <X size={14} aria-hidden="true" />
+      </button>
+    {/if}
   </Sidebar.MenuItem>
   {/if}
 {/snippet}
@@ -235,11 +262,11 @@ async function selectSubsection(id: string) {
 {/snippet}
 
 <Sidebar.Root collapsible="icon">
-  <nav bind:this={navigation} class="bcx-main-navigation" aria-label="Music Explorer sections">
+  <nav bind:this={navigation} class="bcx-main-navigation" aria-label="Music Explorer sections" onpointerenter={handlePointerEnter} onpointerleave={handlePointerLeave}>
     <Sidebar.Header class="bcx-navigation-top">
       <div class="bcx-navigation-controls">
         <Sidebar.MenuButton data-sidebar="trigger" aria-label={sidebar.open ? 'Collapse navigation' : 'Expand navigation'} aria-expanded={sidebar.open} aria-controls={navigationId} tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} onclick={sidebar.toggle}>
-          {#snippet tooltipContent()}<strong>Expand navigation</strong><p>Show navigation icons and labels.</p>{/snippet}
+          {#snippet tooltipContent()}<strong>{sidebar.open ? 'Collapse navigation' : 'Expand navigation'}</strong><p>{sidebar.open ? 'Show navigation icons only.' : 'Show navigation icons and labels.'}</p>{/snippet}
           <Menu size={16} aria-hidden="true" />
           <span data-sidebar-label>Navigation</span>
         </Sidebar.MenuButton>
@@ -251,21 +278,28 @@ async function selectSubsection(id: string) {
         <Sidebar.Menu>{@render sectionButton(dashboardSection)}</Sidebar.Menu>
         <Sidebar.Separator />
       {/if}
+      <BcxPinnedNavigation {value} {contentId} {selectedPinId} portal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} tooltipDisabled={toolsMenuOpen || sectionMenu !== null} onPreview={(page) => { const id = onPinPreview?.(page); if (id) void selectSection(id); }} />
+      {#if previewSections.length}
+        <div class="bcx-navigation-preview-heading" aria-hidden="true"><Eye size={12} /><span data-sidebar-label>Preview</span></div>
+      {/if}
+      <Sidebar.Menu aria-label="Preview">
+        {#each previewSections as section (section.id)}{@render sectionButton(section)}{/each}
+      </Sidebar.Menu>
       <Sidebar.Menu>
-        {#each contextSections as section (section.id)}{@render sectionButton(section)}{/each}
+        {#each fanSections as section (section.id)}{@render sectionButton(section)}{/each}
       </Sidebar.Menu>
       {#if contextSections.length && (librarySections.length || followingSections.length)}<Sidebar.Separator />{/if}
       <Sidebar.Menu>
         {#each librarySections as section (section.id)}{@render sectionButton(section)}{/each}
         {#each followingSections as section (section.id)}{@render sectionButton(section)}{/each}
       </Sidebar.Menu>
-      <BcxPinnedNavigation {value} {contentId} portal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} menuOpen={sectionMenu?.startsWith('__pin__') ? sectionMenu.slice('__pin__'.length) : undefined} tooltipDisabled={toolsMenuOpen || sectionMenu !== null} onMenuOpenChange={(id, open) => { const key = `__pin__${id}`; sectionMenu = open ? key : sectionMenu === key ? null : sectionMenu; if (open) toolsMenuOpen = false; }} onSelect={(page) => { onPinSelect?.(page); void selectSection(`__pin__${page.id}`); }} />
       <Sidebar.Separator />
       <Sidebar.Menu>
         <Sidebar.MenuItem>
           {#if sidebar.open}
             <Collapsible.Root bind:open={toolsExpanded}>
-              <Sidebar.MenuButton isActive={toolsSelected} aria-label={toolsTitle} aria-current={toolsSelected && !toolsExpanded ? 'page' : undefined}>
+              <Sidebar.MenuButton isActive={toolsSelected} aria-label={toolsTitle} aria-current={toolsSelected && !toolsExpanded ? 'page' : undefined} tooltipDisabled={toolsMenuOpen || sectionMenu !== null} tooltipPortal={navigation?.closest('.bcx-side-panel-shell') ?? undefined}>
+                {#snippet tooltipContent()}<strong>Tools</strong><p>{toolsDescription}</p>{/snippet}
                 {#snippet child({ props })}
                   <Collapsible.Trigger {...props}>
                     {@render toolsIcon()}
@@ -310,6 +344,11 @@ async function selectSubsection(id: string) {
 </Sidebar.Root>
 
 <style>
+.bcx-navigation-preview-heading { display: flex; align-items: center; gap: 8px; padding: 4px 10px; color: #9ca3af; font-size: 0.6875rem; }
+:global(.bcx-navigation-closable > .sidebar-menu-button) { padding-right: 36px; }
+.bcx-navigation-close { position: absolute; top: 50%; right: 4px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; transform: translateY(-50%); border: 0; border-radius: 4px; color: #9ca3af; background: transparent; cursor: pointer; }
+.bcx-navigation-close:hover { color: #f9fafb; background: #4b5563; }
+.bcx-navigation-close:focus-visible { outline: 2px solid #04b1fe; outline-offset: -2px; }
 .bcx-navigation-controls { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .bcx-main-navigation { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; }
 :global(.bcx-navigation-top) { border-bottom: 1px solid #4b5563; }

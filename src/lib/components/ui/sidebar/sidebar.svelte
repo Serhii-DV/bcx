@@ -24,12 +24,22 @@ const expanded = $derived(collapsible === 'none' || sidebar.open);
 </div>
 
 <style>
-.sidebar { position: relative; flex: 0 0 var(--sidebar-width-icon); min-height: 0; }
+.sidebar { --sidebar-motion-duration: 180ms; --sidebar-motion-easing: cubic-bezier(0.2, 0, 0, 1); position: relative; flex: 0 0 var(--sidebar-width-icon); min-height: 0; transition: flex-basis var(--sidebar-motion-duration) var(--sidebar-motion-easing); }
 .sidebar[data-state='expanded'][data-overlay='false'] { flex-basis: var(--sidebar-width); }
-.sidebar-container { position: absolute; inset: 0 auto 0 0; box-sizing: border-box; display: flex; flex-direction: column; width: var(--sidebar-width-icon); min-height: 0; border-right: 1px solid #4b5563; background: #111827; color: #d1d5db; }
+.sidebar-container { position: absolute; inset: 0 auto 0 0; box-sizing: border-box; display: flex; flex-direction: column; width: var(--sidebar-width-icon); min-height: 0; overflow: hidden; z-index: 20; transition: width var(--sidebar-motion-duration) var(--sidebar-motion-easing), box-shadow var(--sidebar-motion-duration) var(--sidebar-motion-easing); border-right: 1px solid #4b5563; background: #111827; color: #d1d5db; }
 .sidebar[data-state='expanded'] .sidebar-container { width: var(--sidebar-width); }
-.sidebar[data-overlay='true'] .sidebar-container { z-index: 20; box-shadow: 4px 0 12px rgb(0 0 0 / 25%); }
-.sidebar[data-collapsible='icon'] :global([data-sidebar-label]) { display: none; }
-.sidebar[data-collapsible='icon'] :global([data-sidebar='menu-button']) { justify-content: center; padding-inline: 0; }
+.sidebar[data-overlay='true'] .sidebar-container { box-shadow: 4px 0 12px rgb(0 0 0 / 25%); }
+.sidebar-container :global([data-sidebar-label]) { opacity: 1; visibility: visible; transition: opacity 120ms ease-out 40ms, visibility 0s; }
+.sidebar-container :global([data-sidebar='menu-button'] [data-sidebar-label]) { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sidebar[data-collapsible='icon'] :global([data-sidebar-label]) { opacity: 0; visibility: hidden; transition: opacity 80ms ease-out, visibility 0s linear 80ms; }
+.sidebar-container :global([data-sidebar-action]) { animation: sidebar-action-reveal 120ms ease-out 60ms both; }
 .sidebar[data-collapsible='icon'] :global([data-sidebar='separator']) { width: 24px; margin-inline: auto; }
+@keyframes sidebar-action-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .sidebar-container, .sidebar-container :global([data-sidebar-label]), .sidebar[data-collapsible='icon'] :global([data-sidebar-label]) { transition: none; }
+  .sidebar-container :global([data-sidebar-action]) { animation: none; }
+}
 </style>

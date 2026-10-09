@@ -20,16 +20,26 @@ import {
 import { buildBreadcrumbItems, isNode } from 'src/features/treeview/utils';
 import {
   ICON_DATABASE,
+  ICON_DISC,
+  ICON_HEADPHONES,
   ICON_HISTORY,
   ICON_INFO,
   ICON_LAYOUT_DASHBOARD,
+  ICON_MIC,
   ICON_REFRESH_CCW,
   makeIcon,
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, tick, untrack } from 'svelte';
 import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-import type { PinnedPage } from '../pinnedNavigation';
+import {
+  createPinnedPage,
+  type PinnedPage,
+  samePinnedPage,
+} from '../pinnedNavigation';
+import { pinnedPageFromItem } from '../pinnedPage';
+import { getItemPreviewId, getItemPreviewLabel } from '../stores/itemPreview';
+import { pinnedNavigation } from '../stores/pinnedNavigation';
 import {
   restoreSidebarExpanded,
   saveSidebarExpanded,
@@ -37,6 +47,7 @@ import {
 } from '../stores/sidebarExpanded';
 import BcxActivityLog from './BcxActivityLog.svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
+import BcxBandPreview from './BcxBandPreview.svelte';
 import BcxDashboard from './BcxDashboard.svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxExtensionInfo from './BcxExtensionInfo.svelte';
@@ -76,27 +87,150 @@ onMount(() => {
   void restoreSidebarExpanded();
 });
 let mainNavigation = $state<BcxMainNavigation>();
+let hoverExpanded = $state(false);
+const navigationExpanded = $derived($sidebarExpanded || hoverExpanded);
+
+function setNavigationExpanded(expanded: boolean) {
+  hoverExpanded = false;
+  saveSidebarExpanded(expanded);
+}
 const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let releaseVisitedById: Record<string, boolean> = $state({});
 let requestedPreviewSectionId = $state('');
-let openedPinnedPages = $state<PinnedPage[]>([]);
-const selectedPinnedPage = $derived(
-  openedPinnedPages.find((page) => `__pin__${page.id}` === selectedSectionId),
+let openedPreviews = $state<
+  { id: string; item: TreeItem; pinnedPage?: PinnedPage }[]
+>([]);
+let previewVisitedById: Record<string, boolean> = $state({});
+let selectedPreviewItem = $state<TreeItem>();
+let closedPageSectionIds = $state<string[]>([]);
+const additionalPreviews = $derived(
+  openedPreviews.filter(({ item }) => !findPagePreviewSection(item)),
 );
 
-function openPinnedPage(page: PinnedPage) {
-  const existing = openedPinnedPages.find((other) => other.id === page.id);
-  if (!existing) openedPinnedPages = [...openedPinnedPages, page];
-  else if (
-    existing.url !== page.url ||
-    existing.title !== page.title ||
-    existing.artistName !== page.artistName ||
-    existing.entityId !== page.entityId
-  )
-    openedPinnedPages = openedPinnedPages.map((other) =>
-      other.id === page.id ? page : other,
+const navigationPreviews = $derived(
+  additionalPreviews.filter(({ item }) => !findPin(pinnedPageFromItem(item))),
+);
+
+function findPin(page?: PinnedPage): PinnedPage | undefined {
+  return page
+    ? $pinnedNavigation.items.find((pin) => samePinnedPage(pin, page))
+    : undefined;
+}
+
+function pageForSection(section: SidePanelSection): PinnedPage | undefined {
+  if (section.releasePreview) return pinnedPageFromItem(section.releasePreview);
+  if (!section.id.startsWith('band-')) return undefined;
+  for (const url of section.navigationUrls ?? []) {
+    const page = createPinnedPage(
+      url,
+      section.label,
+      undefined,
+      Number(section.id.slice('band-'.length)),
+      section.image,
     );
+    if (page?.kind === 'band') return page;
+  }
+  return undefined;
+}
+
+function isPagePreviewSection(section: SidePanelSection): boolean {
+  return !!section.releasePreview || section.id.startsWith('band-');
+}
+
+function findPagePreviewSection(item: TreeItem): SidePanelSection | undefined {
+  const id = getItemPreviewId(item);
+  return sections.find((section) =>
+    section.releasePreview
+      ? getItemPreviewId(section.releasePreview) === id
+      : !!item.bandPreview &&
+        section.id.startsWith('band-') &&
+        (section.id === `band-${item.bandPreview.id}` ||
+          section.navigationUrls?.some(
+            (url) => getItemPreviewId({ href: url }) === id,
+          )),
+  );
+}
+
+function keepPreview(item: TreeItem, pinnedPage?: PinnedPage): string {
+  const id = `__preview__${getItemPreviewId(item)}`;
+  const existing = openedPreviews.find((preview) => preview.id === id);
+  if (!existing) openedPreviews = [...openedPreviews, { id, item, pinnedPage }];
+  else if (pinnedPage && existing.pinnedPage)
+    openedPreviews = openedPreviews.map((preview) =>
+      preview.id === id ? { ...preview, pinnedPage } : preview,
+    );
+  const pageSection = findPagePreviewSection(item);
+  if (pageSection)
+    closedPageSectionIds = closedPageSectionIds.filter(
+      (id) => id !== pageSection.id,
+    );
+  return pageSection?.id ?? id;
+}
+
+async function closePreview(id: string) {
+  const destinations = navigationSections.filter(
+    (section) => 'onClose' in section && !!section.onClose,
+  );
+  const index = destinations.findIndex((section) => section.id === id);
+  const pageSection = sections.find((section) => section.id === id);
+  const closed = openedPreviews.find((preview) => preview.id === id);
+  if (pageSection) {
+    closedPageSectionIds = [...closedPageSectionIds, id];
+    openedPreviews = openedPreviews.filter(
+      ({ item }) => findPagePreviewSection(item)?.id !== id,
+    );
+  } else {
+    openedPreviews = openedPreviews.filter((preview) => preview.id !== id);
+  }
+  delete previewVisitedById[id];
+  const remaining = destinations.filter((section) => section.id !== id);
+  const next = remaining[Math.min(index, remaining.length - 1)];
+  if (selectedSectionId === id) selectedSectionId = next?.id ?? dashboardTabId;
+  const closedItem = pageSection?.releasePreview ?? closed?.item;
+  if (
+    selectedPreviewItem &&
+    (closedItem
+      ? getItemPreviewId(selectedPreviewItem) === getItemPreviewId(closedItem)
+      : pageSection && findPagePreviewSection(selectedPreviewItem)?.id === id)
+  )
+    selectedPreviewItem = undefined;
+  await tick();
+  mainNavigation?.focusSelected();
+}
+
+const selectedPinId = $derived.by(() => {
+  const section = sections.find((section) => section.id === selectedSectionId);
+  const preview = openedPreviews.find(({ id }) => id === selectedSectionId);
+  return findPin(
+    section ? pageForSection(section) : pinnedPageFromItem(preview?.item),
+  )?.id;
+});
+
+function previewPinnedPage(page: PinnedPage): string {
+  const item: TreeItem = {
+    href: page.url,
+    entityId: page.entityId,
+    label: `${page.artistName ? `${page.artistName} - ` : ''}${page.title}`,
+    image:
+      page.image ??
+      (page.kind === 'band'
+        ? ICON_MIC
+        : page.kind === 'track'
+          ? ICON_HEADPHONES
+          : ICON_DISC),
+    bandPreview:
+      page.kind === 'band'
+        ? {
+            id: page.entityId,
+            name: page.title,
+            url: page.url,
+            image: page.image,
+            cached: false,
+          }
+        : undefined,
+  };
+  return keepPreview(item, page);
 }
 
 function usesToolbarNavigation(section: SidePanelSection): boolean {
@@ -184,12 +318,36 @@ const navigationSections = $derived([
     image: ICON_LAYOUT_DASHBOARD,
     title: 'Return to your 10 most recently visited bands and releases.',
   },
-  ...sections.map((section) => ({
-    ...section,
-    title: getSectionTitle(section),
-    loaded: !!sectionTreeDataById[section.id],
-    loading: !!sectionLoadingById[section.id],
-    error: sectionErrorById[section.id],
+  ...sections
+    .filter(
+      (section) =>
+        !closedPageSectionIds.includes(section.id) &&
+        !findPin(pageForSection(section)),
+    )
+    .map((section) => ({
+      ...section,
+      title: getSectionTitle(section),
+      loaded: !!sectionTreeDataById[section.id],
+      loading: !!sectionLoadingById[section.id],
+      error: sectionErrorById[section.id],
+      onClose: isPagePreviewSection(section)
+        ? () => void closePreview(section.id)
+        : undefined,
+    })),
+  ...navigationPreviews.map(({ id, item }) => ({
+    id,
+    label: getItemPreviewLabel(item),
+    image:
+      item.image ??
+      item.bandPreview?.image ??
+      item.previewImage ??
+      (item.bandPreview
+        ? ICON_MIC
+        : item.previewInformation?.releaseType === 'Track'
+          ? ICON_HEADPHONES
+          : ICON_DISC),
+    title: `View ${getItemPreviewLabel(item)}.\n${getItemPreviewId(item)}`,
+    onClose: () => void closePreview(id),
   })),
 ]);
 const navigationTools = $derived([
@@ -223,7 +381,7 @@ const navigationTools = $derived([
   },
 ]);
 const selectedNavigationSection = $derived(
-  [...navigationSections, ...navigationTools].find(
+  [...navigationSections, ...navigationTools, ...sections].find(
     (section) => section.id === selectedSectionId,
   ),
 );
@@ -268,11 +426,8 @@ function containsPreviewItems(items: TreeItem[]): boolean {
 }
 
 const showPreview = $derived.by(() => {
-  if (selectedPinnedPage)
-    return (
-      selectedPinnedPage.kind === 'band' ||
-      requestedPreviewSectionId === selectedSectionId
-    );
+  if (additionalPreviews.some((preview) => preview.id === selectedSectionId))
+    return requestedPreviewSectionId === selectedSectionId;
   const section = sections.find((section) => section.id === selectedSectionId);
   if (!section || section.label === 'Following Genres') return false;
   if (section.releasePreview) return requestedPreviewSectionId === section.id;
@@ -468,6 +623,7 @@ $effect(() => {
       (section, index) => section === previousCatalogSections?.[index],
     );
   currentSections = sections;
+  closedPageSectionIds = [];
   if (catalogUnchanged) {
     if (selectedSectionId === previousReleaseId) {
       selectedSectionId = releaseSection?.id ?? defaultSectionId;
@@ -476,7 +632,7 @@ $effect(() => {
   }
   if (
     selectedSectionId !== dashboardTabId &&
-    !selectedSectionId.startsWith('__pin__') &&
+    !selectedSectionId.startsWith('__preview__') &&
     releaseSection &&
     releaseSection.id !== previousReleaseId
   ) {
@@ -486,7 +642,7 @@ $effect(() => {
     selectedSectionId !== infoTabId &&
     selectedSectionId !== storageTabId &&
     selectedSectionId !== activityTabId &&
-    !selectedSectionId.startsWith('__pin__') &&
+    !selectedSectionId.startsWith('__preview__') &&
     !(selectedSectionId === syncTabId && hasFanSync) &&
     !sections.some((section) => section.id === selectedSectionId)
   ) {
@@ -505,11 +661,30 @@ $effect(() => {
 });
 
 $effect(() => {
+  const preview = openedPreviews.find(
+    (preview) => preview.id === selectedSectionId,
+  );
+  if (preview) {
+    const pageSection = findPagePreviewSection(preview.item);
+    if (pageSection) selectedSectionId = pageSection.id;
+    else previewVisitedById[preview.id] = true;
+  }
   const section = sections.find((section) => section.id === selectedSectionId);
   if (section) {
     if (section.releasePreview) releaseVisitedById[section.id] = true;
     untrack(() => void loadSectionTreeData(section));
   }
+});
+
+let activatedPageSectionId = '';
+$effect(() => {
+  const section = defaultToDashboard
+    ? undefined
+    : sections.find((section) => section.defaultOpen);
+  const id = section?.id ?? '';
+  if (id === activatedPageSectionId) return;
+  activatedPageSectionId = id;
+  if (section) selectedSectionId = section.id;
 });
 
 // Focus the selected navigation section when the panel opens.
@@ -530,8 +705,8 @@ $effect(() => {
 
 {#snippet sectionHeading(section: { label: string; image?: string; title?: string }, inline = false)}
   {@const HeadingIcon = makeIcon(section.image?.includes('/') ? undefined : section.image)}
-  <div class="bcx-main-heading" class:inline={inline} class:with-close={!browserPanel && !$sidebarExpanded}>
-    {#if !browserPanel && !$sidebarExpanded}{@render closeAction()}{/if}
+  <div class="bcx-main-heading" class:inline={inline} class:with-close={!browserPanel && !navigationExpanded}>
+    {#if !browserPanel && !navigationExpanded}{@render closeAction()}{/if}
     <div class="bcx-main-heading-identity">
       <span class="bcx-main-heading-icon" aria-hidden="true">
         {#if HeadingIcon}
@@ -558,32 +733,42 @@ $effect(() => {
         <div class="bcx-panel-body">
 
           <div bind:this={sectionsContainer} class="bcx-sections">
-            <Sidebar.Provider class="bcx-panel-body bcx-main-layout" bind:open={$sidebarExpanded} onOpenChange={saveSidebarExpanded}>
+            <Sidebar.Provider class="bcx-panel-body bcx-main-layout" open={navigationExpanded} onOpenChange={setNavigationExpanded}>
               <BcxMainNavigation
                 bind:this={mainNavigation}
+                bind:hoverExpanded
                 sections={navigationSections}
                 tools={navigationTools}
                 bind:value={selectedSectionId}
                 contentId={mainContentId}
                 syncStatus={navigationSyncStatus}
                 headerActions={browserPanel ? undefined : closeAction}
-                onPinSelect={openPinnedPage}
+                onPinPreview={previewPinnedPage}
+                {selectedPinId}
               />
               <div class="bcx-panel-body">
-              {#if !selectedPinnedPage && !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !$sidebarExpanded))}
+              {#if !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('__preview__') && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !navigationExpanded))}
                 {#if selectedNavigationSection}
                   {@render sectionHeading(selectedNavigationSection)}
                 {:else}
                   {@render closeAction()}
                 {/if}
               {/if}
-              <BcxItemPreviewPanel visible={showPreview} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
+              <BcxItemPreviewPanel visible={showPreview} bind:selectedItem={selectedPreviewItem} onPreview={(item) => keepPreview(item)} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
               <div id={`${mainContentId}-${dashboardTabId}`} data-bcx-main-section role="region" aria-label="Dashboard" hidden={selectedSectionId !== dashboardTabId} class="bcx-tab-content bcx-info-scroll">
                 {#if selectedSectionId === dashboardTabId}<BcxDashboard errorMessage={dashboardError} onViewHistory={sections.some((section) => section.id === 'history') ? viewHistory : undefined} />{/if}
               </div>
-              {#each openedPinnedPages as page (page.id)}
-                <div id={`${mainContentId}-__pin__${page.id}`} data-bcx-main-section role="region" aria-label={page.title} hidden={selectedSectionId !== `__pin__${page.id}`} class="bcx-tab-content">
-                  <BcxPinnedPage {page} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+              {#each additionalPreviews as preview (preview.id)}
+                <div id={`${mainContentId}-${preview.id}`} data-bcx-main-section role="region" aria-label={getItemPreviewLabel(preview.item)} hidden={selectedSectionId !== preview.id} class="bcx-tab-content">
+                  {#if previewVisitedById[preview.id]}
+                    {#if preview.pinnedPage}
+                      <BcxPinnedPage page={preview.pinnedPage} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
+                    {:else if preview.item.bandPreview}
+                      <BcxBandPreview band={preview.item.bandPreview} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
+                    {:else}
+                      <BcxReleasePreview item={preview.item} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
+                    {/if}
+                  {/if}
                 </div>
               {/each}
               {#each sections as section (section.id)}
@@ -602,7 +787,7 @@ $effect(() => {
                   {/if}
                   {#if section.releasePreview}
                     {#if releaseVisitedById[section.id]}
-                      <BcxReleasePreview item={section.releasePreview} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                      <BcxReleasePreview item={section.releasePreview} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
                     {/if}
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
@@ -611,7 +796,7 @@ $effect(() => {
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
-                          <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} navigationInFilter={true} leadingActions={!browserPanel && !$sidebarExpanded ? closeAction : undefined} />
+                          <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} navigationInFilter={true} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
                         {:else}
                           <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                         {/if}

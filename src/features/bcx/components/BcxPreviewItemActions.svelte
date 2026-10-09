@@ -29,7 +29,7 @@ let {
   copyValue,
   releaseTitle,
   previewItem,
-  keepInPreviewTab = false,
+  keepInPreview = false,
 }: {
   url?: Url;
   image?: string;
@@ -38,7 +38,7 @@ let {
   copyValue: string;
   releaseTitle?: string;
   previewItem?: TreeItem;
-  keepInPreviewTab?: boolean;
+  keepInPreview?: boolean;
 } = $props();
 const preview = getItemPreviewContext();
 let container = $state<HTMLDivElement>();
@@ -98,7 +98,7 @@ let copyItems = $derived([
     : []),
 ]);
 let previewLabel = $derived(
-  keepInPreviewTab ? 'Keep in preview tab' : `Preview ${kind}`,
+  keepInPreview ? 'Keep in Preview' : `Preview ${kind}`,
 );
 let search = $derived.by(() => {
   if (!copyValue.trim()) return undefined;
@@ -150,7 +150,7 @@ async function copy(value: string) {
 }
 </script>
 
-<div bind:this={container} class="preview-item-actions" class:named-title={kind === 'band' || (kind === 'release' && keepInPreviewTab)}>
+<div bind:this={container} class="preview-item-actions" class:named-title={kind === 'band' || (kind === 'release' && keepInPreview)}>
   <DropdownMenu.Root>
     <DropdownMenu.Trigger class="bcx-section-tab" aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`}>
       {#if copied}
@@ -213,7 +213,7 @@ async function copy(value: string) {
       </DropdownMenu.Content>
     </DropdownMenu.Portal>
   </DropdownMenu.Root>
-  {#if keepInPreviewTab && pinPage}<BcxPinButton page={pinPage} />{/if}
+  {#if keepInPreview && pinPage}<BcxPinButton page={pinPage} />{/if}
   <span role="status" class="sr-only">{copied ? 'Copied' : ''}</span>
   {#if error}<span role="alert">{error}</span>{/if}
 </div>
