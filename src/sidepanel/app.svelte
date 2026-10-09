@@ -11,6 +11,7 @@ import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { console } from 'src/utils/console';
 import { onCtrlShiftPlusKey } from 'src/utils/keyboard';
 import { onMount } from 'svelte';
+import BcxSidePanelHome from './components/BcxSidePanelHome.svelte';
 import {
   type ActiveBandcampTab,
   createActiveTabSidePanelData,
@@ -21,6 +22,7 @@ import { shouldReloadActiveTab } from './services/activeTabUpdates';
 
 let sidePanelSections: SidePanelSection[] | null = $state(null);
 let activeTab: ActiveBandcampTab | null = $state(null);
+let activeBrowserTabId: number | undefined;
 let errorMessage = $state('');
 let isLoading = $state(true);
 let hasCompletedSidePanelTour = $state(true);
@@ -45,7 +47,12 @@ onMount(() => {
     const navigationUrls =
       sidePanelSections?.flatMap((section) => section.navigationUrls ?? []) ??
       [];
-    if (shouldReloadActiveTab(activeTab, tabId, changeInfo, navigationUrls)) {
+    if (
+      (!activeTab &&
+        tabId === activeBrowserTabId &&
+        (changeInfo.url || changeInfo.status === 'complete')) ||
+      shouldReloadActiveTab(activeTab, tabId, changeInfo, navigationUrls)
+    ) {
       void loadSidePanelSections();
     } else if (activeTab?.id === tabId) {
       if (changeInfo.url) activeTab = { ...activeTab, url: changeInfo.url };
@@ -97,8 +104,12 @@ async function loadSidePanelSections() {
   errorMessage = '';
 
   try {
-    const tab = await getActiveBandcampTab();
+    const [tab, browserTabs] = await Promise.all([
+      getActiveBandcampTab(),
+      chrome.tabs.query({ active: true, currentWindow: true }),
+    ]);
     if (generation !== sectionLoadGeneration) return;
+    activeBrowserTabId = browserTabs[0]?.id;
     activeTab = tab;
 
     if (!tab) {
@@ -187,17 +198,13 @@ async function toggleBrowserSidePanel() {
       />
     {/key}
   {/if}
+{:else if !isLoading}
+  <BcxSidePanelHome {errorMessage} />
 {:else}
   <main class="bcx-sidepanel-empty">
     <div class="bcx-sidepanel-empty-content">
       <h1>Music Explorer</h1>
-      {#if isLoading}
-        <p>Loading active Bandcamp tab...</p>
-      {:else if errorMessage}
-        <p>{errorMessage}</p>
-      {:else}
-        <p>Open a Bandcamp music or release page to use BCX.</p>
-      {/if}
+      <p>Loading active Bandcamp tab...</p>
     </div>
   </main>
 {/if}

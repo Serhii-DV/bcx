@@ -85,7 +85,7 @@ async function updateSidePanelOptions(
   tabUrl?: string,
 ): Promise<void> {
   if (!chrome.sidePanel || !tabUrl || isFanSyncTabUrl(tabUrl)) return;
-  const enabled = isBandcampTabUrl(tabUrl);
+  const enabled = true;
   if (sidePanelEnabledByTabId.get(tabId) === enabled) return;
   await chrome.sidePanel.setOptions({ tabId, path: SIDEPANEL_PATH, enabled });
   sidePanelEnabledByTabId.set(tabId, enabled);
@@ -312,10 +312,11 @@ chrome.runtime.onMessage.addListener(
     }
 
     if (message.type === MessageType.OPEN_ACTIVE_TAB_URL) {
-      getActiveBandcampTab()
-        .then((tab) => {
+      chrome.tabs
+        .query({ active: true, currentWindow: true })
+        .then(([tab]) => {
           if (!tab?.id) {
-            sendResponse({ ok: false, error: 'No active Bandcamp tab' });
+            sendResponse({ ok: false, error: 'No active browser tab' });
             return;
           }
 
@@ -356,8 +357,8 @@ async function toggleSidePanelForTab(
     throw new Error('Chrome sidePanel API is not available');
   }
 
-  if (!tab?.id || !isBandcampTabUrl(tab.url)) {
-    throw new Error('No active Bandcamp tab');
+  if (!tab?.id) {
+    throw new Error('No active browser tab');
   }
 
   if (openSidePanelTabIds.has(tab.id)) {
@@ -373,7 +374,11 @@ async function toggleSidePanelForTab(
 
 async function getTabById(tabId?: number): Promise<chrome.tabs.Tab | null> {
   if (!tabId) {
-    return getActiveBandcampTab();
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    return tab ?? null;
   }
 
   try {
