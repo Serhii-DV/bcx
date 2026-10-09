@@ -1,7 +1,6 @@
 <script lang="ts">
 import { Disc, ExternalLink, Music2, UserRound } from '@lucide/svelte';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
-import BcxPinButton from 'src/features/bcx/components/BcxPinButton.svelte';
 import type { PinnedPage } from 'src/features/bcx/pinnedNavigation';
 import { loadPinnedPageImage } from 'src/features/bcx/pinnedPage';
 import { console } from 'src/utils/console';
@@ -75,10 +74,7 @@ async function openPage(event: MouseEvent) {
         </span>
       </span>
     </a>
-    <div class="row-actions">
-      <BcxPinButton {page} iconOnly />
-      <a class="new-tab" href={page.url} target="_blank" rel="noopener noreferrer" aria-label={`Open ${page.title} in a new tab`} title={`Open ${page.title} in a new tab`}><ExternalLink size={16} aria-hidden="true" /></a>
-    </div>
+    <a class="new-tab" href={page.url} target="_blank" rel="noopener noreferrer" aria-label={`Open ${page.title} in a new tab`} title={`Open ${page.title} in a new tab`}><ExternalLink size={16} aria-hidden="true" /></a>
   </div>
   {#if error}<p class="error" role="alert">{error}</p>{/if}
 </li>
@@ -96,7 +92,6 @@ async function openPage(event: MouseEvent) {
   .details { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; color: #9ca3af; font-size: 0.75rem; }
   .artist { overflow-wrap: anywhere; }
   relative-time { white-space: nowrap; }
-  .row-actions { display: flex; align-items: center; flex: 0 0 auto; }
-  .new-tab { display: inline-flex; padding: 4px; border-radius: 4px; color: #d1d5db; }
+  .new-tab { display: inline-flex; flex: 0 0 auto; padding: 4px; border-radius: 4px; color: #d1d5db; }
   .error { margin: 0 6px 6px; color: #fca5a5; font-size: 0.75rem; }
 </style>
