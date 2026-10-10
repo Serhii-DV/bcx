@@ -202,7 +202,9 @@ existing artist groups with saved profile information at render time. A single
 click selects an artist; a double-click shows its subitems. Back to Artists also
 selects on a single-click and returns on a double-click. Enter, Space, and
 ArrowRight retain keyboard access to subitems; Enter, Space, and ArrowLeft can
-return to the artist list. Catalog artists browse only the
+return to the artist list. Ctrl+Enter opens an artist's saved page URL in the
+active browser tab when available, without entering its subitems. Artists without
+a saved page URL remain selected. Catalog artists browse only the
 releases in that catalog without applying the global music filter. Release views
 retain their related saved releases. Artist groups keep
 their release timestamps and lazy loaders. Sorting applies after lazy roots load

@@ -364,7 +364,7 @@ function getItemTitle(item: TreeItem): string | undefined {
     return `${getDrillUpLabel()}\nClick to select\nDouble-click to go back`;
   }
   if (doubleClickToExpand && isNode(item) && !isTreeLayout) {
-    const actionHint = 'Click to select\nDouble-click to show subitems';
+    const actionHint = `Click to select\nDouble-click to show subitems${item.href ? '\nCtrl+Enter to open artist page' : ''}`;
     return item.hint ? `${item.hint}\n${actionHint}` : actionHint;
   }
   if (!item.href) return item.hint;
@@ -777,6 +777,28 @@ async function handleBrowserItemClick(
   item: TreeItem,
   event?: MouseEvent | KeyboardEvent,
 ) {
+  if (
+    doubleClickToExpand &&
+    isNode(item) &&
+    event instanceof KeyboardEvent &&
+    event.key === 'Enter' &&
+    event.ctrlKey
+  ) {
+    event.preventDefault();
+    if (item.href && !event.repeat) {
+      try {
+        await handleItemClick(
+          { ...item, onClick: undefined, query: undefined },
+          event,
+        );
+      } catch (error) {
+        console.error('[BcxTreeBrowser]', 'Could not open artist page:', error);
+        showItemFeedback(item, 'Could not open artist page', 3500);
+      }
+    }
+    return;
+  }
+
   if (
     doubleClickToExpand &&
     (isDrillUpItem(item) || isNode(item)) &&
