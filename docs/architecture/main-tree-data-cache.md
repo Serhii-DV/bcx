@@ -204,14 +204,11 @@ selects on a single-click and returns on a double-click. Enter, Space, and
 ArrowRight retain keyboard access to subitems; Enter, Space, and ArrowLeft can
 return to the artist list. Ctrl+Enter opens an artist's saved page URL in the
 active browser tab when available, without entering its subitems. Artists without
-a saved page URL remain selected. Artist, release, and band rows share
-`BcxTreeItemTooltip` for names and interaction hints on hover and keyboard focus,
-instead of a native browser title. The popup matches the top Band navigation:
-it appears below the item and flips above when space is limited. Popups render
-in the side-panel shell so they remain visible outside the scrolling list.
-The shared browser and nested tree renderer provide this behavior in Releases,
-History, Wishlist, Collection, and Following Bands, including grouped views and
-history entries without saved preview data. Catalog artists browse only the
+a saved page URL remain selected. Artist, release, and band rows use native
+browser titles for interaction hints in both the shared browser and nested tree
+renderer. This includes Releases, History, Wishlist, Collection, and Following
+Bands, grouped views, and history entries without saved preview data. Catalog
+artists browse only the
 releases in that catalog without applying the global music filter. Release views
 retain their related saved releases. Artist groups keep
 their release timestamps and lazy loaders. Sorting applies after lazy roots load
