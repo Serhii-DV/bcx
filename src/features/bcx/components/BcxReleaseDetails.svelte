@@ -9,6 +9,7 @@ import {
   type ReleaseInformation,
   type ReleasePreview,
 } from 'src/features/treeview/ReleasePreview';
+import { watchSavedPreviewLibrary } from 'src/features/treeview/savedPreviewLibrary';
 import { TreeData } from 'src/features/treeview/TreeData';
 import {
   TREE_ITEM_LAYOUT,
@@ -22,7 +23,7 @@ import {
   ICON_MIC,
   ICON_TAGS,
 } from 'src/features/treeview/utils/icon';
-import type { Snippet } from 'svelte';
+import { type Snippet, untrack } from 'svelte';
 import { musicFilterStore } from '../stores/musicFilter';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
@@ -76,13 +77,34 @@ function artistLinks(name: string): BandLinkProfile[] {
     (band) => band.name.trim().toLowerCase() === name.trim().toLowerCase(),
   );
 }
+let libraryRevision = $state(0);
+$effect(() =>
+  watchSavedPreviewLibrary(() => {
+    libraryRevision += 1;
+  }),
+);
+// Object replacement during hydration should not repeat the same lookup.
+let bandLinksKey = $derived(
+  JSON.stringify([
+    releaseUrl?.toString(),
+    information.title,
+    information.artist,
+    information.artistUrl,
+    information.publisher,
+    information.publisherUrl,
+    artistNames,
+  ]),
+);
 $effect(() => {
-  const currentInformation = information;
-  const currentUrl = releaseUrl;
+  bandLinksKey;
+  libraryRevision;
+  const [currentInformation, currentUrl] = untrack(
+    () => [information, releaseUrl] as const,
+  );
   let cancelled = false;
   bandLinks = { artists: [], detectedArtists: [], releases: [] };
   bandLinksError = '';
-  void loadReleaseBandLinks(currentInformation, currentUrl)
+  void untrack(() => loadReleaseBandLinks(currentInformation, currentUrl))
     .then((links) => {
       if (!cancelled) bandLinks = links;
     })

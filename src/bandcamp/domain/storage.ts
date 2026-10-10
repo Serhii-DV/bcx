@@ -295,8 +295,10 @@ export class BandcampStorage {
     return albumsRawDataArray;
   }
 
-  static async getAllAlbumsRawData(): Promise<RawAlbumData[]> {
-    const keys = await storage.getKeys();
+  static async getAllAlbumsRawData(
+    savedKeys?: readonly string[],
+  ): Promise<RawAlbumData[]> {
+    const keys = savedKeys ?? (await storage.getKeys());
     const ids = keys
       .filter(StorageKey.isAlbumKey)
       .map((key) => Number(key.slice(ALBUM_KEY_PREFIX.length)))
@@ -304,20 +306,18 @@ export class BandcampStorage {
     return ids.length ? this.getAlbumsRawDataByIds(ids) : [];
   }
 
-  static async getAlbums(albums: Album[]): Promise<Album[]> {
+  static async getAlbums(
+    albums: Album[],
+    savedData?: RawAlbumData[],
+  ): Promise<Album[]> {
     const albumIds = albums.map((album) => album.id);
     const albumsRawDataArray =
-      await BandcampStorage.getAlbumsRawDataByIds(albumIds);
+      savedData ?? (await BandcampStorage.getAlbumsRawDataByIds(albumIds));
 
     // Collect all unique track IDs from loaded albums
-    const trackIds: number[] = [];
-    albumsRawDataArray.forEach((rawAlbumData) => {
-      rawAlbumData.trackIds.forEach((id) => {
-        if (!trackIds.includes(id)) {
-          trackIds.push(id);
-        }
-      });
-    });
+    const trackIds = [
+      ...new Set(albumsRawDataArray.flatMap((album) => album.trackIds)),
+    ];
 
     // Load all tracks data
     const tracks = await BandcampStorage.getTracksByTrackIds(trackIds);
@@ -381,8 +381,10 @@ export class BandcampStorage {
     return tracks.map((track) => loadedTracksMap.get(track.id) || track);
   }
 
-  static async getAllCompressedBandData(): Promise<CompressedBandData[]> {
-    const keys = await storage.getKeys();
+  static async getAllCompressedBandData(
+    savedKeys?: readonly string[],
+  ): Promise<CompressedBandData[]> {
+    const keys = savedKeys ?? (await storage.getKeys());
     const bandKeys = keys.filter((key) => StorageKey.isBandKey(key));
     const compressedBandDataMap = await storage.get(bandKeys);
 

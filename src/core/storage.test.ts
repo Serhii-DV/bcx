@@ -60,6 +60,20 @@ describe('Storage', () => {
         { enabled: true },
         { enabled: true },
       ]);
+      await Promise.all([debugStorage.getKeys(), debugStorage.getKeys()]);
+      expect(
+        log.mock.calls.every((args) =>
+          args.every(
+            (arg) => !arg || typeof arg !== 'object' || Array.isArray(arg),
+          ),
+        ),
+      ).toBe(true);
+      storageArea.getKeys.mockRejectedValueOnce(new Error('Read failed'));
+      await expect(debugStorage.getKeys()).rejects.toThrow('Read failed');
+      await expect(debugStorage.getKeys()).resolves.toEqual([
+        'enabled',
+        'name',
+      ]);
       expect(timer).not.toHaveBeenCalled();
       expect(timerEnd).not.toHaveBeenCalled();
     } finally {

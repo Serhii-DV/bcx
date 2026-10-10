@@ -30,6 +30,7 @@ export class Storage {
   constructor(
     private storage: chrome.storage.StorageArea,
     private debug = false,
+    private debugPayloads = false,
   ) {}
 
   async get<T extends StorageDataMap = StorageDataMap>(
@@ -53,7 +54,7 @@ export class Storage {
           performance.now() - startedAt,
           'ms',
           ...arrayPreview(uniqueKeys as string[]),
-          items,
+          ...(this.debugPayloads ? [items] : []),
         );
       }
 
@@ -87,32 +88,27 @@ export class Storage {
   }
 
   async getKeys(): Promise<string[]> {
-    return new Promise<string[]>((resolve, reject) => {
-      const logLabel = `[Storage.getKeys]`;
+    const startedAt = performance.now();
+    try {
+      const keys = await this.storage.getKeys();
       if (this.debug) {
-        console.time(logLabel);
+        console.log(
+          '[Storage.getKeys]',
+          performance.now() - startedAt,
+          'ms',
+          ...arrayPreview(keys),
+        );
       }
-
-      this.storage.getKeys().then((keys) => {
-        if (chrome.runtime.lastError) {
-          return reject(
-            new Error(
-              getErrorMessage(
-                chrome.runtime.lastError,
-                'Chrome storage operation failed.',
-              ),
-            ),
-          );
-        }
-
-        if (this.debug) {
-          console.log(logLabel, ...arrayPreview(keys));
-          console.timeEnd(logLabel);
-        }
-
-        resolve(keys);
-      });
-    });
+      return keys;
+    } catch (error) {
+      if (this.debug)
+        console.log(
+          '[Storage.getKeys]',
+          performance.now() - startedAt,
+          'ms (failed)',
+        );
+      throw error;
+    }
   }
 
   async getAll(): Promise<StorageDataMap> {
@@ -180,7 +176,11 @@ export class Storage {
         }
 
         if (this.debug) {
-          console.log(logLabel, storableData);
+          console.log(
+            logLabel,
+            ...arrayPreview(Object.keys(storableData)),
+            ...(this.debugPayloads ? [storableData] : []),
+          );
           console.timeEnd(logLabel);
         }
 

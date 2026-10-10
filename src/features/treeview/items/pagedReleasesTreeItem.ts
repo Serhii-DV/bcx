@@ -4,7 +4,7 @@ import type { TreeItem } from '../TreeItem';
 import { ICON_DISC } from '../utils/icon';
 import { createPagedTreeItem } from './createPagedTreeItem';
 
-const RELEASE_BATCH_SIZE = 20;
+export const RELEASE_BATCH_SIZE = 20;
 
 type CreatePagedReleasesTreeItemArgs = {
   albums: Album[];

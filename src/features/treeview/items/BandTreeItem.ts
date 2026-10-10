@@ -22,7 +22,11 @@ import {
 import { createPagedReleasesTreeItem } from './pagedReleasesTreeItem';
 
 export class BandTreeItem {
-  static create(band: Band, currentPageUrl: Url): TreeItem {
+  static create(
+    band: Band,
+    currentPageUrl: Url,
+    options: { catalogPlaceholders?: boolean } = {},
+  ): TreeItem {
     const showAlbumsWithSummary = isBandcampMusicUrl(currentPageUrl);
     const builder = new TreeItemBuilder(
       BandTreeItemFactory.createWithPreview(band),
@@ -31,7 +35,13 @@ export class BandTreeItem {
 
     builder.add(linkOpenPage(band.name, band.url.toString()));
 
-    if (band.hasReleases) {
+    if (band.hasReleases && options.catalogPlaceholders) {
+      builder.add(
+        items('Artists', []),
+        items('Releases', []),
+        items('Years', []),
+      );
+    } else if (band.hasReleases) {
       builder.add(
         AlbumTreeItemFactory.createArtistsTreeItem(
           band.metadata.albums,
