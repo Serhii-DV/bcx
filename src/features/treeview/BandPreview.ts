@@ -162,6 +162,7 @@ export async function loadReleaseBandLinks(
   artists: BandLinkProfile[];
   detectedArtists: BandLinkProfile[];
   publisher?: BandLinkProfile;
+  parent?: BandLinkProfile;
   releases: BandLinkProfile[];
 }> {
   const normalize = (name: string) => name.trim().toLowerCase();
@@ -251,6 +252,18 @@ export async function loadReleaseBandLinks(
       publisher ??= artist;
     }
   }
+  const parentUrl = bandUrl(releaseUrl?.toString());
+  const parent = parentUrl
+    ? await profile(
+        parentUrl,
+        publisher?.url.hasSameHostname(parentUrl)
+          ? publisher.name
+          : artistUrl?.hasSameHostname(parentUrl) &&
+              !Artist.parse(information.artist).isVariousArtists
+            ? information.artist
+            : parentUrl.hostname.replace(/\.bandcamp\.com$/, ''),
+      )
+    : undefined;
   const detectedArtistNames = new Set(
     getReleaseArtistNames(information).map(normalize),
   );
@@ -271,6 +284,7 @@ export async function loadReleaseBandLinks(
         index,
     ),
     publisher,
+    parent,
     releases: await Promise.all(
       releaseLinks.map(async (release) => {
         const band = await profile(
