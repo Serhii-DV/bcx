@@ -111,7 +111,11 @@ Snapshot version 27 merges recognized country aliases and US state and Canadian
 province or territory names into their countries. Snapshot version 28 also
 recognizes Los Angeles, accented Québec, and Russian Federation as Russia.
 
-Wishlist Releases and Artists show every stored item immediately. Snapshot version
+Wishlist Releases and artist groups show every stored item when opened.
+Alternate release orders and catalog groups larger than the first release page
+are built on demand, retaining counts, source order, and the existing full-list
+or pagination behavior. Runtime loaders are rebuilt from `releaseCatalog`
+after a cache round trip; cache versions, keys, expiry, and invalidation are unchanged. Snapshot version
 10 invalidates older snapshots with paginated Wishlist options. Release previews
 are still rebuilt from raw album data, and Collection release pagination is retained.
 

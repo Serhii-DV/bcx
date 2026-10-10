@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
-import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
@@ -14,7 +13,10 @@ import {
   createReleaseDetailsTree,
   createReleaseInformation,
 } from '../ReleasePreview';
-import { watchSavedPreviewLibrary } from '../savedPreviewLibrary';
+import {
+  getSavedArtistReleases,
+  watchSavedPreviewLibrary,
+} from '../savedPreviewLibrary';
 import { TreeData } from '../TreeData';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
 import { ICON_EXTERNAL_LINK } from '../utils/icon';
@@ -104,17 +106,28 @@ describe('release previews', () => {
       ) => void;
       notify({ '/ui/sidebar-expanded': { newValue: true } }, 'local');
       expect(changed).not.toHaveBeenCalled();
+      rs.useFakeTimers();
       notify({ '/a/1': { newValue: {} } }, 'local');
+      notify({ '/a/2': { newValue: {} } }, 'local');
+      await rs.advanceTimersByTimeAsync(100);
       expect(changed).toHaveBeenCalledTimes(1);
       await loadReleaseBandLinks(information, album.url);
       expect(getKeys).toHaveBeenCalledTimes(2);
       expect(getAlbums).toHaveBeenCalledTimes(2);
       notify({ '/following-bands': { newValue: [] } }, 'local');
+      await rs.advanceTimersByTimeAsync(100);
       expect(changed).toHaveBeenCalledTimes(2);
       await loadReleaseBandLinks(information, album.url);
       expect(getAlbums).toHaveBeenCalledTimes(2);
+      notify({ '/b/1': { newValue: {} } }, 'local');
+      await rs.advanceTimersByTimeAsync(100);
+      await loadReleaseBandLinks(information, album.url);
+      expect(getAlbums).toHaveBeenCalledTimes(2);
+      await getSavedArtistReleases(['Artist']);
+      expect(getAlbums).toHaveBeenCalledTimes(2);
     } finally {
       stop();
+      rs.useRealTimers();
       expect(removeListener).toHaveBeenCalledWith(addListener.mock.calls[0][0]);
       Object.defineProperty(chrome.storage, 'onChanged', {
         configurable: true,
@@ -150,11 +163,15 @@ describe('release previews', () => {
     const rawAlbums = rs
       .spyOn(BandcampStorage, 'getAlbumsRawDataByIds')
       .mockResolvedValue([stored.toRawData()]);
-    rs.spyOn(BandcampStorage, 'getAlbums').mockResolvedValue([stored]);
+    const hydrated = rs
+      .spyOn(BandcampStorage, 'getAlbums')
+      .mockResolvedValue([stored]);
     const details = rs.spyOn(AlbumTreeItemFactory, 'createWithDetails');
     const preview =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
-    expect(details).toHaveBeenCalledWith(AlbumDetails.fromAlbum(stored));
+    expect(details).not.toHaveBeenCalled();
+    expect(rawAlbums).toHaveBeenCalledTimes(1);
+    expect(hydrated).toHaveBeenCalledWith([album], [stored.toRawData()]);
     expect(preview?.items.some((item) => item.label === 'Tracks')).toBe(true);
     expect(
       preview?.items.find((item) => item.label === 'About this release')

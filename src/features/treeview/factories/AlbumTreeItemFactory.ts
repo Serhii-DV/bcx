@@ -1,11 +1,10 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
-import { getArtistNamesFromAlbums } from 'src/bandcamp/domain/album/helper';
+import { groupAlbumsByArtist } from 'src/bandcamp/domain/album/helper';
 import { ArtworkSize } from 'src/bandcamp/domain/artwork/artworkSize';
-import { readCurrentItems } from 'src/bandcamp/domain/fanData/library';
+import { readCurrentLists } from 'src/bandcamp/domain/fanData/library';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
-import { arrayUnique } from 'src/utils/array';
 import { TreeItemButtonFactory } from '../buttons/factory';
 import { ArtistTreeItem } from '../items/ArtistTreeItem';
 import {
@@ -14,8 +13,8 @@ import {
   ReleasePreview,
   releaseCollectionStatus,
 } from '../ReleasePreview';
-import { createTreeDataFromTreeItemChildren } from '../sections/treeDataFactory';
-import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
+import { TreeData } from '../TreeData';
+import { type TreeItem } from '../TreeItem';
 import {
   builder,
   copyable,
@@ -87,29 +86,30 @@ export class AlbumTreeItemFactory {
         },
       ],
       loadPreview: async () => {
-        const saved = await BandcampStorage.getAlbumsRawDataByIds([album.id]);
-        const [stored] = saved.length
-          ? await BandcampStorage.getAlbums([album])
-          : [];
-        const item = stored
-          ? await this.createWithDetails(AlbumDetails.fromAlbum(stored))
-          : this.createWithSummary(album);
-        const information = createReleaseInformation(stored ?? album);
-        const [collection, wishlist] = await Promise.all([
-          readCurrentItems('collection', fanId),
-          readCurrentItems('wishlist', fanId),
+        const [[stored], lists] = await Promise.all([
+          BandcampStorage.getAlbumsRawDataByIds([album.id]).then((saved) =>
+            saved.length ? BandcampStorage.getAlbums([album], saved) : [],
+          ),
+          readCurrentLists(['collection', 'wishlist'], fanId),
         ]);
+        const information = createReleaseInformation(stored ?? album);
+        const baseTree = new TreeData(
+          stored
+            ? [
+                items(
+                  'Tracks',
+                  TrackTreeItemFactory.createMany(stored.tracks),
+                ).build(),
+              ]
+            : [],
+        );
         information.collectionStatus = releaseCollectionStatus(
           album,
-          collection,
-          wishlist,
+          lists.collection,
+          lists.wishlist,
         );
         return new ReleasePreview(
-          createReleaseDetailsTree(
-            createTreeDataFromTreeItemChildren(item, TREE_ITEM_LAYOUT.TREE),
-            information,
-            album.url.toString(),
-          ),
+          createReleaseDetailsTree(baseTree, information, album.url.toString()),
           information,
         );
       },
@@ -193,16 +193,9 @@ export class AlbumTreeItemFactory {
     albums: Album[],
     withSummary: boolean = false,
   ): TreeItem[] {
-    const artists = getArtistNamesFromAlbums(albums);
-    return arrayUnique(artists)
-      .sort()
-      .map((artist) => {
-        const artistChildren: TreeItem[] = this.fromAlbums(
-          albums.filter((album) => album.containsArtistName(artist)),
-          withSummary,
-        );
-        return items(artist, artistChildren).build();
-      });
+    return [...groupAlbumsByArtist(albums)].map(([artist, releases]) =>
+      items(artist, this.fromAlbums(releases, withSummary)).build(),
+    );
   }
 
   static createArtistsTreeItem(

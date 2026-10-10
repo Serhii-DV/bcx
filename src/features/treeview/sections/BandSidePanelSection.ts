@@ -40,7 +40,10 @@ export class BandSidePanelSection {
           withReleasePreviews(
             await TreeItemCache.getOrCreate(
               TreeItemCache.subtreeKey('band', band.id),
-              async () => BandTreeItem.create(band, currentPageUrl),
+              async () =>
+                BandTreeItem.create(band, currentPageUrl, {
+                  catalogPlaceholders: true,
+                }),
               SIDE_PANEL_SECTION_CACHE_TTL.BAND,
             ),
             band,
@@ -53,7 +56,10 @@ export class BandSidePanelSection {
 
 export function createBandTreeData(band: Band) {
   return createTreeDataFromTreeItemChildren(
-    withReleasePreviews(BandTreeItem.create(band, band.url), band),
+    withReleasePreviews(
+      BandTreeItem.create(band, band.url, { catalogPlaceholders: true }),
+      band,
+    ),
   );
 }
 
@@ -62,7 +68,7 @@ function createCurrentBandPageSection(
   currentPageUrl: Url,
 ): SidePanelSection {
   const bandTreeItemFromStorage = withReleasePreviews(
-    BandTreeItem.create(band, currentPageUrl),
+    BandTreeItem.create(band, currentPageUrl, { catalogPlaceholders: true }),
     band,
   );
   const roots = bandTreeItemFromStorage.children || [];

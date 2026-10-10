@@ -2,6 +2,7 @@ import {
   type ParsedReleaseMetadata,
   parseReleaseMetadata,
 } from 'src/utils/releaseMetadata';
+import { isVariousArtists } from '../artist/artist';
 import { getArtistNamesFromTracks } from '../track/helper';
 import type { Album } from './album';
 
@@ -39,4 +40,31 @@ export function getReleaseMetadataFromAlbum(
   }
 
   return metadata;
+}
+
+// Preserve display spellings while grouping case-insensitively in one pass.
+export function groupAlbumsByArtist(albums: Album[]): Map<string, Album[]> {
+  const groups = new Map<string, number[]>();
+  const names = new Set<string>();
+  const compilations: number[] = [];
+  for (const [index, album] of albums.entries()) {
+    const albumNames = getArtistNamesFromAlbums([album]);
+    for (const name of albumNames) names.add(name);
+    if (album.artist.isVariousArtists) compilations.push(index);
+    for (const key of new Set(albumNames.map((name) => name.toLowerCase()))) {
+      const releases = groups.get(key) ?? [];
+      releases.push(index);
+      groups.set(key, releases);
+    }
+  }
+  return new Map(
+    [...names].sort().map((name) => {
+      const matches = groups.get(name.toLowerCase()) ?? [];
+      // Compilation aliases also match all compilation albums, as containsArtistName does.
+      const indexes = isVariousArtists(name)
+        ? [...new Set([...matches, ...compilations])].sort((a, b) => a - b)
+        : matches;
+      return [name, indexes.map((index) => albums[index])];
+    }),
+  );
 }

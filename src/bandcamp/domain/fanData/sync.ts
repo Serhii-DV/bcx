@@ -15,7 +15,7 @@ import {
   isFanDataset,
   itemId,
   readLibrary,
-  saveAvailability,
+  saveAvailabilityBatch,
   saveSnapshot,
   unavailableKey,
 } from './library';
@@ -266,17 +266,35 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
     let available = 0;
     let unavailableCount = 0;
     let changed = 0;
-    for (const item of orderedCandidates) {
-      await progress(`Checking saved pages ${++checked}/${candidates.size}…`);
-      const result = await checkAvailability(item, signal);
-      signal.throwIfAborted();
-      await saveAvailability(job.account.fanId, itemId(item), result);
-      if (result.state === 'available') available++;
-      else if (result.state === 'unavailable') unavailableCount++;
-      else inconclusive++;
-      const previous = previousChecks[itemId(item)];
-      if (previous && previous.state !== result.state) changed++;
-      await new Promise((resolve) => setTimeout(resolve, 250));
+    let pendingAvailability: AvailabilityList = {};
+    let checkpointAt = Date.now();
+    const flushAvailability = async () => {
+      if (!Object.keys(pendingAvailability).length) return;
+      await saveAvailabilityBatch(job.account.fanId, pendingAvailability);
+      pendingAvailability = {};
+      checkpointAt = Date.now();
+    };
+    try {
+      for (const item of orderedCandidates) {
+        await progress(`Checking saved pages ${++checked}/${candidates.size}…`);
+        const result = await checkAvailability(item, signal);
+        signal.throwIfAborted();
+        pendingAvailability[itemId(item)] = result;
+        if (
+          Object.keys(pendingAvailability).length >= 10 ||
+          Date.now() - checkpointAt >= 5000
+        )
+          await flushAvailability();
+        if (result.state === 'available') available++;
+        else if (result.state === 'unavailable') unavailableCount++;
+        else inconclusive++;
+        const previous = previousChecks[itemId(item)];
+        if (previous && previous.state !== result.state) changed++;
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    } finally {
+      // Persist completed checks even when a later request fails or is cancelled.
+      await flushAvailability();
     }
     await updateActivity(
       job.id,

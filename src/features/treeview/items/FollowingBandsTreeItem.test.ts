@@ -6,6 +6,7 @@ import {
   readLibrary,
   readSavedItems,
   saveAvailability,
+  saveAvailabilityBatch,
   saveSnapshot,
   stagingKey,
   unavailableKey,
@@ -286,10 +287,9 @@ describe('Following Bands', () => {
       reason: 'HTTP 404',
     };
     await saveAvailability(42, 'band:1', absent);
-    await saveAvailability(42, 'band:1', {
-      ...absent,
-      state: 'unknown',
-      reason: 'Network error',
+    await saveAvailabilityBatch(42, {
+      'band:1': { ...absent, state: 'unknown', reason: 'Network error' },
+      'band:2': { ...absent, state: 'available', reason: 'HTTP 200' },
     });
     expect(await storage.getByKey(unavailableKey(42))).toEqual({
       'band:1': absent,

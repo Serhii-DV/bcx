@@ -10,6 +10,7 @@ import type {
   MusicAlbumSchema,
   MusicRecordingSchema,
 } from 'src/bandcamp/domain/page/schema';
+import { urlCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
@@ -262,6 +263,17 @@ async function findBandForUrl(
     return hydratedBand ?? entityBand;
   }
 
-  const bands = await BandcampStorage.getBands();
-  return bands.find((band) => band.url.hasSameHostname(currentPageUrl)) ?? null;
+  const bands = await BandcampStorage.getAllCompressedBandData();
+  const match = bands.find((band) => {
+    if (typeof band.u !== 'string') return false;
+    try {
+      return Url.create(urlCompressor.decompress(band.u)).hasSameHostname(
+        currentPageUrl,
+      );
+    } catch {
+      return false;
+    }
+  });
+  if (!match || !Number.isSafeInteger(match.i) || match.i <= 0) return null;
+  return (await BandcampStorage.getBands([match.i]))[0] ?? null;
 }

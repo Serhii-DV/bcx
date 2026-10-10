@@ -3,6 +3,7 @@ import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { libraryKey } from 'src/bandcamp/domain/fanData/library';
 import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
+import { bandDataCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { Url } from 'src/core/url';
 import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
@@ -266,8 +267,12 @@ describe('active tab public profile', () => {
       0,
     );
     band.metadata.location = 'Old location';
-    rs.spyOn(BandcampStorage, 'getByUuids').mockResolvedValue([band]);
-    rs.spyOn(BandcampStorage, 'getBands').mockResolvedValue([band]);
+    const urls = rs
+      .spyOn(BandcampStorage, 'getByUuids')
+      .mockResolvedValue([band]);
+    const getBands = rs
+      .spyOn(BandcampStorage, 'getBands')
+      .mockResolvedValue([band]);
     rs.spyOn(chrome.runtime, 'sendMessage').mockImplementation(async () => ({
       pageData: {
         data: {},
@@ -287,6 +292,28 @@ describe('active tab public profile', () => {
       tree?.items.find((item) => item.label === 'About')?.aboutProfile
         ?.location,
     ).toBe('Paris, France');
+    urls.mockResolvedValue([]);
+    const otherBand = Band.create(
+      903,
+      'Other',
+      'https://other-profile.bandcamp.com',
+      0,
+    );
+    rs.spyOn(BandcampStorage, 'getAllCompressedBandData').mockResolvedValue([
+      bandDataCompressor.compress(otherBand.toRawData()),
+      bandDataCompressor.compress(band.toRawData()),
+    ]);
+    getBands.mockClear();
+    const fallback = await createActiveTabSidePanelData({
+      id: 1,
+      windowId: 1,
+      url: 'https://profile-stored.bandcamp.com/music',
+    });
+    expect(fallback.sections.some((section) => section.id === 'band-902')).toBe(
+      true,
+    );
+    expect(getBands).toHaveBeenCalledTimes(1);
+    expect(getBands).toHaveBeenCalledWith([902]);
   });
 });
 

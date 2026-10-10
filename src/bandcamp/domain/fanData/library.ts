@@ -173,20 +173,52 @@ export async function readCurrentItems<T extends FanItem>(
   dataset: FanDataset,
   fanId?: number,
 ): Promise<T[]> {
-  const owner = !fanId
-    ? (await fanStorage().getByKey<SavedListOwners>(SAVED_LIST_OWNERS_KEY))?.[
-        dataset
-      ]
-    : undefined;
-  const accountId = fanId ?? owner?.fanId;
-  const list = accountId
-    ? (await readLibrary(accountId))?.lists[dataset]
-    : undefined;
-  return list
-    ? list.current.flatMap((id) =>
-        list.records[id] ? [list.records[id] as T] : [],
-      )
-    : readSharedItems<T>(dataset, fanId);
+  return ((await readCurrentLists([dataset], fanId))[dataset] ?? []) as T[];
+}
+
+// Resolve account ownership once and share each account read across datasets.
+export async function readCurrentLists(
+  datasets: readonly FanDataset[],
+  fanId?: number,
+): Promise<Partial<Record<FanDataset, FanItem[]>>> {
+  const storage = fanStorage();
+  let owners = fanId
+    ? undefined
+    : await storage.getByKey<SavedListOwners>(SAVED_LIST_OWNERS_KEY);
+  const libraries = new Map<number, Promise<FanLibrary | undefined>>();
+  const lists = await Promise.all(
+    datasets.map(async (dataset) => {
+      const accountId = fanId ?? owners?.[dataset]?.fanId;
+      if (!accountId) return undefined;
+      let library = libraries.get(accountId);
+      if (!library) {
+        library = readLibrary(accountId);
+        libraries.set(accountId, library);
+      }
+      return (await library)?.lists[dataset];
+    }),
+  );
+  const missing = datasets.filter((_, index) => !lists[index]);
+  if (missing.length && !owners)
+    owners = await storage.getByKey<SavedListOwners>(SAVED_LIST_OWNERS_KEY);
+  const allowed = missing.filter(
+    (dataset) =>
+      !fanId || !owners?.[dataset] || owners[dataset]?.fanId === fanId,
+  );
+  const shared = await storage.get(allowed.map((dataset) => `/${dataset}`));
+  return Object.fromEntries(
+    datasets.map((dataset, index) => {
+      const list = lists[index];
+      return [
+        dataset,
+        list
+          ? list.current.flatMap((id) =>
+              list.records[id] ? [list.records[id]] : [],
+            )
+          : (shared[`/${dataset}`] ?? []),
+      ];
+    }),
+  );
 }
 
 // Preserve every previously seen record before publishing the latest membership.
@@ -290,6 +322,14 @@ export async function saveAvailability(
   id: string,
   result: Availability,
 ): Promise<void> {
+  return saveAvailabilityBatch(fanId, { [id]: result });
+}
+
+export async function saveAvailabilityBatch(
+  fanId: number,
+  updates: AvailabilityList,
+): Promise<void> {
+  if (!Object.keys(updates).length) return;
   const storage = fanStorage();
   const library = await readLibrary(fanId);
   if (!library) return;
@@ -297,9 +337,11 @@ export async function saveAvailability(
     (await storage.getByKey<AvailabilityList>(availabilityKey(fanId))) ?? {};
   const unavailable =
     (await storage.getByKey<AvailabilityList>(unavailableKey(fanId))) ?? {};
-  results[id] = result;
-  if (result.state === 'unavailable') unavailable[id] = result;
-  if (result.state === 'available') delete unavailable[id];
+  for (const [id, result] of Object.entries(updates)) {
+    results[id] = result;
+    if (result.state === 'unavailable') unavailable[id] = result;
+    if (result.state === 'available') delete unavailable[id];
+  }
   // Inconclusive checks never erase an earlier confirmed result.
   library.revision = crypto.randomUUID();
   await storage.set({

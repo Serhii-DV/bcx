@@ -1,9 +1,9 @@
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
 import { Artist, isVariousArtists } from 'src/bandcamp/domain/artist/artist';
-import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import type { ReleaseInformation } from '../ReleasePreview';
+import { getSavedArtistReleases } from '../savedPreviewLibrary';
 import type { TreeItem } from '../TreeItem';
 import { items, text } from '../TreeItemBuilder';
 import { ICON_DISC, ICON_EXTERNAL_LINK } from '../utils/icon';
@@ -41,7 +41,7 @@ export function createRelatedReleasesTreeItem(
           .filter((name) => name && !isVariousArtists(name)),
       );
       const seen = new Set(currentUrl ? [currentUrl.href] : []);
-      const saved = await BandcampStorage.getAllAlbumsRawData();
+      const saved = await getSavedArtistReleases([...artistNames]);
       const albums = saved.flatMap((album) => {
         const url = pageUrl(album.url);
         if (!url?.pathname.startsWith('/album/') || seen.has(url.href))

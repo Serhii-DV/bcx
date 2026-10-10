@@ -9,6 +9,7 @@ import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTa
 import { MainSidePanelSections } from '../items/MainSidePanelSections';
 import { TreeItemCache } from '../items/TreeItemCache';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
+import { hydrateTreeItemChildren } from '../utils';
 import { BandSidePanelSection } from './BandSidePanelSection';
 
 beforeEach(async () => {
@@ -328,6 +329,10 @@ it('shows the full catalog and selects the current release without reordering', 
   const data = await section?.createTreeData();
   const releases = data?.items.find((item) => item.label === 'Releases');
   expect(releases?.initialSelectedHref).toBe(current.url.toString());
+  expect(releases?.children).toBeUndefined();
+  expect(releases?.childrenCount).toBe(45);
+  if (releases) await hydrateTreeItemChildren(releases);
+  expect(releases?.initialSelectedHref).toBe(current.url.toString());
   expect(releases?.children?.[30].href).toBe(current.url.toString());
   expect(releases?.children?.[0].href).toBe(
     band.metadata.albums[0].url.toString(),
@@ -339,6 +344,7 @@ it('shows the full catalog and selects the current release without reordering', 
       url,
     )?.createTreeData();
     const root = catalog?.items.find((item) => item.label === 'Releases');
+    if (root) await hydrateTreeItemChildren(root);
     expect(root?.children?.map((item) => item.href)).toEqual(
       band.metadata.albums.map((album) => album.url.toString()),
     );

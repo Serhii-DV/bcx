@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, rs } from '@rstest/core';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import {
   readCurrentItems,
+  readCurrentLists,
   readSavedItems,
   saveSnapshot,
   stagingKey,
@@ -292,10 +293,26 @@ describe('release catalog previews', () => {
       expect((await createScoped()).releaseCatalog?.albums).toHaveLength(25);
       expect(await readCurrentItems(dataset, 42)).toHaveLength(24);
       expect(await readCurrentItems(dataset)).toHaveLength(24);
+      const reads = rs.spyOn(chrome.storage.local, 'get');
+      const currentLists = await readCurrentLists(
+        ['collection', 'wishlist'],
+        42,
+      );
+      expect(currentLists[dataset]).toHaveLength(24);
+      expect(
+        reads.mock.calls.filter(([keys]) => keys === '/fan-data/account/42'),
+      ).toHaveLength(1);
+      expect((await readCurrentLists([dataset], 99))[dataset]).toEqual([]);
+      reads.mockRestore();
       expect(await storage.getByKey(stagingKey(42, dataset))).toBeUndefined();
       // Restore the source order for the existing catalog/cache assertions below.
       await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, saved);
       const original = await create();
+      const originalReleases = original.children?.find(
+        (item) => item.label === 'Releases',
+      );
+      if (originalReleases?.loadChildren)
+        await hydrateTreeItemChildren(originalReleases);
       if (label === 'Wishlist') {
         for (const name of ['Artists', 'Releases']) {
           expect(
@@ -331,6 +348,15 @@ describe('release catalog previews', () => {
       const titleReleasesDescending = restored?.children?.find(
         (item) => item.label === 'Releases: Title Z–A',
       );
+      for (const root of [
+        reverseReleases,
+        titleReleases,
+        titleReleasesDescending,
+      ]) {
+        expect(root?.children).toBeUndefined();
+        if (root) await hydrateTreeItemChildren(root);
+      }
+      if (releases?.loadChildren) await hydrateTreeItemChildren(releases);
       expect(reverseReleases?.children?.[0].label).toContain('Release 24');
       expect(titleReleases?.children?.[0].label).toContain('Release 0');
       expect(titleReleasesDescending?.children?.[0].label).toContain(
@@ -407,6 +433,8 @@ describe('release catalog previews', () => {
           ).find((tab) => tab.id === '2')?.label,
         ).toBe('Release years (2)');
         const groups = releaseYears.children;
+        for (const group of groups ?? [])
+          if (group.loadChildren) await hydrateTreeItemChildren(group);
         expect(releaseYears.childrenLoaded).toBe(true);
         expect(
           createRootSectionTabs(
@@ -462,6 +490,9 @@ describe('release catalog previews', () => {
         expect(releaseYears.children?.map((item) => item.label)).toEqual([
           'Unknown year',
         ]);
+        const unknownGroup = releaseYears.children?.[0];
+        if (unknownGroup?.loadChildren)
+          await hydrateTreeItemChildren(unknownGroup);
         expect(releaseYears.children?.[0].children).toHaveLength(25);
         expect(fetchMock).not.toHaveBeenCalled();
       }
