@@ -6,10 +6,12 @@ import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
+import { createItemUrl } from './itemUrl';
 
 let {
   about,
   fallbackLocation,
+  bandUrl,
   loading = false,
   error = '',
 }: {
@@ -20,6 +22,7 @@ let {
   error?: string;
 } = $props();
 let profile = $derived(about.aboutProfile);
+let pageUrl = $derived(createItemUrl(bandUrl ?? profile?.url));
 let biography = $derived(
   profile?.biography
     ?.trim()
@@ -107,6 +110,7 @@ let catalogYears = $derived(
   loadingMessage="Loading saved band details…"
   {error}
 >
+  {#if pageUrl}<p class="band-metadata"><BcxPreviewLink url={pageUrl} plain={true} title={`Open ${profile?.name ?? 'band'} on Bandcamp in the current tab`} /></p>{/if}
   {#if createdDate}<p class="band-metadata"><strong>Bandcamp page created on <time datetime={createdDate.dateTime}>{createdDate.label}</time></strong> (<relative-time datetime={createdDate.dateTime} format="relative" tense="past" precision="day" format-style="long" title={createdDate.label}>{createdDate.label}</relative-time>)</p>{/if}
   {#if catalogYears}<p class="band-metadata">Release years {catalogYears}</p>{/if}
   {#if profile?.currency}<p class="band-metadata">Currency {profile.currency}</p>{/if}
