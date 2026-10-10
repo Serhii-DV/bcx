@@ -198,9 +198,13 @@ show the hosting band's name and image, falling back to its subdomain and releas
 artwork. These additional dropdowns follow the artist/label dropdowns.
 Release, Band, Wishlist, and Collection Artists views use `BcxArtistsPanel` for
 artwork rows, filtering, sorting, and artist actions. Catalog views enrich their
-existing artist groups with saved profile information at render time; clicking an
-artist browses only the releases in that catalog without applying the global music
-filter. Release views retain their related saved releases. Artist groups keep
+existing artist groups with saved profile information at render time. A single
+click selects an artist; a double-click shows its subitems. Back to Artists also
+selects on a single-click and returns on a double-click. Enter, Space, and
+ArrowRight retain keyboard access to subitems; Enter, Space, and ArrowLeft can
+return to the artist list. Catalog artists browse only the
+releases in that catalog without applying the global music filter. Release views
+retain their related saved releases. Artist groups keep
 their release timestamps and lazy loaders. Sorting applies after lazy roots load
 and retains the mounted browser, filter, and current artist. Profile enrichment
 does not change subtree snapshots, cache keys, or expiry.

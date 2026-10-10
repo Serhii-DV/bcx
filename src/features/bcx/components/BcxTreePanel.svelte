@@ -14,6 +14,7 @@ let {
   filterActions,
   filterQuery = $bindable(null),
   compareChildren,
+  doubleClickToExpand = false,
 }: {
   root: TreeItem;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
@@ -21,6 +22,7 @@ let {
   filterActions?: Snippet;
   filterQuery?: string | null;
   compareChildren?: (a: TreeItem, b: TreeItem) => number;
+  doubleClickToExpand?: boolean;
 } = $props();
 let treeData = $state<TreeData | null>(null);
 let loading = $state(false);
@@ -78,7 +80,7 @@ $effect(() => {
     <div class="panel-error"><p role="alert">{error}</p><button type="button" class="bcx-section-tab" onclick={() => { retry += 1; }}>Retry</button></div>
   {/if}
   {#if displayedTreeData}
-    <BcxTreeBrowser treeData={displayedTreeData} {onPreview} {itemActions} {filterActions} bind:filterQuery initialRootPath={displayedTreeData.items[0]?.path} lockInitialRoot={true} showBreadcrumb={false} nativeTabNavigation={true} />
+    <BcxTreeBrowser treeData={displayedTreeData} {onPreview} {itemActions} {filterActions} {doubleClickToExpand} bind:filterQuery initialRootPath={displayedTreeData.items[0]?.path} lockInitialRoot={true} showBreadcrumb={false} nativeTabNavigation={true} />
   {/if}
 </div>
 

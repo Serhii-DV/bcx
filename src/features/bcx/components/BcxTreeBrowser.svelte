@@ -62,6 +62,7 @@ interface Props {
   showFilter?: boolean;
   filterActions?: Snippet;
   itemActions?: Snippet<[TreeItem]>;
+  doubleClickToExpand?: boolean;
   isLoading?: boolean;
   loadingMessage?: string;
 }
@@ -83,6 +84,7 @@ let {
   showFilter = true,
   filterActions,
   itemActions,
+  doubleClickToExpand = false,
   isLoading = false,
   loadingMessage = 'Loading',
 }: Props = $props();
@@ -337,9 +339,18 @@ async function handleItemClick(
 }
 
 function handleItemDoubleClick(item: TreeItem, event: MouseEvent) {
-  if (!item.href) return;
   if (event.target instanceof Element && event.target.closest('.item-button'))
     return;
+  if (
+    doubleClickToExpand &&
+    (isDrillUpItem(item) || (isNode(item) && !isTreeLayout))
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    void handleBrowserItemClick(item, event);
+    return;
+  }
+  if (!item.href) return;
   event.preventDefault();
   event.stopPropagation();
   void handleItemClick(
@@ -349,6 +360,13 @@ function handleItemDoubleClick(item: TreeItem, event: MouseEvent) {
 }
 
 function getItemTitle(item: TreeItem): string | undefined {
+  if (doubleClickToExpand && isDrillUpItem(item)) {
+    return `${getDrillUpLabel()}\nClick to select\nDouble-click to go back`;
+  }
+  if (doubleClickToExpand && isNode(item) && !isTreeLayout) {
+    const actionHint = 'Click to select\nDouble-click to show subitems';
+    return item.hint ? `${item.hint}\n${actionHint}` : actionHint;
+  }
   if (!item.href) return item.hint;
 
   const navigationHint = 'Double-click to open the page';
@@ -759,6 +777,17 @@ async function handleBrowserItemClick(
   item: TreeItem,
   event?: MouseEvent | KeyboardEvent,
 ) {
+  if (
+    doubleClickToExpand &&
+    (isDrillUpItem(item) || isNode(item)) &&
+    event instanceof MouseEvent &&
+    event.type === 'click'
+  ) {
+    event.preventDefault();
+    focusTreeItem(item);
+    return;
+  }
+
   if (isDrillUpItem(item)) {
     navigateToParentLevel();
     return;
@@ -903,9 +932,10 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       data-level="{item.level}"
       data-path="{item.path}"
       tabindex={focusedPath === item.path ? 0 : -1}
-      title={item.hint || getDrillUpLabel()}
+      title={getItemTitle(item) || getDrillUpLabel()}
       aria-label={getDrillUpLabel()}
       onclick={(e) => handleBrowserItemClick(item, e)}
+      ondblclick={(event) => handleItemDoubleClick(item, event)}
     onkeydown={(e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();

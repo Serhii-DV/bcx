@@ -48,6 +48,8 @@
 
 ### Patch Changes
 
+- Artists panel rows now select on a single-click and show subitems on a double-click; Back to Artists also returns on a double-click. Keyboard navigation and individual row actions remain available.
+
 - Faster release previews share album, fan-library, and key reads, reuse title/artist lookups, and skip discarded artist catalogs. Related releases use the shared artist index; band URL fallback hydrates only the matching catalog. Large catalog groups and alternate sort views build on demand, with cache refreshes coalesced by data type. Storage timings no longer collide and payload logging is opt-in. Availability checks save bounded batches and flush completed checks on cancellation or failure.
 
 - Temporarily remove `.b2d-widget-container` widgets injected by another extension on Bandcamp pages, including widgets added after page load.

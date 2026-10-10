@@ -82,7 +82,7 @@ async function handleSortCloseAutoFocus(event: Event) {
 {/snippet}
 
 <div bind:this={container} class="artists-panel">
-  <BcxTreePanel root={artistRoot} {onPreview} itemActions={artistItemActions} filterActions={filterActions ?? artistSortControls} bind:filterQuery compareChildren={compareArtists} />
+  <BcxTreePanel root={artistRoot} {onPreview} itemActions={artistItemActions} filterActions={filterActions ?? artistSortControls} bind:filterQuery compareChildren={compareArtists} doubleClickToExpand />
 </div>
 
 <style>
