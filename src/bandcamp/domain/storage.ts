@@ -295,8 +295,10 @@ export class BandcampStorage {
     return albumsRawDataArray;
   }
 
-  static async getAllAlbumsRawData(): Promise<RawAlbumData[]> {
-    const keys = await storage.getKeys();
+  static async getAllAlbumsRawData(
+    savedKeys?: readonly string[],
+  ): Promise<RawAlbumData[]> {
+    const keys = savedKeys ?? (await storage.getKeys());
     const ids = keys
       .filter(StorageKey.isAlbumKey)
       .map((key) => Number(key.slice(ALBUM_KEY_PREFIX.length)))
@@ -381,8 +383,10 @@ export class BandcampStorage {
     return tracks.map((track) => loadedTracksMap.get(track.id) || track);
   }
 
-  static async getAllCompressedBandData(): Promise<CompressedBandData[]> {
-    const keys = await storage.getKeys();
+  static async getAllCompressedBandData(
+    savedKeys?: readonly string[],
+  ): Promise<CompressedBandData[]> {
+    const keys = savedKeys ?? (await storage.getKeys());
     const bandKeys = keys.filter((key) => StorageKey.isBandKey(key));
     const compressedBandDataMap = await storage.get(bandKeys);
 

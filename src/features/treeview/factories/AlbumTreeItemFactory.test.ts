@@ -14,6 +14,7 @@ import {
   createReleaseDetailsTree,
   createReleaseInformation,
 } from '../ReleasePreview';
+import { watchSavedPreviewLibrary } from '../savedPreviewLibrary';
 import { TreeData } from '../TreeData';
 import { TREE_ITEM_LAYOUT } from '../TreeItem';
 import { ICON_EXTERNAL_LINK } from '../utils/icon';
@@ -71,16 +72,55 @@ describe('release previews', () => {
       showChildrenCount: false,
     });
     const getBands = rs.spyOn(BandcampStorage, 'getBands');
-    const links = await loadReleaseBandLinks(preview!.information, album.url);
-    expect(links.artists).toEqual([]);
-    const explicitLinks = await loadReleaseBandLinks(
-      {
-        ...preview!.information,
-        artistUrl: 'https://artist.bandcamp.com/',
-      },
-      album.url,
-    );
-    expect(explicitLinks.artists).toEqual([]);
+    const originalEvent = chrome.storage.onChanged;
+    const addListener = rs.fn();
+    const removeListener = rs.fn();
+    Object.defineProperty(chrome.storage, 'onChanged', {
+      configurable: true,
+      value: { addListener, removeListener },
+    });
+    const changed = rs.fn();
+    const stop = watchSavedPreviewLibrary(changed);
+    const getKeys = rs.spyOn(storage, 'getKeys');
+    const getAlbums = rs.spyOn(BandcampStorage, 'getAllAlbumsRawData');
+    const information = preview!.information;
+    try {
+      const [links, duplicate] = await Promise.all([
+        loadReleaseBandLinks(information, album.url),
+        loadReleaseBandLinks(information, album.url),
+      ]);
+      expect(links.artists).toEqual([]);
+      expect(duplicate).toEqual(links);
+      const explicitLinks = await loadReleaseBandLinks(
+        { ...information, artistUrl: 'https://artist.bandcamp.com/' },
+        album.url,
+      );
+      expect(explicitLinks.artists).toEqual([]);
+      expect(getKeys).toHaveBeenCalledTimes(1);
+      expect(getAlbums).toHaveBeenCalledTimes(1);
+      const notify = addListener.mock.calls[0][0] as (
+        changes: Record<string, chrome.storage.StorageChange>,
+        area: string,
+      ) => void;
+      notify({ '/ui/sidebar-expanded': { newValue: true } }, 'local');
+      expect(changed).not.toHaveBeenCalled();
+      notify({ '/a/1': { newValue: {} } }, 'local');
+      expect(changed).toHaveBeenCalledTimes(1);
+      await loadReleaseBandLinks(information, album.url);
+      expect(getKeys).toHaveBeenCalledTimes(2);
+      expect(getAlbums).toHaveBeenCalledTimes(2);
+      notify({ '/following-bands': { newValue: [] } }, 'local');
+      expect(changed).toHaveBeenCalledTimes(2);
+      await loadReleaseBandLinks(information, album.url);
+      expect(getAlbums).toHaveBeenCalledTimes(2);
+    } finally {
+      stop();
+      expect(removeListener).toHaveBeenCalledWith(addListener.mock.calls[0][0]);
+      Object.defineProperty(chrome.storage, 'onChanged', {
+        configurable: true,
+        value: originalEvent,
+      });
+    }
     expect(getBands).not.toHaveBeenCalled();
   });
 

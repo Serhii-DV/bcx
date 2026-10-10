@@ -46,6 +46,8 @@
 
 ### Patch Changes
 
+- Reduced repeated release-preview storage reads with a shared, change-aware saved-library lookup and stable lookup inputs. Concurrent band and album lookups share key enumeration; storage key timings no longer collide, and full storage payload logging is opt-in.
+
 - Temporarily remove `.b2d-widget-container` widgets injected by another extension on Bandcamp pages, including widgets added after page load.
 
 - Matched Release Info scrollbar styling to TreeBrowser, using the shared thin scrollbar with a transparent track and hover highlight.

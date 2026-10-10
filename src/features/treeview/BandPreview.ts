@@ -18,6 +18,7 @@ import {
   loadSavedReleaseLinks,
   type ReleaseInformation,
 } from './ReleasePreview';
+import { getSavedPreviewBands } from './savedPreviewLibrary';
 import { createBandTreeData } from './sections/BandSidePanelSection';
 import type { TreeData } from './TreeData';
 import type { TreeItem } from './TreeItem';
@@ -173,7 +174,7 @@ export async function loadReleaseBandLinks(
   );
   const publisherName = normalize(information.publisher ?? '');
   const [bands, following, releaseLinks] = await Promise.all([
-    BandcampStorage.getAllCompressedBandData(),
+    getSavedPreviewBands(),
     readSavedItems<FollowingBandItem>('following-bands'),
     loadSavedReleaseLinks(information, releaseUrl),
   ]);

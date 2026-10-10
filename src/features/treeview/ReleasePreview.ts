@@ -3,12 +3,12 @@ import { getReleaseMetadataFromAlbum } from 'src/bandcamp/domain/album/helper';
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
 import { Artist, isVariousArtists } from 'src/bandcamp/domain/artist/artist';
 import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
-import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackTime } from 'src/bandcamp/domain/track/time';
 import type { Track } from 'src/bandcamp/domain/track/track';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { Url } from 'src/core/url';
 import { createRelatedReleasesTreeItem } from './items/relatedReleasesTreeItem';
+import { getSavedPreviewReleases } from './savedPreviewLibrary';
 import { TreeData } from './TreeData';
 import { TREE_ITEM_LAYOUT } from './TreeItem';
 import { items, linkOpen, text } from './TreeItemBuilder';
@@ -71,15 +71,11 @@ export async function loadSavedReleaseLinks(
   releaseUrl?: Url,
 ): Promise<{ url: Url; image?: string }[]> {
   if (!releaseUrl?.pathname.startsWith('/album/')) return [];
-  const normalize = (value: string) =>
-    value.trim().replace(/\s+/g, ' ').toLowerCase();
-  const albums = await BandcampStorage.getAllAlbumsRawData();
+  const albums = await getSavedPreviewReleases(
+    information.title,
+    information.artist,
+  );
   const links = albums.flatMap((album) => {
-    if (
-      normalize(album.title) !== normalize(information.title) ||
-      normalize(album.artist) !== normalize(information.artist)
-    )
-      return [];
     const href = releaseLink(album.url);
     if (!href) return [];
     const url = BandcampUrlFactory.createAlbumUrl(Url.create(href));
