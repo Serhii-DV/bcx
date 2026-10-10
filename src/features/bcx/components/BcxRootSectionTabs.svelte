@@ -9,6 +9,7 @@ import {
   ICON_MENU,
 } from 'src/features/treeview/utils/icon';
 import { onDestroy, type Snippet, tick, untrack } from 'svelte';
+import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxSectionFilter from './BcxSectionFilter.svelte';
 import BcxSectionSort from './BcxSectionSort.svelte';
@@ -564,6 +565,14 @@ onDestroy(() => onNavigationChange?.(undefined));
                   <BcxBandDetails {about} />
                 {/if}
               </div>
+            {:else if root?.releasePreview && root.label === 'Artists'}
+              <BcxArtistsPanel
+                root={treeData.items.find((item) => item.path === tabId) ?? root}
+                catalog={true}
+                catalogSort={artistSort}
+                filterActions={filterControls}
+                bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
+              />
             {:else}
               <BcxTreeBrowser
                 treeData={displayedTreeData}

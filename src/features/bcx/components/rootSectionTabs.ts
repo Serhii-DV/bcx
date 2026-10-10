@@ -23,20 +23,37 @@ export type CatalogYearSort =
   | 'most-releases'
   | 'fewest-releases';
 
-export function sortCatalogGroups(
-  treeData: TreeData,
-  artistSort: CatalogGroupSort,
-  releaseYearSort: CatalogYearSort,
-  addedYearSort: CatalogYearSort,
-): TreeData {
+export function createCatalogArtistComparator(sort: CatalogGroupSort) {
   const collator = new Intl.Collator(undefined, {
     numeric: true,
     sensitivity: 'base',
   });
   const releaseCount = (item: TreeItem) =>
     item.childrenCount ?? item.children?.length ?? 0;
-  const artistName = (a: TreeItem, b: TreeItem) =>
-    collator.compare(a.label ?? '', b.label ?? '');
+  return (a: TreeItem, b: TreeItem) => {
+    const nameOrder = collator.compare(a.label ?? '', b.label ?? '');
+    switch (sort) {
+      case 'za':
+        return -nameOrder;
+      case 'most-releases':
+        return releaseCount(b) - releaseCount(a) || nameOrder;
+      case 'fewest-releases':
+        return releaseCount(a) - releaseCount(b) || nameOrder;
+      default:
+        return nameOrder;
+    }
+  };
+}
+
+export function sortCatalogGroups(
+  treeData: TreeData,
+  artistSort: CatalogGroupSort,
+  releaseYearSort: CatalogYearSort,
+  addedYearSort: CatalogYearSort,
+): TreeData {
+  const releaseCount = (item: TreeItem) =>
+    item.childrenCount ?? item.children?.length ?? 0;
+  const compareArtists = createCatalogArtistComparator(artistSort);
   const newestYear = (a: TreeItem, b: TreeItem) => {
     if (a.label === 'Unknown year') return 1;
     if (b.label === 'Unknown year') return -1;
@@ -51,18 +68,7 @@ export function sortCatalogGroups(
       if (root.label === 'Artists') {
         return {
           ...root,
-          children: [...root.children].sort((a, b) => {
-            switch (artistSort) {
-              case 'za':
-                return -artistName(a, b);
-              case 'most-releases':
-                return releaseCount(b) - releaseCount(a) || artistName(a, b);
-              case 'fewest-releases':
-                return releaseCount(a) - releaseCount(b) || artistName(a, b);
-              default:
-                return artistName(a, b);
-            }
-          }),
+          children: [...root.children].sort(compareArtists),
         };
       }
       if (root.label === 'Release years' || root.label === 'Added years') {

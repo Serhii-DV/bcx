@@ -26,11 +26,12 @@ import {
 } from 'src/features/treeview/utils/icon';
 import { type Snippet, untrack } from 'svelte';
 import { musicFilterStore } from '../stores/musicFilter';
+import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
-import BcxReleaseTreePanel from './BcxReleaseTreePanel.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
+import BcxTreePanel from './BcxTreePanel.svelte';
 import { createItemUrl } from './itemUrl';
 
 let {
@@ -292,17 +293,11 @@ let dates = $derived(
 </BcxItemDetailsLayout>
 {/snippet}
 
-{#snippet artistItemActions(artist: TreeItem)}
-  {#if artist.hasChildren && !artist.previewInformation}
-  <BcxPreviewItemActions url={createItemUrl(artist.href)} image={artist.image} name={artist.label ?? ''} kind="artist" copyValue={artist.label ?? ''} previewItem={artist.bandPreview ? artist : undefined} iconOnly={true} />
-  {/if}
-{/snippet}
-
 {#snippet releasePanel(root: TreeItem)}
   {#if root.pathKey === 'release-info'}
     <div class="release-info-content bcx-info-scroll">{@render releaseInfo()}</div>
   {:else if root.pathKey === 'artists'}
-    <BcxReleaseTreePanel {root} {onPreview} itemActions={artistItemActions} />
+    <BcxArtistsPanel {root} {onPreview} />
   {:else if root.pathKey === 'credits'}
     <div class="release-info-content">
       <section class="release-notes" aria-label="Release credits"><h4>Credits</h4><p>{information.credits}</p></section>
@@ -316,7 +311,7 @@ let dates = $derived(
       </div>
     </section>
   {:else}
-    <BcxReleaseTreePanel {root} />
+    <BcxTreePanel {root} />
   {/if}
 {/snippet}
 
