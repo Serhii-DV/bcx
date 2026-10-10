@@ -104,6 +104,7 @@ let catalogYears = $derived(
   subheadingSize={1}
   subheadingPrefix={flagCode ? locationFlag : undefined}
   compactImage={true}
+  imageScale={2}
   details={bandInformation}
   detailsLabel="Detailed band information"
   {loading}
