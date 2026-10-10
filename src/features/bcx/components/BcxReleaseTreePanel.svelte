@@ -4,8 +4,10 @@ import {
   TREE_ITEM_LAYOUT,
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
-import type { Snippet } from 'svelte';
+import { type Snippet, tick } from 'svelte';
+import BcxSectionSort from './BcxSectionSort.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
+import type { SectionNavigationItem } from './sectionNavigation';
 
 let {
   root,
@@ -20,6 +22,55 @@ let treeData = $state<TreeData | null>(null);
 let loading = $state(false);
 let error = $state('');
 let retry = $state(0);
+let container = $state<HTMLDivElement | null>(null);
+let artistSort = $state<'az' | 'za'>('az');
+const isArtistsPanel = $derived(root.pathKey === 'artists');
+const artistSortItem = $derived<SectionNavigationItem>({
+  id: root.path ?? 'artists',
+  label: 'Artists',
+  contentId: '',
+  sortLabel: 'Sort artists by name',
+  sortValue: artistSort,
+  sortOptions: [
+    { id: 'az', label: 'A–Z', title: 'Show artists in alphabetical order.' },
+    {
+      id: 'za',
+      label: 'Z–A',
+      title: 'Show artists in reverse alphabetical order.',
+    },
+  ],
+});
+const displayedTreeData = $derived.by(() => {
+  if (!treeData || !isArtistsPanel) return treeData;
+  const collator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+  return new TreeData(
+    treeData.items.map((item) => ({
+      ...item,
+      children: [...(item.children ?? [])].sort(
+        (a, b) =>
+          collator.compare(a.label ?? '', b.label ?? '') *
+          (artistSort === 'za' ? -1 : 1),
+      ),
+    })),
+    treeData.layout,
+  );
+});
+
+function setArtistSort(id: string) {
+  if (id === 'az' || id === 'za') artistSort = id;
+}
+
+async function handleSortCloseAutoFocus(event: Event) {
+  event.preventDefault();
+  await tick();
+  if (!container?.closest('[hidden]'))
+    container
+      ?.querySelector<HTMLButtonElement>('[data-bcx-section-sort]')
+      ?.focus();
+}
 
 $effect(() => {
   const currentRoot = root;
@@ -56,13 +107,17 @@ $effect(() => {
 });
 </script>
 
-<div class="release-tree-panel">
+{#snippet artistSortControls()}
+  <BcxSectionSort item={artistSortItem} onValueChange={setArtistSort} onCloseAutoFocus={handleSortCloseAutoFocus} />
+{/snippet}
+
+<div bind:this={container} class="release-tree-panel">
   {#if loading}<p role="status">Loading {root.label?.toLowerCase()}…</p>{/if}
   {#if error}
     <div class="panel-error"><p role="alert">{error}</p><button type="button" class="bcx-section-tab" onclick={() => { retry += 1; }}>Retry</button></div>
   {/if}
-  {#if treeData}
-    <BcxTreeBrowser {treeData} {onPreview} {itemActions} initialRootPath={treeData.items[0]?.path} lockInitialRoot={true} showBreadcrumb={false} nativeTabNavigation={true} />
+  {#if displayedTreeData}
+    <BcxTreeBrowser treeData={displayedTreeData} {onPreview} {itemActions} filterActions={isArtistsPanel ? artistSortControls : undefined} initialRootPath={displayedTreeData.items[0]?.path} lockInitialRoot={true} showBreadcrumb={false} nativeTabNavigation={true} />
   {/if}
 </div>
 
