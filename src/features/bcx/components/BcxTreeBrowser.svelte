@@ -61,6 +61,7 @@ interface Props {
   showBreadcrumb?: boolean;
   showFilter?: boolean;
   filterActions?: Snippet;
+  itemActions?: Snippet<[TreeItem]>;
   isLoading?: boolean;
   loadingMessage?: string;
 }
@@ -81,6 +82,7 @@ let {
   showBreadcrumb = true,
   showFilter = true,
   filterActions,
+  itemActions,
   isLoading = false,
   loadingMessage = 'Loading',
 }: Props = $props();
@@ -939,7 +941,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
         }
       }}
     >
-      <BcxTreeItem item={withPreviewButton(withBrowserChildCount(item))} />
+      <BcxTreeItem item={withPreviewButton(withBrowserChildCount(item))} {itemActions} />
     </div>
   {:else if hasChildren}
     <div
@@ -960,7 +962,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
         }
       }}
     >
-      <BcxTreeItem item={withPreviewButton(withBrowserTreeItemState(item))} />
+      <BcxTreeItem item={withPreviewButton(withBrowserTreeItemState(item))} {itemActions} />
     </div>
   {:else}
     <a
@@ -974,7 +976,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       href={item.href}
       title={getItemTitle(item)}
     >
-      <BcxTreeItem item={withBrowserChildCount(item)} />
+      <BcxTreeItem item={withBrowserChildCount(item)} {itemActions} />
     </a>
   {/if}
 {/snippet}
@@ -1008,6 +1010,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
             onItemDoubleClick={handleItemDoubleClick}
             {getItemTitle}
             decorateItem={withPreviewButton}
+            {itemActions}
             onNodeClick={handleTreeLayoutNodeClick}
           />
         </li>

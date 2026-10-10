@@ -4,14 +4,17 @@ import {
   TREE_ITEM_LAYOUT,
   type TreeItem,
 } from 'src/features/treeview/TreeItem';
+import type { Snippet } from 'svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 
 let {
   root,
   onPreview,
+  itemActions,
 }: {
   root: TreeItem;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
+  itemActions?: Snippet<[TreeItem]>;
 } = $props();
 let treeData = $state<TreeData | null>(null);
 let loading = $state(false);
@@ -59,7 +62,7 @@ $effect(() => {
     <div class="panel-error"><p role="alert">{error}</p><button type="button" class="bcx-section-tab" onclick={() => { retry += 1; }}>Retry</button></div>
   {/if}
   {#if treeData}
-    <BcxTreeBrowser {treeData} {onPreview} initialRootPath={treeData.items[0]?.path} lockInitialRoot={true} showBreadcrumb={false} nativeTabNavigation={true} />
+    <BcxTreeBrowser {treeData} {onPreview} {itemActions} initialRootPath={treeData.items[0]?.path} lockInitialRoot={true} showBreadcrumb={false} nativeTabNavigation={true} />
   {/if}
 </div>
 

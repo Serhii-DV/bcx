@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { isNode } from 'src/features/treeview/utils';
+import type { Snippet } from 'svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
 import { getItemVisibleChildCount as getVisibleChildCount } from './treeViewHelpers';
 
@@ -14,6 +15,7 @@ interface Props {
   onItemDoubleClick?: (item: TreeItem, event: MouseEvent) => void;
   getItemTitle?: (item: TreeItem) => string | undefined;
   decorateItem?: (item: TreeItem) => TreeItem;
+  itemActions?: Snippet<[TreeItem]>;
   onNodeClick: (item: TreeItem, event: MouseEvent) => void;
 }
 
@@ -27,6 +29,7 @@ let {
   onItemDoubleClick,
   getItemTitle = (item) => item.hint,
   decorateItem = (item) => item,
+  itemActions,
   onNodeClick,
 }: Props = $props();
 
@@ -88,7 +91,7 @@ function getItemIndentStyle(item: TreeItem): string {
                 ondblclick={(event) => onItemDoubleClick?.(item, event)}
               >
                 <span class="tree-item-content">
-                  <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} />
+                  <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} {itemActions} />
                 </span>
               </summary>
               {#if !item.isLoadingChildren}
@@ -111,7 +114,7 @@ function getItemIndentStyle(item: TreeItem): string {
               title={getItemTitle(item)}
             >
               <span class="tree-item-content">
-                <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} />
+                <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} {itemActions} />
               </span>
             </a>
           {/if}

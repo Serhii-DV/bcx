@@ -1,16 +1,13 @@
 <script lang="ts">
-import { Album } from 'src/bandcamp/domain/album/album';
-import { Artist } from 'src/bandcamp/domain/artist/artist';
-import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import {
   type BandLinkProfile,
   loadReleaseBandLinks,
 } from 'src/features/treeview/BandPreview';
-import { AlbumTreeItemFactory } from 'src/features/treeview/factories/AlbumTreeItemFactory';
 import {
   createReleaseDetailsTree,
+  getReleaseArtistNames,
   type ReleaseInformation,
-  ReleasePreview,
+  type ReleasePreview,
 } from 'src/features/treeview/ReleasePreview';
 import { TreeData } from 'src/features/treeview/TreeData';
 import {
@@ -22,6 +19,7 @@ import {
   ICON_FILE_TEXT,
   ICON_INFO,
   ICON_LIST_MUSIC,
+  ICON_MIC,
   ICON_TAGS,
 } from 'src/features/treeview/utils/icon';
 import type { Snippet } from 'svelte';
@@ -66,53 +64,23 @@ function bandPreviewItem(band: BandLinkProfile): TreeItem {
   };
 }
 
-function linkedReleaseItem(release: BandLinkProfile): TreeItem {
-  const fallback = information;
-  const href = release.url.toString();
-  return {
-    label: `${fallback.artist} - ${fallback.title}`,
-    href,
-    image: release.image,
-    previewImage: item.previewImage,
-    previewInformation: fallback,
-    loadPreview: async () => {
-      const [saved] = await BandcampStorage.getByUuids([release.url.uuid]);
-      if (saved instanceof Album) {
-        const load = AlbumTreeItemFactory.createWithPreview(saved).loadPreview;
-        if (load) return load();
-      }
-      return new ReleasePreview(
-        createReleaseDetailsTree(new TreeData(), fallback, href),
-        fallback,
-      );
-    },
-  };
-}
 let bandLinks = $state<Awaited<ReturnType<typeof loadReleaseBandLinks>>>({
   artists: [],
+  detectedArtists: [],
   releases: [],
 });
 let bandLinksError = $state('');
-let artistNames = $derived(
-  Artist.parse(information.artist).names.filter((name) => name.trim()),
-);
-let missingArtistNames = $derived.by(() => {
-  const normalize = (name: string) => name.trim().toLowerCase();
-  const representedNames = new Set(
-    bandLinks.artists.map((band) => normalize(band.name)),
+let artistNames = $derived(getReleaseArtistNames(information));
+function artistLinks(name: string): BandLinkProfile[] {
+  return bandLinks.detectedArtists.filter(
+    (band) => band.name.trim().toLowerCase() === name.trim().toLowerCase(),
   );
-  return artistNames.filter((name) => {
-    const key = normalize(name);
-    if (representedNames.has(key)) return false;
-    representedNames.add(key);
-    return true;
-  });
-});
+}
 $effect(() => {
   const currentInformation = information;
   const currentUrl = releaseUrl;
   let cancelled = false;
-  bandLinks = { artists: [], releases: [] };
+  bandLinks = { artists: [], detectedArtists: [], releases: [] };
   bandLinksError = '';
   void loadReleaseBandLinks(currentInformation, currentUrl)
     .then((links) => {
@@ -154,6 +122,19 @@ let tabTree = $derived.by(() => {
       (item) =>
         item !== tracks && item !== relatedReleases && item.label !== 'Credits',
     ),
+  });
+  data.add({
+    label: 'Artists',
+    pathKey: 'artists',
+    image: ICON_MIC,
+    hasChildren: true,
+    childrenCount: artistNames.length,
+    children: artistNames.flatMap((name) => {
+      const links = artistLinks(name);
+      return links.length
+        ? links.map(bandPreviewItem)
+        : [{ label: name, image: ICON_MIC }];
+    }),
   });
   if (information.credits?.trim())
     data.add({
@@ -220,21 +201,9 @@ let dates = $derived(
 {#snippet releaseActions()}
   {@render leadingActions?.()}
   <BcxPreviewItemActions url={releaseUrl} image={item.previewImage} name={`${information.artist} - ${information.title}`} kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={item} keepInPreview={true} />
-  {#each bandLinks.artists as artist (artist.url.toString())}
-    <BcxPreviewItemActions url={artist.url} image={artist.image} name={artist.name} kind="artist" copyValue={artist.name} previewItem={bandPreviewItem(artist)} />
-  {/each}
-  {#each missingArtistNames as name (name)}
-    <BcxPreviewItemActions {name} kind="artist" copyValue={name} />
-  {/each}
-  {#if !artistNames.length && !bandLinks.artists.length}
-    <BcxPreviewItemActions name="Artist" kind="artist" copyValue={information.artist} />
+  {#if bandLinks.parent}
+    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} />
   {/if}
-  {#if bandLinks.publisher}
-    <BcxPreviewItemActions url={bandLinks.publisher.url} image={bandLinks.publisher.image} name={bandLinks.publisher.name} kind="label" copyValue={bandLinks.publisher.name} previewItem={bandPreviewItem(bandLinks.publisher)} />
-  {/if}
-  {#each bandLinks.releases as release (release.url.toString())}
-    <BcxPreviewItemActions url={release.url} image={release.image} name={`Release on ${release.name}`} kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={linkedReleaseItem(release)} />
-  {/each}
 {/snippet}
 
 {#snippet releaseNotes()}
@@ -291,9 +260,15 @@ let dates = $derived(
 </BcxItemDetailsLayout>
 {/snippet}
 
+{#snippet artistItemActions(artist: TreeItem)}
+  <BcxPreviewItemActions url={createItemUrl(artist.href)} image={artist.image} name={artist.label ?? ''} kind="artist" copyValue={artist.label ?? ''} previewItem={artist.bandPreview ? artist : undefined} iconOnly={true} />
+{/snippet}
+
 {#snippet releasePanel(root: TreeItem)}
   {#if root.pathKey === 'release-info'}
     <div class="release-info-content bcx-info-scroll">{@render releaseInfo()}</div>
+  {:else if root.pathKey === 'artists'}
+    <BcxReleaseTreePanel {root} {onPreview} itemActions={artistItemActions} />
   {:else if root.pathKey === 'credits'}
     <div class="release-info-content">
       <section class="release-notes" aria-label="Release credits"><h4>Credits</h4><p>{information.credits}</p></section>

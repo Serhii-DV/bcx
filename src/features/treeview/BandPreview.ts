@@ -14,6 +14,7 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { Url } from 'src/core/url';
 import { BandTreeItem } from './items/BandTreeItem';
 import {
+  getReleaseArtistNames,
   loadSavedReleaseLinks,
   type ReleaseInformation,
 } from './ReleasePreview';
@@ -159,7 +160,9 @@ export async function loadReleaseBandLinks(
   releaseUrl?: Url,
 ): Promise<{
   artists: BandLinkProfile[];
+  detectedArtists: BandLinkProfile[];
   publisher?: BandLinkProfile;
+  parent?: BandLinkProfile;
   releases: BandLinkProfile[];
 }> {
   const normalize = (name: string) => name.trim().toLowerCase();
@@ -249,13 +252,39 @@ export async function loadReleaseBandLinks(
       publisher ??= artist;
     }
   }
+  const parentUrl = bandUrl(releaseUrl?.toString());
+  const parent = parentUrl
+    ? await profile(
+        parentUrl,
+        publisher?.url.hasSameHostname(parentUrl)
+          ? publisher.name
+          : artistUrl?.hasSameHostname(parentUrl) &&
+              !Artist.parse(information.artist).isVariousArtists
+            ? information.artist
+            : parentUrl.hostname.replace(/\.bandcamp\.com$/, ''),
+      )
+    : undefined;
+  const detectedArtistNames = new Set(
+    getReleaseArtistNames(information).map(normalize),
+  );
+  const detectedArtists = [
+    ...artists,
+    ...saved.filter((band) => detectedArtistNames.has(normalize(band.name))),
+  ];
   return {
+    detectedArtists: detectedArtists.filter(
+      (band, index) =>
+        detectedArtists.findIndex((other) =>
+          other.url.hasSameHostname(band.url),
+        ) === index,
+    ),
     artists: artists.filter(
       (band, index) =>
         artists.findIndex((other) => other.url.hasSameHostname(band.url)) ===
         index,
     ),
     publisher,
+    parent,
     releases: await Promise.all(
       releaseLinks.map(async (release) => {
         const band = await profile(
