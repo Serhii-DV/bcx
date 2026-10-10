@@ -30,7 +30,15 @@ let createdDate = $derived.by(() => {
   if (!profile?.createdDate) return undefined;
   const date = new Date(profile.createdDate);
   return Number.isFinite(date.getTime())
-    ? { dateTime: date.toISOString(), label: profile.createdDate }
+    ? {
+        dateTime: date.toISOString(),
+        label: date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          timeZone: 'UTC',
+        }),
+      }
     : undefined;
 });
 let location = $derived(profile?.location || fallbackLocation);
@@ -80,16 +88,6 @@ let catalogYears = $derived(
       {#each biography as paragraph}<p>{paragraph}</p>{/each}
     </div>
   {/if}
-  {#if profile?.currency || createdDate || profile?.trackReleaseCount}
-    <details class="band-secondary-details">
-      <summary>Details</summary>
-      <dl class="band-metadata">
-        {#if profile?.trackReleaseCount}<div><dt>Saved track releases</dt><dd>{profile.trackReleaseCount}</dd></div>{/if}
-        {#if profile?.currency}<div><dt>Currency</dt><dd>{profile.currency}</dd></div>{/if}
-        {#if createdDate}<div><dt>Bandcamp page created</dt><dd><relative-time datetime={createdDate.dateTime} format="relative" precision="day" title={createdDate.label}>{createdDate.label}</relative-time></dd></div>{/if}
-      </dl>
-    </details>
-  {/if}
   {#each messages as message}{#if message.label}<p class="band-message">{message.label}</p>{/if}{/each}
   </div>
 {/snippet}
@@ -109,7 +107,9 @@ let catalogYears = $derived(
   loadingMessage="Loading saved band details…"
   {error}
 >
-  {#if catalogYears}<p class="band-catalog-years">Release years {catalogYears}</p>{/if}
+  {#if createdDate}<p class="band-metadata"><strong>Bandcamp page created on <time datetime={createdDate.dateTime}>{createdDate.label}</time></strong> (<relative-time datetime={createdDate.dateTime} format="relative" tense="past" precision="day" format-style="long" title={createdDate.label}>{createdDate.label}</relative-time>)</p>{/if}
+  {#if catalogYears}<p class="band-metadata">Release years {catalogYears}</p>{/if}
+  {#if profile?.currency}<p class="band-metadata">Currency {profile.currency}</p>{/if}
   {#if profile?.following}<span class="following-badge">Following</span>{/if}
 </BcxItemDetailsLayout>
 
@@ -117,15 +117,8 @@ let catalogYears = $derived(
 .location-flag { --CountryFlagIcon-height: 0.875rem; flex-shrink: 0; }
 .following-badge { display: block; width: fit-content; margin-top: 0.375rem; border-radius: 0.25rem; padding: 0.125rem 0.375rem; background: #293548; color: #a7f3d0; }
 .band-information { padding: 0 1rem 1rem; font-size: 0.8125rem; line-height: 1.5; }
-.band-catalog-years { margin: 0.5rem 0 0; color: #9ca3af; }
-.band-secondary-details { margin-top: 1rem; color: #9ca3af; }
-.band-secondary-details summary { cursor: pointer; width: fit-content; }
-.band-secondary-details summary:focus-visible { outline: 1px solid #38bdf8; outline-offset: 2px; border-radius: 0.25rem; }
-.band-secondary-details .band-metadata { margin: 0.5rem 0 0; }
-.band-metadata { display: flex; flex-wrap: wrap; gap: 0.375rem 1.25rem; margin: 0 0 1rem; }
-.band-metadata div { display: flex; flex-wrap: wrap; gap: 0.375rem; }
-.band-metadata dt { color: #9ca3af; }
-.band-metadata dd { margin: 0; color: #d1d5db; }
+.band-metadata { margin: 0.5rem 0 0; color: #9ca3af; }
+.band-metadata strong { font-weight: 600; color: #d1d5db; }
 .band-information h4 { margin: 0 0 0.375rem; font-size: inherit; font-weight: 600; color: #d1d5db; }
 .band-biography, .band-links { margin-top: 0.75rem; }
 .band-links ul { display: flex; flex-wrap: wrap; gap: 0.375rem 1rem; margin: 0; padding: 0; list-style: none; }
