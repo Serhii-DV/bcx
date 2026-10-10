@@ -1,8 +1,10 @@
 <script lang="ts">
+import { mergeProps } from 'bits-ui';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { isNode } from 'src/features/treeview/utils';
 import type { Snippet } from 'svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
+import BcxTreeItemTooltip from './BcxTreeItemTooltip.svelte';
 import { getItemVisibleChildCount as getVisibleChildCount } from './treeViewHelpers';
 
 interface Props {
@@ -16,6 +18,8 @@ interface Props {
   getItemTitle?: (item: TreeItem) => string | undefined;
   decorateItem?: (item: TreeItem) => TreeItem;
   itemActions?: Snippet<[TreeItem]>;
+  showItemTooltips?: boolean;
+  tooltipPortal?: Element;
   onNodeClick: (item: TreeItem, event: MouseEvent) => void;
 }
 
@@ -30,6 +34,8 @@ let {
   getItemTitle = (item) => item.hint,
   decorateItem = (item) => item,
   itemActions,
+  showItemTooltips = false,
+  tooltipPortal,
   onNodeClick,
 }: Props = $props();
 
@@ -81,19 +87,24 @@ function getItemIndentStyle(item: TreeItem): string {
               data-level="{item.level}"
               data-path="{item.path}"
             >
-              <summary
-                class="tree-item tree-node-summary cursor-pointer select-none px-0 transition-colors"
-                class:focused={focusedPath === item.path}
-                tabindex={focusedPath === item.path ? 0 : -1}
-                style={getItemIndentStyle(item)}
-                title={getItemTitle(item)}
-                onclick={(event) => onNodeClick(item, event)}
-                ondblclick={(event) => onItemDoubleClick?.(item, event)}
-              >
-                <span class="tree-item-content">
-                  <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} {itemActions} />
-                </span>
-              </summary>
+              <BcxTreeItemTooltip {item} hint={getItemTitle(item)} portal={tooltipPortal} disabled={!showItemTooltips}>
+                {#snippet children({ props })}
+                  <summary
+                    {...mergeProps(props, {
+                      onclick: (event: MouseEvent) => onNodeClick(item, event),
+                      ondblclick: (event: MouseEvent) => onItemDoubleClick?.(item, event),
+                    })}
+                    class="tree-item tree-node-summary cursor-pointer select-none px-0 transition-colors"
+                    class:focused={focusedPath === item.path}
+                    tabindex={focusedPath === item.path ? 0 : -1}
+                    style={getItemIndentStyle(item)}
+                  >
+                    <span class="tree-item-content">
+                      <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} {itemActions} />
+                    </span>
+                  </summary>
+                {/snippet}
+              </BcxTreeItemTooltip>
               {#if !item.isLoadingChildren}
                 <div class="tree-children">
                   {@render treeItems(item.children)}
@@ -101,22 +112,27 @@ function getItemIndentStyle(item: TreeItem): string {
               {/if}
             </details>
           {:else}
-            <a
-              class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 transition-colors"
-              class:focused={focusedPath === item.path}
-              data-level="{item.level}"
-              data-path="{item.path}"
-              tabindex={focusedPath === item.path ? 0 : -1}
-              style={getItemIndentStyle(item)}
-              onclick={(event) => onItemClick(item, event)}
-              ondblclick={(event) => onItemDoubleClick?.(item, event)}
-              href={item.href}
-              title={getItemTitle(item)}
-            >
-              <span class="tree-item-content">
-                <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} {itemActions} />
-              </span>
-            </a>
+            <BcxTreeItemTooltip {item} hint={getItemTitle(item)} portal={tooltipPortal} disabled={!showItemTooltips}>
+              {#snippet children({ props })}
+                <a
+                  {...mergeProps(props, {
+                    onclick: (event: MouseEvent) => onItemClick(item, event),
+                    ondblclick: (event: MouseEvent) => onItemDoubleClick?.(item, event),
+                  })}
+                  class="tree-item tree-leaf flex items-center w-full cursor-pointer text-left px-0 py-0 text-gray-200 transition-colors"
+                  class:focused={focusedPath === item.path}
+                  data-level="{item.level}"
+                  data-path="{item.path}"
+                  tabindex={focusedPath === item.path ? 0 : -1}
+                  style={getItemIndentStyle(item)}
+                  href={item.href}
+                >
+                  <span class="tree-item-content">
+                    <BcxTreeItem item={decorateItem(withVisibleChildCount(item))} {itemActions} />
+                  </span>
+                </a>
+              {/snippet}
+            </BcxTreeItemTooltip>
           {/if}
         </li>
       {/each}

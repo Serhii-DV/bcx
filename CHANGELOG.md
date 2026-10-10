@@ -48,7 +48,7 @@
 
 ### Patch Changes
 
-- Artists panel rows now select on a single-click and show subitems on a double-click; Back to Artists also returns on a double-click. Ctrl+Enter opens the selected artist's page in the active browser tab when available. Keyboard navigation and individual row actions remain available.
+- Artists panel rows now select on a single-click and show subitems on a double-click; Back to Artists also returns on a double-click. Ctrl+Enter opens the selected artist's page in the active browser tab when available. Artist, release, and band rows show styled hover and keyboard-focus popups below the item, flipping above when needed, across Releases, History, Wishlist, Collection, and Following Bands, including grouped views. Keyboard navigation and individual row actions remain available.
 
 - Faster release previews share album, fan-library, and key reads, reuse title/artist lookups, and skip discarded artist catalogs. Related releases use the shared artist index; band URL fallback hydrates only the matching catalog. Large catalog groups and alternate sort views build on demand, with cache refreshes coalesced by data type. Storage timings no longer collide and payload logging is opt-in. Availability checks save bounded batches and flush completed checks on cancellation or failure.
 

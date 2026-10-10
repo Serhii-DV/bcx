@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Eye } from '@lucide/svelte';
+import { mergeProps } from 'bits-ui';
 import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import {
@@ -26,6 +27,7 @@ import { getItemPreviewContext } from '../stores/itemPreview';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
+import BcxTreeItemTooltip from './BcxTreeItemTooltip.svelte';
 import BcxTreeRenderer from './BcxTreeRenderer.svelte';
 import {
   activateTreeItem,
@@ -92,7 +94,7 @@ const sharedPreview = getItemPreviewContext();
 const selectPreview = $derived(onSelect ?? sharedPreview?.select);
 const showPreview = $derived(onPreview ?? sharedPreview?.show);
 let isVisible = $state(false);
-let treeContainer: HTMLDivElement;
+let treeContainer = $state<HTMLDivElement>();
 let filterRef: BcxTreeBrowserFilter | undefined = $state();
 let focusedPath: string | null = $state(null);
 let initialSelectionApplied = $state(false);
@@ -268,11 +270,11 @@ $effect(() => {
 
 onMount(() => {
   const updateVisibility = () => {
-    isVisible = !treeContainer.closest('[hidden]');
+    isVisible = !!treeContainer && !treeContainer.closest('[hidden]');
   };
   const observer = new MutationObserver(updateVisibility);
   for (
-    let ancestor = treeContainer.parentElement;
+    let ancestor = treeContainer?.parentElement;
     ancestor;
     ancestor = ancestor.parentElement
   ) {
@@ -970,20 +972,23 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   </div>
 {/snippet}
 
-{#snippet browserTreeItem(item: TreeItem)}
+{#snippet browserTreeItemContent(item: TreeItem, props: Record<string, unknown>)}
   {@const hasChildren = isNode(item)}
+  {@const rowProps = mergeProps(props, {
+    ondblclick: (event: MouseEvent) => handleItemDoubleClick(item, event),
+  })}
   {#if hasItemPreview(item) && !hasChildren}
     <div
+      {...mergeProps(rowProps, {
+        onfocus: () => { focusedPath = item.path ?? null; selectPreview?.(item); },
+        onclick: () => focusTreeItem(item),
+      })}
       role="button"
       class="tree-item bcx-browser-row"
       class:focused={focusedPath === item.path}
       data-level={item.level}
       data-path={item.path}
       tabindex={focusedPath === item.path ? 0 : -1}
-      title={getItemTitle(item)}
-      onfocus={() => { focusedPath = item.path ?? null; selectPreview?.(item); }}
-      onclick={() => focusTreeItem(item)}
-      ondblclick={(event) => handleItemDoubleClick(item, event)}
       onkeydown={(event) => {
         if (event.target instanceof Element && event.target.closest('.item-button')) return;
         if (event.key === 'Enter') {
@@ -997,20 +1002,20 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
     </div>
   {:else if hasChildren}
     <div
+      {...mergeProps(rowProps, {
+        onclick: (event: MouseEvent) => handleBrowserItemClick(item, event),
+      })}
       role="button"
       class="tree-item bcx-browser-row"
       class:focused={focusedPath === item.path}
       data-level="{item.level}"
       data-path="{item.path}"
       tabindex={focusedPath === item.path ? 0 : -1}
-      title={getItemTitle(item)}
-      onclick={(e) => handleBrowserItemClick(item, e)}
-      ondblclick={(event) => handleItemDoubleClick(item, event)}
-      onkeydown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          e.stopPropagation();
-          handleBrowserItemClick(item, e);
+      onkeydown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          event.stopPropagation();
+          handleBrowserItemClick(item, event);
         }
       }}
     >
@@ -1018,19 +1023,25 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
     </div>
   {:else}
     <a
+      {...mergeProps(rowProps, {
+        onclick: (event: MouseEvent) => handleItemClick(item, event),
+      })}
       class="tree-item bcx-browser-row"
       class:focused={focusedPath === item.path}
       data-level="{item.level}"
       data-path="{item.path}"
       tabindex={focusedPath === item.path ? 0 : -1}
-      onclick={(e) => handleItemClick(item, e)}
-      ondblclick={(event) => handleItemDoubleClick(item, event)}
       href={item.href}
-      title={getItemTitle(item)}
     >
       <BcxTreeItem item={withBrowserChildCount(item)} {itemActions} />
     </a>
   {/if}
+{/snippet}
+
+{#snippet browserTreeItem(item: TreeItem)}
+  <BcxTreeItemTooltip {item} hint={getItemTitle(item)} artist={doubleClickToExpand && isNode(item)} portal={treeContainer?.closest('.bcx-side-panel-shell') ?? undefined}>
+    {#snippet children({ props })}{@render browserTreeItemContent(item, props)}{/snippet}
+  </BcxTreeItemTooltip>
 {/snippet}
 
 {#snippet browserEmptyState()}
@@ -1063,6 +1074,8 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
             {getItemTitle}
             decorateItem={withPreviewButton}
             {itemActions}
+            showItemTooltips
+            tooltipPortal={treeContainer?.closest('.bcx-side-panel-shell') ?? undefined}
             onNodeClick={handleTreeLayoutNodeClick}
           />
         </li>
