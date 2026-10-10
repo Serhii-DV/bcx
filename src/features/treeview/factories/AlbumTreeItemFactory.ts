@@ -109,7 +109,7 @@ export class AlbumTreeItemFactory {
           lists.wishlist,
         );
         return new ReleasePreview(
-          createReleaseDetailsTree(baseTree, information, album.url.toString()),
+          createReleaseDetailsTree(baseTree, information),
           information,
         );
       },

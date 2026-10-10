@@ -43,6 +43,7 @@ export interface TreeItem {
   pathKey?: string;
   href?: string;
   image?: string; // image URL or icon name
+  showArtwork?: boolean; // artwork slot independent of preview availability
   flagCode?: string;
   aboutProfile?: {
     id?: number;

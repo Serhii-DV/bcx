@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, rs } from '@rstest/core';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
+import { Band } from 'src/bandcamp/domain/band/band';
 import {
   readCurrentItems,
   readCurrentLists,
@@ -19,6 +20,7 @@ import {
 import { TreeData } from '../TreeData';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { generateTreeHierarchy, hydrateTreeItemChildren } from '../utils';
+import { loadCatalogArtistRows } from './artistPanel';
 import { CollectionTreeItem } from './collection/CollectionTreeItem';
 import { withReleaseCatalog } from './releaseCatalog';
 import { TreeItemCache } from './TreeItemCache';
@@ -90,7 +92,7 @@ describe('release catalog previews', () => {
       releases.children?.[0].label,
     );
   });
-  it('filters Artists at the root while preserving their nested releases', () => {
+  it('filters Artists at the root while preserving their nested releases', async () => {
     const albums = createItems(3).map(AlbumFactory.fromBandcampItem);
     const tree = withReleaseCatalog({ label: 'Label' }, albums);
     const artists = tree.children?.find((item) => item.label === 'Artists');
@@ -120,6 +122,31 @@ describe('release catalog previews', () => {
     expect(
       filterTreeBrowserItems(matches[0].children, 'Release 1', matches[0]),
     ).toEqual(matches[0].children);
+
+    await BandcampStorage.saveBand(
+      Band.create(2, 'Artist 1', 'https://artist1.bandcamp.com', 22),
+    );
+    const rows = await loadCatalogArtistRows({
+      ...artists,
+      children: artists.children?.map((artist) => ({
+        ...artist,
+        query: artist.label,
+      })),
+    });
+    expect(rows[1]).toMatchObject({
+      label: 'Artist 1',
+      showArtwork: true,
+      hasChildren: true,
+      bandPreview: { name: 'Artist 1', url: 'https://artist1.bandcamp.com/' },
+    });
+    expect(rows[1].query).toBeUndefined();
+    expect(rows[1].children).toBe(artists.children?.[1].children);
+    expect(rows[0].showArtwork).toBe(true);
+    expect(rows[0].bandPreview).toBeUndefined();
+    expect(rows[0].href).toBeUndefined();
+    expect(filterTreeBrowserItems(rows, 'artist 1', artists)).toEqual([
+      rows[1],
+    ]);
   });
 
   it('provides artist and year groups with previewable releases, preserving other roots', async () => {

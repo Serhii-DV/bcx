@@ -9,6 +9,7 @@ import {
   ICON_MENU,
 } from 'src/features/treeview/utils/icon';
 import { onDestroy, type Snippet, tick, untrack } from 'svelte';
+import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxSectionFilter from './BcxSectionFilter.svelte';
 import BcxSectionSort from './BcxSectionSort.svelte';
@@ -37,10 +38,6 @@ const tabDescriptions: Record<
 > = {
   'Release Info': { title: 'View release information, artwork, and notes.' },
   Credits: { title: 'View release credits and contributors.' },
-  'Related releases': {
-    title:
-      'Browse locally saved releases by this release’s artists across Bandcamp.',
-  },
   All: { title: 'Browse all items in this section.', image: ICON_MENU },
   Artists: { title: 'Browse releases grouped by artist.' },
   Releases: { title: 'Browse releases in this section.' },
@@ -568,6 +565,14 @@ onDestroy(() => onNavigationChange?.(undefined));
                   <BcxBandDetails {about} />
                 {/if}
               </div>
+            {:else if root?.releasePreview && root.label === 'Artists'}
+              <BcxArtistsPanel
+                root={treeData.items.find((item) => item.path === tabId) ?? root}
+                catalog={true}
+                catalogSort={artistSort}
+                filterActions={filterControls}
+                bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
+              />
             {:else}
               <BcxTreeBrowser
                 treeData={displayedTreeData}

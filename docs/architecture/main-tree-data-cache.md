@@ -196,6 +196,24 @@ artist values, ignoring case and repeated whitespace, exclude the current URL,
 and retain each distinct saved destination. They open the saved release page and
 show the hosting band's name and image, falling back to its subdomain and release
 artwork. These additional dropdowns follow the artist/label dropdowns.
+Release, Band, Wishlist, and Collection Artists views use `BcxArtistsPanel` for
+artwork rows, filtering, sorting, and artist actions. Catalog views enrich their
+existing artist groups with saved profile information at render time. A single
+click selects an artist; a double-click shows its subitems. Back to Artists also
+selects on a single-click and returns on a double-click. Enter, Space, and
+ArrowRight retain keyboard access to subitems; Enter, Space, and ArrowLeft can
+return to the artist list. Ctrl+Enter opens an artist's saved page URL in the
+active browser tab when available, without entering its subitems. Artists without
+a saved page URL remain selected. Artist, release, and band rows use native
+browser titles for interaction hints in both the shared browser and nested tree
+renderer. This includes Releases, History, Wishlist, Collection, and Following
+Bands, grouped views, and history entries without saved preview data. Catalog
+artists browse only the
+releases in that catalog without applying the global music filter. Release views
+retain their related saved releases. Artist groups keep
+their release timestamps and lazy loaders. Sorting applies after lazy roots load
+and retains the mounted browser, filter, and current artist. Profile enrichment
+does not change subtree snapshots, cache keys, or expiry.
 `BcxPreviewItemActions` groups each destination's actions in one flat menu: Open on
 Bandcamp with a wrapping URL, Preview, and separated copy actions with exact-text
 and success feedback. Release menus copy the full release title, release title,

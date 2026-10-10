@@ -149,7 +149,7 @@ let catalog = $derived.by(() => {
 </script>
 
 {#snippet aboutContent(item: TreeItem)}
-  <BcxBandDetails about={item} {fallbackLocation} {loading} {error} />
+  <BcxBandDetails about={item} {fallbackLocation} {bandUrl} {loading} {error} />
 {/snippet}
 
 {#snippet bandActions()}
