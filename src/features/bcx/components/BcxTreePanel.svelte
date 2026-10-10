@@ -14,7 +14,7 @@ let {
   filterActions,
   filterQuery = $bindable(null),
   compareChildren,
-  doubleClickToExpand = false,
+  doubleClickToExpand = true,
 }: {
   root: TreeItem;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;

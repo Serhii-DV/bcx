@@ -86,7 +86,7 @@ let {
   showFilter = true,
   filterActions,
   itemActions,
-  doubleClickToExpand = false,
+  doubleClickToExpand = true,
   isLoading = false,
   loadingMessage = 'Loading',
 }: Props = $props();
@@ -343,13 +343,18 @@ async function handleItemClick(
 function handleItemDoubleClick(item: TreeItem, event: MouseEvent) {
   if (event.target instanceof Element && event.target.closest('.item-button'))
     return;
-  if (
-    doubleClickToExpand &&
-    (isDrillUpItem(item) || (isNode(item) && !isTreeLayout))
-  ) {
+  if (doubleClickToExpand && (isDrillUpItem(item) || isNode(item))) {
     event.preventDefault();
     event.stopPropagation();
-    void handleBrowserItemClick(item, event);
+    if (isTreeLayout && isNode(item)) {
+      if (isNodeExpanded(item)) {
+        collapseCurrentTreeNode(item);
+      } else {
+        void expandCurrentTreeNode(item);
+      }
+    } else {
+      void handleBrowserItemClick(item, event);
+    }
     return;
   }
   if (!item.href) return;
@@ -365,8 +370,8 @@ function getItemTitle(item: TreeItem): string | undefined {
   if (doubleClickToExpand && isDrillUpItem(item)) {
     return `${getDrillUpLabel()}\nClick to select\nDouble-click to go back`;
   }
-  if (doubleClickToExpand && isNode(item) && !isTreeLayout) {
-    const actionHint = `Click to select\nDouble-click to show subitems${item.href ? '\nCtrl+Enter to open artist page' : ''}`;
+  if (doubleClickToExpand && isNode(item)) {
+    const actionHint = `Click to select\nDouble-click to ${isTreeLayout ? 'show or hide' : 'show'} subitems${item.href ? '\nCtrl+Enter to open the page' : ''}`;
     return item.hint ? `${item.hint}\n${actionHint}` : actionHint;
   }
   if (!item.href) return item.hint;
@@ -497,7 +502,9 @@ async function handleKeyDown(event: KeyboardEvent) {
 
         if (isTreeLayout && !isDrillUpItem(currentItem)) {
           if (isNode(currentItem)) {
-            if (isNodeExpanded(currentItem)) {
+            if (doubleClickToExpand && event.key === 'Enter' && event.ctrlKey) {
+              await handleBrowserItemClick(currentItem, event);
+            } else if (isNodeExpanded(currentItem)) {
               collapseCurrentTreeNode(currentItem);
             } else {
               await expandCurrentTreeNode(currentItem);
@@ -794,8 +801,8 @@ async function handleBrowserItemClick(
           event,
         );
       } catch (error) {
-        console.error('[BcxTreeBrowser]', 'Could not open artist page:', error);
-        showItemFeedback(item, 'Could not open artist page', 3500);
+        console.error('[BcxTreeBrowser]', 'Could not open page:', error);
+        showItemFeedback(item, 'Could not open page', 3500);
       }
     }
     return;
@@ -938,6 +945,8 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   event.preventDefault();
   focusedPath = item.path ?? null;
   selectPreview?.(item);
+
+  if (doubleClickToExpand) return;
 
   if (isNodeExpanded(item)) {
     collapseCurrentTreeNode(item);
