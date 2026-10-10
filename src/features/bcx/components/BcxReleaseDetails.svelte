@@ -56,6 +56,7 @@ function bandPreviewItem(band: BandLinkProfile): TreeItem {
     label: band.name,
     href: band.url.toString(),
     image: band.image,
+    showArtwork: true,
     bandPreview: {
       name: band.name,
       url: band.url.toString(),
@@ -155,7 +156,7 @@ let tabTree = $derived.by(() => {
       const links = artistLinks(name);
       return links.length
         ? links.map(bandPreviewItem)
-        : [{ label: name, image: ICON_MIC }];
+        : [{ label: name, showArtwork: true }];
     }),
   });
   if (information.credits?.trim())

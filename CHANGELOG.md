@@ -54,7 +54,7 @@
 
 - Added trailing external-link icons and descriptive Bandcamp hover titles that retain the full URL for release and band links.
 
-- Fixed missing artwork placeholders in TreeBrowser release and band rows, including History entries without saved artwork. History also recognizes `/artists` pages as band entries and previews saved band details from the root Bandcamp URL.
+- TreeBrowser artist, release, and band rows share matching artwork placeholders for missing or failed images, including History entries and Release Artists without saved Bandcamp pages. History also recognizes `/artists` pages as band entries and previews saved band details from the root Bandcamp URL.
 
 - Added hover titles to linked TreeBrowser items explaining that clicking previews release or band details when available and double-clicking opens the page.
 
