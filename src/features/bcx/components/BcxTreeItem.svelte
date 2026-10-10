@@ -10,6 +10,7 @@ import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
+import type { Snippet } from 'svelte';
 import { pinnedPageFromItem } from '../pinnedPage';
 import BcxPinButton from './BcxPinButton.svelte';
 import { createItemUrl } from './itemUrl';
@@ -17,9 +18,10 @@ import { createItemUrl } from './itemUrl';
 interface Props {
   item: TreeItem;
   showActions?: boolean;
+  itemActions?: Snippet<[TreeItem]>;
 }
 
-let { item, showActions = true }: Props = $props();
+let { item, showActions = true, itemActions }: Props = $props();
 let isReleaseOrBand = $derived(!!(item.previewInformation || item.bandPreview));
 let itemImage = $derived(
   isReleaseOrBand && item.image
@@ -181,6 +183,7 @@ async function openBrowserPage(url: string) {
 {#if showActions}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
   {@render treeItemButtons()}
+  {@render itemActions?.(item)}
   {#if childrenCount > 0}
     <span class="item-count text-gray-400">{childrenCount}</span>
   {/if}

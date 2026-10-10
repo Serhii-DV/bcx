@@ -9,6 +9,7 @@ import {
 import { AlbumTreeItemFactory } from 'src/features/treeview/factories/AlbumTreeItemFactory';
 import {
   createReleaseDetailsTree,
+  getReleaseArtistNames,
   type ReleaseInformation,
   ReleasePreview,
 } from 'src/features/treeview/ReleasePreview';
@@ -22,6 +23,7 @@ import {
   ICON_FILE_TEXT,
   ICON_INFO,
   ICON_LIST_MUSIC,
+  ICON_MIC,
   ICON_TAGS,
 } from 'src/features/treeview/utils/icon';
 import type { Snippet } from 'svelte';
@@ -90,18 +92,25 @@ function linkedReleaseItem(release: BandLinkProfile): TreeItem {
 }
 let bandLinks = $state<Awaited<ReturnType<typeof loadReleaseBandLinks>>>({
   artists: [],
+  detectedArtists: [],
   releases: [],
 });
 let bandLinksError = $state('');
-let artistNames = $derived(
+let artistNames = $derived(getReleaseArtistNames(information));
+let releaseArtistNames = $derived(
   Artist.parse(information.artist).names.filter((name) => name.trim()),
 );
+function artistLinks(name: string): BandLinkProfile[] {
+  return bandLinks.detectedArtists.filter(
+    (band) => band.name.trim().toLowerCase() === name.trim().toLowerCase(),
+  );
+}
 let missingArtistNames = $derived.by(() => {
   const normalize = (name: string) => name.trim().toLowerCase();
   const representedNames = new Set(
     bandLinks.artists.map((band) => normalize(band.name)),
   );
-  return artistNames.filter((name) => {
+  return releaseArtistNames.filter((name) => {
     const key = normalize(name);
     if (representedNames.has(key)) return false;
     representedNames.add(key);
@@ -112,7 +121,7 @@ $effect(() => {
   const currentInformation = information;
   const currentUrl = releaseUrl;
   let cancelled = false;
-  bandLinks = { artists: [], releases: [] };
+  bandLinks = { artists: [], detectedArtists: [], releases: [] };
   bandLinksError = '';
   void loadReleaseBandLinks(currentInformation, currentUrl)
     .then((links) => {
@@ -154,6 +163,19 @@ let tabTree = $derived.by(() => {
       (item) =>
         item !== tracks && item !== relatedReleases && item.label !== 'Credits',
     ),
+  });
+  data.add({
+    label: 'Artists',
+    pathKey: 'artists',
+    image: ICON_MIC,
+    hasChildren: true,
+    childrenCount: artistNames.length,
+    children: artistNames.flatMap((name) => {
+      const links = artistLinks(name);
+      return links.length
+        ? links.map(bandPreviewItem)
+        : [{ label: name, image: ICON_MIC }];
+    }),
   });
   if (information.credits?.trim())
     data.add({
@@ -226,7 +248,7 @@ let dates = $derived(
   {#each missingArtistNames as name (name)}
     <BcxPreviewItemActions {name} kind="artist" copyValue={name} />
   {/each}
-  {#if !artistNames.length && !bandLinks.artists.length}
+  {#if !releaseArtistNames.length && !bandLinks.artists.length}
     <BcxPreviewItemActions name="Artist" kind="artist" copyValue={information.artist} />
   {/if}
   {#if bandLinks.publisher}
@@ -291,9 +313,15 @@ let dates = $derived(
 </BcxItemDetailsLayout>
 {/snippet}
 
+{#snippet artistItemActions(artist: TreeItem)}
+  <BcxPreviewItemActions url={createItemUrl(artist.href)} image={artist.image} name={artist.label ?? ''} kind="artist" copyValue={artist.label ?? ''} previewItem={artist.bandPreview ? artist : undefined} iconOnly={true} />
+{/snippet}
+
 {#snippet releasePanel(root: TreeItem)}
   {#if root.pathKey === 'release-info'}
     <div class="release-info-content bcx-info-scroll">{@render releaseInfo()}</div>
+  {:else if root.pathKey === 'artists'}
+    <BcxReleaseTreePanel {root} {onPreview} itemActions={artistItemActions} />
   {:else if root.pathKey === 'credits'}
     <div class="release-info-content">
       <section class="release-notes" aria-label="Release credits"><h4>Credits</h4><p>{information.credits}</p></section>

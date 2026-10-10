@@ -30,6 +30,7 @@ let {
   releaseTitle,
   previewItem,
   keepInPreview = false,
+  iconOnly = false,
 }: {
   url?: Url;
   image?: string;
@@ -39,6 +40,7 @@ let {
   releaseTitle?: string;
   previewItem?: TreeItem;
   keepInPreview?: boolean;
+  iconOnly?: boolean;
 } = $props();
 const preview = getItemPreviewContext();
 let container = $state<HTMLDivElement>();
@@ -152,16 +154,16 @@ async function copy(value: string) {
 
 <div bind:this={container} class="preview-item-actions" class:named-title={kind === 'band' || (kind === 'release' && keepInPreview)}>
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger class="bcx-section-tab" aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`}>
+    <DropdownMenu.Trigger class={iconOnly ? 'item-button item-menu-trigger' : 'bcx-section-tab'} aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`} onclick={(event) => { if (iconOnly) event.stopPropagation(); }} onkeydown={(event) => { if (iconOnly) event.stopPropagation(); }} ondblclick={(event) => { if (iconOnly) event.stopPropagation(); }}>
       {#if copied}
         <Check size={14} class="shrink-0 text-emerald-300" aria-hidden="true" />
-      {:else if image && image !== failedImage}
+      {:else if !iconOnly && image && image !== failedImage}
         <img src={image} alt="" class="item-image" onerror={() => { failedImage = image; }} />
-      {:else if kind === 'band'}
+      {:else if !iconOnly && kind === 'band'}
         <Disc size={14} class="shrink-0" aria-hidden="true" />
       {/if}
-      <span class="item-name">{name}</span>
-      <ChevronDown size={14} class="shrink-0" aria-hidden="true" />
+      {#if !iconOnly}<span class="item-name">{name}</span>{/if}
+      {#if !iconOnly || !copied}<ChevronDown size={iconOnly ? 16 : 14} class="shrink-0" aria-hidden="true" />{/if}
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
       <DropdownMenu.Content class="preview-item-menu" align="start" sideOffset={4} strategy="fixed" onCloseAutoFocus={(event) => { if (previewSelected) { event.preventDefault(); previewSelected = false; } }}>
@@ -222,6 +224,9 @@ async function copy(value: string) {
 .preview-item-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; min-width: 0; max-width: 100%; }
 .named-title :global(.bcx-section-tab) { max-width: 100%; }
 .named-title .item-name { overflow: visible; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.item-menu-trigger { display: inline-flex; align-items: center; justify-content: center; padding: 4px; border: 0; border-radius: 4px; background: transparent; color: #d1d5db; cursor: pointer; }
+.item-menu-trigger:hover { background: rgb(255 255 255 / 10%); color: #fff; }
+.item-menu-trigger:focus-visible { outline: 2px solid #38bdf8; }
 .item-image { width: 16px; height: 16px; flex-shrink: 0; border-radius: 0.125rem; object-fit: cover; }
 .item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 :global(.preview-item-menu) { z-index: 1000000; max-width: min(20rem, calc(100vw - 24px)); max-height: var(--bits-dropdown-menu-content-available-height); overflow-y: auto; padding: 0.25rem; border: 1px solid #4b5563; border-radius: 0.375rem; background: #111827; color: #f9fafb; box-shadow: 0 4px 12px rgb(0 0 0 / 25%); }

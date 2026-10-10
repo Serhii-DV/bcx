@@ -1,6 +1,7 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
 import { getReleaseMetadataFromAlbum } from 'src/bandcamp/domain/album/helper';
 import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
+import { Artist, isVariousArtists } from 'src/bandcamp/domain/artist/artist';
 import { Artwork } from 'src/bandcamp/domain/artwork/artwork';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackTime } from 'src/bandcamp/domain/track/time';
@@ -27,6 +28,7 @@ export interface ReleaseInformation {
   tags: string[];
   tracks: {
     title: string;
+    artist?: string;
     position: number;
     url?: string;
     duration?: string;
@@ -34,6 +36,25 @@ export interface ReleaseInformation {
   duration?: string;
   description?: string;
   credits?: string;
+}
+
+export function getReleaseArtistNames(
+  information: ReleaseInformation,
+): string[] {
+  const names = new Map<string, string>();
+  for (const value of [
+    information.artist,
+    ...information.tracks.map((track) => track.artist ?? ''),
+  ]) {
+    for (const name of Artist.parse(value).names) {
+      const trimmed = name.trim();
+      const key = trimmed.toLowerCase();
+      if (key && !names.has(key)) names.set(key, trimmed);
+    }
+  }
+  const artists = [...names.values()];
+  const namedArtists = artists.filter((name) => !isVariousArtists(name));
+  return namedArtists.length ? namedArtists : artists;
 }
 
 export class ReleasePreview extends TreeData {
@@ -174,6 +195,7 @@ export function createReleaseInformation(album: Album): ReleaseInformation {
     tags: [...new Set(metadata?.keywords ?? [])],
     tracks: tracks.map((track) => ({
       title: track.title,
+      artist: track.artist.toString(),
       position: track.position,
       url: releaseLink(track.url?.toString()),
       duration: track.time?.toReadableString(),

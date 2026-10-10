@@ -14,6 +14,7 @@ import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { Url } from 'src/core/url';
 import { BandTreeItem } from './items/BandTreeItem';
 import {
+  getReleaseArtistNames,
   loadSavedReleaseLinks,
   type ReleaseInformation,
 } from './ReleasePreview';
@@ -159,6 +160,7 @@ export async function loadReleaseBandLinks(
   releaseUrl?: Url,
 ): Promise<{
   artists: BandLinkProfile[];
+  detectedArtists: BandLinkProfile[];
   publisher?: BandLinkProfile;
   releases: BandLinkProfile[];
 }> {
@@ -249,7 +251,20 @@ export async function loadReleaseBandLinks(
       publisher ??= artist;
     }
   }
+  const detectedArtistNames = new Set(
+    getReleaseArtistNames(information).map(normalize),
+  );
+  const detectedArtists = [
+    ...artists,
+    ...saved.filter((band) => detectedArtistNames.has(normalize(band.name))),
+  ];
   return {
+    detectedArtists: detectedArtists.filter(
+      (band, index) =>
+        detectedArtists.findIndex((other) =>
+          other.url.hasSameHostname(band.url),
+        ) === index,
+    ),
     artists: artists.filter(
       (band, index) =>
         artists.findIndex((other) => other.url.hasSameHostname(band.url)) ===
