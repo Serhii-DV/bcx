@@ -37,10 +37,6 @@ const tabDescriptions: Record<
 > = {
   'Release Info': { title: 'View release information, artwork, and notes.' },
   Credits: { title: 'View release credits and contributors.' },
-  'Related releases': {
-    title:
-      'Browse locally saved releases by this release’s artists across Bandcamp.',
-  },
   All: { title: 'Browse all items in this section.', image: ICON_MENU },
   Artists: { title: 'Browse releases grouped by artist.' },
   Releases: { title: 'Browse releases in this section.' },

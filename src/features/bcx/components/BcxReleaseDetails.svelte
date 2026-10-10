@@ -3,6 +3,7 @@ import {
   type BandLinkProfile,
   loadReleaseBandLinks,
 } from 'src/features/treeview/BandPreview';
+import { loadRelatedArtistReleases } from 'src/features/treeview/items/relatedReleasesTreeItem';
 import {
   createReleaseDetailsTree,
   getReleaseArtistNames,
@@ -119,22 +120,24 @@ $effect(() => {
   };
 });
 let releaseTree = $derived(
-  preview ??
-    createReleaseDetailsTree(
-      new TreeData(),
-      information,
-      releaseUrl?.toString(),
-    ),
+  preview ?? createReleaseDetailsTree(new TreeData(), information),
 );
 let tracks = $derived(
   releaseTree.items.find((item) => item.label === 'Tracks'),
 );
-let relatedReleases = $derived(
-  releaseTree.items.find((item) => item.label === 'Related releases'),
-);
 let tags = $derived([...new Set(information.tags)]);
 let tabTree = $derived.by(() => {
   const data = new TreeData([], TREE_ITEM_LAYOUT.BROWSER);
+  const currentReleaseUrl = releaseUrl?.toString();
+  const artists = artistNames.map((name) => {
+    const links = artistLinks(name);
+    return {
+      name,
+      profiles: links.length
+        ? links.map(bandPreviewItem)
+        : [{ label: name, image: undefined, showArtwork: true }],
+    };
+  });
   data.add({
     label: 'Release Info',
     pathKey: 'release-info',
@@ -142,8 +145,7 @@ let tabTree = $derived.by(() => {
     hasChildren: true,
     showChildrenCount: false,
     children: releaseTree.items.filter(
-      (item) =>
-        item !== tracks && item !== relatedReleases && item.label !== 'Credits',
+      (item) => item !== tracks && item.label !== 'Credits',
     ),
   });
   data.add({
@@ -152,11 +154,24 @@ let tabTree = $derived.by(() => {
     image: ICON_MIC,
     hasChildren: true,
     childrenCount: artistNames.length,
-    children: artistNames.flatMap((name) => {
-      const links = artistLinks(name);
-      return links.length
-        ? links.map(bandPreviewItem)
-        : [{ label: name, showArtwork: true }];
+    childrenLoaded: false,
+    loadChildren: async () => ({
+      children: (
+        await Promise.all(
+          artists.map(async ({ name, profiles }) => {
+            const releases = await loadRelatedArtistReleases(
+              [name],
+              currentReleaseUrl,
+            );
+            return profiles.map((artist) => ({
+              ...releases,
+              ...artist,
+              hasChildren: true,
+              hint: `Browse other saved releases by ${name}.`,
+            }));
+          }),
+        )
+      ).flat(),
     }),
   });
   if (information.credits?.trim())
@@ -175,12 +190,6 @@ let tabTree = $derived.by(() => {
     pathKey: 'tracks',
     image: ICON_LIST_MUSIC,
   });
-  if (relatedReleases)
-    data.add({
-      ...relatedReleases,
-      pathKey: 'related-releases',
-      showChildrenCount: false,
-    });
   if (tags.length)
     data.add({
       label: 'Tags',
@@ -284,7 +293,9 @@ let dates = $derived(
 {/snippet}
 
 {#snippet artistItemActions(artist: TreeItem)}
+  {#if artist.hasChildren && !artist.previewInformation}
   <BcxPreviewItemActions url={createItemUrl(artist.href)} image={artist.image} name={artist.label ?? ''} kind="artist" copyValue={artist.label ?? ''} previewItem={artist.bandPreview ? artist : undefined} iconOnly={true} />
+  {/if}
 {/snippet}
 
 {#snippet releasePanel(root: TreeItem)}
@@ -305,7 +316,7 @@ let dates = $derived(
       </div>
     </section>
   {:else}
-    <BcxReleaseTreePanel {root} onPreview={root.pathKey === 'related-releases' ? onPreview : undefined} />
+    <BcxReleaseTreePanel {root} />
   {/if}
 {/snippet}
 
