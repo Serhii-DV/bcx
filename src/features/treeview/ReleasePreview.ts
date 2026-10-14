@@ -7,7 +7,6 @@ import { TrackTime } from 'src/bandcamp/domain/track/time';
 import type { Track } from 'src/bandcamp/domain/track/track';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { Url } from 'src/core/url';
-import { createRelatedReleasesTreeItem } from './items/relatedReleasesTreeItem';
 import { getSavedPreviewReleases } from './savedPreviewLibrary';
 import { TreeData } from './TreeData';
 import { TREE_ITEM_LAYOUT } from './TreeItem';
@@ -106,7 +105,6 @@ export async function loadSavedReleaseLinks(
 export function createReleaseDetailsTree(
   baseTree: TreeData,
   information: ReleaseInformation,
-  releaseUrl?: string,
 ): TreeData {
   const tree = new TreeData([], TREE_ITEM_LAYOUT.TREE);
   const tracks = baseTree.items.find((item) => item.label === 'Tracks');
@@ -127,7 +125,6 @@ export function createReleaseDetailsTree(
               .build(),
           ]
         : []),
-    createRelatedReleasesTreeItem(information, releaseUrl),
     ...(information.description
       ? [items('About this release', [text(information.description)]).build()]
       : []),

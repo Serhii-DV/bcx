@@ -68,8 +68,8 @@ describe('createRootSectionTabs', () => {
           children: [{ label: 'First track' }],
         },
         {
-          path: 'related-releases',
-          label: 'Related releases',
+          path: 'credits',
+          label: 'Credits',
           hasChildren: true,
           showChildrenCount: false,
         },
@@ -77,7 +77,7 @@ describe('createRootSectionTabs', () => {
     ).toEqual([
       { id: 'release-info', label: 'Release Info', image: undefined },
       { id: 'tracks', label: 'Tracks (1)', image: undefined },
-      { id: 'related-releases', label: 'Related releases', image: undefined },
+      { id: 'credits', label: 'Credits', image: undefined },
     ]);
 
     const grouped = new TreeData([

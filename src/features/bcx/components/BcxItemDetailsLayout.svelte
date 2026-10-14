@@ -101,9 +101,9 @@ let failedImage = $state<string>();
 .fit-content .item-details-tree { flex: 0 0 auto; }
 .item-details-header { display: flex; align-items: flex-start; gap: var(--bcx-preview-column-gap, 0.75rem); padding: 0.75rem var(--bcx-preview-gutter, 1rem); }
 .item-details-image { width: min(calc(var(--bcx-preview-column-width, 12rem) * var(--item-image-scale)), calc(40% * var(--item-image-scale))); aspect-ratio: 1; object-fit: contain; border-radius: 0.25rem; flex-shrink: 0; }
-.compact-image .item-details-image { width: min(5rem, 25%); }
-.scaled-image .item-details-header { flex-wrap: wrap; }
-.scaled-image .item-details-heading { flex-basis: 14rem; }
+.compact-image .item-details-image { width: min(calc(5rem * var(--item-image-scale)), 35%); }
+.scaled-image:not(.compact-image) .item-details-header { flex-wrap: wrap; }
+.scaled-image:not(.compact-image) .item-details-heading { flex-basis: 14rem; }
 .compact-header { container-type: inline-size; }
 .compact-header .item-details-header { flex-wrap: wrap; }
 .compact-header .item-details-image { width: min(10rem, 35%); }

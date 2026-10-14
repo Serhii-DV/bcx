@@ -22,9 +22,11 @@ interface Props {
 }
 
 let { item, showActions = true, itemActions }: Props = $props();
-let isReleaseOrBand = $derived(!!(item.previewInformation || item.bandPreview));
+let showArtwork = $derived(
+  item.showArtwork ?? !!(item.previewInformation || item.bandPreview),
+);
 let itemImage = $derived(
-  isReleaseOrBand && item.image
+  showArtwork && item.image
     ? (Artwork.fromUrl(item.image)?.getUrl(ArtworkSize.SMALL) ?? item.image)
     : item.image,
 );
@@ -150,8 +152,8 @@ async function openBrowserPage(url: string) {
 
 {#snippet treeItemImage(item: TreeItem)}
   {@const ImageIcon = makeIcon(item.image)}
-  {#if isReleaseOrBand || item.image !== undefined || item.flagCode}
-    <span class="bcx-tree-item-img flex-shrink-0" class:largeArtwork={isReleaseOrBand} aria-hidden={item.image || item.flagCode ? undefined : 'true'}>
+  {#if showArtwork || item.image !== undefined || item.flagCode}
+    <span class="bcx-tree-item-img flex-shrink-0" class:largeArtwork={showArtwork} aria-hidden={item.image || item.flagCode ? undefined : 'true'}>
       {#if item.flagCode}
         <span class={'flag:' + item.flagCode} aria-hidden="true"></span>
       {:else if item.image && ImageIcon}
@@ -161,7 +163,7 @@ async function openBrowserPage(url: string) {
       {:else if itemImage && itemImage !== failedImage}
         <img src={itemImage} alt={item.label} class="bcx-tree-item-image" loading="lazy" onerror={() => { failedImage = itemImage; }} />
       {:else}
-        <span class="bcx-tree-item-placeholder" aria-hidden="true"><ImageOff size={isReleaseOrBand ? 24 : 16} /></span>
+        <span class="bcx-tree-item-placeholder" aria-hidden="true"><ImageOff size={showArtwork ? 24 : 16} /></span>
       {/if}
     </span>
   {/if}

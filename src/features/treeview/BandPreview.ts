@@ -156,27 +156,10 @@ export interface BandLinkProfile {
   image?: string;
 }
 
-export async function loadReleaseBandLinks(
-  information: ReleaseInformation,
-  releaseUrl?: Url,
-): Promise<{
-  artists: BandLinkProfile[];
-  detectedArtists: BandLinkProfile[];
-  publisher?: BandLinkProfile;
-  parent?: BandLinkProfile;
-  releases: BandLinkProfile[];
-}> {
-  const normalize = (name: string) => name.trim().toLowerCase();
-  const artistNames = new Set(
-    [information.artist, ...Artist.parse(information.artist).names].map(
-      normalize,
-    ),
-  );
-  const publisherName = normalize(information.publisher ?? '');
-  const [bands, following, releaseLinks] = await Promise.all([
+export async function loadSavedBandLinkProfiles(): Promise<BandLinkProfile[]> {
+  const [bands, following] = await Promise.all([
     getSavedPreviewBands(),
     readSavedItems<FollowingBandItem>('following-bands'),
-    loadSavedReleaseLinks(information, releaseUrl),
   ]);
   // The name index keeps only one ID per name. Read band profiles directly so
   // multiple saved pages are available without hydrating their release catalogs.
@@ -209,6 +192,31 @@ export async function loadReleaseBandLinks(
           : undefined,
     });
   }
+
+  return saved;
+}
+
+export async function loadReleaseBandLinks(
+  information: ReleaseInformation,
+  releaseUrl?: Url,
+): Promise<{
+  artists: BandLinkProfile[];
+  detectedArtists: BandLinkProfile[];
+  publisher?: BandLinkProfile;
+  parent?: BandLinkProfile;
+  releases: BandLinkProfile[];
+}> {
+  const normalize = (name: string) => name.trim().toLowerCase();
+  const artistNames = new Set(
+    [information.artist, ...Artist.parse(information.artist).names].map(
+      normalize,
+    ),
+  );
+  const publisherName = normalize(information.publisher ?? '');
+  const [saved, releaseLinks] = await Promise.all([
+    loadSavedBandLinkProfiles(),
+    loadSavedReleaseLinks(information, releaseUrl),
+  ]);
 
   function bandUrl(value?: string): Url | undefined {
     const link = releaseLink(value);
