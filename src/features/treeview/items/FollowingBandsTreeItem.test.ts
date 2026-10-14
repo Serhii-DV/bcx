@@ -11,6 +11,11 @@ import {
 } from 'src/bandcamp/domain/fanData/library';
 import type { FollowingBandItem } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import {
+  completed,
+  openDatabase,
+  readRequest,
+} from 'src/bandcamp/domain/storage/database';
 import { sessionStorage, storage } from 'src/core/shared';
 import { loadBandPreview } from '../BandPreview';
 import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
@@ -68,6 +73,38 @@ describe('Following Bands', () => {
       'following-bands',
       bands,
     );
+    const database = await openDatabase();
+    expect(database.version).toBe(3);
+    expect(database.objectStoreNames.contains('fanMemberships')).toBe(false);
+    const transaction = database.transaction(
+      [
+        'fanCollection',
+        'fanWishlist',
+        'fanFollowingBands',
+        'fanFollowingGenres',
+        'fanLists',
+      ],
+      'readonly',
+    );
+    const done = completed(transaction);
+    const following = transaction.objectStore('fanFollowingBands');
+    expect(following.keyPath).toEqual(['fanId', 'entityKey']);
+    expect(following.index('account').keyPath).toBe('fanId');
+    expect(following.index('current').keyPath).toEqual(['fanId', 'current']);
+    expect(await readRequest(following.index('account').count(42))).toBe(45);
+    for (const name of ['fanCollection', 'fanWishlist', 'fanFollowingGenres'])
+      expect(await readRequest(transaction.objectStore(name).count())).toBe(0);
+    expect(
+      await readRequest(
+        transaction.objectStore('fanLists').get([42, 'following-bands']),
+      ),
+    ).toMatchObject({
+      dataset: 'following-bands',
+      currentCount: 45,
+      savedCount: 45,
+    });
+    await done;
+
     const key = TreeItemCache.subtreeKey('listener', 'following-bands');
     await sessionStorage.setByKey(key, {
       version: 8,

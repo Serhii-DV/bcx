@@ -1,4 +1,12 @@
+import type { FanDataset } from '../fanData/data';
+
 const DATABASE_NAME = 'bcx-library';
+export const FAN_DATASET_STORES = {
+  collection: 'fanCollection',
+  wishlist: 'fanWishlist',
+  'following-bands': 'fanFollowingBands',
+  'following-genres': 'fanFollowingGenres',
+} as const satisfies Record<FanDataset, string>;
 export const DATABASE_STORES = [
   'bands',
   'albums',
@@ -7,7 +15,7 @@ export const DATABASE_STORES = [
   'meta',
   'fanAccounts',
   'fanLists',
-  'fanMemberships',
+  ...Object.values(FAN_DATASET_STORES),
   'fanAvailability',
 ] as const;
 let connection: Promise<IDBDatabase> | undefined;
@@ -15,7 +23,7 @@ let connection: Promise<IDBDatabase> | undefined;
 export function openDatabase(): Promise<IDBDatabase> {
   if (connection) return connection;
   const pending = new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DATABASE_NAME, 2);
+    const request = indexedDB.open(DATABASE_NAME, 3);
     let blocked = false;
     request.onupgradeneeded = (event) => {
       const db = request.result;
@@ -42,15 +50,32 @@ export function openDatabase(): Promise<IDBDatabase> {
         });
         lists.createIndex('account', 'fanId');
         lists.createIndex('datasetOrder', ['dataset', 'updatedOrder']);
-        const memberships = db.createObjectStore('fanMemberships', {
-          keyPath: ['fanId', 'dataset', 'entityKey'],
-        });
-        memberships.createIndex('list', ['fanId', 'dataset']);
-        memberships.createIndex('current', ['fanId', 'dataset', 'current']);
         const availability = db.createObjectStore('fanAvailability', {
           keyPath: ['fanId', 'entityKey'],
         });
         availability.createIndex('account', 'fanId');
+      }
+      if (event.oldVersion < 3) {
+        for (const name of Object.values(FAN_DATASET_STORES)) {
+          const memberships = db.createObjectStore(name, {
+            keyPath: ['fanId', 'entityKey'],
+          });
+          memberships.createIndex('account', 'fanId');
+          memberships.createIndex('current', ['fanId', 'current']);
+        }
+        if (db.objectStoreNames.contains('fanMemberships')) {
+          // No migration: discard legacy memberships and their stale list summaries.
+          db.deleteObjectStore('fanMemberships');
+          const upgrade = request.transaction;
+          if (!upgrade)
+            throw new Error('Missing database upgrade transaction.');
+          upgrade.objectStore('fanLists').clear();
+          upgrade.objectStore('meta').put({
+            key: 'fan-state',
+            revision: crypto.randomUUID(),
+            nextOrder: 0,
+          });
+        }
       }
     };
     request.onblocked = () => {

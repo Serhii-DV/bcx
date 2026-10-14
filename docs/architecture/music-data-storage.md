@@ -3,7 +3,7 @@
 ## Music library
 
 Bandcamp profiles, albums, tracks, and URL references are stored as plain raw
-records in the extension-origin IndexedDB database `bcx-library`, version 2.
+records in the extension-origin IndexedDB database `bcx-library`, version 3.
 The same database stores account-scoped fan lists, memberships, and availability.
 Chrome local storage retains settings, pinned navigation, bounded logs, and sync-job progress.
 Chrome session storage retains disposable tree snapshots and a small music-library
@@ -18,7 +18,10 @@ change notification. No existing local music data is imported or read as a fallb
 | meta | key | none |
 | fanAccounts | fanId | none |
 | fanLists | fanId + dataset | account, datasetOrder (dataset + updatedOrder) |
-| fanMemberships | fanId + dataset + entityKey | list (fanId + dataset), current (fanId + dataset + current) |
+| fanCollection | fanId + entityKey | account, current (fanId + current) |
+| fanWishlist | fanId + entityKey | account, current (fanId + current) |
+| fanFollowingBands | fanId + entityKey | account, current (fanId + current) |
+| fanFollowingGenres | fanId + entityKey | account, current (fanId + current) |
 | fanAvailability | fanId + entityKey | account |
 
 Band IDs identify Bandcamp profiles, which can belong to labels. Album artist
@@ -73,7 +76,9 @@ produce explicit errors. No permission removes database quota or eviction limits
 ## Storage reporting
 
 The Storage panel includes Music library in Current and History. Database store
-counts are measured in one readonly transaction. Byte usage and quota use
+counts are measured in one readonly transaction, with separate categories for
+Collection, Wishlist, Following Bands, and Following Genres. Byte usage and quota
+use
 `navigator.storage.estimate()` for the extension origin and are labeled as
 estimates; per-store byte sizes are unavailable. Category size charts omit those
 unknown sizes. Chrome local, session, and sync measurements remain separate.
@@ -90,8 +95,10 @@ and an update-order counter. Reads without account context select the most recen
 saved account for each dataset; explicit fan IDs always select only that account.
 There are no shared-array copies or ownership documents in Chrome local storage.
 
-`fanMemberships` stores one record per account, dataset, and entity key. Each entry
-contains current membership (0/1), source order, stable history order,
+`fanCollection`, `fanWishlist`, `fanFollowingBands`, and `fanFollowingGenres`
+store one membership record per account and entity key in their own dataset's
+store. The dataset is implied by the store rather than repeated in each record.
+Each entry contains current membership (0/1), source order, stable history order,
 firstSeenAt/lastSeenAt, and basic list-provided details. Entity keys remain
 `a:{id}`, `t:{id}`, `band:{id}`, and `genre:{tag URL}`.
 These summaries support unvisited releases and profiles; detailed music records
@@ -103,8 +110,12 @@ memberships, list metadata/counts, account metadata, and a durable fan revision 
 one transaction. Missing items become former members and remain saved. Non-empty
 incoming fields enrich existing summaries. There are no staging snapshots and no
 import or fallback from previous Chrome local data. A failed transaction leaves
-previous membership and metadata intact. Database version 2 adds empty fan stores
-without converting legacy lists or changing existing music records.
+previous membership and metadata intact. Database version 3 creates separate
+empty dataset stores and removes the legacy `fanMemberships` store without
+copying its data. Existing `fanLists` summaries are cleared during that upgrade
+so timestamps and counts do not describe discarded memberships; sync again to
+populate the lists. The `fanLists` schema, other stores, and existing music
+records stay unchanged. The durable fan revision is renewed with the reset.
 
 `fanAvailability` stores the latest check and, when applicable, a confirmed
 unavailable result together in one record. Only HTTP 404/410 at the requested URL
@@ -118,8 +129,8 @@ A committed snapshot or availability batch publishes
 and durable revision. Open panels debounce changes and refresh matching account
 views; signed-out views can follow the newest saved dataset. Sync timestamps and
 counts read small `fanLists` records, while current membership queries use the
-compound current index. Archive views read just their dataset and account's
-availability records. Collection, Wishlist, and Following Bands retain Unavailable
+dataset store's compound current index. Archive views read just their dataset
+and account's availability records. Collection, Wishlist, and Following Bands retain Unavailable
 and No longer listed views; Following Genres retains All and No longer followed.
 
 One top-level Sync tab manages all four datasets. It verifies the signed-in account,

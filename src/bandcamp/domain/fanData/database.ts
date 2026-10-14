@@ -1,4 +1,9 @@
-import { completed, openDatabase, readRequest } from '../storage/database';
+import {
+  completed,
+  FAN_DATASET_STORES,
+  openDatabase,
+  readRequest,
+} from '../storage/database';
 import {
   type Availability,
   FAN_DATASETS,
@@ -21,7 +26,7 @@ import {
 const FAN_STORES = [
   'fanAccounts',
   'fanLists',
-  'fanMemberships',
+  ...Object.values(FAN_DATASET_STORES),
   'fanAvailability',
   'meta',
 ];
@@ -39,7 +44,6 @@ interface ListRecord {
 }
 interface Membership {
   fanId: number;
-  dataset: FanDataset;
   entityKey: string;
   current: 0 | 1;
   order: number;
@@ -99,13 +103,13 @@ async function readList(
   metadata: ListRecord,
   currentOnly = false,
 ): Promise<SavedFanList> {
-  const memberships = transaction.objectStore('fanMemberships');
+  const memberships = transaction.objectStore(
+    FAN_DATASET_STORES[metadata.dataset],
+  );
   const entries = await readRequest<Membership[]>(
     currentOnly
-      ? memberships
-          .index('current')
-          .getAll([metadata.fanId, metadata.dataset, 1])
-      : memberships.index('list').getAll([metadata.fanId, metadata.dataset]),
+      ? memberships.index('current').getAll([metadata.fanId, 1])
+      : memberships.index('account').getAll(metadata.fanId),
   );
   const current = entries
     .filter((entry) => entry.current === 1)
@@ -156,9 +160,9 @@ async function saveSnapshot(
   state: FanState,
 ): Promise<FanLibraryChange> {
   const { account, dataset, items } = request;
-  const store = transaction.objectStore('fanMemberships');
+  const store = transaction.objectStore(FAN_DATASET_STORES[dataset]);
   const existing = await readRequest<Membership[]>(
-    store.index('list').getAll([account.fanId, dataset]),
+    store.index('account').getAll(account.fanId),
   );
   const previous = new Map(existing.map((entry) => [entry.entityKey, entry]));
   const current = new Set(items.map(itemId));
@@ -172,7 +176,6 @@ async function saveSnapshot(
     const prior = previous.get(entityKey);
     const entry: Membership = {
       fanId: account.fanId,
-      dataset,
       entityKey,
       current: 1,
       order,

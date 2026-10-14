@@ -10,6 +10,11 @@ import { FAN_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/fanData/protocol';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import {
+  completed,
+  openDatabase,
+  readRequest,
+} from 'src/bandcamp/domain/storage/database';
 import { MUSIC_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { storage } from 'src/core/shared';
@@ -478,5 +483,29 @@ describe('release previews', () => {
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(updated?.information.collectionStatus).toEqual(['In collection']);
     expect(await readSavedItems('wishlist', 42)).toEqual([saved]);
+    const database = await openDatabase();
+    const transaction = database.transaction(
+      ['fanCollection', 'fanWishlist'],
+      'readonly',
+    );
+    const done = completed(transaction);
+    const entityKey = `a:${saved.tralbum_id}`;
+    expect(
+      await readRequest(
+        transaction.objectStore('fanCollection').get([42, entityKey]),
+      ),
+    ).toMatchObject({
+      current: 1,
+      item: saved,
+    });
+    expect(
+      await readRequest(
+        transaction.objectStore('fanWishlist').get([42, entityKey]),
+      ),
+    ).toMatchObject({
+      current: 0,
+      item: saved,
+    });
+    await done;
   });
 });

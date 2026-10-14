@@ -275,7 +275,10 @@ export async function measureMusicDatabase() {
           meta: 'Library metadata',
           fanAccounts: 'Fan accounts',
           fanLists: 'Fan lists',
-          fanMemberships: 'List memberships',
+          fanCollection: 'Collection',
+          fanWishlist: 'Wishlist',
+          fanFollowingBands: 'Following Bands',
+          fanFollowingGenres: 'Following Genres',
           fanAvailability: 'Page availability',
         }[store],
         entries: await readRequest<number>(
