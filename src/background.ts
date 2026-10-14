@@ -8,6 +8,7 @@ import { captureStorageHistory } from 'src/features/bcx/storageHistory';
 import { initializeStorageHistory } from 'src/features/bcx/storageHistoryBackground';
 import { console } from 'src/utils/console';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
+import { handleFanLibraryRequest } from './bandcamp/domain/fanData/database';
 import {
   cancelFanSync,
   FAN_SYNC_PROTOCOL_VERSION,
@@ -122,6 +123,17 @@ async function getActiveBandcampTab(): Promise<chrome.tabs.Tab | null> {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.FAN_LIBRARY) {
+      handleFanLibraryRequest(message.request).then(
+        (data) => sendResponse({ ok: true, data }),
+        (error: unknown) =>
+          sendResponse({
+            ok: false,
+            error: getErrorMessage(error, 'Could not access fan library.'),
+          }),
+      );
+      return true;
+    }
     if (message.type === MessageType.MUSIC_LIBRARY) {
       handleMusicLibraryRequest(message.request).then(
         (data) => sendResponse({ ok: true, data }),

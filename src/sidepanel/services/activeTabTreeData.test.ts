@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
-import { libraryKey } from 'src/bandcamp/domain/fanData/library';
+import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { bandDataCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
@@ -102,24 +102,16 @@ describe('active tab fan sections during navigation', () => {
     }
     const currentGenre = { name: 'Metal', tag_page_url: '/tag/metal' };
     const pastGenre = { name: 'Ambient', tag_page_url: '/tag/ambient' };
-    await chrome.storage.local.set({
-      '/following-genres': [currentGenre, pastGenre],
-      [libraryKey(42)]: {
-        version: 1,
-        account: { fanId: 42, username: 'listener' },
-        revision: 'sync-1',
-        lists: {
-          'following-genres': {
-            records: {
-              'genre:/tag/metal': currentGenre,
-              'genre:/tag/ambient': pastGenre,
-            },
-            current: ['genre:/tag/metal'],
-            syncedAt: '2026-09-29T00:00:00Z',
-          },
-        },
-      },
-    });
+    await saveSnapshot(
+      { fanId: 42, username: 'listener' },
+      'following-genres',
+      [currentGenre, pastGenre],
+    );
+    await saveSnapshot(
+      { fanId: 42, username: 'listener' },
+      'following-genres',
+      [currentGenre],
+    );
     try {
       const genres = first.find(
         (section) => section.fanSync?.dataset === 'following-genres',
@@ -133,7 +125,6 @@ describe('active tab fan sections during navigation', () => {
         'Ambient',
       ]);
     } finally {
-      await chrome.storage.local.remove(['/following-genres', libraryKey(42)]);
       await chrome.storage.session.remove(
         TreeItemCache.subtreeKey(42, 'following-genres'),
       );

@@ -27,7 +27,7 @@ flowchart TB
     panel <-->|Read data and cache views| storage
 ```
 
-The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers. The background worker owns music-library IndexedDB access; Chrome storage retains settings, pins, fan libraries, and session caches.
+The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers. The background worker owns music-library IndexedDB access; IndexedDB also stores account-scoped fan lists and availability. Chrome storage retains settings, pins, small sync jobs, bounded logs, and session caches.
 
 Dashboard is the first item in the shared main navigation. Bandcamp pages retain
 their contextual default view; when the active tab is outside Bandcamp, the

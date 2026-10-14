@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
-import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
+import {
+  readSavedItems,
+  saveSnapshot,
+} from 'src/bandcamp/domain/fanData/library';
+import { FAN_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/fanData/protocol';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
@@ -119,7 +123,18 @@ describe('release previews', () => {
       await loadReleaseBandLinks(information, album.url);
       expect(getKeys).not.toHaveBeenCalled();
       expect(getAlbums).toHaveBeenCalledTimes(2);
-      notify({ '/following-bands': { newValue: [] } }, 'local');
+      notify(
+        {
+          [FAN_LIBRARY_REVISION_KEY]: {
+            newValue: {
+              fanId: 42,
+              datasets: ['following-bands'],
+              revision: 'fan-1',
+            },
+          },
+        },
+        'session',
+      );
       await new Promise((resolve) => setTimeout(resolve, 120));
       expect(changed).toHaveBeenCalledTimes(2);
       await loadReleaseBandLinks(information, album.url);
@@ -262,24 +277,22 @@ describe('release previews', () => {
       stored.metadata,
     );
     await BandcampStorage.saveAlbum(labelRelease);
-    await storage.set({
-      '/following-bands': [
-        {
-          band_id: 13,
-          name: 'ARTIST',
-          image_id: 23,
-          url_hints: { subdomain: 'artist-other' },
-          date_followed: '2024-01-01',
-        },
-        {
-          band_id: 11,
-          name: 'Artist',
-          image_id: 21,
-          url_hints: { subdomain: 'artist' },
-          date_followed: '2024-01-01',
-        },
-      ],
-    });
+    await saveSnapshot({ fanId: 42, username: 'listener' }, 'following-bands', [
+      {
+        band_id: 13,
+        name: 'ARTIST',
+        image_id: 23,
+        url_hints: { subdomain: 'artist-other' },
+        date_followed: '2024-01-01',
+      },
+      {
+        band_id: 11,
+        name: 'Artist',
+        image_id: 21,
+        url_hints: { subdomain: 'artist' },
+        date_followed: '2024-01-01',
+      },
+    ]);
     const links = await loadReleaseBandLinks(preview!.information, stored.url);
     expect(links.artists.map((band) => band.url.toString())).toEqual([
       'https://artist.bandcamp.com/',
@@ -448,7 +461,12 @@ describe('release previews', () => {
       item_title: album.title,
       item_url: album.url.toString(),
     };
-    await storage.set({ '/collection': [saved], '/wishlist': [saved] });
+    await saveSnapshot({ fanId: 42, username: 'listener' }, 'collection', [
+      saved,
+    ]);
+    await saveSnapshot({ fanId: 42, username: 'listener' }, 'wishlist', [
+      saved,
+    ]);
     const preview =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(preview?.information.collectionStatus).toEqual([
@@ -459,6 +477,6 @@ describe('release previews', () => {
     const updated =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(updated?.information.collectionStatus).toEqual(['In collection']);
-    expect(await storage.getByKey('/wishlist')).toEqual([saved]);
+    expect(await readSavedItems('wishlist', 42)).toEqual([saved]);
   });
 });

@@ -36,7 +36,7 @@ function categoryForKey(key: string): string {
     key.startsWith('/fan-data/') ||
     FAN_DATASETS.some((dataset) => key === `/${dataset}`)
   )
-    return 'Fan libraries and sync data';
+    return 'Sync jobs and other fan data';
   if (key.startsWith('/cache/')) return 'Cached catalogs';
   if (key.startsWith('/ui/')) return 'Settings and panel state';
   if (isUuid(key)) return 'URL lookups';

@@ -1,15 +1,12 @@
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
 import {
-  type AvailabilityList,
-  availabilityKey,
   type FanDataset,
   type FanItem,
-  fanStorage,
   itemId,
-  readLibrary,
+  readAvailability,
   readSavedItems,
-  unavailableKey,
+  readSavedList,
 } from 'src/bandcamp/domain/fanData/library';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
@@ -65,21 +62,14 @@ export async function appendFanArchive(
   fanId: number | undefined,
   dataset: FanDataset,
 ): Promise<TreeItem> {
-  const storage = fanStorage();
-  const library = fanId ? await readLibrary(fanId) : undefined;
-  const list = library?.lists[dataset];
-  const results =
-    (fanId
-      ? await storage.getByKey<AvailabilityList>(availabilityKey(fanId))
-      : undefined) ?? {};
-  const unavailable =
-    (fanId
-      ? await storage.getByKey<AvailabilityList>(unavailableKey(fanId))
-      : undefined) ?? {};
+  const list = fanId ? await readSavedList(dataset, fanId) : undefined;
+  const { availability: results, unavailable } = fanId
+    ? await readAvailability(fanId)
+    : { availability: {}, unavailable: {} };
   const current = new Set(list?.current ?? []);
-  const entries = (await readSavedItems(dataset, fanId)).map(
-    (item): [string, FanItem] => [itemId(item), item],
-  );
+  const entries = (
+    list ? Object.values(list.records) : await readSavedItems(dataset, fanId)
+  ).map((item): [string, FanItem] => [itemId(item), item]);
   const makeItems = (records: typeof entries) =>
     records.map(([id, item]) =>
       archiveItem(

@@ -1,5 +1,9 @@
 import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
 import type { CompressedBandData } from 'src/bandcamp/domain/band/compressor';
+import {
+  FAN_LIBRARY_REVISION_KEY,
+  isFanLibraryChange,
+} from 'src/bandcamp/domain/fanData/protocol';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { watchMusicLibrary } from 'src/bandcamp/domain/storage/musicLibrary';
 import { normalizeMusicName } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
@@ -86,7 +90,13 @@ function onStorageChanged(
   changes: Record<string, chrome.storage.StorageChange>,
   area: string,
 ): void {
-  if (area === 'local' && '/following-bands' in changes) notify();
+  const change = changes[FAN_LIBRARY_REVISION_KEY]?.newValue;
+  if (
+    area === 'session' &&
+    isFanLibraryChange(change) &&
+    change.datasets.includes('following-bands')
+  )
+    notify();
 }
 
 export function watchSavedPreviewLibrary(onChange: () => void): () => void {

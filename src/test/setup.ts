@@ -12,14 +12,20 @@ if (!globalThis.chrome) {
         id: 'test-extension',
         lastError: undefined,
         sendMessage: async (message: { type?: string; request?: unknown }) => {
-          if (message.type !== 'MUSIC_LIBRARY') return;
+          if (!['MUSIC_LIBRARY', 'FAN_LIBRARY'].includes(message.type ?? ''))
+            return;
           const { handleMusicLibraryRequest } = await import(
             '../bandcamp/domain/storage/musicDatabase'
+          );
+          const { handleFanLibraryRequest } = await import(
+            '../bandcamp/domain/fanData/database'
           );
           try {
             return {
               ok: true,
-              data: await handleMusicLibraryRequest(message.request),
+              data: await (message.type === 'MUSIC_LIBRARY'
+                ? handleMusicLibraryRequest
+                : handleFanLibraryRequest)(message.request),
             };
           } catch (error) {
             return {

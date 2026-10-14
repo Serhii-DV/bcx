@@ -1,13 +1,11 @@
 <script lang="ts">
 import { RefreshCcw } from '@lucide/svelte';
+import { watchFanLibrary } from 'src/bandcamp/domain/fanData/client';
 import {
   FAN_DATASETS,
   type FanAccount,
   type FanDataset,
-  libraryKey,
-  readLibrary,
-  readSavedItems,
-  SAVED_LIST_OWNERS_KEY,
+  readListSummaries,
 } from 'src/bandcamp/domain/fanData/library';
 import {
   FAN_SYNC_PROTOCOL_VERSION,
@@ -56,20 +54,14 @@ let generation = 0;
 async function refresh() {
   const token = ++generation;
   try {
-    const [library, savedLists] = await Promise.all([
-      account ? readLibrary(account.fanId) : undefined,
-      Promise.all(
-        FAN_DATASETS.map((dataset) => readSavedItems(dataset, account?.fanId)),
-      ),
-    ]);
+    const summaries = await readListSummaries(account?.fanId);
     if (token !== generation) return;
     syncedAt = Object.fromEntries(
-      FAN_DATASETS.map((dataset) => [
-        dataset,
-        library?.lists[dataset]?.syncedAt,
-      ]),
+      FAN_DATASETS.map((dataset) => [dataset, summaries[dataset]?.syncedAt]),
     );
-    hasSaved = savedLists.some((saved) => saved.length > 0);
+    hasSaved = Object.values(summaries).some(
+      (summary) => summary.savedCount > 0,
+    );
   } catch (reason) {
     if (token === generation)
       error = getErrorMessage(reason, 'Could not read saved sync status.');
@@ -80,22 +72,12 @@ $effect(() => {
   void refresh();
 });
 onMount(() => {
-  const changed = (
-    changes: Record<string, chrome.storage.StorageChange>,
-    area: string,
-  ) => {
-    if (
-      area === 'local' &&
-      (SAVED_LIST_OWNERS_KEY in changes ||
-        FAN_DATASETS.some((dataset) => `/${dataset}` in changes) ||
-        (account && libraryKey(account.fanId) in changes))
-    )
-      void refresh();
-  };
-  chrome.storage.onChanged.addListener(changed);
+  const stop = watchFanLibrary((change) => {
+    if (!change || !account || change.fanId === account.fanId) void refresh();
+  });
   return () => {
     generation++;
-    chrome.storage.onChanged.removeListener(changed);
+    stop();
   };
 });
 async function request(nextAction?: FanSyncAction) {

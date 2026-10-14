@@ -1,26 +1,21 @@
 import { MessageType } from 'src/core/message';
+import { Storage } from 'src/core/storage';
 import { startActivity, updateActivity } from 'src/features/bcx/activityLog';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { checkAvailability } from './availability';
+import { handleFanLibraryRequest } from './database';
 import {
   type AvailabilityList,
-  availabilityKey,
   FAN_DATASETS,
   type FanAccount,
   type FanDataset,
   type FanItem,
-  fanStorage,
-  importLegacyLists,
   isFanAccount,
   isFanDataset,
   itemId,
-  readLibrary,
-  saveAvailabilityBatch,
-  saveSnapshot,
-  unavailableKey,
 } from './library';
 
-export const FAN_SYNC_PROTOCOL_VERSION = 2;
+export const FAN_SYNC_PROTOCOL_VERSION = 3;
 export function isFanSyncTabUrl(value?: string): boolean {
   if (!value) return false;
   try {
@@ -35,8 +30,9 @@ export function isFanSyncTabUrl(value?: string): boolean {
   }
 }
 
+export const syncJobStorage = () => new Storage(chrome.storage.local);
 export const FAN_SYNC_JOB_KEY = '/fan-data/sync-job';
-export type FanSyncAction = FanDataset | 'all' | 'check' | 'import';
+export type FanSyncAction = FanDataset | 'all' | 'check';
 export interface FanSyncJob {
   id: string;
   account: FanAccount;
@@ -68,7 +64,7 @@ export async function closeOwnedTab(job: FanSyncJob): Promise<void> {
 }
 export function recoverFanSync(): Promise<void> {
   recovery ??= (async () => {
-    const job = await fanStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY);
+    const job = await syncJobStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY);
     if (job?.state !== 'running') return;
     await updateActivity(
       job.id,
@@ -76,7 +72,7 @@ export function recoverFanSync(): Promise<void> {
       'failed',
     );
     await closeOwnedTab(job);
-    await fanStorage().set({
+    await syncJobStorage().set({
       [FAN_SYNC_JOB_KEY]: {
         ...job,
         state: 'error',
@@ -93,12 +89,7 @@ export async function startFanSync(
 ): Promise<void> {
   if (
     !isFanAccount(account) ||
-    !(
-      isFanDataset(action) ||
-      action === 'all' ||
-      action === 'check' ||
-      action === 'import'
-    )
+    !(isFanDataset(action) || action === 'all' || action === 'check')
   ) {
     throw new Error('Open a Bandcamp page while signed in, then try again.');
   }
@@ -118,7 +109,7 @@ export async function startFanSync(
       protocolVersion: FAN_SYNC_PROTOCOL_VERSION,
     };
     controller = new AbortController();
-    await fanStorage().set({ [FAN_SYNC_JOB_KEY]: job });
+    await syncJobStorage().set({ [FAN_SYNC_JOB_KEY]: job });
     await startActivity(
       job.action === 'check' ? 'availability' : 'sync',
       job.action === 'check'
@@ -140,7 +131,7 @@ export function cancelFanSync() {
 }
 
 async function runJob(job: FanSyncJob, abort: AbortController) {
-  const storage = fanStorage();
+  const storage = syncJobStorage();
   const signal = abort.signal;
   // Keep the worker alive only for this bounded, user-requested operation.
   const heartbeat = setInterval(() => {
@@ -189,7 +180,7 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
       job.tabId = tab.id;
       await progress('Waiting for your Collection page…');
       await waitForPage(tab.id, signal);
-      // Verify the account even when only importing unassigned legacy entries.
+      // Verify the account before loading its lists.
       const identity = await requestPage(
         tab.id,
         job.account,
@@ -200,7 +191,6 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
         throw new Error(
           identity.error || 'Could not verify your Bandcamp account.',
         );
-      if (job.action === 'import') await importLegacyLists(job.account);
       const datasets = isFanDataset(job.action) ? [job.action] : FAN_DATASETS;
       for (const dataset of datasets) {
         await progress(`Loading ${dataset}…`);
@@ -214,7 +204,12 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
         if (!response.ok)
           throw new Error(response.error || `Could not load ${dataset}.`);
         await progress(`Saving ${dataset}…`);
-        await saveSnapshot(job.account, dataset, response.items);
+        await handleFanLibraryRequest({
+          action: 'save-snapshot',
+          account: job.account,
+          dataset,
+          items: response.items,
+        });
         (job.completedDatasets ??= []).push(dataset);
         await updateActivity(
           job.id,
@@ -222,11 +217,17 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
         );
       }
     }
-    const library = await readLibrary(job.account.fanId);
-    const unavailable =
-      (await storage.getByKey<AvailabilityList>(
-        unavailableKey(job.account.fanId),
-      )) ?? {};
+    const library = (
+      await handleFanLibraryRequest({
+        action: 'read-library',
+        fanId: job.account.fanId,
+      })
+    ).library;
+    const { unavailable, availability: previousChecks } =
+      await handleFanLibraryRequest({
+        action: 'read-availability',
+        fanId: job.account.fanId,
+      });
     const candidates = new Map<string, FanItem>();
     const currentRecords = new Map<string, FanItem>();
     // Prefer the newest current URL when the same release left one list but
@@ -250,10 +251,6 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
           candidates.set(id, item);
       }
     }
-    const previousChecks =
-      (await storage.getByKey<AvailabilityList>(
-        availabilityKey(job.account.fanId),
-      )) ?? {};
     // Retry unfinished entries first, so a timed-out run makes forward progress.
     const orderedCandidates = [...candidates]
       .map(([id, item]) => currentRecords.get(id) ?? item)
@@ -270,7 +267,11 @@ async function runJob(job: FanSyncJob, abort: AbortController) {
     let checkpointAt = Date.now();
     const flushAvailability = async () => {
       if (!Object.keys(pendingAvailability).length) return;
-      await saveAvailabilityBatch(job.account.fanId, pendingAvailability);
+      await handleFanLibraryRequest({
+        action: 'save-availability',
+        fanId: job.account.fanId,
+        updates: pendingAvailability,
+      });
       pendingAvailability = {};
       checkpointAt = Date.now();
     };

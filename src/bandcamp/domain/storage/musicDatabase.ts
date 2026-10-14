@@ -4,6 +4,12 @@ import { Artist } from '../artist/artist';
 import type { RawBandData } from '../band/compressor';
 import type { RawTrackData } from '../track/compressor';
 import {
+  completed,
+  DATABASE_STORES,
+  openDatabase,
+  readRequest,
+} from './database';
+import {
   isMusicLibraryRequest,
   MUSIC_LIBRARY_REVISION_KEY,
   type MusicLibraryData,
@@ -12,7 +18,6 @@ import {
   normalizeMusicName,
 } from './musicLibraryProtocol';
 
-const DATABASE_NAME = 'bcx-library';
 const STORES = ['bands', 'albums', 'tracks', 'urlRefs', 'meta'] as const;
 type Entity = RawBandData | RawAlbumData | RawTrackData;
 type SavedEntity = Entity & { savedAt: number; savedOrder: number };
@@ -26,81 +31,6 @@ interface LibraryState {
   key: 'state';
   revision: string;
   nextOrder: number;
-}
-let connection: Promise<IDBDatabase> | undefined;
-
-function openDatabase(): Promise<IDBDatabase> {
-  if (connection) return connection;
-  const pending = new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DATABASE_NAME, 1);
-    let blocked = false;
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      const bands = db.createObjectStore('bands', { keyPath: 'id' });
-      bands.createIndex('nameKey', 'nameKey');
-      bands.createIndex('savedOrder', 'savedOrder');
-      const albums = db.createObjectStore('albums', { keyPath: 'id' });
-      albums.createIndex('bandId', 'bandId');
-      albums.createIndex('artistKeys', 'artistKeys', { multiEntry: true });
-      albums.createIndex('titleArtist', ['titleKey', 'artistCreditKey']);
-      albums.createIndex('savedOrder', 'savedOrder');
-      const tracks = db.createObjectStore('tracks', { keyPath: 'id' });
-      tracks.createIndex('albumId', 'albumId');
-      tracks.createIndex('savedOrder', 'savedOrder');
-      const refs = db.createObjectStore('urlRefs', { keyPath: 'uuid' });
-      refs.createIndex('entity', ['store', 'id']);
-      db.createObjectStore('meta', { keyPath: 'key' });
-    };
-    request.onblocked = () => {
-      blocked = true;
-      reject(
-        new Error(
-          'Music library upgrade is blocked. Close other BCX views and retry.',
-        ),
-      );
-    };
-    request.onerror = () =>
-      reject(request.error ?? new Error('Could not open music library.'));
-    request.onsuccess = () => {
-      const db = request.result;
-      if (blocked) {
-        db.close();
-        return;
-      }
-      db.onversionchange = () => {
-        db.close();
-        connection = undefined;
-      };
-      db.onclose = () => {
-        connection = undefined;
-      };
-      resolve(db);
-    };
-  });
-  connection = pending;
-  void pending.catch(() => {
-    if (connection === pending) connection = undefined;
-  });
-  return pending;
-}
-
-function readRequest<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () =>
-      reject(request.error ?? new Error('Music library request failed.'));
-  });
-}
-function completed(transaction: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
-    transaction.oncomplete = () => resolve();
-    transaction.onabort = () =>
-      reject(
-        transaction.error ?? new Error('Music library transaction aborted.'),
-      );
-    transaction.onerror = () =>
-      reject(transaction.error ?? new Error('Could not save music library.'));
-  });
 }
 function emptyData(): MusicLibraryData {
   return { bands: [], albums: [], tracks: [], revision: '' };
@@ -332,17 +262,21 @@ export async function handleMusicLibraryRequest(
 
 export async function measureMusicDatabase() {
   const db = await openDatabase();
-  const transaction = db.transaction([...STORES], 'readonly');
+  const transaction = db.transaction([...DATABASE_STORES], 'readonly');
   const done = completed(transaction);
   try {
     const counts = await Promise.all(
-      STORES.map(async (store) => ({
+      DATABASE_STORES.map(async (store) => ({
         label: {
           bands: 'Bands',
           albums: 'Albums',
           tracks: 'Tracks',
           urlRefs: 'URL lookups',
           meta: 'Library metadata',
+          fanAccounts: 'Fan accounts',
+          fanLists: 'Fan lists',
+          fanMemberships: 'List memberships',
+          fanAvailability: 'Page availability',
         }[store],
         entries: await readRequest<number>(
           transaction.objectStore(store).count(),

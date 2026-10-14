@@ -326,21 +326,18 @@ entry from hiding newly saved data without discarding unrelated caches. Existing
 TTLs and other subtree keys are unchanged. Archive roots are appended after cache
 restoration so their preview callbacks and availability state are always current.
 
-Open panel instances listen for account-library changes in local storage, debounce
-updates, and rebuild loaded fan sections with stale-request protection. They retain
-mounted root tabs and use stable paths to preserve filters and selection when the
-selected item remains present. Collection pagination still resets on a rebuild;
-items beyond its first page remain accessible through Show more.
+Open panel instances listen for `/fan-data/revision` session notifications,
+debounce changes, and rebuild loaded fan sections for the matching fan ID and
+affected datasets. They retain mounted root tabs and stable paths with stale-request
+protection. Collection pagination resets on rebuild; later items remain accessible
+through Show more.
 
-Snapshot version 30 rebuilds Collection, Wishlist, and Following Bands from all
-saved entries, including the original shared arrays before the first sync. Fan
-cache revisions combine the dataset sync timestamp with its shared-array ownership
-revision. Sync publishes merged arrays at the original storage keys; open panels
-also observe those keys and ownership changes, so signed-out views can refresh.
-Archive roots use the same saved items and retain separate current-membership and
-availability filters.
-Snapshot version 31 rebuilds Following Genres from every saved genre. Its All tab
-includes former follows, while No longer followed filters them separately.
+Collection, Wishlist, Following Bands, and Following Genres read all retained
+account-scoped memberships from IndexedDB. Dataset revisions come from durable
+`fanLists` records; there are no shared local arrays or ownership documents.
+Signed-out views use the most recently saved list for each dataset. Following
+Genres retains its All and No longer followed roots. Snapshot serialization and
+version 31, keys, TTLs, and explicit invalidation remain unchanged.
 
 ## IndexedDB music revisions
 

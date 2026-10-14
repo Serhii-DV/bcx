@@ -6,12 +6,10 @@ import {
   readCurrentLists,
   readSavedItems,
   saveSnapshot,
-  stagingKey,
 } from 'src/bandcamp/domain/fanData/library';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
-import { storage } from 'src/core/shared';
 import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import {
   filterTreeBrowserItems,
@@ -283,9 +281,15 @@ describe('release catalog previews', () => {
         purchased:
           index < 20 ? '02 Jan 2025 03:04:05 GMT' : '03 Feb 2024 04:05:06 GMT',
       }));
-      await storage.set({
-        '/collection': collectionItems,
-        '/wishlist': createItems(25).map((item, index) => ({
+      await saveSnapshot(
+        { fanId: 42, username: 'listener' },
+        'collection',
+        collectionItems,
+      );
+      await saveSnapshot(
+        { fanId: 42, username: 'listener' },
+        'wishlist',
+        createItems(25).map((item, index) => ({
           ...item,
           added:
             index === 24
@@ -294,7 +298,7 @@ describe('release catalog previews', () => {
                 ? '02 Jan 2025 03:04:05 GMT'
                 : '03 Feb 2024 04:05:06 GMT',
         })),
-      });
+      );
       if (label === 'Collection') {
         const storedAlbum = AlbumFactory.fromBandcampItem(collectionItems[0]);
         storedAlbum.metadata = Metadata.create(
@@ -320,18 +324,20 @@ describe('release catalog previews', () => {
       expect((await createScoped()).releaseCatalog?.albums).toHaveLength(25);
       expect(await readCurrentItems(dataset, 42)).toHaveLength(24);
       expect(await readCurrentItems(dataset)).toHaveLength(24);
-      const reads = rs.spyOn(chrome.storage.local, 'get');
+      const reads = rs.spyOn(chrome.runtime, 'sendMessage');
       const currentLists = await readCurrentLists(
         ['collection', 'wishlist'],
         42,
       );
       expect(currentLists[dataset]).toHaveLength(24);
-      expect(
-        reads.mock.calls.filter(([keys]) => keys === '/fan-data/account/42'),
-      ).toHaveLength(1);
+      expect(reads).toHaveBeenCalledTimes(1);
       expect((await readCurrentLists([dataset], 99))[dataset]).toEqual([]);
       reads.mockRestore();
-      expect(await storage.getByKey(stagingKey(42, dataset))).toBeUndefined();
+      expect(
+        (await chrome.storage.local.get())[
+          `/fan-data/account/42/staging/${dataset}`
+        ],
+      ).toBeUndefined();
       // Restore the source order for the existing catalog/cache assertions below.
       await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, saved);
       const original = await create();

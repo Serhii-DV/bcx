@@ -1,13 +1,13 @@
 <script lang="ts">
 import { Info, X } from '@lucide/svelte';
 import {
-  fanStorage,
-  libraryKey,
-  SAVED_LIST_OWNERS_KEY,
-} from 'src/bandcamp/domain/fanData/library';
+  FAN_LIBRARY_REVISION_KEY,
+  isFanLibraryChange,
+} from 'src/bandcamp/domain/fanData/protocol';
 import {
   FAN_SYNC_JOB_KEY,
   type FanSyncJob,
+  syncJobStorage,
 } from 'src/bandcamp/domain/fanData/sync';
 import { MUSIC_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
@@ -536,7 +536,7 @@ onMount(() => {
   const refreshSyncJob = async () => {
     const generation = ++jobReadGeneration;
     try {
-      const job = await fanStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY);
+      const job = await syncJobStorage().getByKey<FanSyncJob>(FAN_SYNC_JOB_KEY);
       if (generation === jobReadGeneration) {
         fanSyncJob = job;
         fanSyncError = '';
@@ -553,7 +553,12 @@ onMount(() => {
   ) => {
     const musicChanged =
       area === 'session' && MUSIC_LIBRARY_REVISION_KEY in changes;
-    if (area !== 'local' && !musicChanged) return;
+    const fanValue =
+      area === 'session'
+        ? changes[FAN_LIBRARY_REVISION_KEY]?.newValue
+        : undefined;
+    const fanChanged = isFanLibraryChange(fanValue) ? fanValue : undefined;
+    if (area !== 'local' && !musicChanged && !fanChanged) return;
     if (area === 'local' && FAN_SYNC_JOB_KEY in changes) void refreshSyncJob();
     for (const section of sections) {
       const account = section.fanSync?.account ?? section.fanAccount;
@@ -561,10 +566,11 @@ onMount(() => {
         (musicChanged &&
           section.fanSync &&
           section.fanSync.dataset !== 'following-genres') ||
-        (account && libraryKey(account.fanId) in changes) ||
-        (section.fanSync &&
-          (`/${section.fanSync.dataset}` in changes ||
-            SAVED_LIST_OWNERS_KEY in changes))
+        (fanChanged &&
+          (!account || account.fanId === fanChanged.fanId) &&
+          (section.fanSync
+            ? fanChanged.datasets.includes(section.fanSync.dataset)
+            : !!section.fanAccount))
       )
         pending.add(section.id);
     }
