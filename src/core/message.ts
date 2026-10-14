@@ -18,6 +18,7 @@ export enum MessageType {
   START_FAN_SYNC = 'START_FAN_SYNC',
   CANCEL_FAN_SYNC = 'CANCEL_FAN_SYNC',
   LOAD_FAN_DATA = 'LOAD_FAN_DATA',
+  LOG_FAN_SYNC_DEBUG = 'LOG_FAN_SYNC_DEBUG',
   HISTORY_SEARCH = 'HISTORY_SEARCH',
   GET_ACTIVE_BANDCAMP_TAB = 'GET_ACTIVE_BANDCAMP_TAB',
   GET_ACTIVE_BANDCAMP_PAGE_DATA = 'GET_ACTIVE_BANDCAMP_PAGE_DATA',
@@ -68,6 +69,11 @@ export type Message =
       action: FanSyncAction;
     }
   | { type: MessageType.CANCEL_FAN_SYNC }
+  | {
+      type: MessageType.LOG_FAN_SYNC_DEBUG;
+      label: string;
+      capture: Record<string, unknown>;
+    }
   | {
       type: MessageType.LOAD_FAN_DATA;
       account: FanAccount;

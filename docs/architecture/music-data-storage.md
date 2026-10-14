@@ -152,33 +152,32 @@ console timer labels.
 
 ## Temporary Sync debugging
 
-Sync automatically stores original JSON objects in Chrome session storage for
-DevTools inspection, without extension viewer, copy, or debug-toggle controls.
-`/debug/fan-sync/page-data` retains the latest fan-page data blob before account
-validation. Each successfully decoded API response is stored separately at
+Sync logs the original fan-page JSON and every successfully decoded API response
+to the extension service worker's console. Debug data is not written to session
+storage or IndexedDB, and no viewer, copy, or debug-toggle controls are added.
+
+The `/debug/fan-sync/page-data` entry logs the original page blob before account
+validation. API entries use labels of the form
 `/debug/fan-sync/<dataset>/<runId>/<responseNumber>`, before response validation
-or membership enrichment. The datasets are `collection`, `wishlist`,
-`following-bands`, and `following-genres`. A dataset satisfied entirely by the
-page's item cache makes no API request; its original objects remain in page-data.
+or membership enrichment. Datasets are `collection`, `wishlist`,
+`following-bands`, and `following-genres`. Each pagination response is logged
+separately. Datasets satisfied entirely by the page's item cache make no API
+request; their original objects are included in the page-data entry.
 
-Each capture contains its timestamp, expected fan ID, and source page URL.
-Dataset captures also identify the endpoint, request method/payload, and response
-number within that run. `data` holds the complete original response object, not a
-JSON string. Each dataset retrieval uses its start time as an ISO 8601 UTC
-`runId`, for example `2026-10-14T12:34:56.789Z`, and response numbers start at 1.
-Key suffixes are zero-padded to at least four digits, such as `0001` and `0123`;
-the `page` metadata remains numeric.
-Runs started within the same millisecond in a content-script context advance the
-timestamp by one millisecond to avoid overwriting captures.
-Pagination and subsequent syncs retain previous response captures
-instead of overwriting them; no captures are automatically evicted.
+Each entry contains its timestamp, expected fan ID, and source page URL.
+API entries also identify the endpoint, request method/payload, run ID, and
+numeric response number. Expand `data` to inspect the full original object.
+Chrome messaging serializes the entry before content-side enrichment, so later
+mutations do not change the logged JSON snapshot.
 
-Captures have no additional per-key size limit and share Chrome's session storage
-quota with disposable caches. Failed writes, including quota errors, replace the
-value at that key with capture metadata and an error when possible, and report
-failures in the console. Once the shared quota is exhausted, further response
-objects cannot be retained; earlier captures remain available.
-Debug persistence never changes normal sync success/failure. Captures survive
-ordinary page navigation and clear with the extension's session storage lifecycle.
-Inspect Application > Storage > Extension Storage > BCX > Session in Chrome
-DevTools, then filter for `/debug/fan-sync/`.
+Run IDs use ISO 8601 UTC timestamps, such as `2026-10-14T12:34:56.789Z`.
+Response label suffixes start at `0001` and are zero-padded to at least four
+digits; the `page` metadata remains numeric. Runs started in the same
+millisecond within one content-script context advance the timestamp by one
+millisecond to keep labels distinct.
+
+Open BCX's service worker DevTools from `chrome://extensions` before starting
+Sync, select Console, and filter for `/debug/fan-sync/`. Output goes to the
+worker rather than the temporary page console so closing the Sync tab does not
+hide it. Console output has no stored debug history or session-storage quota.
+Logging failures report a warning without changing normal Sync success/failure.

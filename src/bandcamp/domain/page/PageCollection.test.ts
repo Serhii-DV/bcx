@@ -1,20 +1,25 @@
 import { describe, expect, it, rstest } from '@rstest/core';
+import { type Message, MessageType } from 'src/core/message';
 import type { BandcampItem, BandcampResponseCapture } from './PageCollection';
 
+const loggedEntries: { label: string; capture: Record<string, unknown> }[] = [];
+
 function installChromeMock() {
-  const sessionData: Record<string, unknown> = {};
+  loggedEntries.length = 0;
   Object.defineProperty(globalThis, 'chrome', {
     value: {
+      runtime: {
+        sendMessage: rstest.fn(async (message: Message) => {
+          if (message.type === MessageType.LOG_FAN_SYNC_DEBUG)
+            loggedEntries.push(structuredClone(message));
+          return { ok: true };
+        }),
+      },
       storage: {
         local: {},
         session: {
-          set: rstest.fn(async (values: Record<string, unknown>) => {
-            Object.assign(sessionData, structuredClone(values));
-          }),
-          get: rstest.fn(async () => structuredClone(sessionData)),
-          remove: rstest.fn(async (key: string) => {
-            delete sessionData[key];
-          }),
+          set: rstest.fn(),
+          remove: rstest.fn(),
         },
       },
     },
@@ -113,12 +118,12 @@ describe('PageCollection', () => {
       '../../content/fanSyncDebug'
     );
     const account = { fanId: 42, username: 'fan' };
-    const storeCapture = createFanResponseCapture(account, 'wishlist');
+    const logCapture = createFanResponseCapture(account, 'wishlist');
     const pageCollection = await createPageCollection(
       transport,
       async (capture) => {
         captures.push(structuredClone(capture));
-        await storeCapture(capture);
+        await logCapture(capture);
       },
     );
 
@@ -144,41 +149,43 @@ describe('PageCollection', () => {
     expect((captures[2].response as { items: BandcampItem[] }).items).toEqual([
       collectionItem(2),
     ]);
-    const stored = await chrome.storage.session.get(null);
-    const keys = Object.keys(stored);
-    expect(keys).toHaveLength(3);
-    const runPrefix = keys[0].slice(0, keys[0].lastIndexOf('/'));
+    expect(loggedEntries).toHaveLength(3);
+    const labels = loggedEntries.map((entry) => entry.label);
+    const runPrefix = labels[0].slice(0, labels[0].lastIndexOf('/'));
     expect(runPrefix).toMatch(
       /^\/debug\/fan-sync\/wishlist\/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
     );
-    expect(keys).toEqual(
+    expect(labels).toEqual(
       ['0001', '0002', '0003'].map((page) => `${runPrefix}/${page}`),
     );
     captures.forEach((capture, index) => {
-      expect(stored[keys[index]]).toMatchObject({
+      expect(loggedEntries[index].capture).toMatchObject({
         fanId: 42,
         dataset: 'wishlist',
         page: index + 1,
         method: capture.method,
         endpoint: capture.endpoint,
-        data: capture.response,
       });
+      // The logged snapshot retains all raw fields without later enrichment.
+      expect(loggedEntries[index].capture.data).toEqual(capture.response);
     });
 
-    // A subsequent retrieval uses a new run key and preserves all earlier pages.
+    const previousEntries = structuredClone(loggedEntries);
     const nextRun = createFanResponseCapture(account, 'wishlist');
     await nextRun(captures[1]);
-    const afterNextRun = await chrome.storage.session.get(null);
-    expect(Object.keys(afterNextRun)).toHaveLength(4);
-    for (const key of keys) expect(afterNextRun[key]).toEqual(stored[key]);
-    const nextKey = Object.keys(afterNextRun).find(
-      (key) => !keys.includes(key),
-    );
-    expect(nextKey).not.toContain(runPrefix);
-    expect(nextKey).toMatch(/\/0001$/);
-    expect(afterNextRun[nextKey!]).toMatchObject({
-      data: captures[1].response,
-    });
+    expect(loggedEntries).toHaveLength(4);
+    expect(loggedEntries.slice(0, 3)).toEqual(previousEntries);
+    expect(loggedEntries[3].label).not.toContain(runPrefix);
+    expect(loggedEntries[3].label).toMatch(/\/0001$/);
+    expect(loggedEntries[3].capture.data).toEqual(captures[1].response);
+
+    const { captureFanPageData } = await import('../../content/fanSyncDebug');
+    const pageData = pageCollection.getPageData();
+    await captureFanPageData(account, pageData);
+    expect(loggedEntries[4].label).toBe('/debug/fan-sync/page-data');
+    expect(loggedEntries[4].capture.data).toEqual(pageData);
+    expect(chrome.storage.session.set).not.toHaveBeenCalled();
+    expect(chrome.storage.session.remove).not.toHaveBeenCalled();
 
     expect(transport.postJsonString).toHaveBeenCalledTimes(2);
     expect(transport.postJsonString.mock.calls[1][1]).toMatchObject({
@@ -257,9 +264,20 @@ describe('PageCollection', () => {
         more_available: false,
       })),
     };
-    const pageCollection = await createPageCollection(transport, async () => {
-      throw new Error('Debug storage unavailable');
-    });
+    const { createFanResponseCapture } = await import(
+      '../../content/fanSyncDebug'
+    );
+    const pageCollection = await createPageCollection(
+      transport,
+      createFanResponseCapture(
+        { fanId: 42, username: 'fan' },
+        'following-bands',
+      ),
+    );
+    const sendMessage = chrome.runtime.sendMessage as ReturnType<
+      typeof rstest.fn
+    >;
+    sendMessage.mockRejectedValue(new Error('Debug console unavailable'));
     const { PageCollection } = await import('./PageCollection');
 
     const items = await pageCollection.loadFollowingBandsItems();

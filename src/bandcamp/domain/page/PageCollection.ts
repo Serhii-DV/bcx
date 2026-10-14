@@ -170,7 +170,7 @@ export class PageCollection {
     }
     const record = async (value: BandcampResponseCapture) => {
       try {
-        // Await persistence before consumers can enrich or otherwise mutate a response.
+        // Await the capture before consumers can enrich or otherwise mutate a response.
         await capture(value);
       } catch (error) {
         console.warn('BCX could not capture a Bandcamp response:', error);

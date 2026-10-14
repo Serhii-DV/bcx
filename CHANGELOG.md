@@ -50,7 +50,7 @@
 
 ### Patch Changes
 
-- Sync keeps the latest original fan-page JSON and stores every raw API response separately in session storage under a dataset/timestamp/response key for DevTools inspection, with readable UTC run timestamps and response numbers padded to four digits. Pagination and later Sync runs preserve earlier responses. Captures precede validation and enrichment, include source metadata, and have no extra per-capture size limit. Storage failures record an explicit status when possible without interrupting Sync.
+- Sync logs the original fan-page JSON and every raw API response to the service-worker console for inspection, including each pagination response. Entries include source metadata, readable UTC run timestamps, and response numbers padded to four digits. JSON snapshots precede validation and enrichment; debug data no longer consumes session storage, and logging failures do not interrupt Sync.
 
 - All TreeBrowser rows with subitems now select on a single-click and show subitems on a double-click, including lazy-loaded groups and tree layouts; double-clicking an expanded tree row hides its subitems. Back rows also return on a double-click. Ctrl+Enter opens the selected parent item's page in the active browser tab when available. Row interaction hints use standard browser titles. Keyboard navigation and individual row actions remain available.
 

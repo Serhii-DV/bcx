@@ -123,6 +123,24 @@ async function getActiveBandcampTab(): Promise<chrome.tabs.Tab | null> {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.LOG_FAN_SYNC_DEBUG) {
+      if (
+        _sender.id !== chrome.runtime.id ||
+        !isFanSyncTabUrl(_sender.tab?.url) ||
+        typeof message.label !== 'string' ||
+        !message.label.startsWith('/debug/fan-sync/') ||
+        !message.capture ||
+        typeof message.capture !== 'object' ||
+        Array.isArray(message.capture)
+      ) {
+        sendResponse({ ok: false, error: 'Invalid fan-sync debug message.' });
+        return;
+      }
+      // Messaging supplies a JSON snapshot isolated from content-side enrichment.
+      console.log(message.label, message.capture);
+      sendResponse({ ok: true });
+      return;
+    }
     if (message.type === MessageType.FAN_LIBRARY) {
       handleFanLibraryRequest(message.request).then(
         (data) => sendResponse({ ok: true, data }),
