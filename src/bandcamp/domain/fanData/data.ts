@@ -46,8 +46,13 @@ export function isFanAccount(value: unknown): value is FanAccount {
 }
 export function itemId(item: FanItem): string {
   if ('tralbum_id' in item) return `${item.tralbum_type}:${item.tralbum_id}`;
-  if ('band_id' in item) return `band:${item.band_id}`;
-  return `genre:${item.tag_page_url}`;
+  if ('band_id' in item) return `b:${item.band_id}`;
+  const url = new URL(item.tag_page_url, 'https://bandcamp.com');
+  url.searchParams.sort();
+  const path = url.pathname
+    .replace(/^\/discover(?:\/|$)/, '')
+    .replace(/^\//, '');
+  return `g:${path}${url.search}`;
 }
 export function itemUrl(item: FanItem): string {
   if ('tralbum_id' in item) return item.item_url;

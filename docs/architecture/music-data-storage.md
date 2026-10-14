@@ -3,7 +3,7 @@
 ## Music library
 
 Bandcamp profiles, albums, tracks, and URL references are stored as plain raw
-records in the extension-origin IndexedDB database `bcx-library`, version 3.
+records in the extension-origin IndexedDB database `bcx-library`, version 4.
 The same database stores account-scoped fan lists, memberships, and availability.
 Chrome local storage retains settings, pinned navigation, bounded logs, and sync-job progress.
 Chrome session storage retains disposable tree snapshots and a small music-library
@@ -100,7 +100,13 @@ store one membership record per account and entity key in their own dataset's
 store. The dataset is implied by the store rather than repeated in each record.
 Each entry contains current membership (0/1), source order, stable history order,
 firstSeenAt/lastSeenAt, and basic list-provided details. Entity keys remain
-`a:{id}`, `t:{id}`, `band:{id}`, and `genre:{tag URL}`.
+`a:{id}` and `t:{id}` for releases, and `b:{band_id}` for bands. Genres use
+`g:{path}{query}`: parse the tag-page URL, drop its origin and leading slash,
+remove the leading `discover/` segment, sort query parameters by name, and omit
+the fragment. Other path segments, including `tag/`, remain part of the key.
+For example, `http://bandcamp.com/discover/dark-ambient?tab=all_releases&f=digital`
+becomes `g:dark-ambient?f=digital&tab=all_releases`. The original URL remains
+unchanged in `item.tag_page_url`.
 These summaries support unvisited releases and profiles; detailed music records
 remain separate and are not overwritten by list sync. Dataset-specific added,
 purchased, and followed dates remain in each membership's source item.
@@ -116,6 +122,13 @@ copying its data. Existing `fanLists` summaries are cleared during that upgrade
 so timestamps and counts do not describe discarded memberships; sync again to
 populate the lists. The `fanLists` schema, other stores, and existing music
 records stay unchanged. The durable fan revision is renewed with the reset.
+
+Version 4 adopts the compact band and genre keys. Upgrading to version 4 clears
+Following Bands and Following Genres memberships, their list summaries, and
+availability records with the old `band:` prefix, without migrating their data.
+Collection, Wishlist, release availability, account identity, and the `fanLists`
+schema stay unchanged. The fan revision is renewed while preserving its order
+counter; sync the two following lists again after reloading BCX.
 
 `fanAvailability` stores the latest check and, when applicable, a confirmed
 unavailable result together in one record. Only HTTP 404/410 at the requested URL

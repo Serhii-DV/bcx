@@ -23,7 +23,7 @@ let connection: Promise<IDBDatabase> | undefined;
 export function openDatabase(): Promise<IDBDatabase> {
   if (connection) return connection;
   const pending = new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DATABASE_NAME, 3);
+    const request = indexedDB.open(DATABASE_NAME, 4);
     let blocked = false;
     request.onupgradeneeded = (event) => {
       const db = request.result;
@@ -76,6 +76,41 @@ export function openDatabase(): Promise<IDBDatabase> {
             nextOrder: 0,
           });
         }
+      }
+      if (event.oldVersion > 0 && event.oldVersion < 4) {
+        // The key format changed; start these lists fresh without migrating records.
+        const upgrade = request.transaction;
+        if (!upgrade) throw new Error('Missing database upgrade transaction.');
+        upgrade.objectStore('fanFollowingBands').clear();
+        upgrade.objectStore('fanFollowingGenres').clear();
+        const lists = upgrade.objectStore('fanLists').openCursor();
+        lists.onsuccess = () => {
+          const cursor = lists.result;
+          if (!cursor) return;
+          if (
+            cursor.value.dataset === 'following-bands' ||
+            cursor.value.dataset === 'following-genres'
+          )
+            cursor.delete();
+          cursor.continue();
+        };
+        const availability = upgrade
+          .objectStore('fanAvailability')
+          .openCursor();
+        availability.onsuccess = () => {
+          const cursor = availability.result;
+          if (!cursor) return;
+          if (cursor.value.entityKey.startsWith('band:')) cursor.delete();
+          cursor.continue();
+        };
+        const state = upgrade.objectStore('meta').get('fan-state');
+        state.onsuccess = () => {
+          if (state.result)
+            upgrade.objectStore('meta').put({
+              ...state.result,
+              revision: crypto.randomUUID(),
+            });
+        };
       }
     };
     request.onblocked = () => {

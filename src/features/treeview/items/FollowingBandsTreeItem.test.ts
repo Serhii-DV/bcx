@@ -74,7 +74,7 @@ describe('Following Bands', () => {
       bands,
     );
     const database = await openDatabase();
-    expect(database.version).toBe(3);
+    expect(database.version).toBe(4);
     expect(database.objectStoreNames.contains('fanMemberships')).toBe(false);
     const transaction = database.transaction(
       [
@@ -92,6 +92,11 @@ describe('Following Bands', () => {
     expect(following.index('account').keyPath).toBe('fanId');
     expect(following.index('current').keyPath).toEqual(['fanId', 'current']);
     expect(await readRequest(following.index('account').count(42))).toBe(45);
+    expect(await readRequest(following.get([42, 'b:1']))).toMatchObject({
+      entityKey: 'b:1',
+      current: 1,
+      item: bands[0],
+    });
     for (const name of ['fanCollection', 'fanWishlist', 'fanFollowingGenres'])
       expect(await readRequest(transaction.objectStore(name).count())).toBe(0);
     expect(
@@ -324,13 +329,13 @@ describe('Following Bands', () => {
       url: preview.url,
       reason: 'HTTP 404',
     };
-    await saveAvailability(42, 'band:1', absent);
+    await saveAvailability(42, 'b:1', absent);
     await saveAvailabilityBatch(42, {
-      'band:1': { ...absent, state: 'unknown', reason: 'Network error' },
-      'band:2': { ...absent, state: 'available', reason: 'HTTP 200' },
+      'b:1': { ...absent, state: 'unknown', reason: 'Network error' },
+      'b:2': { ...absent, state: 'available', reason: 'HTTP 200' },
     });
     expect((await readAvailability(42)).unavailable).toEqual({
-      'band:1': absent,
+      'b:1': absent,
     });
     const scoped = await appendFanArchive(
       await FollowingBandsTreeItem.create('listener', 42),
@@ -356,7 +361,7 @@ describe('Following Bands', () => {
       (await FollowingBandsTreeItem.create('another-listener', 99))
         .children?.[0].childrenCount,
     ).toBe(0);
-    await saveAvailability(42, 'band:1', {
+    await saveAvailability(42, 'b:1', {
       ...absent,
       state: 'available',
       reason: 'Page returned',

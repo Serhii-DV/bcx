@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
-import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
+import { readLibrary, saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { bandDataCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
@@ -100,18 +100,48 @@ describe('active tab fan sections during navigation', () => {
         createRootSectionTabs(tree.items).map((tab) => tab.label),
       ).toContain('Unavailable');
     }
-    const currentGenre = { name: 'Metal', tag_page_url: '/tag/metal' };
+    const currentGenre = {
+      name: 'Metal',
+      tag_page_url:
+        'http://bandcamp.com/discover/metal?tab=all_releases&f=digital',
+    };
     const pastGenre = { name: 'Ambient', tag_page_url: '/tag/ambient' };
     await saveSnapshot(
       { fanId: 42, username: 'listener' },
       'following-genres',
       [currentGenre, pastGenre],
     );
+    const initialGenres = (await readLibrary(42))?.lists['following-genres'];
+    expect(initialGenres?.current).toEqual([
+      'g:metal?f=digital&tab=all_releases',
+      'g:tag/ambient',
+    ]);
+    expect(
+      initialGenres?.records['g:metal?f=digital&tab=all_releases'],
+    ).toEqual(currentGenre);
+    const equivalentGenre = {
+      ...currentGenre,
+      tag_page_url: '/discover/metal?f=digital&tab=all_releases#top',
+    };
+    await expect(
+      saveSnapshot({ fanId: 42, username: 'listener' }, 'following-genres', [
+        currentGenre,
+        equivalentGenre,
+      ]),
+    ).rejects.toThrow('Duplicate item');
     await saveSnapshot(
       { fanId: 42, username: 'listener' },
       'following-genres',
-      [currentGenre],
+      [equivalentGenre],
     );
+    const updatedGenres = (await readLibrary(42))?.lists['following-genres'];
+    expect(updatedGenres?.current).toEqual([
+      'g:metal?f=digital&tab=all_releases',
+    ]);
+    expect(Object.keys(updatedGenres?.records ?? {})).toHaveLength(2);
+    expect(
+      updatedGenres?.records['g:metal?f=digital&tab=all_releases'],
+    ).toEqual(equivalentGenre);
     try {
       const genres = first.find(
         (section) => section.fanSync?.dataset === 'following-genres',
