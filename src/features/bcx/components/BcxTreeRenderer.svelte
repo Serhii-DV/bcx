@@ -137,7 +137,7 @@ function getItemIndentStyle(item: TreeItem): string {
 .tree-leaf {
   width: 100%;
   border-radius: 4px;
-  padding-left: 1.5rem;
+  padding-left: 0.5rem;
   padding-block: 0.25rem;
   color: rgb(229 231 235);
   text-align: left;
