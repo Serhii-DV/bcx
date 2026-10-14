@@ -1,5 +1,5 @@
 import { describe, expect, it, rstest } from '@rstest/core';
-import type { BandcampItem } from './PageCollection';
+import type { BandcampItem, BandcampResponseCapture } from './PageCollection';
 
 function installChromeMock() {
   Object.defineProperty(globalThis, 'chrome', {
@@ -32,10 +32,16 @@ function collectionItem(
   };
 }
 
-async function createPageCollection(transport: unknown) {
+async function createPageCollection(
+  transport: unknown,
+  captureResponse?: (capture: BandcampResponseCapture) => Promise<void>,
+) {
   installChromeMock();
   const { PageCollection } = await import('./PageCollection');
-  const pageCollection = new PageCollection({ transport } as any);
+  const pageCollection = new PageCollection({
+    transport,
+    captureResponse,
+  } as any);
   pageCollection.getPageData = () =>
     ({
       fan_data: { fan_id: 42 },
@@ -93,13 +99,35 @@ describe('PageCollection', () => {
           more_available: false,
         }),
     };
-    const pageCollection = await createPageCollection(transport);
+    const captures: BandcampResponseCapture[] = [];
+    const pageCollection = await createPageCollection(
+      transport,
+      async (capture) => {
+        captures.push(structuredClone(capture));
+      },
+    );
 
     const items = await pageCollection.loadWishlistItems({ pageSize: 1 });
 
     expect(items).toMatchObject([
       { tralbum_id: 1, isFree: true, isPurchased: true, isWishlisted: false },
       { tralbum_id: 2, isFree: false, isPurchased: false, isWishlisted: true },
+    ]);
+    expect(captures).toHaveLength(3);
+    expect(captures[0]).toMatchObject({
+      method: 'GET',
+      response: { collection_summary: expect.any(Object) },
+    });
+    expect(captures[1]).toMatchObject({
+      method: 'POST',
+      request: { count: 1 },
+      response: { more_available: true },
+    });
+    expect((captures[1].response as { items: BandcampItem[] }).items).toEqual([
+      collectionItem(1),
+    ]);
+    expect((captures[2].response as { items: BandcampItem[] }).items).toEqual([
+      collectionItem(2),
     ]);
     expect(transport.postJsonString).toHaveBeenCalledTimes(2);
     expect(transport.postJsonString.mock.calls[1][1]).toMatchObject({
@@ -178,7 +206,9 @@ describe('PageCollection', () => {
         more_available: false,
       })),
     };
-    const pageCollection = await createPageCollection(transport);
+    const pageCollection = await createPageCollection(transport, async () => {
+      throw new Error('Debug storage unavailable');
+    });
     const { PageCollection } = await import('./PageCollection');
 
     const items = await pageCollection.loadFollowingBandsItems();

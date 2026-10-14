@@ -4,6 +4,7 @@ import {
   validateItems,
 } from '../domain/fanData/library';
 import { PageCollection } from '../domain/page/PageCollection';
+import { captureFanPageData, createFanResponseCapture } from './fanSyncDebug';
 
 export async function loadFanData(account: unknown, dataset: unknown) {
   if (
@@ -11,8 +12,14 @@ export async function loadFanData(account: unknown, dataset: unknown) {
     !(isFanDataset(dataset) || dataset === 'identity')
   )
     throw new Error('Invalid sync request.');
-  const page = new PageCollection();
+  const page = new PageCollection({
+    captureResponse:
+      dataset === 'identity'
+        ? undefined
+        : createFanResponseCapture(account, dataset),
+  });
   const data = page.getPageData();
+  await captureFanPageData(account, data);
   if (
     location.hostname !== 'bandcamp.com' ||
     data?.fan_data?.fan_id !== account.fanId ||

@@ -149,3 +149,28 @@ originating tab. Background side-panel configuration ignores missing URLs and
 unchanged enablement, avoiding redundant reconfiguration during background work.
 Concurrent storage-read timings use elapsed timestamps rather than shared
 console timer labels.
+
+## Temporary Sync debugging
+
+Sync automatically stores original JSON objects in Chrome session storage for
+DevTools inspection, without extension viewer, copy, or debug-toggle controls.
+`/debug/fan-sync/page-data` retains the latest fan-page data blob before account
+validation. `/debug/fan-sync/collection`, `/debug/fan-sync/wishlist`,
+`/debug/fan-sync/following-bands`, and `/debug/fan-sync/following-genres` retain
+the latest successfully decoded API response for each dataset, before response
+validation or membership enrichment. A dataset satisfied entirely by the page's
+item cache makes no API request; its original objects remain in page-data.
+
+Each capture contains its timestamp, expected fan ID, and source page URL.
+Dataset captures also identify the endpoint, request method/payload, and response
+number within that request. `data` holds the original object, not a JSON string.
+Pagination overwrites the dataset's capture with the latest response; captures
+are not a full response history.
+
+Captures are bounded to 1 MB of serialized JSON per key and share session storage
+with disposable caches. Oversized or failed writes replace the stale value with
+capture metadata and an error when possible, and report failures in the console.
+Debug persistence never changes normal sync success/failure. Captures survive
+ordinary page navigation and clear with the extension's session storage lifecycle.
+Inspect Application > Storage > Extension Storage > BCX > Session in Chrome
+DevTools, then filter for `/debug/fan-sync/`.
