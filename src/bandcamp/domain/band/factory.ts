@@ -1,8 +1,6 @@
-import { decompress } from '../compressor';
 import type { MusicAlbumSchema } from '../page/schema';
-import { bandDataCompressor } from '../shared';
 import { Band } from './band';
-import { type CompressedBandData, type RawBandData } from './compressor';
+import type { RawBandData } from './data';
 import { BandMetadata } from './metadata';
 
 export class BandFactory {
@@ -14,10 +12,6 @@ export class BandFactory {
       rawData.artworkId,
       BandMetadata.fromRawData(rawData.metadata),
     );
-  }
-
-  static createRawData(compressedData: CompressedBandData): RawBandData {
-    return decompress(compressedData, bandDataCompressor) as RawBandData;
   }
 
   static fromMusicAlbumSchema(schema: MusicAlbumSchema): Band {

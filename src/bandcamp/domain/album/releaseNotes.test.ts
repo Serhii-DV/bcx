@@ -5,7 +5,7 @@ import { Price } from '../price';
 import { releaseNotesFromSchema } from './releaseNotes';
 
 describe('release notes persistence', () => {
-  it('round trips optional release notes through raw and compressed metadata', () => {
+  it('round trips optional release notes through raw metadata', () => {
     const notes = {
       description: 'About the album',
       credits: 'Credits',
@@ -24,18 +24,15 @@ describe('release notes persistence', () => {
       notes,
     );
     expect(Metadata.fromRawData(metadata.toRawData()).release).toEqual(notes);
-    expect(
-      Metadata.fromStorageObject(metadata.toStorageObject()).release,
-    ).toEqual(notes);
   });
 
   it('continues to read older metadata without release notes', () => {
-    const restored = Metadata.fromStorageObject({
-      p: { a: 5, c: 'EUR' },
-      b: 'Label',
-      d: '2026-01-01',
-      m: '2026-01-01',
-      k: ['ambient'],
+    const restored = Metadata.fromRawData({
+      price: { amount: 5, currency: 'EUR' },
+      publisher: 'Label',
+      published: '2026-01-01',
+      modified: '2026-01-01',
+      keywords: ['ambient'],
     });
     expect(restored.release).toBeUndefined();
     expect(restored.price.toString()).toBe('5 EUR');

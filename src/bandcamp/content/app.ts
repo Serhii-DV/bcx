@@ -1,5 +1,5 @@
-import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
-import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/data';
+import type { RawTrackData } from 'src/bandcamp/domain/track/data';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { mount } from 'svelte';
 import App from './app.svelte';

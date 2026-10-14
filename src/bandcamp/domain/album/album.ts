@@ -1,4 +1,3 @@
-import type { Storable, StorableData, StorageObject } from 'src/core/storage';
 import { Url } from 'src/core/url';
 import { arrayUnique } from 'src/utils/array';
 import { removeInvisibleChars } from 'src/utils/string';
@@ -6,15 +5,12 @@ import { Artist, isVariousArtists } from '../artist/artist';
 import { ArtistFactory } from '../artist/factory';
 import { containsArtistName } from '../artist/helper';
 import { Artwork } from '../artwork/artwork';
-import { type Compressable, compress } from '../compressor';
 import { Metadata } from '../metadata';
-import { albumDataCompressor } from '../shared';
-import { StorageKey } from '../storageKey';
 import { getUniqueArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
-import { AlbumDataCompressor, type RawAlbumData } from './compressor';
+import type { RawAlbumData } from './data';
 
-export class Album implements Storable, Compressable {
+export class Album {
   constructor(
     public url: Url,
     public artist: Artist,
@@ -80,25 +76,8 @@ export class Album implements Storable, Compressable {
     return containsArtistName(this.artistNames, name);
   }
 
-  get compressor(): AlbumDataCompressor {
-    return albumDataCompressor;
-  }
-
   toString(): string {
     return this.fullTitle;
-  }
-
-  toStorableData(): StorableData {
-    const key = StorageKey.albumKey(this.id);
-    const urlKey = this.url.uuid;
-    return {
-      [key]: this.toStorageObject(),
-      [urlKey]: key,
-    };
-  }
-
-  toStorageObject(): StorageObject {
-    return compress(this);
   }
 
   toRawData(): RawAlbumData {

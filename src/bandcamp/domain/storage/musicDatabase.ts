@@ -1,8 +1,8 @@
 import { v5 as uuid5 } from 'uuid';
-import type { RawAlbumData } from '../album/compressor';
+import type { RawAlbumData } from '../album/data';
 import { Artist } from '../artist/artist';
-import type { RawBandData } from '../band/compressor';
-import type { RawTrackData } from '../track/compressor';
+import type { RawBandData } from '../band/data';
+import type { RawTrackData } from '../track/data';
 import {
   completed,
   DATABASE_STORES,

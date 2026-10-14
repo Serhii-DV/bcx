@@ -2,29 +2,7 @@ import { arrayUnique } from 'src/utils/array';
 import { arrayPreview, console } from 'src/utils/console';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 
-export interface StorageObject {
-  [key: string]: any;
-}
-
-export interface StorableData {
-  // must be `any` because values can be either StorageObject or string (key reference)
-  [key: string]: any;
-}
-
-export interface StorableObject {
-  toStorageObject(): StorageObject;
-}
-
-export interface StorableObjectConstructor<T> {
-  new (...args: any[]): T;
-  fromStorageObject(data: StorageObject): T;
-}
-
-export interface Storable extends StorableObject {
-  toStorableData(): StorableData;
-}
-
-export type StorageDataMap = StorableData;
+export type StorageDataMap = Record<string, unknown>;
 
 export class Storage {
   constructor(
@@ -141,29 +119,27 @@ export class Storage {
   }
 
   async set(
-    key: string | StorableData | Storable,
-    data?: StorageObject,
+    key: string | StorageDataMap,
+    data?: StorageDataMap,
   ): Promise<void> {
-    let storableData: StorableData;
+    let storageData: StorageDataMap;
 
     if (typeof key === 'string') {
       if (data === undefined) {
         throw new Error('Data parameter is required when key is a string');
       }
-      storableData = { [key]: data };
-    } else if ('toStorableData' in key) {
-      storableData = (key as Storable).toStorableData();
+      storageData = { [key]: data };
     } else {
-      storableData = key as StorableData;
+      storageData = key;
     }
 
     return new Promise((resolve, reject) => {
-      const logLabel = `[Storage.set(${Object.keys(storableData).length})]`;
+      const logLabel = `[Storage.set(${Object.keys(storageData).length})]`;
       if (this.debug) {
         console.time(logLabel);
       }
 
-      this.storage.set(storableData, () => {
+      this.storage.set(storageData, () => {
         if (chrome.runtime.lastError) {
           return reject(
             new Error(
@@ -178,8 +154,8 @@ export class Storage {
         if (this.debug) {
           console.log(
             logLabel,
-            ...arrayPreview(Object.keys(storableData)),
-            ...(this.debugPayloads ? [storableData] : []),
+            ...arrayPreview(Object.keys(storageData)),
+            ...(this.debugPayloads ? [storageData] : []),
           );
           console.timeEnd(logLabel);
         }

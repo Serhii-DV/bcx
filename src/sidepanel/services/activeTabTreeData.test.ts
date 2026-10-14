@@ -3,7 +3,6 @@ import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { readLibrary, saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
-import { bandDataCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { Url } from 'src/core/url';
 import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
@@ -320,9 +319,9 @@ describe('active tab public profile', () => {
       'https://other-profile.bandcamp.com',
       0,
     );
-    rs.spyOn(BandcampStorage, 'getAllCompressedBandData').mockResolvedValue([
-      bandDataCompressor.compress(otherBand.toRawData()),
-      bandDataCompressor.compress(band.toRawData()),
+    rs.spyOn(BandcampStorage, 'getAllBandsRawData').mockResolvedValue([
+      otherBand.toRawData(),
+      band.toRawData(),
     ]);
     getBands.mockClear();
     const fallback = await createActiveTabSidePanelData({

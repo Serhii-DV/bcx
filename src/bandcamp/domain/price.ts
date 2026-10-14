@@ -1,15 +1,9 @@
-import type { StorableObject, StorageObject } from 'src/core/storage';
-import { type Compressable, compress, decompress } from './compressor';
-import {
-  type CompressedPriceData,
-  PriceDataCompressor,
-  type RawPriceData,
-} from './priceCompressor';
-import { priceDataCompressor } from './shared';
+export interface RawPriceData {
+  amount: number;
+  currency: string;
+}
 
-export class Price implements StorableObject, Compressable {
-  public readonly compressor = new PriceDataCompressor();
-
+export class Price {
   constructor(
     public amount: number,
     public currency: string,
@@ -30,10 +24,6 @@ export class Price implements StorableObject, Compressable {
     return `${this.amount} ${this.currency}`;
   }
 
-  toStorageObject(): StorageObject {
-    return compress(this);
-  }
-
   toRawData(): RawPriceData {
     return {
       amount: this.amount,
@@ -43,13 +33,5 @@ export class Price implements StorableObject, Compressable {
 
   static fromRawData(rawData: RawPriceData): Price {
     return Price.create(rawData.amount, rawData.currency);
-  }
-
-  static fromStorageObject(data: StorageObject): Price {
-    const decompressed = decompress(
-      data as CompressedPriceData,
-      priceDataCompressor,
-    ) as RawPriceData;
-    return Price.create(decompressed.amount, decompressed.currency);
   }
 }

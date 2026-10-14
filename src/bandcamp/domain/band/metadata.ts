@@ -1,18 +1,22 @@
-import type { StorableObject, StorageObject } from 'src/core/storage';
 import { arrayNumberUnique, arrayUnique } from 'src/utils/array';
 import type { Album } from '../album/album';
-import { type Compressable, compress, decompress } from '../compressor';
 import { UNKNOWN_YEAR } from '../page/pageMusic';
-import { bandMetadataCompressor } from '../shared';
 import { getArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
-import {
-  BandMetadataCompressor,
-  type CompressedBandMetadata,
-  type RawBandMetadata,
-} from './metadataCompressor';
 
-export class BandMetadata implements StorableObject, Compressable {
+export interface RawBandMetadata {
+  /** Compatibility with previously saved raw band data. */
+  profile?: Pick<BandMetadata, 'location' | 'biography' | 'links'>;
+  location?: string;
+  biography?: string;
+  links?: BandMetadata['links'];
+  created: string;
+  currency: string;
+  albumIds: number[];
+  trackIds: number[];
+}
+
+export class BandMetadata {
   constructor(
     public created: Date,
     public currency: string,
@@ -109,10 +113,6 @@ export class BandMetadata implements StorableObject, Compressable {
     return queries;
   }
 
-  get compressor(): BandMetadataCompressor {
-    return bandMetadataCompressor;
-  }
-
   static create(
     created: string | Date,
     currency: string,
@@ -131,10 +131,6 @@ export class BandMetadata implements StorableObject, Compressable {
       biography,
       links,
     );
-  }
-
-  toStorageObject(): StorageObject {
-    return compress(this);
   }
 
   toRawData(): RawBandMetadata {
@@ -161,15 +157,5 @@ export class BandMetadata implements StorableObject, Compressable {
       rawData.biography ?? rawData.profile?.biography,
       rawData.links ?? rawData.profile?.links ?? [],
     );
-  }
-
-  static fromStorageObject(data: StorageObject): BandMetadata {
-    // Note: albums and tracks arrays will contain IDs, not full objects
-    // The actual Album and Track objects should be reconstructed elsewhere
-    const metadata = decompress(
-      data as CompressedBandMetadata,
-      bandMetadataCompressor,
-    ) as RawBandMetadata;
-    return BandMetadata.fromRawData(metadata);
   }
 }

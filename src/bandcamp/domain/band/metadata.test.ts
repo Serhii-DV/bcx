@@ -23,12 +23,9 @@ describe('band metadata profile fields', () => {
     expect(raw).toMatchObject(profile);
     expect(raw).not.toHaveProperty('profile');
     expect(BandMetadata.fromRawData(raw)).toMatchObject(profile);
-    expect(
-      BandMetadata.fromStorageObject(metadata.toStorageObject()),
-    ).toMatchObject(profile);
   });
 
-  it('reads saved nested profiles and the existing compressed format', () => {
+  it('reads saved nested raw profiles', () => {
     expect(
       BandMetadata.fromRawData({
         created: '2020-01-01',
@@ -38,15 +35,17 @@ describe('band metadata profile fields', () => {
         profile,
       }),
     ).toMatchObject(profile);
-    expect(
-      BandMetadata.fromStorageObject({ c: '2020-01-01', r: 'EUR', p: profile }),
-    ).toMatchObject(profile);
   });
 
   it('defaults missing links and keeps an explicitly empty flat profile', () => {
     expect(BandMetadata.create('2020-01-01', 'EUR').links).toEqual([]);
     expect(
-      BandMetadata.fromStorageObject({ c: '2020-01-01', r: 'EUR' }).links,
+      BandMetadata.fromRawData({
+        created: '2020-01-01',
+        currency: 'EUR',
+        albumIds: [],
+        trackIds: [],
+      }).links,
     ).toEqual([]);
     expect(
       BandMetadata.fromRawData({

@@ -1,5 +1,5 @@
-import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
-import type { CompressedBandData } from 'src/bandcamp/domain/band/compressor';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/data';
+import type { RawBandData } from 'src/bandcamp/domain/band/data';
 import {
   FAN_LIBRARY_REVISION_KEY,
   isFanLibraryChange,
@@ -11,7 +11,7 @@ import { normalizeMusicName } from 'src/bandcamp/domain/storage/musicLibraryProt
 type ReleaseLinkData = Pick<RawAlbumData, 'url' | 'artworkId'>;
 interface PreviewLibrary {
   releases: Map<string, Promise<RawAlbumData[]>>;
-  bands?: Promise<CompressedBandData[]>;
+  bands?: Promise<RawBandData[]>;
 }
 const createLibrary = (): PreviewLibrary => ({ releases: new Map() });
 let library = createLibrary();
@@ -62,10 +62,10 @@ export function getSavedArtistReleases(
   return getReleases(key, () => BandcampStorage.findAlbumsByArtists(artists));
 }
 
-export function getSavedPreviewBands(): Promise<CompressedBandData[]> {
+export function getSavedPreviewBands(): Promise<RawBandData[]> {
   const current = listeners.size ? library : createLibrary();
   if (!current.bands) {
-    current.bands = BandcampStorage.getAllCompressedBandData().catch(
+    current.bands = BandcampStorage.getAllBandsRawData().catch(
       (error: unknown) => {
         current.bands = undefined;
         throw error;

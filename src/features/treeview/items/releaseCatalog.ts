@@ -1,5 +1,5 @@
 import type { Album } from 'src/bandcamp/domain/album/album';
-import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/data';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { groupAlbumsByArtist } from 'src/bandcamp/domain/album/helper';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';

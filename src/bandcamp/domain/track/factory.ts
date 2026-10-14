@@ -1,9 +1,7 @@
-import type { StorageObject } from 'src/core/storage';
 import { Url } from 'src/core/url';
 import { Artist } from '../artist/artist';
 import { ArtistFactory } from '../artist/factory';
 import { Artwork } from '../artwork/artwork';
-import { decompress } from '../compressor';
 import { Metadata } from '../metadata';
 import {
   getPropertyValueByName,
@@ -11,8 +9,8 @@ import {
   type MusicRecordingSchema,
 } from '../page/schema';
 import { Price } from '../price';
-import { bandcampPageData, trackDataCompressor } from '../shared';
-import { type CompressedTrackData, type RawTrackData } from './compressor';
+import { bandcampPageData } from '../shared';
+import type { RawTrackData } from './data';
 import { TrackTime } from './time';
 import { Track } from './track';
 
@@ -173,18 +171,5 @@ export class TrackFactory {
       rawData.albumId,
       rawData.metadata ? Metadata.fromRawData(rawData.metadata) : undefined,
     );
-  }
-
-  static fromCompressedData(data: CompressedTrackData): Track {
-    const rawData = decompress(
-      data as CompressedTrackData,
-      trackDataCompressor,
-    ) as RawTrackData;
-
-    return this.fromRawData(rawData);
-  }
-
-  static fromStorage(track: StorageObject): Track {
-    return this.fromCompressedData(track as CompressedTrackData);
   }
 }

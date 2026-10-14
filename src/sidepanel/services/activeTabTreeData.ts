@@ -1,5 +1,5 @@
 import { Album } from 'src/bandcamp/domain/album/album';
-import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/data';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
@@ -10,9 +10,8 @@ import type {
   MusicAlbumSchema,
   MusicRecordingSchema,
 } from 'src/bandcamp/domain/page/schema';
-import { urlCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
-import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
+import type { RawTrackData } from 'src/bandcamp/domain/track/data';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { Track } from 'src/bandcamp/domain/track/track';
 import type { FanData } from 'src/bandcamp/domain/types/FanData';
@@ -263,17 +262,15 @@ async function findBandForUrl(
     return hydratedBand ?? entityBand;
   }
 
-  const bands = await BandcampStorage.getAllCompressedBandData();
+  const bands = await BandcampStorage.getAllBandsRawData();
   const match = bands.find((band) => {
-    if (typeof band.u !== 'string') return false;
+    if (typeof band.url !== 'string') return false;
     try {
-      return Url.create(urlCompressor.decompress(band.u)).hasSameHostname(
-        currentPageUrl,
-      );
+      return Url.create(band.url).hasSameHostname(currentPageUrl);
     } catch {
       return false;
     }
   });
-  if (!match || !Number.isSafeInteger(match.i) || match.i <= 0) return null;
-  return (await BandcampStorage.getBands([match.i]))[0] ?? null;
+  if (!match || !Number.isSafeInteger(match.id) || match.id <= 0) return null;
+  return (await BandcampStorage.getBands([match.id]))[0] ?? null;
 }

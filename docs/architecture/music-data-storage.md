@@ -63,10 +63,12 @@ URL references contain only `uuid`, `store`, and `id`; the URL remains on the
 entity record.
 
 Artist/title queries use database indexes rather than reading all saved albums.
-The existing `BandcampStorage` factory-facing methods retain their compressed
-return shapes through a small compatibility adapter; compression is not the
-database storage format. The old `/bands` map is a derived compatibility view,
-not another persisted index. Band lookups by name can return multiple profiles.
+`BandcampStorage` reads validated raw records directly and reconstructs models
+through their raw-data factories. Band and album reads load related release and
+track IDs as needed; there is no compression adapter or local-storage model
+serialization. IndexedDB maintains the band name index; the old `/bands` map and
+its rebuild command have been removed. Band lookups by name can return multiple
+profiles.
 
 Every committed write records a revision in IndexedDB and publishes it at
 `/music-library/revision` in Chrome session storage. Mounted previews invalidate

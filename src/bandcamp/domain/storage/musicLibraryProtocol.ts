@@ -1,7 +1,7 @@
-import type { RawAlbumData } from '../album/compressor';
-import type { RawBandData } from '../band/compressor';
-import type { RawMetadataData } from '../metadataCompressor';
-import type { RawTrackData } from '../track/compressor';
+import type { RawAlbumData } from '../album/data';
+import type { RawBandData } from '../band/data';
+import type { RawMetadataData } from '../metadata';
+import type { RawTrackData } from '../track/data';
 
 export const MUSIC_LIBRARY_REVISION_KEY = '/music-library/revision';
 export type MusicStore = 'bands' | 'albums' | 'tracks';

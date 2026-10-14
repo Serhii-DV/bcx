@@ -1,6 +1,5 @@
 import { FAN_DATASETS } from 'src/bandcamp/domain/fanData/library';
 import { measureMusicDatabase } from 'src/bandcamp/domain/storage/musicDatabase';
-import { StorageKey } from 'src/bandcamp/domain/storageKey';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { validate as isUuid } from 'uuid';
 
@@ -29,9 +28,10 @@ export interface StorageUsage {
 function categoryForKey(key: string): string {
   if (key.startsWith('/activity-log/')) return 'Activity log';
   if (key.startsWith('/storage-history/')) return 'Storage history';
-  if (StorageKey.isAlbumKey(key)) return 'Albums';
-  if (StorageKey.isTrackKey(key)) return 'Tracks';
-  if (StorageKey.isBandKey(key) || StorageKey.isBandsKey(key)) return 'Bands';
+  // Report legacy music records that may still remain in Chrome storage.
+  if (key.startsWith('/a/')) return 'Albums';
+  if (key.startsWith('/t/')) return 'Tracks';
+  if (key.startsWith('/b/') || key === '/bands') return 'Bands';
   if (
     key.startsWith('/fan-data/') ||
     FAN_DATASETS.some((dataset) => key === `/${dataset}`)

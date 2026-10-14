@@ -52,6 +52,8 @@
 
 ### Patch Changes
 
+- Removed obsolete Album, Band, Track, metadata, price, and URL compression and local-storage serialization. Music-library reads now consume raw IndexedDB records directly; removed the compatibility adapter, legacy storage-key builders, and band-index rebuild command.
+
 - Sync logs the original fan-page JSON and every raw API response to the service-worker console for inspection, including each pagination response. Entries include source metadata, readable UTC run timestamps, and response numbers padded to four digits. JSON snapshots precede validation and enrichment; debug data no longer consumes session storage, and logging failures do not interrupt Sync.
 
 - All TreeBrowser rows with subitems now select on a single-click and show subitems on a double-click, including lazy-loaded groups and tree layouts; double-clicking an expanded tree row hides its subitems. Back rows also return on a double-click. Ctrl+Enter opens the selected parent item's page in the active browser tab when available. Row interaction hints use standard browser titles. Keyboard navigation and individual row actions remain available.

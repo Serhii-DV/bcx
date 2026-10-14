@@ -8,7 +8,6 @@ import {
   validateItems,
 } from 'src/bandcamp/domain/fanData/library';
 import type { FollowingBandItem } from 'src/bandcamp/domain/page/PageCollection';
-import { urlCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { Url } from 'src/core/url';
@@ -161,18 +160,17 @@ export async function loadSavedBandLinkProfiles(): Promise<BandLinkProfile[]> {
     getSavedPreviewBands(),
     readSavedItems<FollowingBandItem>('following-bands'),
   ]);
-  // The name index keeps only one ID per name. Read band profiles directly so
-  // multiple saved pages are available without hydrating their release catalogs.
+  // Read saved profiles without hydrating their release catalogs.
   const saved: BandLinkProfile[] = bands
-    .filter((band) => typeof band.n === 'string' && typeof band.u === 'string')
+    .filter(
+      (band) => typeof band.name === 'string' && typeof band.url === 'string',
+    )
     .map((band) => ({
-      name: band.n,
-      url: BandcampUrlFactory.createBandUrl(
-        Url.create(urlCompressor.decompress(band.u)),
-      ),
+      name: band.name,
+      url: BandcampUrlFactory.createBandUrl(Url.create(band.url)),
       image:
-        Number.isSafeInteger(band.a) && band.a > 0
-          ? Artwork.createForBand(band.a).smallSizeUrl
+        Number.isSafeInteger(band.artworkId) && band.artworkId > 0
+          ? Artwork.createForBand(band.artworkId).smallSizeUrl
           : undefined,
     }));
   validateItems('following-bands', following);

@@ -1,25 +1,9 @@
-import { beforeEach, describe, expect, it } from '@rstest/core';
-
-function installChromeMock() {
-  Object.defineProperty(globalThis, 'chrome', {
-    value: {
-      storage: {
-        local: {},
-        session: {},
-      },
-    },
-    configurable: true,
-  });
-}
+import { describe, expect, it } from '@rstest/core';
+import { Metadata } from './metadata';
+import { Price } from './price';
 
 describe('Metadata', () => {
-  beforeEach(() => {
-    installChromeMock();
-  });
-
-  it('creates date accessors from raw date strings', async () => {
-    const { Metadata } = await import('./metadata');
-    const { Price } = await import('./price');
+  it('creates date accessors from raw date strings', () => {
     const metadata = Metadata.create(
       Price.create(7, 'USD'),
       'Example Publisher',
@@ -37,9 +21,7 @@ describe('Metadata', () => {
     });
   });
 
-  it('round-trips through storage object compression', async () => {
-    const { Metadata } = await import('./metadata');
-    const { Price } = await import('./price');
+  it('round-trips through raw data', () => {
     const metadata = Metadata.create(
       Price.create(0, 'EUR'),
       'Publisher',
@@ -48,7 +30,7 @@ describe('Metadata', () => {
       ['tag'],
     );
 
-    const restored = Metadata.fromStorageObject(metadata.toStorageObject());
+    const restored = Metadata.fromRawData(metadata.toRawData());
 
     expect(restored.toRawData()).toEqual(metadata.toRawData());
   });

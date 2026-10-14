@@ -1,50 +1,7 @@
 // We use `/` at the start to avoid potential collisions with other keys and namespaces
-// Also, it shows up nicely in the storage viewer before UUID values
-export const BAND_KEY_PREFIX = '/b/';
-export const ALBUM_KEY_PREFIX = '/a/';
-export const TRACK_KEY_PREFIX = '/t/';
-export const BANDS_KEY = '/bands';
 export const TOUR_COMPLETE_KEY = '/ui/tour-complete';
 export const SIDE_PANEL_TOUR_COMPLETE_KEY = '/ui/side-panel-tour-complete';
 export const SIDE_PANEL_OPEN_KEY = '/ui/side-panel-open';
 export const SIDEBAR_EXPANDED_KEY = '/ui/sidebar-expanded';
 export const RELEASE_PREVIEW_SIZE_KEY = '/ui/release-preview-size';
 export const BAND_RELEASE_PREVIEW_SIZE_KEY = '/ui/band-release-preview-size';
-
-export class StorageKey {
-  static bandKey(bandId: number): string {
-    return `${BAND_KEY_PREFIX}${bandId}`;
-  }
-
-  static albumKey(albumId: number): string {
-    return `${ALBUM_KEY_PREFIX}${albumId}`;
-  }
-
-  static trackKey(trackId: number): string {
-    return `${TRACK_KEY_PREFIX}${trackId}`;
-  }
-
-  static trackKeys(trackIds: number[]): string[] {
-    return trackIds.map((id) => StorageKey.trackKey(id));
-  }
-
-  static bandsKey(): string {
-    return BANDS_KEY;
-  }
-
-  static isBandKey(key: string): boolean {
-    return key.startsWith(BAND_KEY_PREFIX);
-  }
-
-  static isAlbumKey(key: string): boolean {
-    return key.startsWith(ALBUM_KEY_PREFIX);
-  }
-
-  static isTrackKey(key: string): boolean {
-    return key.startsWith(TRACK_KEY_PREFIX);
-  }
-
-  static isBandsKey(key: string): boolean {
-    return key === BANDS_KEY;
-  }
-}
