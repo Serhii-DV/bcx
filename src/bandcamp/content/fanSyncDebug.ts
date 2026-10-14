@@ -3,7 +3,6 @@ import type { FanAccount, FanDataset } from '../domain/fanData/data';
 import type { BandcampResponseCapture } from '../domain/page/PageCollection';
 
 const PREFIX = '/debug/fan-sync/';
-const MAX_CAPTURE_BYTES = 1024 * 1024;
 
 /** Store objects directly so DevTools can expand their original JSON structure. */
 async function saveCapture(
@@ -13,11 +12,6 @@ async function saveCapture(
 ): Promise<void> {
   try {
     const value = { ...metadata, data };
-    if (
-      new TextEncoder().encode(JSON.stringify(value)).byteLength >
-      MAX_CAPTURE_BYTES
-    )
-      throw new Error('Debug capture exceeds the 1 MB limit.');
     await chrome.storage.session.set({ [key]: value });
   } catch (error) {
     const message = getErrorMessage(error, 'Could not save debug capture.');

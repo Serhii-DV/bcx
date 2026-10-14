@@ -167,9 +167,10 @@ number within that request. `data` holds the original object, not a JSON string.
 Pagination overwrites the dataset's capture with the latest response; captures
 are not a full response history.
 
-Captures are bounded to 1 MB of serialized JSON per key and share session storage
-with disposable caches. Oversized or failed writes replace the stale value with
-capture metadata and an error when possible, and report failures in the console.
+Captures have no additional per-key size limit and share Chrome's session storage
+quota with disposable caches. Failed writes, including quota errors, replace the
+stale value with capture metadata and an error when possible, and report failures
+in the console.
 Debug persistence never changes normal sync success/failure. Captures survive
 ordinary page navigation and clear with the extension's session storage lifecycle.
 Inspect Application > Storage > Extension Storage > BCX > Session in Chrome

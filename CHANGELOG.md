@@ -50,7 +50,7 @@
 
 ### Patch Changes
 
-- Sync retains the original fan-page JSON and the latest raw response for each dataset in session storage for DevTools inspection. Captures precede validation and enrichment, include source metadata, and have a 1 MB per-capture limit with explicit failure status; debug storage failures do not interrupt sync.
+- Sync retains the original fan-page JSON and the latest raw response for each dataset in session storage for DevTools inspection. Captures precede validation and enrichment, include source metadata, and use Chrome’s session storage quota without an additional per-capture limit. Failed writes record an explicit status when possible without interrupting sync.
 
 - All TreeBrowser rows with subitems now select on a single-click and show subitems on a double-click, including lazy-loaded groups and tree layouts; double-clicking an expanded tree row hides its subitems. Back rows also return on a double-click. Ctrl+Enter opens the selected parent item's page in the active browser tab when available. Row interaction hints use standard browser titles. Keyboard navigation and individual row actions remain available.
 
