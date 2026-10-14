@@ -341,3 +341,15 @@ Archive roots use the same saved items and retain separate current-membership an
 availability filters.
 Snapshot version 31 rebuilds Following Genres from every saved genre. Its All tab
 includes former follows, while No longer followed filters them separately.
+
+## IndexedDB music revisions
+
+Music metadata lives in extension IndexedDB; subtree snapshots remain in Chrome
+session storage. Band snapshots include the database's durable revision.
+Collection, Wishlist, and Following Bands combine their saved-list revision with
+that music revision so newly saved profile/release metadata is reflected on rebuild.
+Following Genres retains only its saved-list revision. Existing cache keys, TTLs,
+snapshot serialization, and explicit invalidation remain unchanged.
+Mounted music previews and loaded fan sections observe the small
+`/music-library/revision` session-storage notification published after a successful
+database transaction.

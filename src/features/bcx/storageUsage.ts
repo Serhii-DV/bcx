@@ -1,4 +1,5 @@
 import { FAN_DATASETS } from 'src/bandcamp/domain/fanData/library';
+import { measureMusicDatabase } from 'src/bandcamp/domain/storage/musicDatabase';
 import { StorageKey } from 'src/bandcamp/domain/storageKey';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { validate as isUuid } from 'uuid';
@@ -10,7 +11,8 @@ export interface StorageCategoryUsage {
 }
 
 export interface StorageAreaUsage {
-  id: 'local' | 'session' | 'sync';
+  id: 'local' | 'session' | 'sync' | 'indexeddb';
+  estimated?: boolean;
   label: string;
   quota: number | null;
   bytes: number;
@@ -42,7 +44,7 @@ function categoryForKey(key: string): string {
 }
 
 async function measureArea(
-  id: StorageAreaUsage['id'],
+  id: 'local' | 'session' | 'sync',
   label: string,
   unlimited: boolean,
 ): Promise<StorageAreaUsage> {
@@ -101,6 +103,18 @@ export async function readStorageUsage(): Promise<StorageUsage> {
     measureArea('local', 'Local data', unlimited),
     measureArea('session', 'Session memory', false),
     measureArea('sync', 'Chrome sync storage', false),
+    measureMusicDatabase().catch(
+      (error: unknown): StorageAreaUsage => ({
+        id: 'indexeddb',
+        label: 'Music library',
+        estimated: true,
+        bytes: 0,
+        entries: 0,
+        quota: null,
+        categories: [],
+        error: getErrorMessage(error, 'Could not measure music library.'),
+      }),
+    ),
   ]);
   return { areas, measuredAt: new Date() };
 }
@@ -122,7 +136,8 @@ function isCount(value: unknown): value is number {
 export function isStorageAreaUsage(value: unknown): value is StorageAreaUsage {
   return (
     isObject(value) &&
-    ['local', 'session', 'sync'].includes(String(value.id)) &&
+    ['local', 'session', 'sync', 'indexeddb'].includes(String(value.id)) &&
+    (value.estimated === undefined || typeof value.estimated === 'boolean') &&
     typeof value.label === 'string' &&
     (value.quota === null || isCount(value.quota)) &&
     isCount(value.bytes) &&

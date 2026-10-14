@@ -90,6 +90,9 @@ importers:
       bits-ui:
         specifier: ^2.16.3
         version: 2.19.2(@internationalized/date@3.12.4)(svelte@5.57.0)
+      fake-indexeddb:
+        specifier: ^6.2.5
+        version: 6.2.5
       jsdom:
         specifier: 30.1.0
         version: 30.1.0
@@ -1024,6 +1027,10 @@ packages:
 
   ev-emitter@1.1.1:
     resolution: {integrity: sha512-ipiDYhdQSCZ4hSbX4rMW+XzNKMD1prg/sTvoVmSLkuQ1MVlwjJQQA+sW8tMYR3BLUr9KjodFV4pvzunvRhd33Q==}
+
+  fake-indexeddb@6.2.5:
+    resolution: {integrity: sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==}
+    engines: {node: '>=18'}
 
   fast-string-truncated-width@3.0.3:
     resolution: {integrity: sha512-0jjjIEL6+0jag3l2XWWizO64/aZVtpiGE3t0Zgqxv0DPuxiMjvB3M24fCyhZUO4KomJQPj3LTSUnDP3GpdwC0g==}
@@ -2460,6 +2467,8 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.6.0
 
   ev-emitter@1.1.1: {}
+
+  fake-indexeddb@6.2.5: {}
 
   fast-string-truncated-width@3.0.3: {}
 

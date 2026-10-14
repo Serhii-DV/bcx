@@ -15,6 +15,7 @@ import {
   recoverFanSync,
   startFanSync,
 } from './bandcamp/domain/fanData/sync';
+import { handleMusicLibraryRequest } from './bandcamp/domain/storage/musicDatabase';
 import { History } from './core/history';
 import { type Message, MessageType } from './core/message';
 
@@ -39,12 +40,13 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Extension installed!');
-  chrome.storage.session
-    .setAccessLevel({
-      accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS',
-    })
-    .catch(console.error);
 });
+
+chrome.storage.session
+  .setAccessLevel({
+    accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS',
+  })
+  .catch(console.error);
 
 chrome.sidePanel
   ?.setPanelBehavior({ openPanelOnActionClick: true })
@@ -120,6 +122,17 @@ async function getActiveBandcampTab(): Promise<chrome.tabs.Tab | null> {
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
+    if (message.type === MessageType.MUSIC_LIBRARY) {
+      handleMusicLibraryRequest(message.request).then(
+        (data) => sendResponse({ ok: true, data }),
+        (error: unknown) =>
+          sendResponse({
+            ok: false,
+            error: getErrorMessage(error, 'Could not access music library.'),
+          }),
+      );
+      return true;
+    }
     if (message.type === MessageType.UPDATE_PINNED_NAVIGATION) {
       updatePinnedNavigation(message.command).then(
         () => sendResponse({ ok: true }),

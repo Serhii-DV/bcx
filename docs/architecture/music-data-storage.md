@@ -1,56 +1,77 @@
 # Music data storage flows
 
-## Writing music data
+## Music library
 
-Album and track pages provide JSON-LD schema data in the HTML. The content script turns that data into BCX models, then saves compressed records in Chrome local storage.
+Bandcamp profiles, albums, tracks, and URL references are stored as plain raw
+records in the extension-origin IndexedDB database `bcx-library`, version 1.
+Chrome local storage retains settings, pinned navigation, and fan-library data.
+Chrome session storage retains disposable tree snapshots and a small music-library
+change notification. No existing local music data is imported or read as a fallback.
 
-```mermaid
-flowchart TB
-    html[Bandcamp album or track page<br/>JSON-LD script]
-    schema[Parse JSON and select<br/>MusicAlbum or MusicRecording schema]
-    html --> schema
+| Object store | Key | Indexes |
+| --- | --- | --- |
+| bands | id | nameKey (non-unique), savedOrder |
+| albums | id | bandId, artistKeys (multi-entry), titleArtist (titleKey + artistCreditKey), savedOrder |
+| tracks | id | albumId, savedOrder |
+| urlRefs | URL UUID | entity (store + id) |
+| meta | key | none |
 
-    schema -->|Album page| albumFactory[AlbumFactory and TrackFactory]
-    schema -->|Track page| trackFactory[TrackFactory]
-    albumFactory --> album[Album with Track objects]
-    trackFactory --> track[Track object]
+Band IDs identify Bandcamp profiles, which can belong to labels. Album artist
+credits remain independent of the hosting band. Normalized name keys support
+lookups without merging identities. Albums retain ordered track IDs, while band
+profiles retain ordered album and standalone track IDs. Records include savedAt
+and stable savedOrder fields; updates preserve initial ordering. Artwork IDs and
+URLs are retained, but image bytes and audio are not archived.
 
-    album --> saveAlbum[BandcampStorage.saveAlbum]
-    track --> saveTrack[BandcampStorage.saveTrack]
-    saveAlbum --> raw[toRawData: plain fields]
-    saveTrack --> raw
-    raw --> compressed[Compress: short field names and URLs]
-    compressed --> keyed[Keyed records and URL lookups]
-    keyed --> wrapper[Storage.set]
-    wrapper --> local[chrome.storage.local]
-```
+## Writing and reading
 
-`saveAlbum` includes the album and any tracks that are not already stored. An album record keeps track IDs rather than full Track objects. Stored records use `/a/{id}` and `/t/{id}` keys, with URL lookup keys pointing to those records when a URL is available.
-
-This chart covers album and track pages. The artist music page builds band data from page content through a separate path.
-
-## Reading music data
-
-The side panel and content scripts read saved albums and tracks through `BandcampStorage`.
+Content scripts, injected panels, and extension pages use the typed
+`MUSIC_LIBRARY` message through `requestMusicLibrary`. The background worker
+validates requests and owns all IndexedDB access. Database modules do not import
+DOM-dependent page state. IndexedDB accessed directly from a content script would
+belong to the host page, not the extension.
 
 ```mermaid
 flowchart TB
-    request[Side panel or content script requests saved music]
-    read[BandcampStorage read methods]
-    lookup[Choose an entity ID or saved URL reference]
-    get[Storage.get]
-    local[chrome.storage.local]
-    records[Compressed album and track records]
-    expanded[Decompress field names and URLs]
-    raw[RawAlbumData or RawTrackData]
-    models[Factories rebuild Album and Track objects]
-    result[Music data returned to the caller]
-
-    request --> read --> lookup --> get --> local
-    local --> records --> expanded --> raw --> models --> result
+    page[Bandcamp page data] --> models[Existing models and factories]
+    models --> client[BandcampStorage]
+    panel[Side panel and injected panels] --> client
+    client -->|Validated raw records and queries| worker[Background service worker]
+    worker --> database[Extension IndexedDB]
+    database -->|Records and indexed matches| worker
+    worker --> client
+    worker -->|Committed revision| session[Chrome session storage]
+    session -->|Change notification| panel
 ```
 
-A URL reference requires a first storage lookup to find its entity key. Album reads can then follow stored track IDs, load those track records, and attach the reconstructed Tracks to the Album. Direct track reads rebuild a Track from its compressed record.
+A save commits related profiles, albums, tracks, URL references, and the durable
+library revision together in a readwrite transaction. Only successful transaction
+completion is reported as a save. Missing or empty catalog-summary fields preserve
+richer saved page metadata. Basic summaries do not replace detailed release data.
+URLs are canonicalized before recording UUID references; earlier aliases can still
+resolve the same entity. Track removal also removes its URL references.
+
+Artist/title queries use database indexes rather than reading all saved albums.
+The existing `BandcampStorage` factory-facing methods retain their compressed
+return shapes through a small compatibility adapter; compression is not the
+database storage format. The old `/bands` map is a derived compatibility view,
+not another persisted index. Band lookups by name can return multiple profiles.
+
+Every committed write records a revision in IndexedDB and publishes it at
+`/music-library/revision` in Chrome session storage. Mounted previews invalidate
+their query caches and reload saved details on changes. Band and music-dependent
+fan subtree snapshots include the revision while retaining their keys, TTLs, and
+serialization. Following Genres keeps its fan-data revision alone.
+Connections close on version changes; blocked upgrades and storage failures
+produce explicit errors. No permission removes database quota or eviction limits.
+
+## Storage reporting
+
+The Storage panel includes Music library in Current and History. Database store
+counts are measured in one readonly transaction. Byte usage and quota use
+`navigator.storage.estimate()` for the extension origin and are labeled as
+estimates; per-store byte sizes are unavailable. Category size charts omit those
+unknown sizes. Chrome local, session, and sync measurements remain separate.
 
 ## Fan library and unavailable entries
 
@@ -110,9 +131,10 @@ the former explicit import action remains supported only for message compatibili
 
 `/fan-data/sync-job` stores job progress and errors. An interrupted worker marks the
 job interrupted on its next startup; retry preserves already committed data.
-The manifest requests `unlimitedStorage` because the retained music archive and
-staging snapshots can outgrow Chrome's default 10 MB local-storage quota. Reload
-the extension after this manifest change. Storage callbacks normalize Chrome's
+The manifest does not request `unlimitedStorage`. Fan libraries and staging
+snapshots remain subject to Chrome local storage's 10 MB quota; music data uses
+the separate IndexedDB quota. Reload the extension after manifest changes.
+Storage callbacks normalize Chrome's
 plain `runtime.lastError` objects into JavaScript Errors, preserving their message.
 Sync errors include the failing step and any datasets already published, and the
 panel suppresses the initial saved-list notice while a failure is displayed.

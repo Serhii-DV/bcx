@@ -1,5 +1,6 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
+import { requestMusicLibrary } from 'src/bandcamp/domain/storage/musicLibrary';
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
@@ -45,6 +46,7 @@ export class BandSidePanelSection {
                   catalogPlaceholders: true,
                 }),
               SIDE_PANEL_SECTION_CACHE_TTL.BAND,
+              (await requestMusicLibrary({ action: 'revision' })).revision,
             ),
             band,
             currentPageUrl,

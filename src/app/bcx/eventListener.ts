@@ -54,7 +54,9 @@ async function clearAlbumData(data: BCXEventData) {
     StorageKey.trackKeys(albumRawData.trackIds),
   );
 
-  await storage.remove(trackKeys);
+  await BandcampStorage.removeTracks(
+    albumsRawData.flatMap((album) => album.trackIds),
+  );
 
   window.postMessage(
     {

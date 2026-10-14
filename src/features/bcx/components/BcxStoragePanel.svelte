@@ -17,7 +17,7 @@ import BcxStorageHistory from './BcxStorageHistory.svelte';
 
 let { onViewLog }: { onViewLog?: () => void } = $props();
 let view = $state('current');
-let currentArea = $state('local');
+let currentArea = $state('indexeddb');
 let historyChart = $state('total');
 let historyPanel = $state<ReturnType<typeof BcxStorageHistory>>();
 let historyLoading = $state(false);
@@ -69,9 +69,9 @@ async function refresh() {
           typeof value !== 'object' ||
           !('areas' in value) ||
           !Array.isArray(value.areas) ||
-          value.areas.length !== 3 ||
+          value.areas.length !== 4 ||
           !value.areas.every(isStorageAreaUsage) ||
-          new Set(value.areas.map((area) => area.id)).size !== 3 ||
+          new Set(value.areas.map((area) => area.id)).size !== 4 ||
           !('measuredAt' in value) ||
           typeof value.measuredAt !== 'string' ||
           !Number.isFinite(Date.parse(value.measuredAt))
@@ -117,7 +117,7 @@ onMount(() => {
         {#if onViewLog}<button class="bcx-section-tab" onclick={onViewLog}>View log</button>{/if}
         {#if view === 'history'}
           <label class="storage-filter">Period <select bind:value={historyDays}><option value={30}>30 days</option><option value={90}>90 days</option><option value={365}>365 days</option></select></label>
-          <label class="storage-filter">Storage <select bind:value={historyArea}><option value="all">All storage</option><option value="local">Local data</option><option value="session">Session memory</option><option value="sync">Chrome sync</option></select></label>
+          <label class="storage-filter">Storage <select bind:value={historyArea}><option value="all">All storage</option><option value="indexeddb">Music library</option><option value="local">Local data</option><option value="session">Session memory</option><option value="sync">Chrome sync</option></select></label>
         {/if}
         <button class="bcx-section-tab" onclick={() => view === 'history' ? historyPanel?.refresh() : refresh()} disabled={refreshing || (view === 'history' && !historyPanel)} aria-label={`Refresh ${view === 'history' ? 'storage history' : 'current storage'}`}>
           <RefreshCcw size={16} class="shrink-0" aria-hidden="true" />
@@ -131,7 +131,7 @@ onMount(() => {
   <Tabs.Content value="current" class="bcx-tab-content">
   <Tabs.Root bind:value={currentArea} class="bcx-panel-body">
     <BcxSectionTabs
-      tabs={[{ id: 'local', label: 'Local data' }, { id: 'session', label: 'Session memory' }, { id: 'sync', label: 'Chrome sync storage' }]}
+      tabs={[{ id: 'indexeddb', label: 'Music library' }, { id: 'local', label: 'Local data' }, { id: 'session', label: 'Session memory' }, { id: 'sync', label: 'Chrome sync storage' }]}
       bind:value={currentArea}
       label="Current storage areas"
     />
@@ -147,7 +147,7 @@ onMount(() => {
     {#each usage.areas as area (area.id)}
       <Tabs.Content value={area.id}>
       <section class="storage-area" aria-label={area.label}>
-        <div class="storage-heading"><h3>{area.label}</h3>{#if !area.error}<strong>{formatStorageBytes(area.bytes)}</strong>{/if}</div>
+        <div class="storage-heading"><h3>{area.label}</h3>{#if !area.error}<strong>{area.estimated ? '≈ ' : ''}{formatStorageBytes(area.bytes)}</strong>{/if}</div>
         {#if area.error}
           <p role="alert">Unavailable: {area.error}</p>
         {:else}
@@ -156,16 +156,17 @@ onMount(() => {
             <progress max={area.quota} value={Math.min(area.bytes, area.quota)} aria-label={`${area.label} quota used`}></progress>
             <p class="storage-note">{(area.bytes / area.quota * 100).toFixed(1)}% of {formatStorageBytes(area.quota)} used · {formatStorageBytes(Math.max(0, area.quota - area.bytes))} available</p>
           {:else}
-            <p class="storage-note">No fixed Chrome quota (unlimited storage permission).</p>
+            <p class="storage-note">Storage quota is unavailable.</p>
           {/if}
+          {#if area.estimated}<p class="storage-note">Size and quota are estimates for the extension origin, including database indexes and other web storage. Per-store byte sizes are unavailable; record counts are exact at measurement time.</p>{/if}
           {#if area.categories.length}
-            <BcxStorageBar categories={area.categories} label={area.label} />
+            {#if !area.estimated}<BcxStorageBar categories={area.categories} label={area.label} />{/if}
             <table>
               <caption class="sr-only">{area.label} by category</caption>
               <thead><tr><th scope="col">Category</th><th scope="col">Entries</th><th scope="col">Size</th></tr></thead>
               <tbody>
                 {#each area.categories as category (category.label)}
-                  <tr><th scope="row">{category.label}</th><td>{category.entries.toLocaleString()}</td><td>{formatStorageBytes(category.bytes)}</td></tr>
+                  <tr><th scope="row">{category.label}</th><td>{category.entries.toLocaleString()}</td><td>{area.estimated ? '—' : formatStorageBytes(category.bytes)}</td></tr>
                 {/each}
               </tbody>
             </table>
@@ -176,8 +177,8 @@ onMount(() => {
       </section>
       </Tabs.Content>
     {/each}
-    <p class="storage-note">Sizes are reported by Chrome for extension storage, including temporary session memory. They exclude extension installation files, browser history, and page storage. History is read from Chrome; any cached catalogs are counted above.</p>
-    <p class="storage-note">Entries count storage keys, not individual releases inside saved lists. Data can change during measurement. Refresh to update. KB = 1,024 bytes.</p>
+    <p class="storage-note">Chrome storage sizes are browser-reported; music library size is an extension-origin estimate. Totals combine these measurements, including temporary session memory. They exclude extension installation files, browser history, and page storage. History is read from Chrome; any cached catalogs are counted above.</p>
+    <p class="storage-note">Music library entries count database records. Other entries count storage keys, not individual releases inside saved lists. Data can change during measurement. Refresh to update. KB = 1,024 bytes.</p>
   {:else if loading}
     <p role="status">Measuring extension storage…</p>
   {/if}

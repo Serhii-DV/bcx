@@ -6,6 +6,7 @@ import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { MUSIC_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { storage } from 'src/core/shared';
 import { loadReleaseBandLinks } from '../BandPreview';
@@ -82,7 +83,7 @@ describe('release previews', () => {
     const changed = rs.fn();
     const stop = watchSavedPreviewLibrary(changed);
     const getKeys = rs.spyOn(storage, 'getKeys');
-    const getAlbums = rs.spyOn(BandcampStorage, 'getAllAlbumsRawData');
+    const getAlbums = rs.spyOn(BandcampStorage, 'findAlbumsByTitleAndArtist');
     const information = preview!.information;
     try {
       const [links, duplicate] = await Promise.all([
@@ -96,7 +97,7 @@ describe('release previews', () => {
         album.url,
       );
       expect(explicitLinks.artists).toEqual([]);
-      expect(getKeys).toHaveBeenCalledTimes(1);
+      expect(getKeys).not.toHaveBeenCalled();
       expect(getAlbums).toHaveBeenCalledTimes(1);
       const notify = addListener.mock.calls[0][0] as (
         changes: Record<string, chrome.storage.StorageChange>,
@@ -104,28 +105,36 @@ describe('release previews', () => {
       ) => void;
       notify({ '/ui/sidebar-expanded': { newValue: true } }, 'local');
       expect(changed).not.toHaveBeenCalled();
-      rs.useFakeTimers();
-      notify({ '/a/1': { newValue: {} } }, 'local');
-      notify({ '/a/2': { newValue: {} } }, 'local');
-      await rs.advanceTimersByTimeAsync(100);
+      const notifyMusic = addListener.mock.calls[1][0] as typeof notify;
+      notifyMusic(
+        { [MUSIC_LIBRARY_REVISION_KEY]: { newValue: 'revision-1' } },
+        'session',
+      );
+      notifyMusic(
+        { [MUSIC_LIBRARY_REVISION_KEY]: { newValue: 'revision-2' } },
+        'session',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 120));
       expect(changed).toHaveBeenCalledTimes(1);
       await loadReleaseBandLinks(information, album.url);
-      expect(getKeys).toHaveBeenCalledTimes(2);
+      expect(getKeys).not.toHaveBeenCalled();
       expect(getAlbums).toHaveBeenCalledTimes(2);
       notify({ '/following-bands': { newValue: [] } }, 'local');
-      await rs.advanceTimersByTimeAsync(100);
+      await new Promise((resolve) => setTimeout(resolve, 120));
       expect(changed).toHaveBeenCalledTimes(2);
       await loadReleaseBandLinks(information, album.url);
       expect(getAlbums).toHaveBeenCalledTimes(2);
-      notify({ '/b/1': { newValue: {} } }, 'local');
-      await rs.advanceTimersByTimeAsync(100);
+      notifyMusic(
+        { [MUSIC_LIBRARY_REVISION_KEY]: { newValue: 'revision-3' } },
+        'session',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 120));
       await loadReleaseBandLinks(information, album.url);
-      expect(getAlbums).toHaveBeenCalledTimes(2);
+      expect(getAlbums).toHaveBeenCalledTimes(3);
       await getSavedArtistReleases(['Artist']);
-      expect(getAlbums).toHaveBeenCalledTimes(2);
+      expect(getAlbums).toHaveBeenCalledTimes(3);
     } finally {
       stop();
-      rs.useRealTimers();
       expect(removeListener).toHaveBeenCalledWith(addListener.mock.calls[0][0]);
       Object.defineProperty(chrome.storage, 'onChanged', {
         configurable: true,
@@ -413,12 +422,15 @@ describe('release previews', () => {
     await expect(
       AlbumTreeItemFactory.createWithPreview(album).loadPreview?.(),
     ).rejects.toThrow('Storage unavailable');
-    rs.spyOn(BandcampStorage, 'getAllAlbumsRawData').mockRejectedValue(
+    rs.spyOn(BandcampStorage, 'findAlbumsByTitleAndArtist').mockRejectedValue(
       new Error('Storage unavailable'),
     );
     await expect(
       loadReleaseBandLinks(createReleaseInformation(album), album.url),
     ).rejects.toThrow('Storage unavailable');
+    rs.spyOn(BandcampStorage, 'findAlbumsByArtists').mockRejectedValue(
+      new Error('Storage unavailable'),
+    );
     await expect(
       loadRelatedArtistReleases(['Artist'], album.url.toString()),
     ).rejects.toThrow('Storage unavailable');

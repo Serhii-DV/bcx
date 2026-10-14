@@ -9,6 +9,7 @@ import {
   FAN_SYNC_JOB_KEY,
   type FanSyncJob,
 } from 'src/bandcamp/domain/fanData/sync';
+import { MUSIC_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { TreeData } from 'src/features/treeview/TreeData';
@@ -550,11 +551,16 @@ onMount(() => {
     changes: Record<string, chrome.storage.StorageChange>,
     area: string,
   ) => {
-    if (area !== 'local') return;
-    if (FAN_SYNC_JOB_KEY in changes) void refreshSyncJob();
+    const musicChanged =
+      area === 'session' && MUSIC_LIBRARY_REVISION_KEY in changes;
+    if (area !== 'local' && !musicChanged) return;
+    if (area === 'local' && FAN_SYNC_JOB_KEY in changes) void refreshSyncJob();
     for (const section of sections) {
       const account = section.fanSync?.account ?? section.fanAccount;
       if (
+        (musicChanged &&
+          section.fanSync &&
+          section.fanSync.dataset !== 'following-genres') ||
         (account && libraryKey(account.fanId) in changes) ||
         (section.fanSync &&
           (`/${section.fanSync.dataset}` in changes ||

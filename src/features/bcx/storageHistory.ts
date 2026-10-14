@@ -38,9 +38,9 @@ function isSnapshot(value: unknown): value is StorageSnapshot {
     typeof value.measuredAt === 'string' &&
     Number.isFinite(Date.parse(value.measuredAt)) &&
     Array.isArray(value.areas) &&
-    value.areas.length === 3 &&
+    (value.areas.length === 3 || value.areas.length === 4) &&
     value.areas.every(isStorageAreaUsage) &&
-    new Set(value.areas.map((area) => area.id)).size === 3
+    new Set(value.areas.map((area) => area.id)).size === value.areas.length
   );
 }
 
