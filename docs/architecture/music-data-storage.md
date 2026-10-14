@@ -59,6 +59,9 @@ richer saved page metadata. Basic summaries do not replace detailed release data
 URLs are canonicalized before recording UUID references; earlier aliases can still
 resolve the same entity. Track removal also removes its URL references.
 
+URL references contain only `uuid`, `store`, and `id`; the URL remains on the
+entity record.
+
 Artist/title queries use database indexes rather than reading all saved albums.
 The existing `BandcampStorage` factory-facing methods retain their compressed
 return shapes through a small compatibility adapter; compression is not the

@@ -25,7 +25,6 @@ interface MusicReference {
   uuid: string;
   store: MusicStore;
   id: number;
-  url: string;
 }
 interface LibraryState {
   key: 'state';
@@ -130,7 +129,6 @@ async function write(
               uuid: uuid5(record.url, uuid5.URL),
               store,
               id: record.id,
-              url: record.url,
             };
             transaction.objectStore('urlRefs').put(reference);
           }
