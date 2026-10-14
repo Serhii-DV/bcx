@@ -155,22 +155,29 @@ console timer labels.
 Sync automatically stores original JSON objects in Chrome session storage for
 DevTools inspection, without extension viewer, copy, or debug-toggle controls.
 `/debug/fan-sync/page-data` retains the latest fan-page data blob before account
-validation. `/debug/fan-sync/collection`, `/debug/fan-sync/wishlist`,
-`/debug/fan-sync/following-bands`, and `/debug/fan-sync/following-genres` retain
-the latest successfully decoded API response for each dataset, before response
-validation or membership enrichment. A dataset satisfied entirely by the page's
-item cache makes no API request; its original objects remain in page-data.
+validation. Each successfully decoded API response is stored separately at
+`/debug/fan-sync/<dataset>/<runId>/<responseNumber>`, before response validation
+or membership enrichment. The datasets are `collection`, `wishlist`,
+`following-bands`, and `following-genres`. A dataset satisfied entirely by the
+page's item cache makes no API request; its original objects remain in page-data.
 
 Each capture contains its timestamp, expected fan ID, and source page URL.
 Dataset captures also identify the endpoint, request method/payload, and response
-number within that request. `data` holds the original object, not a JSON string.
-Pagination overwrites the dataset's capture with the latest response; captures
-are not a full response history.
+number within that run. `data` holds the complete original response object, not a
+JSON string. Each dataset retrieval uses its start time as an ISO 8601 UTC
+`runId`, for example `2026-10-14T12:34:56.789Z`, and response numbers start at 1.
+Key suffixes are zero-padded to at least four digits, such as `0001` and `0123`;
+the `page` metadata remains numeric.
+Runs started within the same millisecond in a content-script context advance the
+timestamp by one millisecond to avoid overwriting captures.
+Pagination and subsequent syncs retain previous response captures
+instead of overwriting them; no captures are automatically evicted.
 
 Captures have no additional per-key size limit and share Chrome's session storage
 quota with disposable caches. Failed writes, including quota errors, replace the
-stale value with capture metadata and an error when possible, and report failures
-in the console.
+value at that key with capture metadata and an error when possible, and report
+failures in the console. Once the shared quota is exhausted, further response
+objects cannot be retained; earlier captures remain available.
 Debug persistence never changes normal sync success/failure. Captures survive
 ordinary page navigation and clear with the extension's session storage lifecycle.
 Inspect Application > Storage > Extension Storage > BCX > Session in Chrome

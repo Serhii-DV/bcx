@@ -2,11 +2,20 @@ import { describe, expect, it, rstest } from '@rstest/core';
 import type { BandcampItem, BandcampResponseCapture } from './PageCollection';
 
 function installChromeMock() {
+  const sessionData: Record<string, unknown> = {};
   Object.defineProperty(globalThis, 'chrome', {
     value: {
       storage: {
         local: {},
-        session: {},
+        session: {
+          set: rstest.fn(async (values: Record<string, unknown>) => {
+            Object.assign(sessionData, structuredClone(values));
+          }),
+          get: rstest.fn(async () => structuredClone(sessionData)),
+          remove: rstest.fn(async (key: string) => {
+            delete sessionData[key];
+          }),
+        },
       },
     },
     configurable: true,
@@ -100,10 +109,16 @@ describe('PageCollection', () => {
         }),
     };
     const captures: BandcampResponseCapture[] = [];
+    const { createFanResponseCapture } = await import(
+      '../../content/fanSyncDebug'
+    );
+    const account = { fanId: 42, username: 'fan' };
+    const storeCapture = createFanResponseCapture(account, 'wishlist');
     const pageCollection = await createPageCollection(
       transport,
       async (capture) => {
         captures.push(structuredClone(capture));
+        await storeCapture(capture);
       },
     );
 
@@ -129,6 +144,42 @@ describe('PageCollection', () => {
     expect((captures[2].response as { items: BandcampItem[] }).items).toEqual([
       collectionItem(2),
     ]);
+    const stored = await chrome.storage.session.get(null);
+    const keys = Object.keys(stored);
+    expect(keys).toHaveLength(3);
+    const runPrefix = keys[0].slice(0, keys[0].lastIndexOf('/'));
+    expect(runPrefix).toMatch(
+      /^\/debug\/fan-sync\/wishlist\/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
+    expect(keys).toEqual(
+      ['0001', '0002', '0003'].map((page) => `${runPrefix}/${page}`),
+    );
+    captures.forEach((capture, index) => {
+      expect(stored[keys[index]]).toMatchObject({
+        fanId: 42,
+        dataset: 'wishlist',
+        page: index + 1,
+        method: capture.method,
+        endpoint: capture.endpoint,
+        data: capture.response,
+      });
+    });
+
+    // A subsequent retrieval uses a new run key and preserves all earlier pages.
+    const nextRun = createFanResponseCapture(account, 'wishlist');
+    await nextRun(captures[1]);
+    const afterNextRun = await chrome.storage.session.get(null);
+    expect(Object.keys(afterNextRun)).toHaveLength(4);
+    for (const key of keys) expect(afterNextRun[key]).toEqual(stored[key]);
+    const nextKey = Object.keys(afterNextRun).find(
+      (key) => !keys.includes(key),
+    );
+    expect(nextKey).not.toContain(runPrefix);
+    expect(nextKey).toMatch(/\/0001$/);
+    expect(afterNextRun[nextKey!]).toMatchObject({
+      data: captures[1].response,
+    });
+
     expect(transport.postJsonString).toHaveBeenCalledTimes(2);
     expect(transport.postJsonString.mock.calls[1][1]).toMatchObject({
       fan_id: 42,

@@ -3,6 +3,7 @@ import type { FanAccount, FanDataset } from '../domain/fanData/data';
 import type { BandcampResponseCapture } from '../domain/page/PageCollection';
 
 const PREFIX = '/debug/fan-sync/';
+let lastRunAt = 0;
 
 /** Store objects directly so DevTools can expand their original JSON structure. */
 async function saveCapture(
@@ -17,7 +18,7 @@ async function saveCapture(
     const message = getErrorMessage(error, 'Could not save debug capture.');
     console.warn('BCX fan-sync debug capture:', message);
     try {
-      // Replace stale captures with an explicit status, leaving unrelated session data intact.
+      // Record failure status at this key, leaving other captures and session data intact.
       await chrome.storage.session.remove(key);
       await chrome.storage.session.set({
         [key]: { ...metadata, error: message },
@@ -47,20 +48,27 @@ export function createFanResponseCapture(
   account: FanAccount,
   dataset: FanDataset,
 ) {
+  // Keep runs distinct even when started within the same millisecond.
+  const runAt = Math.max(Date.now(), lastRunAt + 1);
+  lastRunAt = runAt;
+  const runId = new Date(runAt).toISOString();
   let page = 0;
-  return (capture: BandcampResponseCapture): Promise<void> =>
-    saveCapture(
-      PREFIX + dataset,
+  return (capture: BandcampResponseCapture): Promise<void> => {
+    const responseNumber = ++page;
+    return saveCapture(
+      `${PREFIX}${dataset}/${runId}/${String(responseNumber).padStart(4, '0')}`,
       {
         capturedAt: new Date().toISOString(),
         fanId: account.fanId,
         dataset,
         pageUrl: location.href,
-        page: ++page,
+        runId,
+        page: responseNumber,
         endpoint: capture.endpoint,
         method: capture.method,
         request: capture.request,
       },
       capture.response,
     );
+  };
 }
