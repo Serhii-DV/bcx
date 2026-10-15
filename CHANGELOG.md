@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Collection and Wishlist sync automatically save album and track records with list-provided titles, artwork, URLs, relationships, and valid prices. Records and list membership commit together; existing page details and track lists are preserved, and unknown release dates remain unknown.
+
 - Album and track TreeView rows show their saved prices, with zero displayed as "name your price". Band, Collection, and Wishlist catalogs include a By Prices panel showing name your price first, currencies alphabetically with exact price groups ascending inside each currency, and Price unknown last for missing pricing. Collection and Wishlist use each fan-list item's price and currency for rows, archives, and grouping, including releases whose pages have not been visited; saved release metadata still supplies other details. Standalone tracks retain track previews.
 
 - Added an X button at the top right of the shared Preview Panel so lists can use the full panel height. The panel stays closed while browsing until a release, band, or track Preview action reopens it, retaining its selected details and saved split size.

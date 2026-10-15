@@ -398,6 +398,30 @@ describe('release catalog previews', () => {
                 : '03 Feb 2024 04:05:06 GMT',
         })),
       );
+      const syncedAlbums = await BandcampStorage.getAlbumsRawDataByIds([
+        1, 2, 3,
+      ]);
+      expect(syncedAlbums[0]).toMatchObject({
+        id: 1,
+        bandId: 1,
+        title: 'Release 0',
+        artist: 'Artist 0',
+        artworkId: 1,
+        trackIds: [],
+        metadata: {
+          price: { amount: 9.5, currency: 'EUR' },
+          published: '',
+          modified: '',
+        },
+      });
+      expect(syncedAlbums[1].metadata).toBeUndefined();
+      expect(syncedAlbums[2].metadata).toBeUndefined();
+      const syncedAlbum = AlbumFactory.fromRawData(syncedAlbums[0]);
+      expect(syncedAlbum.toString()).toBe('Artist 0 - Release 0');
+      expect(syncedAlbum.toRawData().metadata?.published).toBe('');
+      expect(
+        (await BandcampStorage.getByUuids([syncedAlbum.url.uuid]))[0].id,
+      ).toBe(1);
       if (label === 'Collection') {
         const storedAlbum = AlbumFactory.fromBandcampItem(collectionItems[0]);
         storedAlbum.metadata = Metadata.create(
@@ -405,6 +429,8 @@ describe('release catalog previews', () => {
           'Artist 0',
           '1999-01-01',
           '1999-01-01',
+          [],
+          { minimumPrice: 0, credits: 'Saved credits' },
         );
         await BandcampStorage.saveAlbum(storedAlbum);
       }
@@ -448,6 +474,15 @@ describe('release catalog previews', () => {
       ).toBeUndefined();
       // Restore the source order for the existing catalog/cache assertions below.
       await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, saved);
+      if (label === 'Collection') {
+        const [preserved] = await BandcampStorage.getAlbumsRawDataByIds([1]);
+        expect(preserved.metadata).toMatchObject({
+          price: { amount: 9.5, currency: 'EUR' },
+          publisher: 'Artist 0',
+          published: '1999-01-01T00:00:00.000Z',
+          release: { minimumPrice: 9.5, credits: 'Saved credits' },
+        });
+      }
       const original = await create();
       const originalReleases = original.children?.find(
         (item) => item.label === 'Releases',
@@ -738,6 +773,31 @@ describe('release catalog previews', () => {
           '2025-01-01',
         ),
       );
+      await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, [
+        ...saved,
+        {
+          ...createItems(1)[0],
+          tralbum_type: 't',
+          tralbum_id: track.id,
+          album_id: 42,
+          item_title: track.title,
+          item_url: track.url!.toString(),
+          price: 0,
+          currency: 'gbp',
+        },
+      ]);
+      const [newTrack] = await BandcampStorage.getTracksByTrackIds([track.id]);
+      expect(newTrack.toRawData()).toMatchObject({
+        id: track.id,
+        albumId: 42,
+        url: track.url?.toString(),
+        title: 'Saved single',
+        metadata: {
+          price: { amount: 0, currency: 'GBP' },
+          published: '',
+          modified: '',
+        },
+      });
       await BandcampStorage.saveTrack(track);
       await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, [
         ...saved,
@@ -751,6 +811,14 @@ describe('release catalog previews', () => {
           currency: 'gbp',
         },
       ]);
+      const [syncedTrack] = await BandcampStorage.getTracksByTrackIds([
+        track.id,
+      ]);
+      expect(syncedTrack.metadata?.price.toRawData()).toEqual({
+        amount: 2.5,
+        currency: 'GBP',
+      });
+      expect(syncedTrack.metadata?.publishedDate).toBe('2025-01-01');
       const refreshed = await createScoped();
       const trackPrices = refreshed.children
         ?.find((item) => item.label === 'By Prices')

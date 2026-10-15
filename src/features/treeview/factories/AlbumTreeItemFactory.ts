@@ -136,7 +136,9 @@ export class AlbumTreeItemFactory {
         .add(
           ...artistNames.map((artistName) => searchQuery(artistName)),
           searchQuery(displayTitle),
-          album.metadata ? searchQuery(String(album.metadata.year)) : undefined,
+          album.metadata?.year
+            ? searchQuery(String(album.metadata.year))
+            : undefined,
           ...keywords.map((keyword) => searchQuery(keyword)),
         )
         .withImage(ICON_FUNNEL),
@@ -165,7 +167,7 @@ export class AlbumTreeItemFactory {
       );
     }
 
-    if (album.metadata) {
+    if (album.metadata?.year) {
       builder.add(
         searchQuery(String(album.metadata.year)).withImage(ICON_CALENDAR_DAYS),
       );

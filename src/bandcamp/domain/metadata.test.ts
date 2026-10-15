@@ -33,5 +33,12 @@ describe('Metadata', () => {
     const restored = Metadata.fromRawData(metadata.toRawData());
 
     expect(restored.toRawData()).toEqual(metadata.toRawData());
+
+    const summary = Metadata.create(Price.create(5, 'EUR'), '', '', '');
+    const restoredSummary = Metadata.fromRawData(summary.toRawData());
+    expect(restoredSummary.year).toBeUndefined();
+    expect(restoredSummary.publishedDate).toBe('');
+    expect(restoredSummary.modifiedDate).toBe('');
+    expect(restoredSummary.toRawData()).toEqual(summary.toRawData());
   });
 });

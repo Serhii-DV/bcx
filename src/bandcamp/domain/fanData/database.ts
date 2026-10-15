@@ -4,6 +4,7 @@ import {
   openDatabase,
   readRequest,
 } from '../storage/database';
+import { publishMusicRevision, saveMusicBatch } from '../storage/musicDatabase';
 import {
   type Availability,
   FAN_DATASETS,
@@ -15,6 +16,7 @@ import {
   mergeFanItem,
   type SavedFanList,
 } from './data';
+import { musicFromFanItems } from './music';
 import {
   FAN_LIBRARY_REVISION_KEY,
   type FanLibraryChange,
@@ -256,8 +258,12 @@ export async function handleFanLibraryRequest(
   const writes =
     request.action === 'save-snapshot' ||
     request.action === 'save-availability';
+  const savesMusic =
+    request.action === 'save-snapshot' &&
+    (request.dataset === 'collection' || request.dataset === 'wishlist') &&
+    request.items.length > 0;
   const transaction = database.transaction(
-    FAN_STORES,
+    savesMusic ? [...FAN_STORES, 'albums', 'tracks', 'urlRefs'] : FAN_STORES,
     writes ? 'readwrite' : 'readonly',
   );
   const done = completed(transaction);
@@ -265,9 +271,17 @@ export async function handleFanLibraryRequest(
     const result = emptyResponse();
     const state = await getState(transaction);
     let change: FanLibraryChange | undefined;
+    let musicRevision: string | undefined;
     switch (request.action) {
       case 'save-snapshot':
         change = await saveSnapshot(transaction, request, state);
+        if (savesMusic) {
+          musicRevision = await saveMusicBatch(
+            transaction,
+            musicFromFanItems(request.items),
+            { preserveExisting: true },
+          );
+        }
         break;
       case 'save-availability':
         change = await saveAvailability(transaction, request, state);
@@ -363,6 +377,7 @@ export async function handleFanLibraryRequest(
     if (request.action !== 'revision' || !request.dataset)
       result.revision = state.revision;
     await done;
+    if (musicRevision) await publishMusicRevision(musicRevision);
     if (change) await publish(change);
     return result;
   } catch (error) {

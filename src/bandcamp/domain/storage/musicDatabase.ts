@@ -12,6 +12,7 @@ import {
 import {
   isMusicLibraryRequest,
   MUSIC_LIBRARY_REVISION_KEY,
+  type MusicBatch,
   type MusicLibraryData,
   type MusicLibraryRequest,
   type MusicStore,
@@ -72,7 +73,7 @@ function mergeFields(previous: unknown, incoming: unknown): unknown {
   return incoming;
 }
 
-async function publishRevision(revision: string): Promise<void> {
+export async function publishMusicRevision(revision: string): Promise<void> {
   try {
     await chrome.storage.session.set({
       [MUSIC_LIBRARY_REVISION_KEY]: revision,
@@ -85,6 +86,91 @@ async function publishRevision(revision: string): Promise<void> {
   }
 }
 
+export async function saveMusicBatch(
+  transaction: IDBTransaction,
+  batch: MusicBatch,
+  { preserveExisting = false }: { preserveExisting?: boolean } = {},
+): Promise<string> {
+  const meta = transaction.objectStore('meta');
+  const state: LibraryState = (await readRequest<LibraryState | undefined>(
+    meta.get('state'),
+  )) ?? { key: 'state', revision: '', nextOrder: 0 };
+  for (const store of ['bands', 'albums', 'tracks'] as const) {
+    for (const incoming of batch[store] ?? []) {
+      const objectStore = transaction.objectStore(store);
+      const previous = await readRequest<SavedEntity | undefined>(
+        objectStore.get(incoming.id),
+      );
+      const detailed =
+        previous &&
+        'artist' in previous.data &&
+        previous.data.metadata?.published &&
+        (!('metadata' in incoming) || !incoming.metadata);
+      const data = (
+        detailed || preserveExisting
+          ? mergeFields(incoming, previous?.data)
+          : mergeFields(previous?.data, incoming)
+      ) as Entity;
+      // List summaries can refresh a known price without replacing page details.
+      if (
+        preserveExisting &&
+        'artist' in incoming &&
+        incoming.metadata &&
+        'artist' in data &&
+        data.metadata
+      ) {
+        data.metadata.price = incoming.metadata.price;
+        if (data.metadata.release?.minimumPrice !== undefined)
+          data.metadata.release.minimumPrice = incoming.metadata.price.amount;
+      }
+      if (
+        'name' in incoming &&
+        'name' in data &&
+        incoming.metadata.releases !== undefined
+      ) {
+        // A scanned catalog is authoritative, including a genuinely empty page.
+        data.metadata.releases = incoming.metadata.releases;
+      }
+      const record: SavedEntity = {
+        data,
+        keys: {},
+        storage: {
+          savedAt: Date.now(),
+          savedOrder: previous?.storage.savedOrder ?? state.nextOrder++,
+        },
+      };
+      if (data.url) data.url = canonicalUrl(data.url, store);
+      if (store === 'bands' && 'name' in data)
+        record.keys = { name: normalizeMusicName(data.name) };
+      if (store === 'albums' && 'artist' in data) {
+        record.keys = {
+          artists: [
+            ...new Set(
+              [data.artist, ...Artist.parse(data.artist).names].map(
+                normalizeMusicName,
+              ),
+            ),
+          ],
+          title: normalizeMusicName(data.title),
+          artistCredit: normalizeMusicName(data.artist),
+        };
+      }
+      objectStore.put(record);
+      if (data.url) {
+        const reference: MusicReference = {
+          uuid: uuid5(data.url, uuid5.URL),
+          store,
+          id: data.id,
+        };
+        transaction.objectStore('urlRefs').put(reference);
+      }
+    }
+  }
+  state.revision = crypto.randomUUID();
+  meta.put(state);
+  return state.revision;
+}
+
 async function write(
   database: IDBDatabase,
   request: Extract<MusicLibraryRequest, { action: 'save' | 'remove-tracks' }>,
@@ -92,71 +178,14 @@ async function write(
   const transaction = database.transaction([...STORES], 'readwrite');
   const done = completed(transaction);
   try {
-    const meta = transaction.objectStore('meta');
-    const state: LibraryState = (await readRequest<LibraryState | undefined>(
-      meta.get('state'),
-    )) ?? { key: 'state', revision: '', nextOrder: 0 };
+    let revision: string;
     if (request.action === 'save') {
-      for (const store of ['bands', 'albums', 'tracks'] as const) {
-        for (const incoming of request.data[store] ?? []) {
-          const objectStore = transaction.objectStore(store);
-          const previous = await readRequest<SavedEntity | undefined>(
-            objectStore.get(incoming.id),
-          );
-          const detailed =
-            previous &&
-            'artist' in previous.data &&
-            previous.data.metadata &&
-            (!('metadata' in incoming) || !incoming.metadata);
-          const data = (
-            detailed
-              ? mergeFields(incoming, previous.data)
-              : mergeFields(previous?.data, incoming)
-          ) as Entity;
-          if (
-            'name' in incoming &&
-            'name' in data &&
-            incoming.metadata.releases !== undefined
-          ) {
-            // A scanned catalog is authoritative, including a genuinely empty page.
-            data.metadata.releases = incoming.metadata.releases;
-          }
-          const record: SavedEntity = {
-            data,
-            keys: {},
-            storage: {
-              savedAt: Date.now(),
-              savedOrder: previous?.storage.savedOrder ?? state.nextOrder++,
-            },
-          };
-          if (data.url) data.url = canonicalUrl(data.url, store);
-          if (store === 'bands' && 'name' in data)
-            record.keys = { name: normalizeMusicName(data.name) };
-          if (store === 'albums' && 'artist' in data) {
-            record.keys = {
-              artists: [
-                ...new Set(
-                  [data.artist, ...Artist.parse(data.artist).names].map(
-                    normalizeMusicName,
-                  ),
-                ),
-              ],
-              title: normalizeMusicName(data.title),
-              artistCredit: normalizeMusicName(data.artist),
-            };
-          }
-          objectStore.put(record);
-          if (data.url) {
-            const reference: MusicReference = {
-              uuid: uuid5(data.url, uuid5.URL),
-              store,
-              id: data.id,
-            };
-            transaction.objectStore('urlRefs').put(reference);
-          }
-        }
-      }
+      revision = await saveMusicBatch(transaction, request.data);
     } else {
+      const meta = transaction.objectStore('meta');
+      const state: LibraryState = (await readRequest<LibraryState | undefined>(
+        meta.get('state'),
+      )) ?? { key: 'state', revision: '', nextOrder: 0 };
       const refs = transaction.objectStore('urlRefs');
       for (const id of request.ids) {
         transaction.objectStore('tracks').delete(id);
@@ -165,12 +194,13 @@ async function write(
         );
         for (const key of keys) refs.delete(key);
       }
+      state.revision = crypto.randomUUID();
+      meta.put(state);
+      revision = state.revision;
     }
-    state.revision = crypto.randomUUID();
-    meta.put(state);
     await done;
-    await publishRevision(state.revision);
-    return { ...emptyData(), revision: state.revision };
+    await publishMusicRevision(revision);
+    return { ...emptyData(), revision };
   } catch (error) {
     try {
       transaction.abort();
