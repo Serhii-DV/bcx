@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Added an X button at the top right of the shared Preview Panel so lists can use the full panel height. The panel stays closed while browsing until a release, band, or track Preview action reopens it, retaining its selected details and saved split size.
+
 - Artist action dropdowns now sit inside the tree row’s button group. Band rows, including saved and unsaved History entries, and Release and track rows share the Preview Panel’s action menu for opening, previewing, pinning, copying names, titles and URLs, and searching Bandcamp.
 
 - Removed duplicate URLs from IndexedDB URL references to reduce library storage while preserving UUID lookups and earlier URL aliases.

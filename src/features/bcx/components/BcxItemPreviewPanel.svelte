@@ -36,14 +36,18 @@ const componentId = $props.id();
 const itemListId = `${componentId}-item-list`;
 const itemPreviewId = `${componentId}-item-preview`;
 let previewPanel: HTMLDivElement;
+let itemList: HTMLDivElement;
 let preview = $state<BcxItemPreview>();
+let closed = $state(false);
+const previewVisible = $derived(visible && !closed);
+let previewTrigger: HTMLElement | undefined;
 let isResizing = $state(false);
 let resizeStartY = 0;
 let resizeStartSize = DEFAULT_ITEM_PREVIEW_SIZE;
 
 function selectItem(item: TreeItem) {
   if (!hasItemPreview(item)) return;
-  onShowPreview?.();
+  if (!closed) onShowPreview?.();
   untrack(() => {
     if (
       !selectedItem ||
@@ -55,11 +59,29 @@ function selectItem(item: TreeItem) {
 
 async function previewItem(item: TreeItem) {
   if (!hasItemPreview(item)) return;
+  if (
+    document.activeElement instanceof HTMLElement &&
+    itemList.contains(document.activeElement)
+  )
+    previewTrigger = document.activeElement;
+  closed = false;
   onShowPreview?.();
   onPreview?.(item);
   selectedItem = item;
   await tick();
   preview?.focus();
+}
+
+async function closePreview() {
+  closed = true;
+  await tick();
+  const trigger =
+    previewTrigger?.isConnected && !previewTrigger.closest('[hidden]')
+      ? previewTrigger
+      : Array.from(
+          itemList.querySelectorAll<HTMLElement>('.tree-item[tabindex="0"]'),
+        ).find((item) => !item.closest('[hidden]'));
+  (trigger ?? itemList).focus({ preventScroll: true });
 }
 
 setContext<ItemPreviewContext>(ITEM_PREVIEW_CONTEXT, {
@@ -139,17 +161,17 @@ function handleLostPointerCapture() {
 <div
   bind:this={previewPanel}
   class:resizing={isResizing}
-  class:preview-hidden={!visible}
+  class:preview-hidden={!previewVisible}
   class="item-preview-panel"
-  style:grid-template-rows={visible ? `${100 - $previewSize}fr auto ${$previewSize}fr` : '1fr'}
+  style:grid-template-rows={previewVisible ? `${100 - $previewSize}fr auto ${$previewSize}fr` : '1fr'}
 >
-  <div id={itemListId} class="item-preview-panel-list">
+  <div bind:this={itemList} id={itemListId} class="item-preview-panel-list" tabindex="-1">
     {@render children()}
   </div>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (ARIA separator is keyboard interactive) -->
   <div
     class="item-preview-panel-resizer"
-    hidden={!visible}
+    hidden={!previewVisible}
     role="separator"
     aria-label="Resize item details"
     aria-orientation="horizontal"
@@ -170,8 +192,8 @@ function handleLostPointerCapture() {
   >
     <span aria-hidden="true"></span>
   </div>
-  <section id={itemPreviewId} class="item-preview-panel-details" aria-label="Preview" hidden={!visible}>
-    <BcxItemPreview bind:this={preview} item={selectedItem} onPreview={previewItem} />
+  <section id={itemPreviewId} class="item-preview-panel-details" aria-label="Preview" hidden={!previewVisible}>
+    <BcxItemPreview bind:this={preview} item={selectedItem} onPreview={previewItem} onClose={closePreview} />
   </section>
 </div>
 

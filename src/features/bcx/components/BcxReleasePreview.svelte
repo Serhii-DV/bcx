@@ -9,10 +9,12 @@ let {
   item,
   onPreview,
   leadingActions,
+  trailingActions,
 }: {
   item: TreeItem;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
   leadingActions?: Snippet;
+  trailingActions?: Snippet;
 } = $props();
 let preview = $state<ReleasePreview | null>(null);
 let loading = $state(false);
@@ -56,9 +58,14 @@ $effect(() => {
 
 <div class="release-preview">
   {#if information}
-    <BcxReleaseDetails {item} {information} {preview} {loading} {error} {onPreview} {leadingActions} />
+    <BcxReleaseDetails {item} {information} {preview} {loading} {error} {onPreview} {leadingActions} {trailingActions} />
   {:else}
-    {#if leadingActions}<div class="release-leading-actions">{@render leadingActions()}</div>{/if}
+    {#if leadingActions || trailingActions}
+      <div class="release-leading-actions">
+        {@render leadingActions?.()}
+        {#if trailingActions}<div class="release-trailing-actions">{@render trailingActions()}</div>{/if}
+      </div>
+    {/if}
     {#if loading}
       <p role="status">Loading release details…</p>
     {:else if error}
@@ -69,7 +76,8 @@ $effect(() => {
 
 <style>
 .release-preview { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
-.release-leading-actions { padding: 4px var(--bcx-preview-gutter, 16px); }
+.release-leading-actions { display: flex; align-items: flex-start; padding: 4px var(--bcx-preview-gutter, 16px); }
+.release-trailing-actions { margin-left: auto; }
 p { margin: 0; padding: 0.5rem 1rem; font-size: 0.8125rem; }
 [role='alert'] { color: #fca5a5; }
 </style>
