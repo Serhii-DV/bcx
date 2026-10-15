@@ -123,7 +123,7 @@ function clearFilter() {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0;
+  margin: 9px 0 0;
   padding: 0;
   background-color: transparent;
   color: oklch(70.7% 0.022 261.325);
