@@ -2,8 +2,8 @@
 
 ## Music library
 
-Bandcamp profiles, albums, tracks, and URL references are stored as plain raw
-records in the extension-origin IndexedDB database `bcx-library`, version 4.
+Bandcamp profiles, albums, tracks, and URL references are stored in the
+extension-origin IndexedDB database `bcx-library`, version 4.
 The same database stores account-scoped fan lists, memberships, and availability.
 Chrome local storage retains settings, pinned navigation, bounded logs, and sync-job progress.
 Chrome session storage retains disposable tree snapshots and a small music-library
@@ -11,9 +11,9 @@ change notification. No existing local music data is imported or read as a fallb
 
 | Object store | Key | Indexes |
 | --- | --- | --- |
-| bands | id | nameKey (non-unique), savedOrder |
-| albums | id | bandId, artistKeys (multi-entry), titleArtist (titleKey + artistCreditKey), savedOrder |
-| tracks | id | albumId, savedOrder |
+| bands | data.id | nameKey (keys.name, non-unique), savedOrder (storage.savedOrder) |
+| albums | data.id | bandId (data.bandId), artistKeys (keys.artists, multi-entry), titleArtist (keys.title + keys.artistCredit), savedOrder (storage.savedOrder) |
+| tracks | data.id | albumId (data.albumId), savedOrder (storage.savedOrder) |
 | urlRefs | URL UUID | entity (store + id) |
 | meta | key | none |
 | fanAccounts | fanId | none |
@@ -24,12 +24,25 @@ change notification. No existing local music data is imported or read as a fallb
 | fanFollowingGenres | fanId + entityKey | account, current (fanId + current) |
 | fanAvailability | fanId + entityKey | account |
 
+Bands, albums, and tracks use a `{ data, keys, storage }` record. `data` contains
+only the model's raw data, including its ID and any music metadata. `keys` holds
+derived normalized search values: bands use `name`; albums use `artists`, `title`,
+and `artistCredit`; tracks use an empty object because their indexes need no
+derived values. `storage` holds `savedAt` (the latest save time) and `savedOrder`
+(the initial insertion order). Search keys are rebuilt from the final merged
+data on every save. IDs and relationships are indexed directly under `data`
+rather than duplicated in `keys`.
+
+The schema is created from scratch, with no migration or compatibility reads.
+Delete the existing `bcx-library` database before loading this schema; clearing
+its records alone does not recreate object-store key paths or indexes.
+
 Band IDs identify Bandcamp profiles, which can belong to labels. Album artist
 credits remain independent of the hosting band. Normalized name keys support
 lookups without merging identities. Albums retain ordered track IDs, while band
-profiles retain ordered album and standalone track IDs. Records include savedAt
-and stable savedOrder fields; updates preserve initial ordering. Artwork IDs and
-URLs are retained, but image bytes and audio are not archived.
+profiles retain ordered album and standalone track IDs. Updates preserve initial
+ordering. Artwork IDs and URLs are retained, but image bytes and audio are not
+archived.
 
 ## Writing and reading
 
@@ -60,11 +73,13 @@ URLs are canonicalized before recording UUID references; earlier aliases can sti
 resolve the same entity. Track removal also removes its URL references.
 
 URL references contain only `uuid`, `store`, and `id`; the URL remains on the
-entity record.
+entity's `data` object.
 
 Artist/title queries use database indexes rather than reading all saved albums.
-`BandcampStorage` reads validated raw records directly and reconstructs models
-through their raw-data factories. Band and album reads load related release and
+The database layer unwraps `record.data` for every read, URL lookup, and indexed
+query; search keys and storage bookkeeping remain internal to that layer.
+`BandcampStorage` receives validated raw data and reconstructs models through
+their raw-data factories. Band and album reads load related release and
 track IDs as needed; there is no compression adapter or local-storage model
 serialization. IndexedDB maintains the band name index; the old `/bands` map and
 its rebuild command have been removed. Band lookups by name can return multiple
@@ -121,19 +136,8 @@ memberships, list metadata/counts, account metadata, and a durable fan revision 
 one transaction. Missing items become former members and remain saved. Non-empty
 incoming fields enrich existing summaries. There are no staging snapshots and no
 import or fallback from previous Chrome local data. A failed transaction leaves
-previous membership and metadata intact. Database version 3 creates separate
-empty dataset stores and removes the legacy `fanMemberships` store without
-copying its data. Existing `fanLists` summaries are cleared during that upgrade
-so timestamps and counts do not describe discarded memberships; sync again to
-populate the lists. The `fanLists` schema, other stores, and existing music
-records stay unchanged. The durable fan revision is renewed with the reset.
-
-Version 4 adopts the compact band and genre keys. Upgrading to version 4 clears
-Following Bands and Following Genres memberships, their list summaries, and
-availability records with the old `band:` prefix, without migrating their data.
-Collection, Wishlist, release availability, account identity, and the `fanLists`
-schema stay unchanged. The fan revision is renewed while preserving its order
-counter; sync the two following lists again after reloading BCX.
+previous membership and metadata intact. Fresh databases create all four dataset
+stores directly. After recreating the database, sync again to populate the lists.
 
 `fanAvailability` stores the latest check and, when applicable, a confirmed
 unavailable result together in one record. Only HTTP 404/410 at the requested URL

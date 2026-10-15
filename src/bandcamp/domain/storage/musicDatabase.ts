@@ -20,7 +20,19 @@ import {
 
 const STORES = ['bands', 'albums', 'tracks', 'urlRefs', 'meta'] as const;
 type Entity = RawBandData | RawAlbumData | RawTrackData;
-type SavedEntity = Entity & { savedAt: number; savedOrder: number };
+interface SavedEntity<T extends Entity = Entity> {
+  data: T;
+  keys: {
+    name?: string;
+    artists?: string[];
+    title?: string;
+    artistCredit?: string;
+  };
+  storage: {
+    savedAt: number;
+    savedOrder: number;
+  };
+}
 interface MusicReference {
   uuid: string;
   store: MusicStore;
@@ -93,42 +105,44 @@ async function write(
           );
           const detailed =
             previous &&
-            'artist' in previous &&
-            previous.metadata &&
+            'artist' in previous.data &&
+            previous.data.metadata &&
             (!('metadata' in incoming) || !incoming.metadata);
-          const merged = (
+          const data = (
             detailed
-              ? mergeFields(incoming, previous)
-              : mergeFields(previous, incoming)
+              ? mergeFields(incoming, previous.data)
+              : mergeFields(previous?.data, incoming)
           ) as Entity;
-          const record = {
-            ...merged,
-            savedAt: Date.now(),
-            savedOrder: previous?.savedOrder ?? state.nextOrder++,
+          const record: SavedEntity = {
+            data,
+            keys: {},
+            storage: {
+              savedAt: Date.now(),
+              savedOrder: previous?.storage.savedOrder ?? state.nextOrder++,
+            },
           };
-          if ('url' in record && record.url)
-            record.url = canonicalUrl(record.url, store);
-          if (store === 'bands' && 'name' in record)
-            Object.assign(record, { nameKey: normalizeMusicName(record.name) });
-          if (store === 'albums' && 'artist' in record) {
-            Object.assign(record, {
-              artistKeys: [
+          if (data.url) data.url = canonicalUrl(data.url, store);
+          if (store === 'bands' && 'name' in data)
+            record.keys = { name: normalizeMusicName(data.name) };
+          if (store === 'albums' && 'artist' in data) {
+            record.keys = {
+              artists: [
                 ...new Set(
-                  [record.artist, ...Artist.parse(record.artist).names].map(
+                  [data.artist, ...Artist.parse(data.artist).names].map(
                     normalizeMusicName,
                   ),
                 ),
               ],
-              titleKey: normalizeMusicName(record.title),
-              artistCreditKey: normalizeMusicName(record.artist),
-            });
+              title: normalizeMusicName(data.title),
+              artistCredit: normalizeMusicName(data.artist),
+            };
           }
           objectStore.put(record);
-          if (record.url) {
+          if (data.url) {
             const reference: MusicReference = {
-              uuid: uuid5(record.url, uuid5.URL),
+              uuid: uuid5(data.url, uuid5.URL),
               store,
-              id: record.id,
+              id: data.id,
             };
             transaction.objectStore('urlRefs').put(reference);
           }
@@ -180,12 +194,14 @@ export async function handleMusicLibraryRequest(
       const records = value.ids
         ? await Promise.all(
             [...new Set(value.ids)].map((id) =>
-              readRequest<Entity | undefined>(store.get(id)),
+              readRequest<SavedEntity | undefined>(store.get(id)),
             ),
           )
         : await readRequest<SavedEntity[]>(store.index('savedOrder').getAll());
       Object.assign(result, {
-        [value.store]: records.filter((record) => record !== undefined),
+        [value.store]: records
+          .filter((record) => record !== undefined)
+          .map((record) => record.data),
       });
     } else if (value.action === 'lookup') {
       const references = await Promise.all(
@@ -198,16 +214,16 @@ export async function handleMusicLibraryRequest(
       await Promise.all(
         references.map(async (ref) => {
           if (!ref) return;
-          const record = await readRequest<Entity | undefined>(
+          const record = await readRequest<SavedEntity | undefined>(
             transaction.objectStore(ref.store).get(ref.id),
           );
           if (
             record &&
             !(result[ref.store] as Entity[]).some(
-              (saved) => saved.id === record.id,
+              (saved) => saved.id === record.data.id,
             )
           )
-            (result[ref.store] as Entity[]).push(record);
+            (result[ref.store] as Entity[]).push(record.data);
         }),
       );
     } else if (
@@ -219,13 +235,13 @@ export async function handleMusicLibraryRequest(
         value.action === 'find-albums'
           ? await Promise.all(
               [...new Set(value.artists.map(normalizeMusicName))].map((name) =>
-                readRequest<SavedEntity[]>(
+                readRequest<SavedEntity<RawAlbumData>[]>(
                   albums.index('artistKeys').getAll(name),
                 ),
               ),
             )
           : [
-              await readRequest<SavedEntity[]>(
+              await readRequest<SavedEntity<RawAlbumData>[]>(
                 albums
                   .index('titleArtist')
                   .getAll([
@@ -234,20 +250,25 @@ export async function handleMusicLibraryRequest(
                   ]),
               ),
             ];
-      const unique = new Map(groups.flat().map((album) => [album.id, album]));
-      result.albums = [...unique.values()].sort(
-        (a, b) => a.savedOrder - b.savedOrder,
-      ) as RawAlbumData[];
+      const unique = new Map(
+        groups.flat().map((album) => [album.data.id, album]),
+      );
+      result.albums = [...unique.values()]
+        .sort((a, b) => a.storage.savedOrder - b.storage.savedOrder)
+        .map((record) => record.data);
     } else if (value.action === 'find-bands') {
       const bands = transaction.objectStore('bands');
       const groups = await Promise.all(
         [...new Set(value.names.map(normalizeMusicName))].map((name) =>
-          readRequest<SavedEntity[]>(bands.index('nameKey').getAll(name)),
+          readRequest<SavedEntity<RawBandData>[]>(
+            bands.index('nameKey').getAll(name),
+          ),
         ),
       );
       result.bands = groups
         .flat()
-        .sort((a, b) => a.savedOrder - b.savedOrder) as RawBandData[];
+        .sort((a, b) => a.storage.savedOrder - b.storage.savedOrder)
+        .map((record) => record.data);
     }
     result.revision = (await stateRequest)?.revision ?? '';
     await done;

@@ -25,92 +25,39 @@ export function openDatabase(): Promise<IDBDatabase> {
   const pending = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME, 4);
     let blocked = false;
-    request.onupgradeneeded = (event) => {
+    request.onupgradeneeded = () => {
+      // Fresh databases only; existing installations must recreate the database.
       const db = request.result;
-      if (event.oldVersion < 1) {
-        const bands = db.createObjectStore('bands', { keyPath: 'id' });
-        bands.createIndex('nameKey', 'nameKey');
-        bands.createIndex('savedOrder', 'savedOrder');
-        const albums = db.createObjectStore('albums', { keyPath: 'id' });
-        albums.createIndex('bandId', 'bandId');
-        albums.createIndex('artistKeys', 'artistKeys', { multiEntry: true });
-        albums.createIndex('titleArtist', ['titleKey', 'artistCreditKey']);
-        albums.createIndex('savedOrder', 'savedOrder');
-        const tracks = db.createObjectStore('tracks', { keyPath: 'id' });
-        tracks.createIndex('albumId', 'albumId');
-        tracks.createIndex('savedOrder', 'savedOrder');
-        const refs = db.createObjectStore('urlRefs', { keyPath: 'uuid' });
-        refs.createIndex('entity', ['store', 'id']);
-        db.createObjectStore('meta', { keyPath: 'key' });
-      }
-      if (event.oldVersion < 2) {
-        db.createObjectStore('fanAccounts', { keyPath: 'fanId' });
-        const lists = db.createObjectStore('fanLists', {
-          keyPath: ['fanId', 'dataset'],
-        });
-        lists.createIndex('account', 'fanId');
-        lists.createIndex('datasetOrder', ['dataset', 'updatedOrder']);
-        const availability = db.createObjectStore('fanAvailability', {
+      const bands = db.createObjectStore('bands', { keyPath: 'data.id' });
+      bands.createIndex('nameKey', 'keys.name');
+      bands.createIndex('savedOrder', 'storage.savedOrder');
+      const albums = db.createObjectStore('albums', { keyPath: 'data.id' });
+      albums.createIndex('bandId', 'data.bandId');
+      albums.createIndex('artistKeys', 'keys.artists', { multiEntry: true });
+      albums.createIndex('titleArtist', ['keys.title', 'keys.artistCredit']);
+      albums.createIndex('savedOrder', 'storage.savedOrder');
+      const tracks = db.createObjectStore('tracks', { keyPath: 'data.id' });
+      tracks.createIndex('albumId', 'data.albumId');
+      tracks.createIndex('savedOrder', 'storage.savedOrder');
+      const refs = db.createObjectStore('urlRefs', { keyPath: 'uuid' });
+      refs.createIndex('entity', ['store', 'id']);
+      db.createObjectStore('meta', { keyPath: 'key' });
+      db.createObjectStore('fanAccounts', { keyPath: 'fanId' });
+      const lists = db.createObjectStore('fanLists', {
+        keyPath: ['fanId', 'dataset'],
+      });
+      lists.createIndex('account', 'fanId');
+      lists.createIndex('datasetOrder', ['dataset', 'updatedOrder']);
+      const availability = db.createObjectStore('fanAvailability', {
+        keyPath: ['fanId', 'entityKey'],
+      });
+      availability.createIndex('account', 'fanId');
+      for (const name of Object.values(FAN_DATASET_STORES)) {
+        const memberships = db.createObjectStore(name, {
           keyPath: ['fanId', 'entityKey'],
         });
-        availability.createIndex('account', 'fanId');
-      }
-      if (event.oldVersion < 3) {
-        for (const name of Object.values(FAN_DATASET_STORES)) {
-          const memberships = db.createObjectStore(name, {
-            keyPath: ['fanId', 'entityKey'],
-          });
-          memberships.createIndex('account', 'fanId');
-          memberships.createIndex('current', ['fanId', 'current']);
-        }
-        if (db.objectStoreNames.contains('fanMemberships')) {
-          // No migration: discard legacy memberships and their stale list summaries.
-          db.deleteObjectStore('fanMemberships');
-          const upgrade = request.transaction;
-          if (!upgrade)
-            throw new Error('Missing database upgrade transaction.');
-          upgrade.objectStore('fanLists').clear();
-          upgrade.objectStore('meta').put({
-            key: 'fan-state',
-            revision: crypto.randomUUID(),
-            nextOrder: 0,
-          });
-        }
-      }
-      if (event.oldVersion > 0 && event.oldVersion < 4) {
-        // The key format changed; start these lists fresh without migrating records.
-        const upgrade = request.transaction;
-        if (!upgrade) throw new Error('Missing database upgrade transaction.');
-        upgrade.objectStore('fanFollowingBands').clear();
-        upgrade.objectStore('fanFollowingGenres').clear();
-        const lists = upgrade.objectStore('fanLists').openCursor();
-        lists.onsuccess = () => {
-          const cursor = lists.result;
-          if (!cursor) return;
-          if (
-            cursor.value.dataset === 'following-bands' ||
-            cursor.value.dataset === 'following-genres'
-          )
-            cursor.delete();
-          cursor.continue();
-        };
-        const availability = upgrade
-          .objectStore('fanAvailability')
-          .openCursor();
-        availability.onsuccess = () => {
-          const cursor = availability.result;
-          if (!cursor) return;
-          if (cursor.value.entityKey.startsWith('band:')) cursor.delete();
-          cursor.continue();
-        };
-        const state = upgrade.objectStore('meta').get('fan-state');
-        state.onsuccess = () => {
-          if (state.result)
-            upgrade.objectStore('meta').put({
-              ...state.result,
-              revision: crypto.randomUUID(),
-            });
-        };
+        memberships.createIndex('account', 'fanId');
+        memberships.createIndex('current', ['fanId', 'current']);
       }
     };
     request.onblocked = () => {
