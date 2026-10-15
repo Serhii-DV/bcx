@@ -13,6 +13,7 @@ import { getErrorMessage } from 'src/utils/getErrorMessage';
 import type { Snippet } from 'svelte';
 import { pinnedPageFromItem } from '../pinnedPage';
 import BcxPinButton from './BcxPinButton.svelte';
+import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxReleaseItemActions from './BcxReleaseItemActions.svelte';
 import { createItemUrl } from './itemUrl';
 
@@ -111,7 +112,7 @@ async function openBrowserPage(url: string) {
 {/snippet}
 
 {#snippet treeItemButtons()}
-  {#if primaryButtons.length || pinPage || itemActions || item.previewInformation}
+  {#if primaryButtons.length || pinPage || itemActions || item.previewInformation || item.bandPreview}
 <div class="item-buttons">
   {#each primaryButtons as button}
     {@render treeItemButton(button)}
@@ -121,7 +122,11 @@ async function openBrowserPage(url: string) {
     {@render treeItemButton(button)}
   {/each}
   {#if browserButton}{@render treeItemButton(browserButton)}{/if}
-  {@render itemActions?.(item)}
+  {#if itemActions}
+    {@render itemActions(item)}
+  {:else if item.bandPreview}
+    <BcxPreviewItemActions url={createItemUrl(item.bandPreview.url)} image={item.bandPreview.image ?? item.image} name={item.bandPreview.name} kind="band" copyValue={item.bandPreview.name} previewItem={item} iconOnly />
+  {/if}
   {#if item.previewInformation}
     <BcxReleaseItemActions {item} information={item.previewInformation} iconOnly />
   {/if}

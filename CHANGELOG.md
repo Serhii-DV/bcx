@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Artist action dropdowns now sit inside the tree row’s button group. Release and track rows share the Preview Panel’s action menu for opening, previewing, pinning, copying titles and URLs, and searching Bandcamp.
+- Artist action dropdowns now sit inside the tree row’s button group. Band rows, including saved and unsaved History entries, and Release and track rows share the Preview Panel’s action menu for opening, previewing, pinning, copying names, titles and URLs, and searching Bandcamp.
 
 - Removed duplicate URLs from IndexedDB URL references to reduce library storage while preserving UUID lookups and earlier URL aliases.
 
