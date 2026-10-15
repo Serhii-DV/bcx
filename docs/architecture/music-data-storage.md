@@ -39,9 +39,15 @@ its records alone does not recreate object-store key paths or indexes.
 
 Band IDs identify Bandcamp profiles, which can belong to labels. Album artist
 credits remain independent of the hosting band. Normalized name keys support
-lookups without merging identities. Albums retain ordered track IDs, while band
-profiles retain ordered album and standalone track IDs. Updates preserve initial
-ordering. Artwork IDs and URLs are retained, but image bytes and audio are not
+lookups without merging identities. Albums retain ordered track IDs. Band metadata
+stores one ordered `releases` array of `{ type: 'album' | 'track', id: number }`
+references to the existing album and track stores, preserving mixed music-page
+order. In-memory album and track views derive from that catalog; album track lists
+remain separate. Band records use only typed release references; the database is
+built from scratch, without migration or compatibility reads for older band formats.
+Missing `releases` means an unscanned summary and preserves a saved catalog;
+an explicitly empty array clears it. No database schema upgrade is required for
+this model-field change. Artwork IDs and URLs are retained, but image bytes and audio are not
 archived.
 
 ## Writing and reading

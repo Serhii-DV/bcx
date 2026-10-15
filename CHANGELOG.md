@@ -52,6 +52,8 @@
 
 ### Patch Changes
 
+- Band catalogs preserve the page order of albums and standalone tracks through scanning, IndexedDB storage, previews, and sorting. Stored band metadata uses only typed release references; the database is built from scratch without migration or compatibility reads for older band formats.
+
 - Following Bands sync accepts complete API pagination when Bandcamp's displayed total includes bands the API no longer returns, preventing false incomplete-data errors while retaining saved history and pagination safeguards.
 
 - Removed obsolete Album, Band, Track, metadata, price, and URL compression and local-storage serialization. Music-library reads now consume raw IndexedDB records directly; removed the compatibility adapter, legacy storage-key builders, and band-index rebuild command.

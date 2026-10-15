@@ -4,7 +4,10 @@ import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandFactory } from 'src/bandcamp/domain/band/factory';
-import { BandMetadata } from 'src/bandcamp/domain/band/metadata';
+import {
+  BandMetadata,
+  type RawBandMetadata,
+} from 'src/bandcamp/domain/band/metadata';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
 import type {
   MusicAlbumSchema,
@@ -62,10 +65,7 @@ interface ActiveMusicBandData {
   name: string;
   url: string;
   artworkId: number;
-  metadata: {
-    created: string;
-    currency: string;
-  };
+  metadata: RawBandMetadata;
   albums: RawAlbumData[];
   tracks: RawTrackData[];
 }
@@ -229,12 +229,7 @@ function createBandFromActiveMusicData(data: ActiveMusicBandData): Band {
     data.name,
     data.url,
     data.artworkId,
-    BandMetadata.create(
-      data.metadata.created,
-      data.metadata.currency,
-      albums,
-      tracks,
-    ),
+    BandMetadata.fromRawData(data.metadata, albums, tracks),
   );
 }
 

@@ -4,6 +4,7 @@ import { Band } from 'src/bandcamp/domain/band/band';
 import { readLibrary, saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { Url } from 'src/core/url';
 import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
@@ -239,6 +240,22 @@ describe('active tab fan sections during navigation', () => {
 
 describe('active tab public profile', () => {
   it('passes the content-script profile into the actual About panel', async () => {
+    const album = Album.create(
+      'https://profile-test.bandcamp.com/album/release',
+      'Example',
+      'Release',
+      1,
+      1,
+      901,
+    );
+    const track = TrackFactory.create(
+      1,
+      1,
+      'Example',
+      'Single',
+      2,
+      'https://profile-test.bandcamp.com/track/single',
+    );
     const profile = {
       location: 'Copenhagen, Denmark',
       biography: 'Independent label.',
@@ -254,9 +271,16 @@ describe('active tab public profile', () => {
           name: 'Example',
           url: 'https://profile-test.bandcamp.com',
           artworkId: 0,
-          metadata: { created: '2020-01-01', currency: 'EUR' },
-          albums: [],
-          tracks: [],
+          metadata: {
+            created: '2020-01-01',
+            currency: 'EUR',
+            releases: [
+              { type: 'track', id: 1 },
+              { type: 'album', id: 1 },
+            ],
+          },
+          albums: [album.toRawData()],
+          tracks: [track.toRawData()],
         },
       },
     }));
@@ -277,6 +301,11 @@ describe('active tab public profile', () => {
       about?.children?.find((item) => item.label === 'Links')?.children?.[0]
         .href,
     ).toBe(profile.links[0].url);
+    expect(
+      tree?.items
+        .find((item) => item.label === 'Releases')
+        ?.children?.map((item) => item.href),
+    ).toEqual([track.url?.toString(), album.url.toString()]);
   });
 
   it('refreshes an older stored profile when live catalog data is unavailable', async () => {

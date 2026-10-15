@@ -10,6 +10,7 @@ import {
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import {
   filterTreeBrowserItems,
@@ -161,9 +162,20 @@ describe('release catalog previews', () => {
       '2026-01-01',
       '2026-01-01',
     );
+    const track = TrackFactory.create(
+      1,
+      1,
+      'Artist 0',
+      'Single',
+      3,
+      'https://artist0.bandcamp.com/track/single',
+      undefined,
+      undefined,
+      albums[0].metadata,
+    );
     const tree = withReleaseCatalog(
       { label: 'Label', children: [{ label: 'About' }] },
-      albums,
+      [albums[0], track, albums[1]],
       { groupByYear: true },
     );
     const rootLabels = tree.children?.map((item) => item.label) ?? [];
@@ -207,6 +219,24 @@ describe('release catalog previews', () => {
     expect(
       new TreeData(restoredYears?.children ?? []).filterSuggestions,
     ).toEqual(['2025', '2026']);
+    expect(
+      restored?.children
+        ?.find((item) => item.label === 'Releases')
+        ?.children?.map((item) => item.href),
+    ).toEqual([
+      albums[0].url.toString(),
+      track.url?.toString(),
+      albums[1].url.toString(),
+    ]);
+    expect(
+      restored?.children
+        ?.find((item) => item.label === 'Artists')
+        ?.children?.[0].children?.map((item) => item.href),
+    ).toEqual([albums[0].url.toString(), track.url?.toString()]);
+    expect(
+      restoredYears?.children?.[1].children?.[1].previewInformation
+        ?.releaseType,
+    ).toBe('Track');
   });
 
   it('filters Release years at the root while preserving releases inside matching years', async () => {

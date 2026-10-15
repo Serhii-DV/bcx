@@ -113,6 +113,14 @@ async function write(
               ? mergeFields(incoming, previous.data)
               : mergeFields(previous?.data, incoming)
           ) as Entity;
+          if (
+            'name' in incoming &&
+            'name' in data &&
+            incoming.metadata.releases !== undefined
+          ) {
+            // A scanned catalog is authoritative, including a genuinely empty page.
+            data.metadata.releases = incoming.metadata.releases;
+          }
           const record: SavedEntity = {
             data,
             keys: {},

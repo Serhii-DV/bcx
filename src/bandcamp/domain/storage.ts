@@ -33,11 +33,16 @@ export class BandcampStorage {
     });
     if (!bands.length) return [];
 
+    const refs = bands.flatMap((band) => band.metadata.releases ?? []);
     const albumIds = [
-      ...new Set(bands.flatMap((band) => band.metadata.albumIds)),
+      ...new Set(
+        refs.filter((ref) => ref.type === 'album').map((ref) => ref.id),
+      ),
     ];
     const trackIds = [
-      ...new Set(bands.flatMap((band) => band.metadata.trackIds)),
+      ...new Set(
+        refs.filter((ref) => ref.type === 'track').map((ref) => ref.id),
+      ),
     ];
     const [albums, tracks] = await Promise.all([
       this.getAlbumsRawDataByIds(albumIds),
@@ -53,16 +58,18 @@ export class BandcampStorage {
     const tracksById = new Map(tracks.map((track) => [track.id, track]));
 
     return bands.map((rawData) => {
-      const band = BandFactory.fromRawData(rawData);
-      band.metadata.albums = rawData.metadata.albumIds
-        .map((id) => albumsById.get(id))
+      const refs = rawData.metadata.releases ?? [];
+      const bandAlbums = refs
+        .filter((ref) => ref.type === 'album')
+        .map((ref) => albumsById.get(ref.id))
         .filter((album): album is RawAlbumData => album !== undefined)
         .map(AlbumFactory.fromRawData);
-      band.metadata.tracks = rawData.metadata.trackIds
-        .map((id) => tracksById.get(id))
+      const bandTracks = refs
+        .filter((ref) => ref.type === 'track')
+        .map((ref) => tracksById.get(ref.id))
         .filter((track): track is RawTrackData => track !== undefined)
         .map(TrackFactory.fromRawData);
-      return band;
+      return BandFactory.fromRawData(rawData, bandAlbums, bandTracks);
     });
   }
 

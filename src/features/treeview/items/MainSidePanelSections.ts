@@ -60,8 +60,10 @@ export class MainSidePanelSections {
             new BandMetadata(
               band.metadata.created,
               band.metadata.currency,
-              [album, ...band.metadata.albums],
-              band.metadata.tracks,
+              [album, ...band.metadata.releases],
+              band.metadata.location,
+              band.metadata.biography,
+              band.metadata.links,
             ),
           )
         : band;

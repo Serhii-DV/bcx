@@ -97,8 +97,14 @@ export function isRawBand(value: unknown): value is RawBandData {
     isId(value.artworkId) &&
     typeof metadata.created === 'string' &&
     typeof metadata.currency === 'string' &&
-    isIds(metadata.albumIds) &&
-    isIds(metadata.trackIds) &&
+    (metadata.releases === undefined ||
+      (Array.isArray(metadata.releases) &&
+        metadata.releases.every(
+          (ref) =>
+            isRecord(ref) &&
+            (ref.type === 'album' || ref.type === 'track') &&
+            isId(ref.id),
+        ))) &&
     optionalString(metadata.location) &&
     optionalString(metadata.biography) &&
     (metadata.links === undefined ||

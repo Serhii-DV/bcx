@@ -88,6 +88,11 @@ snapshots that lack this data. Cache keys, TTLs, and explicit invalidation stay 
 same. Artist/Label sections rebuild Artists, Releases, and Release years from the current
 band data after reading their cached subtree.
 
+Mixed band catalogs also retain raw standalone tracks and typed release references
+inside `releaseCatalog`, so restoring runtime loaders preserves their positions
+among albums. Cache keys, TTLs,
+snapshot version, and invalidation rules are unchanged.
+
 Catalog roots carry `releasePreview` and browser layout at runtime so nested
 artist/year groups share the bottom details panel. Loaded Collection and Wishlist
 sections also expose all catalog URLs, including releases beyond the first page,

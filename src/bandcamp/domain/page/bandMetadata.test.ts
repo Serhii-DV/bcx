@@ -32,7 +32,6 @@ describe('public band profile', () => {
       '2020-01-01',
       'EUR',
       [],
-      [],
       profile.location,
       profile.biography,
       profile.links,
@@ -56,8 +55,7 @@ describe('public band profile', () => {
       BandMetadata.fromRawData({
         created: '2020-01-01',
         currency: 'EUR',
-        albumIds: [],
-        trackIds: [],
+        releases: [],
       }),
     ).toMatchObject({ location: undefined, biography: undefined, links: [] });
   });

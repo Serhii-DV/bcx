@@ -27,15 +27,13 @@ export class Band {
     const bandId = typeof id === 'string' ? parseInt(id, 10) : id;
     const bandUrl = Url.create(url);
     const bandArtwork = Artwork.createForBand(artworkId);
-    const bandMetadata = metadata || new BandMetadata(new Date(), '', [], []);
+    const bandMetadata = metadata || new BandMetadata(new Date(), '');
 
     return new Band(bandId, name, bandUrl, bandArtwork, bandMetadata);
   }
 
   get hasReleases(): boolean {
-    return (
-      this.metadata.albums.length > 0 || this.metadata.trackReleases.length > 0
-    );
+    return this.metadata.releases.length > 0;
   }
 
   toRawData(): RawBandData {

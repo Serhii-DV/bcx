@@ -4,7 +4,8 @@ import {
 } from 'src/utils/releaseMetadata';
 import { isVariousArtists } from '../artist/artist';
 import { getArtistNamesFromTracks } from '../track/helper';
-import type { Album } from './album';
+import type { Track } from '../track/track';
+import { Album } from './album';
 
 /**
  * Get all artist names associated with the band's releases, including duplicates.
@@ -44,14 +45,23 @@ export function getReleaseMetadataFromAlbum(
 
 // Preserve display spellings while grouping case-insensitively in one pass.
 export function groupAlbumsByArtist(albums: Album[]): Map<string, Album[]> {
+  return groupReleasesByArtist(albums);
+}
+
+export function groupReleasesByArtist<T extends Album | Track>(
+  releases: T[],
+): Map<string, T[]> {
   const groups = new Map<string, number[]>();
   const names = new Set<string>();
   const compilations: number[] = [];
-  for (const [index, album] of albums.entries()) {
-    const albumNames = getArtistNamesFromAlbums([album]);
-    for (const name of albumNames) names.add(name);
-    if (album.artist.isVariousArtists) compilations.push(index);
-    for (const key of new Set(albumNames.map((name) => name.toLowerCase()))) {
+  for (const [index, release] of releases.entries()) {
+    const releaseNames =
+      release instanceof Album
+        ? getArtistNamesFromAlbums([release])
+        : getArtistNamesFromTracks([release]);
+    for (const name of releaseNames) names.add(name);
+    if (release.artist.isVariousArtists) compilations.push(index);
+    for (const key of new Set(releaseNames.map((name) => name.toLowerCase()))) {
       const releases = groups.get(key) ?? [];
       releases.push(index);
       groups.set(key, releases);
@@ -60,11 +70,11 @@ export function groupAlbumsByArtist(albums: Album[]): Map<string, Album[]> {
   return new Map(
     [...names].sort().map((name) => {
       const matches = groups.get(name.toLowerCase()) ?? [];
-      // Compilation aliases also match all compilation albums, as containsArtistName does.
+      // Compilation aliases also match all compilation releases, as containsArtistName does.
       const indexes = isVariousArtists(name)
         ? [...new Set([...matches, ...compilations])].sort((a, b) => a - b)
         : matches;
-      return [name, indexes.map((index) => albums[index])];
+      return [name, indexes.map((index) => releases[index])];
     }),
   );
 }

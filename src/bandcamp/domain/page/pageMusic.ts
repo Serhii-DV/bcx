@@ -81,13 +81,28 @@ export class PageMusic implements BandPage {
   }
 
   private async initReleases(): Promise<void> {
+    // A missing grid is an unscanned summary, not an empty catalog.
+    if (!this.musicGridElement) return;
     const releases = this.findReleases();
+    if (!releases.length && this.musicGridItemElements.length) {
+      throw new Error('No releases could be read from the band music grid.');
+    }
     const albums = releases.filter(
       (release): release is Album => release instanceof Album,
     );
-    this.band.metadata.albums = await BandcampStorage.getAlbums(albums);
-    this.band.metadata.tracks = releases.filter(
+    const tracks = releases.filter(
       (release): release is Track => release instanceof Track,
+    );
+    const [savedAlbums, savedTracks] = await Promise.all([
+      BandcampStorage.getAlbums(albums),
+      BandcampStorage.getTracks(tracks),
+    ]);
+    const albumsById = new Map(savedAlbums.map((album) => [album.id, album]));
+    const tracksById = new Map(savedTracks.map((track) => [track.id, track]));
+    this.band.metadata.releases = releases.map((release) =>
+      release instanceof Album
+        ? (albumsById.get(release.id) ?? release)
+        : (tracksById.get(release.id) ?? release),
     );
   }
 
@@ -226,21 +241,19 @@ export class PageMusic implements BandPage {
     // It looks like clientItems data attribute doesn't contain "featured" releases
     // We can't use this method. Let's use this method as a fallback.
 
-    const albums = this.extractReleasesFromDOM();
+    const releases = this.extractReleasesFromDOM();
 
-    if (!albums.length) {
-      return this.extractAlbumsFromDataAttr();
+    if (!releases.length) {
+      return this.extractReleasesFromDataAttr();
     }
 
-    return albums;
+    return releases;
   }
 
   /**
-   * Extracts albums from music grid client items
-   * @param items - Array of MusicGridClientItem objects
-   * @returns Array of Album objects
+   * Extracts ordered releases from music grid client items.
    */
-  private extractAlbumsFromDataAttr(): Album[] {
+  private extractReleasesFromDataAttr(): Release[] {
     const clientItemsData = this.musicGridElement?.dataset?.clientItems;
 
     if (!clientItemsData) {
@@ -262,33 +275,45 @@ export class PageMusic implements BandPage {
         'items',
       );
 
-      const albums = items
-        .map((item) => this.createAlbumFromClientItem(item))
-        .filter((album): album is Album => album !== null);
+      const releases = items
+        .map((item) => this.createReleaseFromClientItem(item))
+        .filter((release): release is Release => release !== null);
 
       console.log(
         '[PageMusic]',
         'Extracted',
-        albums.length,
-        'albums from music grid client items data',
+        releases.length,
+        'releases from music grid client items data',
       );
 
-      return albums;
+      return releases;
     } catch (error) {
       console.warn('[PageMusic]', 'Failed to parse client items data:', error);
+      throw error;
     }
-
-    return [];
   }
 
   /**
-   * Creates an Album from a client item
+   * Creates a release from a client item
    * @param item - The music grid client item
-   * @returns Album object or null if creation fails
+   * @returns Album or Track, or null for unsupported item types
    */
-  private createAlbumFromClientItem(item: MusicGridClientItem): Album | null {
+  private createReleaseFromClientItem(
+    item: MusicGridClientItem,
+  ): Release | null {
     const albumUrl = this.normalizeUrl(item.page_url);
     const artist = item.artist || this.band.name;
+    if (item.type === 'track' || item.type === 't') {
+      return TrackFactory.create(
+        item.id,
+        1,
+        artist,
+        item.title,
+        item.art_id,
+        albumUrl,
+      );
+    }
+    if (item.type !== 'album' && item.type !== 'a') return null;
     return Album.create(
       albumUrl,
       artist,
@@ -511,8 +536,7 @@ export class PageMusic implements BandPage {
       BandMetadata.create(
         bandData.create_date,
         bandData.currency,
-        [],
-        [],
+        undefined,
         profile?.location,
         profile?.biography,
         profile?.links,
