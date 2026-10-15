@@ -52,6 +52,8 @@
 
 ### Patch Changes
 
+- Following Bands sync accepts complete API pagination when Bandcamp's displayed total includes bands the API no longer returns, preventing false incomplete-data errors while retaining saved history and pagination safeguards.
+
 - Removed obsolete Album, Band, Track, metadata, price, and URL compression and local-storage serialization. Music-library reads now consume raw IndexedDB records directly; removed the compatibility adapter, legacy storage-key builders, and band-index rebuild command.
 
 - Sync logs the original fan-page JSON and every raw API response to the service-worker console for inspection, including each pagination response. Entries include source metadata, readable UTC run timestamps, and response numbers padded to four digits. JSON snapshots precede validation and enrichment; debug data no longer consumes session storage, and logging failures do not interrupt Sync.

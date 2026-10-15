@@ -161,6 +161,12 @@ already committed datasets on cancellation or failure. Availability checks run
 oldest/unattempted records first, save bounded batches, and flush completed checks
 before cancelling. Only still-owned, inactive temporary tabs are closed.
 
+Following Bands completeness follows the API's terminal `more_available: false`
+response, with malformed responses and repeated or missing pagination tokens
+rejected. Its page-level `item_count` can include bands omitted by the API and
+does not gate a completed snapshot. Other datasets still require their expected
+item count. Saved historical records remain available when absent from a snapshot.
+
 `/fan-data/sync-job` remains a small Chrome local record for job progress,
 errors, protocol version, and tab cleanup. Worker recovery marks interrupted jobs
 for retry. Logs and settings also remain local; retained list data does not consume
