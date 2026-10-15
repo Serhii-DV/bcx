@@ -7,6 +7,7 @@ import {
   type BandReleaseRef,
   resolveBandReleases,
 } from 'src/bandcamp/domain/band/metadata';
+import type { RawPriceData } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import type { RawTrackData } from 'src/bandcamp/domain/track/data';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
@@ -34,6 +35,7 @@ export interface ReleaseCatalog {
   releases?: BandReleaseRef[];
   addedAt?: Array<string | null>;
   releaseDates?: Array<string | null>;
+  prices?: Array<RawPriceData | null>;
   addedYearSource?: 'collection' | 'wishlist';
   groupByYear?: boolean;
   paginateReleases?: boolean;
@@ -88,6 +90,14 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
   const releaseDateByRelease = new Map(
     releases.map((album, index) => [album, catalog.releaseDates?.[index]]),
   );
+  const priceByRelease = new Map(
+    releases.map((release, index) => [
+      release,
+      catalog.prices
+        ? (catalog.prices[index] ?? undefined)
+        : getReleasePrice(release.metadata),
+    ]),
+  );
   const createReleaseItem = (album: BandRelease): TreeItem => {
     const release =
       album instanceof Album
@@ -114,6 +124,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         : undefined);
     return {
       ...release,
+      price: formatReleasePrice(priceByRelease.get(album)),
       timestamp: addedAt
         ? { label: 'Added', dateTime: addedAt }
         : releasedTimestamp,
@@ -239,7 +250,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     >();
     const unknown: BandRelease[] = [];
     for (const release of releases) {
-      const price = getReleasePrice(release.metadata);
+      const price = priceByRelease.get(release);
       const label = formatReleasePrice(price);
       if (!price || !label) {
         unknown.push(release);

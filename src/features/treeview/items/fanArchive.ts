@@ -11,7 +11,7 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
-import { formatReleasePrice, getReleasePrice } from '../releasePrice';
+import { formatReleasePrice, getFanItemPrice } from '../releasePrice';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { link } from '../TreeItemBuilder';
 
@@ -20,14 +20,16 @@ function archiveItem(
   current: boolean,
   note?: string,
   fanId?: number,
-  price?: string,
 ): TreeItem {
   let tree: TreeItem;
   if ('tralbum_id' in item) {
-    tree = AlbumTreeItemFactory.createWithPreview(
-      AlbumFactory.fromBandcampItem(item),
-      fanId,
-    );
+    tree = {
+      ...AlbumTreeItemFactory.createWithPreview(
+        AlbumFactory.fromBandcampItem(item),
+        fanId,
+      ),
+      price: formatReleasePrice(getFanItemPrice(item)),
+    };
   } else if ('band_id' in item) {
     tree = BandTreeItemFactory.createWithPreview(
       Band.create(
@@ -45,7 +47,7 @@ function archiveItem(
       item.name,
       new URL(item.tag_page_url, 'https://bandcamp.com').href,
     ).build();
-  return { ...tree, price: price ?? tree.price, hint: note };
+  return { ...tree, hint: note };
 }
 function archiveRoot(label: string, children: TreeItem[]): TreeItem {
   return {
@@ -69,15 +71,6 @@ export async function appendFanArchive(
     ? await readAvailability(fanId)
     : { availability: {}, unavailable: {} };
   const current = new Set(list?.current ?? []);
-  const pricesByUrl = new Map(
-    [
-      ...(tree.releaseCatalog?.albums ?? []),
-      ...(tree.releaseCatalog?.tracks ?? []),
-    ].map((release) => [
-      release.url,
-      formatReleasePrice(getReleasePrice(release.metadata)),
-    ]),
-  );
   const entries = (
     list ? Object.values(list.records) : await readSavedItems(dataset, fanId)
   ).map((item): [string, FanItem] => [itemId(item), item]);
@@ -94,7 +87,6 @@ export async function appendFanArchive(
               : `No longer listed. ${results[id]?.reason ?? 'Availability check pending.'}`
             : undefined,
         fanId,
-        'tralbum_id' in item ? pricesByUrl.get(item.item_url) : undefined,
       ),
     );
   const roots = [...(tree.children ?? [])];

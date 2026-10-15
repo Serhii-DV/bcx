@@ -1,5 +1,17 @@
 import type { RawMetadataData } from 'src/bandcamp/domain/metadata';
+import type { BandcampItem } from 'src/bandcamp/domain/page/PageCollection';
 import type { RawPriceData } from 'src/bandcamp/domain/price';
+
+export function getFanItemPrice(
+  item: Pick<BandcampItem, 'price' | 'currency'>,
+): RawPriceData | undefined {
+  return getReleasePrice({
+    price: {
+      amount: item.price,
+      currency: typeof item.currency === 'string' ? item.currency : '',
+    },
+  });
+}
 
 export function getReleasePrice(
   metadata?: Pick<RawMetadataData, 'price' | 'release'>,

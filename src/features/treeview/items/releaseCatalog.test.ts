@@ -336,7 +336,12 @@ describe('release catalog previews', () => {
     ['Wishlist', () => WishlistTreeItem.create('listener')],
   ] as const) {
     it(`${label} preserves nested previews and list loading behavior after a session cache round trip`, async () => {
-      const collectionItems = createItems(25).map((item, index) => ({
+      const priceItems = createItems(25).map((item, index) => ({
+        ...item,
+        price: index === 0 ? 9.5 : index === 1 ? 0 : index === 2 ? -1 : 5,
+        currency: index === 0 || index === 2 ? 'eur' : undefined,
+      }));
+      const collectionItems = priceItems.map((item, index) => ({
         ...item,
         purchased:
           index < 20 ? '02 Jan 2025 03:04:05 GMT' : '03 Feb 2024 04:05:06 GMT',
@@ -349,7 +354,7 @@ describe('release catalog previews', () => {
       await saveSnapshot(
         { fanId: 42, username: 'listener' },
         'wishlist',
-        createItems(25).map((item, index) => ({
+        priceItems.map((item, index) => ({
           ...item,
           added:
             index === 24
@@ -392,7 +397,7 @@ describe('release catalog previews', () => {
       expect(
         archived.children?.find((root) => root.label === 'No longer listed')
           ?.children?.[0].price,
-      ).toBe(label === 'Collection' ? 'name your price' : undefined);
+      ).toBe('9.5 EUR');
       const reads = rs.spyOn(chrome.runtime, 'sendMessage');
       const currentLists = await readCurrentLists(
         ['collection', 'wishlist'],
@@ -659,21 +664,22 @@ describe('release catalog previews', () => {
 
       expect(artists.children).toHaveLength(25);
       assertPreview(artists.children?.[24].children?.[0]);
+      expect(releases.children?.[0].price).toBe('9.5 EUR');
+      expect(releases.children?.[1].price).toBe('name your price');
+      expect(artists.children?.[0].children?.[0].price).toBe('9.5 EUR');
       const prices = restored?.children?.find(
         (item) => item.label === 'By Prices',
       );
-      expect(prices?.children?.map((group) => group.label)).toEqual(
-        label === 'Collection'
-          ? ['name your price', 'Price unknown']
-          : ['Price unknown'],
-      );
+      expect(prices?.children?.map((group) => group.label)).toEqual([
+        'name your price',
+        '9.5 EUR',
+        'Price unknown',
+      ]);
       const unknownPrices = prices?.children?.find(
         (group) => group.label === 'Price unknown',
       );
       if (unknownPrices) await hydrateTreeItemChildren(unknownPrices);
-      expect(unknownPrices?.children).toHaveLength(
-        label === 'Collection' ? 24 : 25,
-      );
+      expect(unknownPrices?.children).toHaveLength(23);
       expect(
         unknownPrices?.children?.every((item) => item.price === undefined),
       ).toBe(true);
@@ -703,14 +709,16 @@ describe('release catalog previews', () => {
           tralbum_id: track.id,
           item_title: track.title,
           item_url: track.url!.toString(),
+          price: 2.5,
+          currency: 'gbp',
         },
       ]);
       const refreshed = await createScoped();
       const trackPrices = refreshed.children
         ?.find((item) => item.label === 'By Prices')
-        ?.children?.find((group) => group.label === '5.5 EUR');
+        ?.children?.find((group) => group.label === '2.5 GBP');
       expect(trackPrices?.children?.[0]).toMatchObject({
-        price: '5.5 EUR',
+        price: '2.5 GBP',
         href: track.url?.toString(),
         previewInformation: { releaseType: 'Track' },
       });

@@ -2,6 +2,7 @@ import { readSavedItems } from 'src/bandcamp/domain/fanData/library';
 import type { BandcampItem } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { TreeItemButtonFactory } from '../buttons/factory';
+import { getFanItemPrice } from '../releasePrice';
 import type { TreeItem } from '../TreeItem';
 import { item } from '../TreeItemBuilder';
 import type { TreeItemButton } from '../TreeItemButton';
@@ -17,6 +18,7 @@ export class WishlistTreeItem {
 
     return withReleaseCatalog(builder.build(), releases, {
       fanId,
+      prices: wishlistItems.map((item) => getFanItemPrice(item) ?? null),
       paginateReleases: false,
       addedAt: wishlistItems.map((item) => {
         if (!item.added?.trim()) return null;

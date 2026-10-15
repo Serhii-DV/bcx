@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Album and track TreeView rows show their saved prices, with zero displayed as "name your price". Band, Collection, and Wishlist catalogs include a By Prices panel grouped by exact price and currency, with a Price unknown group for missing pricing. Collection and Wishlist reuse metadata saved from visited album and track pages and retain standalone tracks as track releases.
+- Album and track TreeView rows show their saved prices, with zero displayed as "name your price". Band, Collection, and Wishlist catalogs include a By Prices panel grouped by exact price and currency, with a Price unknown group for missing pricing. Collection and Wishlist use each fan-list item's price and currency for rows, archives, and grouping, including releases whose pages have not been visited; saved release metadata still supplies other details. Standalone tracks retain track previews.
 
 - Added an X button at the top right of the shared Preview Panel so lists can use the full panel height. The panel stays closed while browsing until a release, band, or track Preview action reopens it, retaining its selected details and saved split size.
 
