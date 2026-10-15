@@ -42,8 +42,11 @@ store another visit log. Canonical URLs merge band homepage, music, and artists
 visits. Pinned items remain in the main navigation; browser side-panel history events
 refresh recent visits while Dashboard is open. Injected panels load recent visits
 through the existing background history request when Dashboard is selected.
-Title links ask the background worker to navigate the active browser tab; a
-separate link opens a new tab. Same-tab returns to Bandcamp reload the explorer.
+Dashboard renders these destinations with the same TreeBrowser and item rows as
+History's All view, including preview selection, visit times, and shared item
+actions, with the filter hidden on Dashboard. View history
+follows the list and opens the full History panel. Double-clicking a row or using
+its Open action navigates to Bandcamp through the existing extension actions.
 
 ## Main navigation interaction
 
