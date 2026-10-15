@@ -150,7 +150,7 @@ describe('release catalog previews', () => {
   });
 
   it('provides artist, year, and price groups with previewable releases, preserving other roots', async () => {
-    const albums = createItems(2).map(AlbumFactory.fromBandcampItem);
+    const albums = createItems(4).map(AlbumFactory.fromBandcampItem);
     albums[0].metadata = Metadata.create(
       Price.create(0, 'USD'),
       'Label',
@@ -163,6 +163,17 @@ describe('release catalog previews', () => {
       '2026-01-01',
       '2026-01-01',
     );
+    for (const [index, amount] of [
+      [2, 10],
+      [3, 2],
+    ]) {
+      albums[index].metadata = Metadata.create(
+        Price.create(amount, 'CAD'),
+        'Label',
+        '2026-01-01',
+        '2026-01-01',
+      );
+    }
     const track = TrackFactory.create(
       1,
       1,
@@ -181,7 +192,7 @@ describe('release catalog previews', () => {
     );
     const tree = withReleaseCatalog(
       { label: 'Label', children: [{ label: 'About' }] },
-      [albums[0], track, albums[1]],
+      [albums[0], track, ...albums.slice(1)],
       { groupByYear: true },
     );
     const rootLabels = tree.children?.map((item) => item.label) ?? [];
@@ -221,21 +232,42 @@ describe('release catalog previews', () => {
       );
       expect(prices?.children?.map((group) => group.label)).toEqual([
         'name your price',
-        '5.5 EUR',
-        '5.5 USD',
+        'CAD',
+        'EUR',
+        'USD',
       ]);
+      expect(prices?.children?.[0].children?.[0].price).toBe('name your price');
+      const cad = prices?.children?.find((group) => group.label === 'CAD');
+      expect(cad?.children?.map((group) => group.label)).toEqual([
+        '2 CAD',
+        '10 CAD',
+      ]);
+      expect(cad?.children?.map((group) => group.children?.[0].price)).toEqual([
+        '2 CAD',
+        '10 CAD',
+      ]);
+      for (const group of cad?.children ?? [])
+        assertPreview(group.children?.[0]);
+      const eur = prices?.children?.find((group) => group.label === 'EUR');
+      expect(eur?.children?.[0].label).toBe('5.5 EUR');
       expect(
-        prices?.children?.map((group) => group.children?.[0].price),
-      ).toEqual(['name your price', '5.5 EUR', '5.5 USD']);
-      expect(
-        prices?.children?.[1].children?.[0].previewInformation?.releaseType,
+        eur?.children?.[0].children?.[0].previewInformation?.releaseType,
       ).toBe('Track');
-      expect(prices?.children?.[1].pathKey).not.toContain('.');
+      expect(eur?.children?.[0].children?.[0].price).toBe('5.5 EUR');
+      expect(eur?.pathKey).not.toContain('.');
+      expect(eur?.children?.[0].pathKey).not.toContain('.');
+      const usd = prices?.children?.find((group) => group.label === 'USD');
+      expect(usd?.children?.[0].children?.[0].price).toBe('5.5 USD');
       const matches = filterTreeBrowserItems(prices?.children, 'EUR', prices);
-      expect(matches.map((group) => group.label)).toEqual(['5.5 EUR']);
+      expect(matches.map((group) => group.label)).toEqual(['EUR']);
       expect(getTreeItemFilterSuggestions(prices?.children)).toEqual([
+        '10 CAD',
+        '2 CAD',
         '5.5 EUR',
         '5.5 USD',
+        'CAD',
+        'EUR',
+        'USD',
         'name your price',
       ]);
     }
@@ -257,6 +289,8 @@ describe('release catalog previews', () => {
       albums[0].url.toString(),
       track.url?.toString(),
       albums[1].url.toString(),
+      albums[2].url.toString(),
+      albums[3].url.toString(),
     ]);
     expect(
       restored?.children
@@ -672,9 +706,13 @@ describe('release catalog previews', () => {
       );
       expect(prices?.children?.map((group) => group.label)).toEqual([
         'name your price',
-        '9.5 EUR',
+        'EUR',
         'Price unknown',
       ]);
+      expect(prices?.children?.[1].children?.[0].label).toBe('9.5 EUR');
+      expect(prices?.children?.[1].children?.[0].children?.[0].price).toBe(
+        '9.5 EUR',
+      );
       const unknownPrices = prices?.children?.find(
         (group) => group.label === 'Price unknown',
       );
@@ -716,6 +754,7 @@ describe('release catalog previews', () => {
       const refreshed = await createScoped();
       const trackPrices = refreshed.children
         ?.find((item) => item.label === 'By Prices')
+        ?.children?.find((group) => group.label === 'GBP')
         ?.children?.find((group) => group.label === '2.5 GBP');
       expect(trackPrices?.children?.[0]).toMatchObject({
         price: '2.5 GBP',

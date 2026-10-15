@@ -94,8 +94,10 @@ among albums. Cache keys, TTLs,
 snapshot version, and invalidation rules are unchanged.
 
 Catalogs also rebuild By Prices, preserving exact amounts and currencies,
-grouping zero prices as name your price, and keeping missing or unavailable
-pricing under Price unknown. Collection and Wishlist use each fan-list item's
+showing name your price first, currencies alphabetically with ascending price
+groups inside each currency, and Price unknown last for missing or unavailable
+pricing. Zero prices share the top-level name your price group across currencies.
+Collection and Wishlist use each fan-list item's
 price and currency for rows, archives, and grouping. Catalog snapshots preserve
 these prices in source release order, independently of stored release metadata,
 which still supplies dates and other details. Band catalogs use saved release

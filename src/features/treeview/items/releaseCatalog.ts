@@ -260,17 +260,33 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
       group.releases.push(release);
       priceGroups.set(label, group);
     }
-    const groups = [...priceGroups]
-      .sort(([, a], [, b]) =>
-        a.amount === 0 || b.amount === 0
-          ? a.amount - b.amount
-          : a.currency.localeCompare(b.currency) || a.amount - b.amount,
-      )
-      .map(([label, group]) => ({
+    const groups: TreeItem[] = [];
+    const currencies = new Map<string, TreeItem[]>();
+    const orderedPrices = [...priceGroups].sort(([, a], [, b]) =>
+      a.amount === 0 || b.amount === 0
+        ? a.amount - b.amount
+        : a.currency.localeCompare(b.currency) || a.amount - b.amount,
+    );
+    for (const [label, group] of orderedPrices) {
+      const priceGroup = {
         ...createReleaseGroup(label, group.releases, createReleaseItem),
         image: ICON_BANKNOTE,
         pathKey: `price-${encodeURIComponent(label).replaceAll('.', '%2E')}`,
-      }));
+      };
+      if (group.amount === 0) {
+        groups.push(priceGroup);
+      } else {
+        const prices = currencies.get(group.currency) ?? [];
+        prices.push(priceGroup);
+        currencies.set(group.currency, prices);
+      }
+    }
+    for (const [currency, prices] of currencies) {
+      groups.push({
+        ...items(currency, prices).withImage(ICON_BANKNOTE).build(),
+        pathKey: `currency-${encodeURIComponent(currency).replaceAll('.', '%2E')}`,
+      });
+    }
     if (unknown.length > 0) {
       groups.push({
         ...createReleaseGroup('Price unknown', unknown, createReleaseItem),
