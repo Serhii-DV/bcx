@@ -93,6 +93,13 @@ inside `releaseCatalog`, so restoring runtime loaders preserves their positions
 among albums. Cache keys, TTLs,
 snapshot version, and invalidation rules are unchanged.
 
+Catalogs also rebuild By Prices from saved release metadata, preserving exact
+amounts and currencies, grouping zero prices as name your price, and keeping
+missing or unavailable pricing under Price unknown. Collection and Wishlist
+hydrate metadata from the albums and tracks stores by URL before building their catalogs. Snapshot
+version 32 includes price labels on standalone tree rows and invalidates older
+snapshots without saved prices; cache keys, TTLs, and revision checks are unchanged.
+
 Catalog roots carry `releasePreview` and browser layout at runtime so nested
 artist/year groups share the bottom details panel. Loaded Collection and Wishlist
 sections also expose all catalog URLs, including releases beyond the first page,

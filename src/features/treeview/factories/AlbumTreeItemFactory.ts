@@ -13,6 +13,7 @@ import {
   ReleasePreview,
   releaseCollectionStatus,
 } from '../ReleasePreview';
+import { formatReleasePrice, getReleasePrice } from '../releasePrice';
 import { TreeData } from '../TreeData';
 import { type TreeItem } from '../TreeItem';
 import {
@@ -46,6 +47,9 @@ export class AlbumTreeItemFactory {
     return linkOrText(album.toString(), album.url?.toString())
       .withImage(album.artwork.tinySizeUrl)
       .withKeywords(album.artistNames)
+      .apply((item) => {
+        item.price = formatReleasePrice(getReleasePrice(album.metadata));
+      })
       .build();
   }
 

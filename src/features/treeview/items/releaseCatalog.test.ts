@@ -21,6 +21,7 @@ import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { generateTreeHierarchy, hydrateTreeItemChildren } from '../utils';
 import { loadCatalogArtistRows } from './artistPanel';
 import { CollectionTreeItem } from './collection/CollectionTreeItem';
+import { appendFanArchive } from './fanArchive';
 import { withReleaseCatalog } from './releaseCatalog';
 import { TreeItemCache } from './TreeItemCache';
 import { WishlistTreeItem } from './WishlistTreeItem';
@@ -148,7 +149,7 @@ describe('release catalog previews', () => {
     ]);
   });
 
-  it('provides artist and year groups with previewable releases, preserving other roots', async () => {
+  it('provides artist, year, and price groups with previewable releases, preserving other roots', async () => {
     const albums = createItems(2).map(AlbumFactory.fromBandcampItem);
     albums[0].metadata = Metadata.create(
       Price.create(0, 'USD'),
@@ -157,7 +158,7 @@ describe('release catalog previews', () => {
       '2025-01-01',
     );
     albums[1].metadata = Metadata.create(
-      Price.create(0, 'USD'),
+      Price.create(5.5, 'USD'),
       'Label',
       '2026-01-01',
       '2026-01-01',
@@ -171,7 +172,12 @@ describe('release catalog previews', () => {
       'https://artist0.bandcamp.com/track/single',
       undefined,
       undefined,
-      albums[0].metadata,
+      Metadata.create(
+        Price.create(5.5, 'EUR'),
+        'Label',
+        '2025-01-01',
+        '2025-01-01',
+      ),
     );
     const tree = withReleaseCatalog(
       { label: 'Label', children: [{ label: 'About' }] },
@@ -182,7 +188,7 @@ describe('release catalog previews', () => {
     expect(rootLabels.indexOf('Release years')).toBeLessThan(
       rootLabels.indexOf('About'),
     );
-    for (const name of ['Artists', 'Releases', 'Release years']) {
+    for (const name of ['Artists', 'Releases', 'Release years', 'By Prices']) {
       const root = tree.children?.find((item) => item.label === name);
       expect(root?.releasePreview).toBe(true);
       expect(root?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
@@ -209,6 +215,30 @@ describe('release catalog previews', () => {
     const key = TreeItemCache.subtreeKey('label', 'Years');
     await TreeItemCache.set(key, tree);
     const restored = await TreeItemCache.get(key);
+    for (const catalog of [tree, restored]) {
+      const prices = catalog?.children?.find(
+        (item) => item.label === 'By Prices',
+      );
+      expect(prices?.children?.map((group) => group.label)).toEqual([
+        'name your price',
+        '5.5 EUR',
+        '5.5 USD',
+      ]);
+      expect(
+        prices?.children?.map((group) => group.children?.[0].price),
+      ).toEqual(['name your price', '5.5 EUR', '5.5 USD']);
+      expect(
+        prices?.children?.[1].children?.[0].previewInformation?.releaseType,
+      ).toBe('Track');
+      expect(prices?.children?.[1].pathKey).not.toContain('.');
+      const matches = filterTreeBrowserItems(prices?.children, 'EUR', prices);
+      expect(matches.map((group) => group.label)).toEqual(['5.5 EUR']);
+      expect(getTreeItemFilterSuggestions(prices?.children)).toEqual([
+        '5.5 EUR',
+        '5.5 USD',
+        'name your price',
+      ]);
+    }
     const restoredYears = restored?.children?.find(
       (item) => item.label === 'Release years',
     );
@@ -354,6 +384,15 @@ describe('release catalog previews', () => {
       expect((await createScoped()).releaseCatalog?.albums).toHaveLength(25);
       expect(await readCurrentItems(dataset, 42)).toHaveLength(24);
       expect(await readCurrentItems(dataset)).toHaveLength(24);
+      const archived = await appendFanArchive(
+        await createScoped(),
+        42,
+        dataset,
+      );
+      expect(
+        archived.children?.find((root) => root.label === 'No longer listed')
+          ?.children?.[0].price,
+      ).toBe(label === 'Collection' ? 'name your price' : undefined);
       const reads = rs.spyOn(chrome.runtime, 'sendMessage');
       const currentLists = await readCurrentLists(
         ['collection', 'wishlist'],
@@ -387,6 +426,7 @@ describe('release catalog previews', () => {
           'Releases',
           'Release years',
           'Added years',
+          'By Prices',
           'Releases: Reverse',
           'Releases: Title A–Z',
           'Releases: Title Z–A',
@@ -442,6 +482,7 @@ describe('release catalog previews', () => {
           'Releases',
           'Release years',
           'Added years',
+          'By Prices',
           'Releases: Reverse',
           'Releases: Title A–Z',
           'Releases: Title Z–A',
@@ -471,14 +512,15 @@ describe('release catalog previews', () => {
         expect(releaseYears?.releasePreview).toBe(true);
         expect(releaseYears?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
         expect(releaseYears?.children?.map((item) => item.label)).toEqual([
+          '1999',
           'Unknown year',
         ]);
-        expect(releaseYears?.childrenCount).toBe(1);
+        expect(releaseYears?.childrenCount).toBe(2);
         expect(
           createRootSectionTabs(
             generateTreeHierarchy(restored?.children ?? []),
           ).find((tab) => tab.id === '2')?.label,
-        ).toBe('Release years (1)');
+        ).toBe('Release years (2)');
 
         const fetchMock = rs
           .spyOn(globalThis, 'fetch')
@@ -617,6 +659,61 @@ describe('release catalog previews', () => {
 
       expect(artists.children).toHaveLength(25);
       assertPreview(artists.children?.[24].children?.[0]);
+      const prices = restored?.children?.find(
+        (item) => item.label === 'By Prices',
+      );
+      expect(prices?.children?.map((group) => group.label)).toEqual(
+        label === 'Collection'
+          ? ['name your price', 'Price unknown']
+          : ['Price unknown'],
+      );
+      const unknownPrices = prices?.children?.find(
+        (group) => group.label === 'Price unknown',
+      );
+      if (unknownPrices) await hydrateTreeItemChildren(unknownPrices);
+      expect(unknownPrices?.children).toHaveLength(
+        label === 'Collection' ? 24 : 25,
+      );
+      expect(
+        unknownPrices?.children?.every((item) => item.price === undefined),
+      ).toBe(true);
+
+      const track = TrackFactory.create(
+        1,
+        0,
+        'Artist 0',
+        'Saved single',
+        1,
+        'https://artist0.bandcamp.com/track/saved-single',
+        undefined,
+        undefined,
+        Metadata.create(
+          Price.create(5.5, 'EUR'),
+          'Artist 0',
+          '2025-01-01',
+          '2025-01-01',
+        ),
+      );
+      await BandcampStorage.saveTrack(track);
+      await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, [
+        ...saved,
+        {
+          ...createItems(1)[0],
+          tralbum_type: 't',
+          tralbum_id: track.id,
+          item_title: track.title,
+          item_url: track.url!.toString(),
+        },
+      ]);
+      const refreshed = await createScoped();
+      const trackPrices = refreshed.children
+        ?.find((item) => item.label === 'By Prices')
+        ?.children?.find((group) => group.label === '5.5 EUR');
+      expect(trackPrices?.children?.[0]).toMatchObject({
+        price: '5.5 EUR',
+        href: track.url?.toString(),
+        previewInformation: { releaseType: 'Track' },
+      });
     });
   }
 });

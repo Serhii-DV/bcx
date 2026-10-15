@@ -93,6 +93,9 @@ export function createFanDataSubtreeSection(
           BandcampUrlFactory.generateFanUrl(fanData.username || ''),
           BandcampUrlFactory.generateWishlistUrl(fanData.username || ''),
           ...item.releaseCatalog.albums.map((album) => album.url),
+          ...(item.releaseCatalog.tracks ?? []).flatMap((track) =>
+            track.url ? [track.url] : [],
+          ),
         ];
       }
       if (sync) {

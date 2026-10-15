@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Album and track TreeView rows show their saved prices, with zero displayed as "name your price". Band, Collection, and Wishlist catalogs include a By Prices panel grouped by exact price and currency, with a Price unknown group for missing pricing. Collection and Wishlist reuse metadata saved from visited album and track pages and retain standalone tracks as track releases.
+
 - Added an X button at the top right of the shared Preview Panel so lists can use the full panel height. The panel stays closed while browsing until a release, band, or track Preview action reopens it, retaining its selected details and saved split size.
 
 - Artist action dropdowns now sit inside the tree row’s button group. Band rows, including saved and unsaved History entries, and Release and track rows share the Preview Panel’s action menu for opening, previewing, pinning, copying names, titles and URLs, and searching Bandcamp.

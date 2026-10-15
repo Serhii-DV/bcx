@@ -14,9 +14,11 @@ import { Track } from 'src/bandcamp/domain/track/track';
 import { console } from 'src/utils/console';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TrackTreeItemFactory } from '../factories/TrackTreeItemFactory';
+import { formatReleasePrice, getReleasePrice } from '../releasePrice';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
 import {
+  ICON_BANKNOTE,
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
   ICON_DISC,
@@ -229,6 +231,43 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
       catalog.addedYearSource === 'wishlist',
     );
     if (addedYears) roots.push(addedYears);
+  }
+  if (releases.length > 0) {
+    const priceGroups = new Map<
+      string,
+      { amount: number; currency: string; releases: BandRelease[] }
+    >();
+    const unknown: BandRelease[] = [];
+    for (const release of releases) {
+      const price = getReleasePrice(release.metadata);
+      const label = formatReleasePrice(price);
+      if (!price || !label) {
+        unknown.push(release);
+        continue;
+      }
+      const group = priceGroups.get(label) ?? { ...price, releases: [] };
+      group.releases.push(release);
+      priceGroups.set(label, group);
+    }
+    const groups = [...priceGroups]
+      .sort(([, a], [, b]) =>
+        a.amount === 0 || b.amount === 0
+          ? a.amount - b.amount
+          : a.currency.localeCompare(b.currency) || a.amount - b.amount,
+      )
+      .map(([label, group]) => ({
+        ...createReleaseGroup(label, group.releases, createReleaseItem),
+        image: ICON_BANKNOTE,
+        pathKey: `price-${encodeURIComponent(label).replaceAll('.', '%2E')}`,
+      }));
+    if (unknown.length > 0) {
+      groups.push({
+        ...createReleaseGroup('Price unknown', unknown, createReleaseItem),
+        image: ICON_BANKNOTE,
+        pathKey: 'price-unknown',
+      });
+    }
+    roots.push(items('By Prices', groups).withImage(ICON_BANKNOTE).build());
   }
   roots.push(
     createReleasesRoot('Releases: Reverse', () => [...releases].reverse()),

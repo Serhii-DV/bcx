@@ -5,6 +5,8 @@ import {
   saveAvailabilityBatch,
   saveSnapshot,
 } from 'src/bandcamp/domain/fanData/library';
+import { Metadata } from 'src/bandcamp/domain/metadata';
+import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { History } from 'src/core/history';
@@ -85,6 +87,13 @@ describe('History pagination', () => {
         2,
         1,
         1,
+        [],
+        Metadata.create(
+          Price.create(5, 'EUR'),
+          'Saved band',
+          '2025-01-01',
+          '2025-01-01',
+        ),
       ),
       TrackFactory.create(
         3,
@@ -94,6 +103,13 @@ describe('History pagination', () => {
         1,
         'https://artist.bandcamp.com/track/saved-track',
         '00:03:15',
+        undefined,
+        Metadata.create(
+          Price.create(0, 'USD'),
+          'Saved band',
+          '2025-01-01',
+          '2025-01-01',
+        ),
       ),
     ]);
     await saveSnapshot(
@@ -155,6 +171,8 @@ describe('History pagination', () => {
     });
     expect(all?.[2].loadPreview).toBeTypeOf('function');
     expect(all?.[2].previewInformation?.title).toBe('Saved release');
+    expect(all?.[2].price).toBe('5 EUR');
+    expect(all?.[3].price).toBe('name your price');
     expect(all?.[3].previewInformation).toMatchObject({
       title: 'Saved track',
       releaseType: 'Track',

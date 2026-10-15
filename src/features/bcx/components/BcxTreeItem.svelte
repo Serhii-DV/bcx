@@ -182,6 +182,9 @@ async function openBrowserPage(url: string) {
 {@render treeItemImage(item)}
 <span class="item-label-content">
   <span class="item-label">{item.label}</span>
+  {#if item.price}
+    <span class="item-price text-gray-300 text-xs">{item.price}</span>
+  {/if}
   {#if displayUrl}
     <span class="item-url text-gray-400">{displayUrl}</span>
   {/if}
