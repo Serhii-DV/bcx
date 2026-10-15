@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Artist action dropdowns now sit inside the tree row’s button group. Release and track rows share the Preview Panel’s action menu for opening, previewing, pinning, copying titles and URLs, and searching Bandcamp.
+
 - Removed duplicate URLs from IndexedDB URL references to reduce library storage while preserving UUID lookups and earlier URL aliases.
 
 - Bandcamp profiles, albums, tracks, URL references, Collection, Wishlist, Following Bands, Following Genres, and page availability now use IndexedDB. Band, album, and track records separate raw model `data`, derived search `keys`, and `storage` timestamps/order; indexed queries return only model data. Collection, Wishlist, Following Bands, and Following Genres each have a separate membership store, with shared fanLists sync metadata. Band keys use `b:<band_id>`; genre keys use `g:<path-and-query>` without the `discover/` prefix, with normalized query order and original URLs retained. Transactional fan-list updates preserve account-specific ordering, dates, and former memberships without shared-array or staging copies. Artist/title and membership reads use indexes; open panels and Sync status refresh on committed revisions. Settings, pins, bounded logs, small sync jobs, and session caches retain their existing storage areas. Storage reports all database record counts and estimated size. Removed unlimited storage permission. Requires recreating the IndexedDB database and syncing lists again; existing records are not migrated or read through compatibility fallbacks.
