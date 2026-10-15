@@ -1,5 +1,6 @@
 import type { Band } from 'src/bandcamp/domain/band/band';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
+import { requestMusicLibrary } from 'src/bandcamp/domain/storage/musicLibrary';
 import { isBandcampMusicUrl } from 'src/bandcamp/domain/url/helper';
 import type { Url } from 'src/core/url';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
@@ -45,6 +46,7 @@ export class BandSidePanelSection {
                   catalogPlaceholders: true,
                 }),
               SIDE_PANEL_SECTION_CACHE_TTL.BAND,
+              (await requestMusicLibrary({ action: 'revision' })).revision,
             ),
             band,
             currentPageUrl,
@@ -120,7 +122,7 @@ function withReleasePreviews(
   };
   const releaseCatalog = withReleaseCatalog(
     refreshedItem,
-    band.metadata.albums,
+    band.metadata.releases,
     {
       groupByYear: true,
       paginateReleases: false,
@@ -141,20 +143,20 @@ function withReleasePreviews(
         : root,
     ),
   };
-  const selectedIndex = band.metadata.albums.findIndex(
-    (album) =>
-      album.url.withoutSearchAndHash.toString() ===
+  const selectedIndex = band.metadata.releases.findIndex(
+    (release) =>
+      release.url?.withoutSearchAndHash.toString() ===
       currentPageUrl?.withoutSearchAndHash.toString(),
   );
   if (selectedIndex < 0) return catalog;
-  const selectedAlbum = band.metadata.albums[selectedIndex];
+  const selectedAlbum = band.metadata.releases[selectedIndex];
   return {
     ...catalog,
     children: catalog.children?.map((child) =>
       child.label === 'Releases'
         ? {
             ...child,
-            initialSelectedHref: selectedAlbum.url.toString(),
+            initialSelectedHref: selectedAlbum.url?.toString(),
           }
         : child,
     ),
@@ -166,6 +168,8 @@ function getNavigationUrls(band: Band, currentPageUrl: Url): string[] {
     currentPageUrl.toString(),
     band.url.toString(),
     new URL('/music', band.url).toString(),
-    ...band.metadata.albums.map((album) => album.url.toString()),
+    ...band.metadata.releases.flatMap((release) =>
+      release.url ? [release.url.toString()] : [],
+    ),
   ];
 }

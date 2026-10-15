@@ -88,6 +88,11 @@ snapshots that lack this data. Cache keys, TTLs, and explicit invalidation stay 
 same. Artist/Label sections rebuild Artists, Releases, and Release years from the current
 band data after reading their cached subtree.
 
+Mixed band catalogs also retain raw standalone tracks and typed release references
+inside `releaseCatalog`, so restoring runtime loaders preserves their positions
+among albums. Cache keys, TTLs,
+snapshot version, and invalidation rules are unchanged.
+
 Catalog roots carry `releasePreview` and browser layout at runtime so nested
 artist/year groups share the bottom details panel. Loaded Collection and Wishlist
 sections also expose all catalog URLs, including releases beyond the first page,
@@ -326,18 +331,27 @@ entry from hiding newly saved data without discarding unrelated caches. Existing
 TTLs and other subtree keys are unchanged. Archive roots are appended after cache
 restoration so their preview callbacks and availability state are always current.
 
-Open panel instances listen for account-library changes in local storage, debounce
-updates, and rebuild loaded fan sections with stale-request protection. They retain
-mounted root tabs and use stable paths to preserve filters and selection when the
-selected item remains present. Collection pagination still resets on a rebuild;
-items beyond its first page remain accessible through Show more.
+Open panel instances listen for `/fan-data/revision` session notifications,
+debounce changes, and rebuild loaded fan sections for the matching fan ID and
+affected datasets. They retain mounted root tabs and stable paths with stale-request
+protection. Collection pagination resets on rebuild; later items remain accessible
+through Show more.
 
-Snapshot version 30 rebuilds Collection, Wishlist, and Following Bands from all
-saved entries, including the original shared arrays before the first sync. Fan
-cache revisions combine the dataset sync timestamp with its shared-array ownership
-revision. Sync publishes merged arrays at the original storage keys; open panels
-also observe those keys and ownership changes, so signed-out views can refresh.
-Archive roots use the same saved items and retain separate current-membership and
-availability filters.
-Snapshot version 31 rebuilds Following Genres from every saved genre. Its All tab
-includes former follows, while No longer followed filters them separately.
+Collection, Wishlist, Following Bands, and Following Genres read all retained
+account-scoped memberships from IndexedDB. Dataset revisions come from durable
+`fanLists` records; there are no shared local arrays or ownership documents.
+Signed-out views use the most recently saved list for each dataset. Following
+Genres retains its All and No longer followed roots. Snapshot serialization and
+version 31, keys, TTLs, and explicit invalidation remain unchanged.
+
+## IndexedDB music revisions
+
+Music metadata lives in extension IndexedDB; subtree snapshots remain in Chrome
+session storage. Band snapshots include the database's durable revision.
+Collection, Wishlist, and Following Bands combine their saved-list revision with
+that music revision so newly saved profile/release metadata is reflected on rebuild.
+Following Genres retains only its saved-list revision. Existing cache keys, TTLs,
+snapshot serialization, and explicit invalidation remain unchanged.
+Mounted music previews and loaded fan sections observe the small
+`/music-library/revision` session-storage notification published after a successful
+database transaction.

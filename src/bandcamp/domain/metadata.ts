@@ -1,15 +1,17 @@
-import type { StorableObject, StorageObject } from 'src/core/storage';
 import type { ReleaseNotes } from './album/releaseNotes';
-import { type Compressable, compress, decompress } from './compressor';
-import {
-  type CompressedMetadataData,
-  MetadataCompressor,
-  type RawMetadataData,
-} from './metadataCompressor';
+import type { RawPriceData } from './price';
 import { Price } from './price';
-import { metadataCompressor } from './shared';
 
-export class Metadata implements StorableObject, Compressable {
+export interface RawMetadataData {
+  price: RawPriceData;
+  publisher: string;
+  published: string;
+  modified: string;
+  keywords: string[];
+  release?: ReleaseNotes;
+}
+
+export class Metadata {
   constructor(
     public price: Price,
     public publisher: string,
@@ -18,10 +20,6 @@ export class Metadata implements StorableObject, Compressable {
     public keywords: string[],
     public release?: ReleaseNotes,
   ) {}
-
-  get compressor(): MetadataCompressor {
-    return metadataCompressor;
-  }
 
   get year(): number {
     return this.published.getFullYear();
@@ -53,10 +51,6 @@ export class Metadata implements StorableObject, Compressable {
     );
   }
 
-  toStorageObject(): StorageObject {
-    return compress(this);
-  }
-
   toRawData(): RawMetadataData {
     return {
       price: this.price.toRawData(),
@@ -76,22 +70,6 @@ export class Metadata implements StorableObject, Compressable {
       rawData.modified,
       rawData.keywords || [],
       rawData.release,
-    );
-  }
-
-  static fromStorageObject(data: StorageObject): Metadata {
-    const decompressed = decompress(
-      data as CompressedMetadataData,
-      metadataCompressor,
-    ) as RawMetadataData;
-
-    return Metadata.create(
-      Price.create(decompressed.price.amount, decompressed.price.currency),
-      decompressed.publisher,
-      decompressed.published,
-      decompressed.modified,
-      decompressed.keywords,
-      decompressed.release,
     );
   }
 }

@@ -40,16 +40,6 @@ const BCX = {
         '*',
       );
     },
-
-    async indexBands() {
-      window.postMessage(
-        {
-          source: 'BCX',
-          action: 'indexBands',
-        },
-        '*',
-      );
-    },
   },
   sessionStorage: {
     async clear() {

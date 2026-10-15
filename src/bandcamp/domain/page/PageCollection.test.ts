@@ -1,12 +1,26 @@
 import { describe, expect, it, rstest } from '@rstest/core';
-import type { BandcampItem } from './PageCollection';
+import { type Message, MessageType } from 'src/core/message';
+import type { BandcampItem, BandcampResponseCapture } from './PageCollection';
+
+const loggedEntries: { label: string; capture: Record<string, unknown> }[] = [];
 
 function installChromeMock() {
+  loggedEntries.length = 0;
   Object.defineProperty(globalThis, 'chrome', {
     value: {
+      runtime: {
+        sendMessage: rstest.fn(async (message: Message) => {
+          if (message.type === MessageType.LOG_FAN_SYNC_DEBUG)
+            loggedEntries.push(structuredClone(message));
+          return { ok: true };
+        }),
+      },
       storage: {
         local: {},
-        session: {},
+        session: {
+          set: rstest.fn(),
+          remove: rstest.fn(),
+        },
       },
     },
     configurable: true,
@@ -32,10 +46,16 @@ function collectionItem(
   };
 }
 
-async function createPageCollection(transport: unknown) {
+async function createPageCollection(
+  transport: unknown,
+  captureResponse?: (capture: BandcampResponseCapture) => Promise<void>,
+) {
   installChromeMock();
   const { PageCollection } = await import('./PageCollection');
-  const pageCollection = new PageCollection({ transport } as any);
+  const pageCollection = new PageCollection({
+    transport,
+    captureResponse,
+  } as any);
   pageCollection.getPageData = () =>
     ({
       fan_data: { fan_id: 42 },
@@ -93,7 +113,19 @@ describe('PageCollection', () => {
           more_available: false,
         }),
     };
-    const pageCollection = await createPageCollection(transport);
+    const captures: BandcampResponseCapture[] = [];
+    const { createFanResponseCapture } = await import(
+      '../../content/fanSyncDebug'
+    );
+    const account = { fanId: 42, username: 'fan' };
+    const logCapture = createFanResponseCapture(account, 'wishlist');
+    const pageCollection = await createPageCollection(
+      transport,
+      async (capture) => {
+        captures.push(structuredClone(capture));
+        await logCapture(capture);
+      },
+    );
 
     const items = await pageCollection.loadWishlistItems({ pageSize: 1 });
 
@@ -101,6 +133,60 @@ describe('PageCollection', () => {
       { tralbum_id: 1, isFree: true, isPurchased: true, isWishlisted: false },
       { tralbum_id: 2, isFree: false, isPurchased: false, isWishlisted: true },
     ]);
+    expect(captures).toHaveLength(3);
+    expect(captures[0]).toMatchObject({
+      method: 'GET',
+      response: { collection_summary: expect.any(Object) },
+    });
+    expect(captures[1]).toMatchObject({
+      method: 'POST',
+      request: { count: 1 },
+      response: { more_available: true },
+    });
+    expect((captures[1].response as { items: BandcampItem[] }).items).toEqual([
+      collectionItem(1),
+    ]);
+    expect((captures[2].response as { items: BandcampItem[] }).items).toEqual([
+      collectionItem(2),
+    ]);
+    expect(loggedEntries).toHaveLength(3);
+    const labels = loggedEntries.map((entry) => entry.label);
+    const runPrefix = labels[0].slice(0, labels[0].lastIndexOf('/'));
+    expect(runPrefix).toMatch(
+      /^\/debug\/fan-sync\/wishlist\/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
+    expect(labels).toEqual(
+      ['0001', '0002', '0003'].map((page) => `${runPrefix}/${page}`),
+    );
+    captures.forEach((capture, index) => {
+      expect(loggedEntries[index].capture).toMatchObject({
+        fanId: 42,
+        dataset: 'wishlist',
+        page: index + 1,
+        method: capture.method,
+        endpoint: capture.endpoint,
+      });
+      // The logged snapshot retains all raw fields without later enrichment.
+      expect(loggedEntries[index].capture.data).toEqual(capture.response);
+    });
+
+    const previousEntries = structuredClone(loggedEntries);
+    const nextRun = createFanResponseCapture(account, 'wishlist');
+    await nextRun(captures[1]);
+    expect(loggedEntries).toHaveLength(4);
+    expect(loggedEntries.slice(0, 3)).toEqual(previousEntries);
+    expect(loggedEntries[3].label).not.toContain(runPrefix);
+    expect(loggedEntries[3].label).toMatch(/\/0001$/);
+    expect(loggedEntries[3].capture.data).toEqual(captures[1].response);
+
+    const { captureFanPageData } = await import('../../content/fanSyncDebug');
+    const pageData = pageCollection.getPageData();
+    await captureFanPageData(account, pageData);
+    expect(loggedEntries[4].label).toBe('/debug/fan-sync/page-data');
+    expect(loggedEntries[4].capture.data).toEqual(pageData);
+    expect(chrome.storage.session.set).not.toHaveBeenCalled();
+    expect(chrome.storage.session.remove).not.toHaveBeenCalled();
+
     expect(transport.postJsonString).toHaveBeenCalledTimes(2);
     expect(transport.postJsonString.mock.calls[1][1]).toMatchObject({
       fan_id: 42,
@@ -178,7 +264,20 @@ describe('PageCollection', () => {
         more_available: false,
       })),
     };
-    const pageCollection = await createPageCollection(transport);
+    const { createFanResponseCapture } = await import(
+      '../../content/fanSyncDebug'
+    );
+    const pageCollection = await createPageCollection(
+      transport,
+      createFanResponseCapture(
+        { fanId: 42, username: 'fan' },
+        'following-bands',
+      ),
+    );
+    const sendMessage = chrome.runtime.sendMessage as ReturnType<
+      typeof rstest.fn
+    >;
+    sendMessage.mockRejectedValue(new Error('Debug console unavailable'));
     const { PageCollection } = await import('./PageCollection');
 
     const items = await pageCollection.loadFollowingBandsItems();

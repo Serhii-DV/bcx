@@ -1,6 +1,5 @@
 import { describe, expect, it } from '@rstest/core';
 import { BandMetadata } from '../band/metadata';
-import { BandMetadataCompressor } from '../band/metadataCompressor';
 import { readBandMetadata } from './bandMetadata';
 
 const parse = (html: string) =>
@@ -33,14 +32,13 @@ describe('public band profile', () => {
       '2020-01-01',
       'EUR',
       [],
-      [],
       profile.location,
       profile.biography,
       profile.links,
     );
-    expect(
-      BandMetadata.fromStorageObject(metadata.toStorageObject()),
-    ).toMatchObject(profile);
+    expect(BandMetadata.fromRawData(metadata.toRawData())).toMatchObject(
+      profile,
+    );
   });
 
   it('distinguishes a missing sidebar from an empty profile', () => {
@@ -54,7 +52,11 @@ describe('public band profile', () => {
       ),
     ).toEqual({ location: undefined, biography: undefined, links: [] });
     expect(
-      new BandMetadataCompressor().decompress({ c: '2020-01-01', r: 'EUR' }),
+      BandMetadata.fromRawData({
+        created: '2020-01-01',
+        currency: 'EUR',
+        releases: [],
+      }),
     ).toMatchObject({ location: undefined, biography: undefined, links: [] });
   });
 });

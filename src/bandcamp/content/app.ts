@@ -1,5 +1,5 @@
-import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
-import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/data';
+import type { RawTrackData } from 'src/bandcamp/domain/track/data';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { mount } from 'svelte';
 import App from './app.svelte';
@@ -166,10 +166,7 @@ function createActiveMusicBandData(): ActiveMusicBandData | null {
     name: band.name,
     url: band.url.toString(),
     artworkId: band.artwork.id,
-    metadata: {
-      created: band.metadata.created.toISOString(),
-      currency: band.metadata.currency,
-    },
+    metadata: band.metadata.toRawData(),
     albums: band.metadata.albums.map((album) => album.toRawData()),
     tracks: band.metadata.tracks.map((track) => track.toRawData()),
   };

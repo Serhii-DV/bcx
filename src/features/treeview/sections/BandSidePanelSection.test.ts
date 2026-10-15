@@ -40,8 +40,8 @@ describe('Artist/Label release browser', () => {
       links: [{ label: 'Website', url: 'https://example.com/' }],
     });
     // A large catalog must not defer the About rows read by the details panel.
-    band.metadata.albums = Array.from({ length: 250 }, () =>
-      AlbumFactory.fromRawData(album.toRawData()),
+    band.metadata.releases = Array.from({ length: 250 }, (_, index) =>
+      AlbumFactory.fromRawData({ ...album.toRawData(), id: index + 1 }),
     );
     for (const url of [band.url, album.url]) {
       const data = await BandSidePanelSection.create(
@@ -84,7 +84,23 @@ describe('Artist/Label release browser', () => {
       '2026-01-01',
       [],
     );
-    band.metadata.albums = [release];
+    const track = TrackFactory.create(
+      1,
+      1,
+      'Artist',
+      'Single',
+      3,
+      'https://label.bandcamp.com/track/single',
+      undefined,
+      undefined,
+      release.metadata,
+    );
+    const second = AlbumFactory.fromRawData({
+      ...release.toRawData(),
+      id: 2,
+      url: 'https://label.bandcamp.com/album/second',
+    });
+    band.metadata.releases = [release, track, second];
 
     for (const url of [band.url, album.url, album.url]) {
       const data = await BandSidePanelSection.create(
@@ -112,6 +128,14 @@ describe('Artist/Label release browser', () => {
           label: 'Released',
           dateTime: '2026-01-01T00:00:00.000Z',
         });
+        expect(group?.children?.map((item) => item.href)).toEqual([
+          release.url.toString(),
+          track.url?.toString(),
+          second.url.toString(),
+        ]);
+        expect(group?.children?.[1].previewInformation?.releaseType).toBe(
+          'Track',
+        );
       }
       expect(
         data?.items.find((item) => item.label === 'Releases')?.children?.[0]
@@ -120,7 +144,29 @@ describe('Artist/Label release browser', () => {
         label: 'Released',
         dateTime: '2026-01-01T00:00:00.000Z',
       });
+      const releases = data?.items.find((item) => item.label === 'Releases');
+      expect(releases?.children?.map((item) => item.href)).toEqual([
+        release.url.toString(),
+        track.url?.toString(),
+        second.url.toString(),
+      ]);
+      const reverse = data?.items.find(
+        (item) => item.label === 'Releases: Reverse',
+      );
+      if (reverse) await hydrateTreeItemChildren(reverse);
+      expect(reverse?.children?.map((item) => item.href)).toEqual([
+        second.url.toString(),
+        track.url?.toString(),
+        release.url.toString(),
+      ]);
     }
+    const trackSection = BandSidePanelSection.create(band, track.url!);
+    expect(trackSection?.navigationUrls).toContain(track.url?.toString());
+    expect(
+      (await trackSection?.createTreeData())?.items.find(
+        (item) => item.label === 'Releases',
+      )?.initialSelectedHref,
+    ).toBe(track.url?.toString());
   });
 
   it('shows sorted unique release tags in their own subtab, including after cache restoration', async () => {
@@ -133,8 +179,9 @@ describe('Artist/Label release browser', () => {
       '2026-01-01',
       ['techno', 'ambient', 'ambient'],
     );
-    band.metadata.albums = [release, release];
-    band.metadata.tracks = [
+    band.metadata.releases = [release, release];
+    band.metadata.releases = [
+      ...band.metadata.releases,
       TrackFactory.create(
         2,
         1,
@@ -228,7 +275,7 @@ describe('Artist/Label release browser', () => {
 
   it('refreshes About information and artwork after reading an older cached tree', async () => {
     const band = Band.create(8, 'Label', 'https://label.bandcamp.com', 123);
-    band.metadata.albums = [album];
+    band.metadata.releases = [album];
     await TreeItemCache.set(TreeItemCache.subtreeKey('band', 8), {
       children: [
         { label: 'About Label', children: [{ label: 'Old information' }] },
@@ -284,7 +331,7 @@ describe('Artist/Label release browser', () => {
 
   it('renders music-page releases in browser layout without drill-down children', async () => {
     const band = Band.create(1, 'Artist', 'https://artist.bandcamp.com', 1);
-    band.metadata.albums = [album];
+    band.metadata.releases = [album];
     const data = await BandSidePanelSection.create(
       band,
       Url.create('https://artist.bandcamp.com/music'),
@@ -297,7 +344,7 @@ describe('Artist/Label release browser', () => {
 
   it('restores runtime preview loaders even when the band subtree is cached', async () => {
     const band = Band.create(1, 'Artist', 'https://artist.bandcamp.com', 1);
-    band.metadata.albums = [album];
+    band.metadata.releases = [album];
     await TreeItemCache.set(TreeItemCache.subtreeKey('band', 1), {
       children: [{ label: 'Releases', children: [{ label: 'Old release' }] }],
     });
@@ -313,7 +360,7 @@ describe('Artist/Label release browser', () => {
 
 it('shows the full catalog and selects the current release without reordering', async () => {
   const band = Band.create(1, 'Artist', 'https://artist.bandcamp.com', 1);
-  band.metadata.albums = Array.from({ length: 45 }, (_, index) =>
+  band.metadata.releases = Array.from({ length: 45 }, (_, index) =>
     AlbumFactory.fromRawData({
       ...album.toRawData(),
       id: index + 1,

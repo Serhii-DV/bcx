@@ -1,10 +1,19 @@
-import type { Album } from 'src/bandcamp/domain/album/album';
-import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
+import { Album } from 'src/bandcamp/domain/album/album';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/data';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
-import { groupAlbumsByArtist } from 'src/bandcamp/domain/album/helper';
+import { groupReleasesByArtist } from 'src/bandcamp/domain/album/helper';
+import {
+  type BandRelease,
+  type BandReleaseRef,
+  resolveBandReleases,
+} from 'src/bandcamp/domain/band/metadata';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import type { RawTrackData } from 'src/bandcamp/domain/track/data';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
+import { Track } from 'src/bandcamp/domain/track/track';
 import { console } from 'src/utils/console';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
+import { TrackTreeItemFactory } from '../factories/TrackTreeItemFactory';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
 import {
@@ -13,14 +22,14 @@ import {
   ICON_DISC,
   ICON_MIC,
 } from '../utils/icon';
-import {
-  createPagedReleasesTreeItem,
-  RELEASE_BATCH_SIZE,
-} from './pagedReleasesTreeItem';
+import { createPagedTreeItem } from './createPagedTreeItem';
+import { RELEASE_BATCH_SIZE } from './pagedReleasesTreeItem';
 
 export interface ReleaseCatalog {
   fanId?: number;
   albums: RawAlbumData[];
+  tracks?: RawTrackData[];
+  releases?: BandReleaseRef[];
   addedAt?: Array<string | null>;
   releaseDates?: Array<string | null>;
   addedYearSource?: 'collection' | 'wishlist';
@@ -31,40 +40,76 @@ export interface ReleaseCatalog {
 
 export function withReleaseCatalog(
   item: TreeItem,
-  albums: Album[],
-  options: Omit<ReleaseCatalog, 'albums'> = {},
+  releases: readonly BandRelease[],
+  options: Omit<ReleaseCatalog, 'albums' | 'tracks' | 'releases'> = {},
 ): TreeItem {
+  const albums = releases.filter(
+    (release): release is Album => release instanceof Album,
+  );
+  const tracks = releases.filter(
+    (release): release is Track => release instanceof Track,
+  );
   return restoreReleaseCatalog({
     ...item,
     releaseCatalog: {
       ...options,
       albums: albums.map((album) => album.toRawData()),
+      tracks: tracks.length
+        ? tracks.map((track) => track.toRawData())
+        : undefined,
+      releases: tracks.length
+        ? releases.map((release) => ({
+            type: release instanceof Album ? 'album' : 'track',
+            id: release.id,
+          }))
+        : undefined,
     },
   });
 }
 
-// Rebuild runtime preview and pagination callbacks from the cached album data.
+// Rebuild runtime preview and pagination callbacks from cached release data.
 export function restoreReleaseCatalog(item: TreeItem): TreeItem {
   const catalog = item.releaseCatalog;
   if (!catalog) return item;
-  const albums = catalog.albums.map((album) => AlbumFactory.fromRawData(album));
-  const addedAtByAlbum = new Map(
-    albums.map((album, index) => [album, catalog.addedAt?.[index]]),
+  const savedAlbums = catalog.albums.map((album) =>
+    AlbumFactory.fromRawData(album),
   );
-  const releaseDateByAlbum = new Map(
-    albums.map((album, index) => [album, catalog.releaseDates?.[index]]),
+  const tracks = (catalog.tracks ?? []).map((track) =>
+    TrackFactory.fromRawData(track),
   );
-  const createReleaseItem = (album: Album): TreeItem => {
-    const release = AlbumTreeItemFactory.createWithPreview(
-      album,
-      catalog.fanId,
-      {
-        showReleaseDate: catalog.showReleaseDate,
-        releaseDate: releaseDateByAlbum.get(album) ?? undefined,
-      },
-    );
-    const addedAt = addedAtByAlbum.get(album);
-    const releasedTimestamp = release.timestamp;
+  const releases: BandRelease[] = catalog.releases
+    ? resolveBandReleases(catalog.releases, savedAlbums, tracks)
+    : [...savedAlbums, ...tracks];
+  const addedAtByRelease = new Map(
+    releases.map((album, index) => [album, catalog.addedAt?.[index]]),
+  );
+  const releaseDateByRelease = new Map(
+    releases.map((album, index) => [album, catalog.releaseDates?.[index]]),
+  );
+  const createReleaseItem = (album: BandRelease): TreeItem => {
+    const release =
+      album instanceof Album
+        ? AlbumTreeItemFactory.createWithPreview(album, catalog.fanId, {
+            showReleaseDate: catalog.showReleaseDate,
+            releaseDate: releaseDateByRelease.get(album) ?? undefined,
+          })
+        : {
+            ...TrackTreeItemFactory.createWithPreview(album),
+            label: album.toString(),
+            image: album.artwork.id > 0 ? album.artwork.tinySizeUrl : undefined,
+            keywords: album.artist.names,
+          };
+    const addedAt = addedAtByRelease.get(album);
+    const releaseDate =
+      releaseDateByRelease.get(album) ?? release.previewInformation?.date;
+    const published = releaseDate ? new Date(releaseDate) : undefined;
+    const releasedTimestamp =
+      release.timestamp ??
+      (catalog.showReleaseDate &&
+      published &&
+      Number.isFinite(published.getTime())
+        ? { label: 'Released', dateTime: published.toISOString() }
+        : undefined);
     return {
       ...release,
       timestamp: addedAt
@@ -73,7 +118,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
       secondaryTimestamp: addedAt ? releasedTimestamp : undefined,
     };
   };
-  const artistGroups = [...groupAlbumsByArtist(albums)].map(
+  const artistGroups = [...groupReleasesByArtist(releases)].map(
     ([name, releases]) => ({
       ...createReleaseGroup(name, releases, createReleaseItem),
       includeInFilterSuggestions: true,
@@ -87,32 +132,34 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     numeric: true,
     sensitivity: 'base',
   });
-  const compareTitles = (a: Album, b: Album) =>
+  const compareTitles = (a: BandRelease, b: BandRelease) =>
     collator.compare(a.title, b.title) ||
     collator.compare(a.artist.toString(), b.artist.toString());
   const createReleasesRoot = (
     label: string,
-    orderedAlbums: () => Album[],
+    orderedReleases: () => BandRelease[],
     lazy = true,
   ): TreeItem => {
     const create = () =>
       catalog.paginateReleases === false
-        ? items(label, orderedAlbums().map(createReleaseItem))
+        ? items(label, orderedReleases().map(createReleaseItem))
             .withImage(ICON_DISC)
             .build()
-        : createPagedReleasesTreeItem({
-            albums: orderedAlbums(),
+        : createPagedTreeItem({
+            items: orderedReleases(),
+            batchSize: RELEASE_BATCH_SIZE,
             errorContext: '[Release catalog]',
+            errorMessage: 'Failed to load more releases:',
+            image: ICON_DISC,
             label,
-            withPreview: true,
-            createPreviewItem: createReleaseItem,
+            createChildren: (releases) => releases.map(createReleaseItem),
           });
     if (!lazy) return create();
     return items(label, [])
       .withImage(ICON_DISC)
       .makeLazy(async () => create())
       .apply((root) => {
-        root.childrenCount = albums.length;
+        root.childrenCount = releases.length;
       })
       .build();
   };
@@ -120,17 +167,18 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     artists,
     createReleasesRoot(
       'Releases',
-      () => albums,
-      catalog.paginateReleases === false && albums.length > RELEASE_BATCH_SIZE,
+      () => releases,
+      catalog.paginateReleases === false &&
+        releases.length > RELEASE_BATCH_SIZE,
     ),
   ];
 
-  if ((catalog.groupByYear || catalog.addedYearSource) && albums.length > 0) {
+  if ((catalog.groupByYear || catalog.addedYearSource) && releases.length > 0) {
     const createReleaseYears = (years: Map<string, number>): TreeItem => {
       const root = createYearsRoot(
         'Release years',
-        albums,
-        (album) => years.get(album.url.toString()),
+        releases,
+        (album) => years.get(album.url?.toString() ?? ''),
         createReleaseItem,
         true,
       );
@@ -148,18 +196,20 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
       };
     };
     const immediateYears = new Map(
-      albums.flatMap((album) => {
+      releases.flatMap((album) => {
         const year = album.metadata?.year;
         return typeof year === 'number' && Number.isFinite(year)
-          ? [[album.url.toString(), year] as const]
+          ? [[album.url?.toString() ?? '', year] as const]
           : [];
       }),
     );
     const initial = createReleaseYears(immediateYears);
-    if (albums.some((album) => !immediateYears.has(album.url.toString()))) {
+    if (
+      releases.some((album) => !immediateYears.has(album.url?.toString() ?? ''))
+    ) {
       initial.childrenLoaded = false;
       initial.loadChildren = async () => {
-        const knownYears = await loadStoredReleaseYears(albums);
+        const knownYears = await loadStoredReleaseYears(releases);
         return createReleaseYears(knownYears);
       };
     } else {
@@ -170,9 +220,9 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
   if (catalog.addedAt && catalog.addedYearSource) {
     const addedYears = createYearsRoot(
       'Added years',
-      albums,
+      releases,
       (album) => {
-        const addedAt = addedAtByAlbum.get(album);
+        const addedAt = addedAtByRelease.get(album);
         return addedAt ? new Date(addedAt).getUTCFullYear() : undefined;
       },
       createReleaseItem,
@@ -181,12 +231,12 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     if (addedYears) roots.push(addedYears);
   }
   roots.push(
-    createReleasesRoot('Releases: Reverse', () => [...albums].reverse()),
+    createReleasesRoot('Releases: Reverse', () => [...releases].reverse()),
     createReleasesRoot('Releases: Title A–Z', () =>
-      [...albums].sort(compareTitles),
+      [...releases].sort(compareTitles),
     ),
     createReleasesRoot('Releases: Title Z–A', () =>
-      [...albums].sort((a, b) => compareTitles(b, a)),
+      [...releases].sort((a, b) => compareTitles(b, a)),
     ),
   );
   const remaining = new Map(
@@ -227,16 +277,25 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
 }
 
 async function loadStoredReleaseYears(
-  albums: Album[],
+  releases: BandRelease[],
 ): Promise<Map<string, number>> {
-  const storedAlbums = await BandcampStorage.getAlbumsRawDataByIds(
-    albums.map((album) => album.id),
-  ).catch((error) => {
+  const [storedAlbums, storedTracks] = await Promise.all([
+    BandcampStorage.getAlbumsRawDataByIds(
+      releases
+        .filter((release) => release instanceof Album)
+        .map((album) => album.id),
+    ),
+    BandcampStorage.getTracksByTrackIds(
+      releases
+        .filter((release) => release instanceof Track)
+        .map((track) => track.id),
+    ).then((tracks) => tracks.map((track) => track.toRawData())),
+  ]).catch((error) => {
     console.warn('[Release years] Stored album lookup failed:', error);
-    return [];
+    return [[], []];
   });
   const storedYears = new Map(
-    storedAlbums.map((album) => [
+    [...storedAlbums, ...storedTracks].map((album) => [
       album.url,
       album.metadata?.published
         ? new Date(album.metadata.published).getUTCFullYear()
@@ -244,14 +303,14 @@ async function loadStoredReleaseYears(
     ]),
   );
   const years = new Map<string, number>();
-  for (const album of albums) {
+  for (const album of releases) {
     const metadataYear = album.metadata?.year;
     const year =
       typeof metadataYear === 'number' && Number.isFinite(metadataYear)
         ? metadataYear
-        : storedYears.get(album.url.toString());
+        : storedYears.get(album.url?.toString());
     if (typeof year === 'number' && Number.isFinite(year)) {
-      years.set(album.url.toString(), year);
+      years.set(album.url?.toString() ?? '', year);
     }
   }
   return years;
@@ -259,30 +318,30 @@ async function loadStoredReleaseYears(
 
 function createYearsRoot(
   label: string,
-  albums: Album[],
-  getYear: (album: Album) => number | undefined,
-  createReleaseItem: (album: Album) => TreeItem,
+  releases: BandRelease[],
+  getYear: (album: BandRelease) => number | undefined,
+  createReleaseItem: (album: BandRelease) => TreeItem,
   includeUnknown: boolean = false,
 ): TreeItem | null {
-  const albumsByYear = new Map<number, Album[]>();
-  const unknown: Album[] = [];
-  for (const album of albums) {
+  const releasesByYear = new Map<number, BandRelease[]>();
+  const unknown: BandRelease[] = [];
+  for (const album of releases) {
     const year = getYear(album);
     if (typeof year !== 'number' || !Number.isFinite(year)) {
       unknown.push(album);
       continue;
     }
-    const releases = albumsByYear.get(year) ?? [];
+    const releases = releasesByYear.get(year) ?? [];
     releases.push(album);
-    albumsByYear.set(year, releases);
+    releasesByYear.set(year, releases);
   }
 
-  const groups = [...albumsByYear.keys()]
+  const groups = [...releasesByYear.keys()]
     .sort((a, b) => b - a)
     .map((year) => ({
       ...createReleaseGroup(
         String(year),
-        albumsByYear.get(year) ?? [],
+        releasesByYear.get(year) ?? [],
         createReleaseItem,
       ),
       image: ICON_CALENDAR_DAYS,
@@ -303,22 +362,22 @@ function createYearsRoot(
 
 function createReleaseGroup(
   label: string,
-  albums: Album[],
-  createReleaseItem: (album: Album) => TreeItem,
+  releases: BandRelease[],
+  createReleaseItem: (album: BandRelease) => TreeItem,
 ): TreeItem {
   const create = () =>
     items(
       label,
-      albums.map((album) => ({
+      releases.map((album) => ({
         ...createReleaseItem(album),
         includeInFilterSuggestions: false,
       })),
     ).build();
-  if (albums.length <= RELEASE_BATCH_SIZE) return create();
+  if (releases.length <= RELEASE_BATCH_SIZE) return create();
   return items(label, [])
     .makeLazy(async () => create())
     .apply((group) => {
-      group.childrenCount = albums.length;
+      group.childrenCount = releases.length;
     })
     .build();
 }

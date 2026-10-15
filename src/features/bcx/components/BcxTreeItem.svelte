@@ -13,6 +13,8 @@ import { getErrorMessage } from 'src/utils/getErrorMessage';
 import type { Snippet } from 'svelte';
 import { pinnedPageFromItem } from '../pinnedPage';
 import BcxPinButton from './BcxPinButton.svelte';
+import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
+import BcxReleaseItemActions from './BcxReleaseItemActions.svelte';
 import { createItemUrl } from './itemUrl';
 
 interface Props {
@@ -110,7 +112,7 @@ async function openBrowserPage(url: string) {
 {/snippet}
 
 {#snippet treeItemButtons()}
-  {#if primaryButtons.length || pinPage}
+  {#if primaryButtons.length || pinPage || itemActions || item.previewInformation || item.bandPreview}
 <div class="item-buttons">
   {#each primaryButtons as button}
     {@render treeItemButton(button)}
@@ -120,6 +122,14 @@ async function openBrowserPage(url: string) {
     {@render treeItemButton(button)}
   {/each}
   {#if browserButton}{@render treeItemButton(browserButton)}{/if}
+  {#if itemActions}
+    {@render itemActions(item)}
+  {:else if item.bandPreview}
+    <BcxPreviewItemActions url={createItemUrl(item.bandPreview.url)} image={item.bandPreview.image ?? item.image} name={item.bandPreview.name} kind="band" copyValue={item.bandPreview.name} previewItem={item} iconOnly />
+  {/if}
+  {#if item.previewInformation}
+    <BcxReleaseItemActions {item} information={item.previewInformation} iconOnly />
+  {/if}
 </div>
   {/if}
 {/snippet}
@@ -185,7 +195,6 @@ async function openBrowserPage(url: string) {
 {#if showActions}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
   {@render treeItemButtons()}
-  {@render itemActions?.(item)}
   {#if childrenCount > 0}
     <span class="item-count text-gray-400">{childrenCount}</span>
   {/if}
@@ -308,6 +317,7 @@ async function openBrowserPage(url: string) {
 :global(.tree-item:focus) .item-buttons,
 :global(.tree-item:focus-within) .item-buttons,
 :global(.tree-item.focused) .item-buttons,
+.item-buttons:has(:global([data-state='open'])),
 :global(.tree-item:hover) .item-external-link-icon,
 :global(.tree-item:focus) .item-external-link-icon,
 :global(.tree-item:focus-within) .item-external-link-icon,

@@ -75,6 +75,13 @@ export type LoadOptions = {
   signal?: AbortSignal;
 };
 
+export interface BandcampResponseCapture {
+  endpoint: string;
+  method: 'GET' | 'POST';
+  request?: object;
+  response: unknown;
+}
+
 interface BandcampTransport {
   getJson<T>(url: string, signal?: AbortSignal): Promise<T>;
   postJsonString<T>(
@@ -150,8 +157,50 @@ export class PageCollection {
   private pageData?: CollectionPageData;
   private summary?: CollectionSummary | null;
 
-  constructor(args?: { doc?: Document; transport?: BandcampTransport }) {
-    this.transport = args?.transport ?? new FetchBandcampTransport();
+  constructor(args?: {
+    doc?: Document;
+    transport?: BandcampTransport;
+    captureResponse?: (capture: BandcampResponseCapture) => Promise<void>;
+  }) {
+    const transport = args?.transport ?? new FetchBandcampTransport();
+    const capture = args?.captureResponse;
+    if (!capture) {
+      this.transport = transport;
+      return;
+    }
+    const record = async (value: BandcampResponseCapture) => {
+      try {
+        // Await the capture before consumers can enrich or otherwise mutate a response.
+        await capture(value);
+      } catch (error) {
+        console.warn('BCX could not capture a Bandcamp response:', error);
+      }
+    };
+    this.transport = {
+      getJson: async <T>(url: string, signal?: AbortSignal): Promise<T> => {
+        const response = await transport.getJson<T>(url, signal);
+        await record({ endpoint: url, method: 'GET', response });
+        return response;
+      },
+      postJsonString: async <T>(
+        url: string,
+        payload: object,
+        signal?: AbortSignal,
+      ): Promise<T> => {
+        const response = await transport.postJsonString<T>(
+          url,
+          payload,
+          signal,
+        );
+        await record({
+          endpoint: url,
+          method: 'POST',
+          request: payload,
+          response,
+        });
+        return response;
+      },
+    };
   }
 
   /** Parse #pagedata[data-blob] once */

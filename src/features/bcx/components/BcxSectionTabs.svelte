@@ -388,10 +388,6 @@ async function handleCloseAutoFocus(event: Event) {
     min-width: 0;
     margin: 0 var(--bcx-preview-gutter, 8px) 8px;
     padding: 4px;
-    border: 1px solid #4b5563;
-    border-radius: 8px;
-    background: rgb(17 24 39 / 60%);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 15%);
   }
   :global(.bcx-visible-tabs) {
     display: flex;

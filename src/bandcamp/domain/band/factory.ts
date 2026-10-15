@@ -1,23 +1,23 @@
-import { decompress } from '../compressor';
+import type { Album } from '../album/album';
 import type { MusicAlbumSchema } from '../page/schema';
-import { bandDataCompressor } from '../shared';
+import type { Track } from '../track/track';
 import { Band } from './band';
-import { type CompressedBandData, type RawBandData } from './compressor';
+import type { RawBandData } from './data';
 import { BandMetadata } from './metadata';
 
 export class BandFactory {
-  static fromRawData(rawData: RawBandData): Band {
+  static fromRawData(
+    rawData: RawBandData,
+    albums: Album[] = [],
+    tracks: Track[] = [],
+  ): Band {
     return Band.create(
       rawData.id,
       rawData.name,
       rawData.url,
       rawData.artworkId,
-      BandMetadata.fromRawData(rawData.metadata),
+      BandMetadata.fromRawData(rawData.metadata, albums, tracks),
     );
-  }
-
-  static createRawData(compressedData: CompressedBandData): RawBandData {
-    return decompress(compressedData, bandDataCompressor) as RawBandData;
   }
 
   static fromMusicAlbumSchema(schema: MusicAlbumSchema): Band {

@@ -4,6 +4,7 @@ import {
   validateItems,
 } from '../domain/fanData/library';
 import { PageCollection } from '../domain/page/PageCollection';
+import { captureFanPageData, createFanResponseCapture } from './fanSyncDebug';
 
 export async function loadFanData(account: unknown, dataset: unknown) {
   if (
@@ -11,8 +12,14 @@ export async function loadFanData(account: unknown, dataset: unknown) {
     !(isFanDataset(dataset) || dataset === 'identity')
   )
     throw new Error('Invalid sync request.');
-  const page = new PageCollection();
+  const page = new PageCollection({
+    captureResponse:
+      dataset === 'identity'
+        ? undefined
+        : createFanResponseCapture(account, dataset),
+  });
   const data = page.getPageData();
+  await captureFanPageData(account, data);
   if (
     location.hostname !== 'bandcamp.com' ||
     data?.fan_data?.fan_id !== account.fanId ||
@@ -44,7 +51,9 @@ export async function loadFanData(account: unknown, dataset: unknown) {
     typeof count !== 'object' ||
     !('item_count' in count) ||
     typeof count.item_count !== 'number' ||
-    items.length !== count.item_count
+    // Bandcamp can count bands that its API no longer returns. Following bands
+    // are complete when the validated pagination reaches more_available=false.
+    (dataset !== 'following-bands' && items.length !== count.item_count)
   ) {
     throw new Error(
       `Incomplete ${dataset} data. Saved data is unchanged; retry sync.`,

@@ -1184,7 +1184,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   width: 100%;
   cursor: pointer;
   padding-right: 0;
-  padding-left: 1.5rem;
+  padding-left: 0.5rem;
   padding-block: 0.25rem;
   color: rgb(229 231 235);
   text-align: left;

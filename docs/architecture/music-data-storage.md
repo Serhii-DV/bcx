@@ -1,123 +1,185 @@
 # Music data storage flows
 
-## Writing music data
+## Music library
 
-Album and track pages provide JSON-LD schema data in the HTML. The content script turns that data into BCX models, then saves compressed records in Chrome local storage.
+Bandcamp profiles, albums, tracks, and URL references are stored in the
+extension-origin IndexedDB database `bcx-library`, version 4.
+The same database stores account-scoped fan lists, memberships, and availability.
+Chrome local storage retains settings, pinned navigation, bounded logs, and sync-job progress.
+Chrome session storage retains disposable tree snapshots and a small music-library
+change notification. No existing local music data is imported or read as a fallback.
+
+| Object store | Key | Indexes |
+| --- | --- | --- |
+| bands | data.id | nameKey (keys.name, non-unique), savedOrder (storage.savedOrder) |
+| albums | data.id | bandId (data.bandId), artistKeys (keys.artists, multi-entry), titleArtist (keys.title + keys.artistCredit), savedOrder (storage.savedOrder) |
+| tracks | data.id | albumId (data.albumId), savedOrder (storage.savedOrder) |
+| urlRefs | URL UUID | entity (store + id) |
+| meta | key | none |
+| fanAccounts | fanId | none |
+| fanLists | fanId + dataset | account, datasetOrder (dataset + updatedOrder) |
+| fanCollection | fanId + entityKey | account, current (fanId + current) |
+| fanWishlist | fanId + entityKey | account, current (fanId + current) |
+| fanFollowingBands | fanId + entityKey | account, current (fanId + current) |
+| fanFollowingGenres | fanId + entityKey | account, current (fanId + current) |
+| fanAvailability | fanId + entityKey | account |
+
+Bands, albums, and tracks use a `{ data, keys, storage }` record. `data` contains
+only the model's raw data, including its ID and any music metadata. `keys` holds
+derived normalized search values: bands use `name`; albums use `artists`, `title`,
+and `artistCredit`; tracks use an empty object because their indexes need no
+derived values. `storage` holds `savedAt` (the latest save time) and `savedOrder`
+(the initial insertion order). Search keys are rebuilt from the final merged
+data on every save. IDs and relationships are indexed directly under `data`
+rather than duplicated in `keys`.
+
+The schema is created from scratch, with no migration or compatibility reads.
+Delete the existing `bcx-library` database before loading this schema; clearing
+its records alone does not recreate object-store key paths or indexes.
+
+Band IDs identify Bandcamp profiles, which can belong to labels. Album artist
+credits remain independent of the hosting band. Normalized name keys support
+lookups without merging identities. Albums retain ordered track IDs. Band metadata
+stores one ordered `releases` array of `{ type: 'album' | 'track', id: number }`
+references to the existing album and track stores, preserving mixed music-page
+order. In-memory album and track views derive from that catalog; album track lists
+remain separate. Band records use only typed release references; the database is
+built from scratch, without migration or compatibility reads for older band formats.
+Missing `releases` means an unscanned summary and preserves a saved catalog;
+an explicitly empty array clears it. No database schema upgrade is required for
+this model-field change. Artwork IDs and URLs are retained, but image bytes and audio are not
+archived.
+
+## Writing and reading
+
+Content scripts, injected panels, and extension pages use the typed
+`MUSIC_LIBRARY` message through `requestMusicLibrary`. The background worker
+validates requests and owns all IndexedDB access. Database modules do not import
+DOM-dependent page state. IndexedDB accessed directly from a content script would
+belong to the host page, not the extension.
 
 ```mermaid
 flowchart TB
-    html[Bandcamp album or track page<br/>JSON-LD script]
-    schema[Parse JSON and select<br/>MusicAlbum or MusicRecording schema]
-    html --> schema
-
-    schema -->|Album page| albumFactory[AlbumFactory and TrackFactory]
-    schema -->|Track page| trackFactory[TrackFactory]
-    albumFactory --> album[Album with Track objects]
-    trackFactory --> track[Track object]
-
-    album --> saveAlbum[BandcampStorage.saveAlbum]
-    track --> saveTrack[BandcampStorage.saveTrack]
-    saveAlbum --> raw[toRawData: plain fields]
-    saveTrack --> raw
-    raw --> compressed[Compress: short field names and URLs]
-    compressed --> keyed[Keyed records and URL lookups]
-    keyed --> wrapper[Storage.set]
-    wrapper --> local[chrome.storage.local]
+    page[Bandcamp page data] --> models[Existing models and factories]
+    models --> client[BandcampStorage and fan-library clients]
+    panel[Side panel and injected panels] --> client
+    client -->|Validated raw records and queries| worker[Background service worker]
+    worker --> database[Extension IndexedDB]
+    database -->|Records and indexed matches| worker
+    worker --> client
+    worker -->|Committed revision| session[Chrome session storage]
+    session -->|Change notification| panel
 ```
 
-`saveAlbum` includes the album and any tracks that are not already stored. An album record keeps track IDs rather than full Track objects. Stored records use `/a/{id}` and `/t/{id}` keys, with URL lookup keys pointing to those records when a URL is available.
+A save commits related profiles, albums, tracks, URL references, and the durable
+library revision together in a readwrite transaction. Only successful transaction
+completion is reported as a save. Missing or empty catalog-summary fields preserve
+richer saved page metadata. Basic summaries do not replace detailed release data.
+URLs are canonicalized before recording UUID references; earlier aliases can still
+resolve the same entity. Track removal also removes its URL references.
 
-This chart covers album and track pages. The artist music page builds band data from page content through a separate path.
+URL references contain only `uuid`, `store`, and `id`; the URL remains on the
+entity's `data` object.
 
-## Reading music data
+Artist/title queries use database indexes rather than reading all saved albums.
+The database layer unwraps `record.data` for every read, URL lookup, and indexed
+query; search keys and storage bookkeeping remain internal to that layer.
+`BandcampStorage` receives validated raw data and reconstructs models through
+their raw-data factories. Band and album reads load related release and
+track IDs as needed; there is no compression adapter or local-storage model
+serialization. IndexedDB maintains the band name index; the old `/bands` map and
+its rebuild command have been removed. Band lookups by name can return multiple
+profiles.
 
-The side panel and content scripts read saved albums and tracks through `BandcampStorage`.
+Every committed write records a revision in IndexedDB and publishes it at
+`/music-library/revision` in Chrome session storage. Mounted previews invalidate
+their query caches and reload saved details on changes. Band and music-dependent
+fan subtree snapshots include the revision while retaining their keys, TTLs, and
+serialization. Following Genres keeps its fan-data revision alone.
+Connections close on version changes; blocked upgrades and storage failures
+produce explicit errors. No permission removes database quota or eviction limits.
 
-```mermaid
-flowchart TB
-    request[Side panel or content script requests saved music]
-    read[BandcampStorage read methods]
-    lookup[Choose an entity ID or saved URL reference]
-    get[Storage.get]
-    local[chrome.storage.local]
-    records[Compressed album and track records]
-    expanded[Decompress field names and URLs]
-    raw[RawAlbumData or RawTrackData]
-    models[Factories rebuild Album and Track objects]
-    result[Music data returned to the caller]
+## Storage reporting
 
-    request --> read --> lookup --> get --> local
-    local --> records --> expanded --> raw --> models --> result
-```
+The Storage panel includes Music library in Current and History. Database store
+counts are measured in one readonly transaction, with separate categories for
+Collection, Wishlist, Following Bands, and Following Genres. Byte usage and quota
+use
+`navigator.storage.estimate()` for the extension origin and are labeled as
+estimates; per-store byte sizes are unavailable. Category size charts omit those
+unknown sizes. Chrome local, session, and sync measurements remain separate.
 
-A URL reference requires a first storage lookup to find its entity key. Album reads can then follow stored track IDs, load those track records, and attach the reconstructed Tracks to the Album. Direct track reads rebuild a Track from its compressed record.
+## Fan lists and availability
 
-## Fan library and unavailable entries
+Collection, Wishlist, Following Bands, and Following Genres use IndexedDB through
+the validated `FAN_LIBRARY` protocol. The background worker calls the same database
+handler directly during sync, avoiding messages sent back to itself.
 
-`src/bandcamp/domain/fanData/library.ts` keeps the original `/collection`,
-`/wishlist`, `/following-bands`, and `/following-genres` array fields. Collection,
-Wishlist, and Following Bands display these saved entries before the first sync,
-without an import step. The array shape stays compatible with existing readers.
-Account-scoped membership and saved history remain at `/fan-data/account/{fanId}`. Each dataset retains all previously seen records and a
-separate ordered list of current IDs. Missing IDs are never deleted. Releases use
-`a:{id}` or `t:{id}`, bands use `band:{id}`, and genre identities use their tag URL.
-Successful snapshots merge fields; absent/null fields do not erase saved metadata.
-Existing detailed `BandcampStorage` records remain intact.
+`fanAccounts` stores verified fan identity and an account revision.
+`fanLists` stores the successful sync time, current/saved counts, dataset revision,
+and an update-order counter. Reads without account context select the most recently
+saved account for each dataset; explicit fan IDs always select only that account.
+There are no shared-array copies or ownership documents in Chrome local storage.
 
-`/fan-data/account/{fanId}/unavailable` is a separate registry of confirmed
-unavailable references, with URLs, timestamps and reasons. The account's
-`/availability` registry also records accessible and inconclusive checks. Only
-HTTP 404/410 at the requested URL adds an Unavailable entry. Redirects, challenges,
-unsupported custom domains and request failures remain inconclusive. An accessible
-Bandcamp page removes an earlier Unavailable status. List membership is independent:
-a missing item can still be accessible (for example, an unfollowed band).
+`fanCollection`, `fanWishlist`, `fanFollowingBands`, and `fanFollowingGenres`
+store one membership record per account and entity key in their own dataset's
+store. The dataset is implied by the store rather than repeated in each record.
+Each entry contains current membership (0/1), source order, stable history order,
+firstSeenAt/lastSeenAt, and basic list-provided details. Entity keys remain
+`a:{id}` and `t:{id}` for releases, and `b:{band_id}` for bands. Genres use
+`g:{path}{query}`: parse the tag-page URL, drop its origin and leading slash,
+remove the leading `discover/` segment, sort query parameters by name, and omit
+the fragment. Other path segments, including `tag/`, remain part of the key.
+For example, `http://bandcamp.com/discover/dark-ambient?tab=all_releases&f=digital`
+becomes `g:dark-ambient?f=digital&tab=all_releases`. The original URL remains
+unchanged in `item.tag_page_url`.
+These summaries support unvisited releases and profiles; detailed music records
+remain separate and are not overwritten by list sync. Dataset-specific added,
+purchased, and followed dates remain in each membership's source item.
 
-Sync checks missing records and previously unavailable records in the selected
-list. The Sync tab also offers a check of all saved release/band pages, including
-items still in current lists. Oldest/unattempted checks run first so retries after
-a timeout make progress. Results are saved incrementally. Genres retain historical
-membership but do not receive page-availability classifications.
+Complete snapshots are validated before starting a transaction. Publishing updates
+memberships, list metadata/counts, account metadata, and a durable fan revision in
+one transaction. Missing items become former members and remain saved. Non-empty
+incoming fields enrich existing summaries. There are no staging snapshots and no
+import or fallback from previous Chrome local data. A failed transaction leaves
+previous membership and metadata intact. Fresh databases create all four dataset
+stores directly. After recreating the database, sync again to populate the lists.
 
-Collection, Wishlist, and Following Bands show all saved entries in their first
-catalog tab. Their Unavailable tab appears before No longer listed. Following
-Genres shows every saved genre in All and filters former follows in No longer
-followed. Following badges use current membership, so a saved band missing from
-the latest list is not shown as currently followed.
-One top-level Sync tab manages all four fan datasets. It offers full or individual
-list sync, saved-page availability checks, job progress, errors, and each list's
-last sync time. While a job runs or needs attention, fan-data panels show a compact
-status link back to Sync. Artist and release pages identify the signed-in fan
-through `identities.fan.id` (with a `fan_id` fallback). Without a verified account,
-the Sync controls remain visible but disabled with a sign-in message, and empty
-archive tabs remain visible.
+`fanAvailability` stores the latest check and, when applicable, a confirmed
+unavailable result together in one record. Only HTTP 404/410 at the requested URL
+confirms unavailability. An accessible page clears that result. Inconclusive
+redirects, challenges, unsupported custom domains, and request failures retain an
+earlier confirmed result. Availability is independent of list membership. Genres
+retain historical membership without page-availability classification.
 
-History keeps All, Bands, Releases, and Tracks subtabs. Search stays within the
-selected type, and pagination remains in batches of 50.
-After the Collection page verifies the account and returns a complete dataset,
-sync validates the response and stages it at
-`/fan-data/account/{fanId}/staging/{dataset}`. It merges the existing shared array
-and account history by stable ID, then publishes the merged array, account metadata,
-and ownership revision in one storage write. Fresh items come first; saved missing
-entries remain afterward. Failed validation or publishing leaves prior saved data
-intact; staging is removed after the attempt and is never read by the panels.
+A committed snapshot or availability batch publishes
+`/fan-data/revision` in Chrome session storage with the fan ID, affected datasets,
+and durable revision. Open panels debounce changes and refresh matching account
+views; signed-out views can follow the newest saved dataset. Sync timestamps and
+counts read small `fanLists` records, while current membership queries use the
+dataset store's compound current index. Archive views read just their dataset
+and account's availability records. Collection, Wishlist, and Following Bands retain Unavailable
+and No longer listed views; Following Genres retains All and No longer followed.
 
-`/fan-data/saved-list-owners` records the fan ID and revision for each shared array.
-Previously unassigned arrays are adopted during a verified sync. A list already
-owned by another account is not adopted; that account retains its own saved copy.
-When switching accounts, panels use the matching account history if the shared
-array belongs to another fan. Ordinary sync now includes older data automatically;
-the former explicit import action remains supported only for message compatibility.
+One top-level Sync tab manages all four datasets. It verifies the signed-in account,
+requests complete pagination through an inactive Collection tab, and preserves
+already committed datasets on cancellation or failure. Availability checks run
+oldest/unattempted records first, save bounded batches, and flush completed checks
+before cancelling. Only still-owned, inactive temporary tabs are closed.
 
-`/fan-data/sync-job` stores job progress and errors. An interrupted worker marks the
-job interrupted on its next startup; retry preserves already committed data.
-The manifest requests `unlimitedStorage` because the retained music archive and
-staging snapshots can outgrow Chrome's default 10 MB local-storage quota. Reload
-the extension after this manifest change. Storage callbacks normalize Chrome's
-plain `runtime.lastError` objects into JavaScript Errors, preserving their message.
-Sync errors include the failing step and any datasets already published, and the
-panel suppresses the initial saved-list notice while a failure is displayed.
-Storage failures are reported as errors rather than successful syncs.
-Saved artwork URLs are retained, but image bytes and audio are not archived.
+Following Bands completeness follows the API's terminal `more_available: false`
+response, with malformed responses and repeated or missing pagination tokens
+rejected. Its page-level `item_count` can include bands omitted by the API and
+does not gate a completed snapshot. Other datasets still require their expected
+item count. Saved historical records remain available when absent from a snapshot.
+
+`/fan-data/sync-job` remains a small Chrome local record for job progress,
+errors, protocol version, and tab cleanup. Worker recovery marks interrupted jobs
+for retry. Logs and settings also remain local; retained list data does not consume
+the local storage quota. The manifest does not request `unlimitedStorage`, so
+database quota and eviction rules still apply. Reload BCX after updates and refresh
+Bandcamp pages. Storage failures remain explicit errors, never successful syncs.
+No music, fan-list, or pin export/import is provided.
 
 Sync requests check the background worker's protocol version before starting a
 job. Jobs carry that version so the UI can identify saved errors produced by an
@@ -132,3 +194,35 @@ originating tab. Background side-panel configuration ignores missing URLs and
 unchanged enablement, avoiding redundant reconfiguration during background work.
 Concurrent storage-read timings use elapsed timestamps rather than shared
 console timer labels.
+
+## Temporary Sync debugging
+
+Sync logs the original fan-page JSON and every successfully decoded API response
+to the extension service worker's console. Debug data is not written to session
+storage or IndexedDB, and no viewer, copy, or debug-toggle controls are added.
+
+The `/debug/fan-sync/page-data` entry logs the original page blob before account
+validation. API entries use labels of the form
+`/debug/fan-sync/<dataset>/<runId>/<responseNumber>`, before response validation
+or membership enrichment. Datasets are `collection`, `wishlist`,
+`following-bands`, and `following-genres`. Each pagination response is logged
+separately. Datasets satisfied entirely by the page's item cache make no API
+request; their original objects are included in the page-data entry.
+
+Each entry contains its timestamp, expected fan ID, and source page URL.
+API entries also identify the endpoint, request method/payload, run ID, and
+numeric response number. Expand `data` to inspect the full original object.
+Chrome messaging serializes the entry before content-side enrichment, so later
+mutations do not change the logged JSON snapshot.
+
+Run IDs use ISO 8601 UTC timestamps, such as `2026-10-14T12:34:56.789Z`.
+Response label suffixes start at `0001` and are zero-padded to at least four
+digits; the `page` metadata remains numeric. Runs started in the same
+millisecond within one content-script context advance the timestamp by one
+millisecond to keep labels distinct.
+
+Open BCX's service worker DevTools from `chrome://extensions` before starting
+Sync, select Console, and filter for `/debug/fan-sync/`. Output goes to the
+worker rather than the temporary page console so closing the Sync tab does not
+hide it. Console output has no stored debug history or session-storage quota.
+Logging failures report a warning without changing normal Sync success/failure.

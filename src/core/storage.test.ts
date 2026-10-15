@@ -7,7 +7,7 @@ import {
   rstest,
 } from '@rstest/core';
 import { console as logger } from 'src/utils/console';
-import { type StorableData, Storage } from './storage';
+import { Storage, type StorageDataMap } from './storage';
 
 describe('Storage', () => {
   const originalChrome = globalThis.chrome;
@@ -91,9 +91,9 @@ describe('Storage', () => {
     await expect(storage.getBooleanByKey('missing')).resolves.toBeUndefined();
   });
 
-  it('sets keyed data and storable data objects', async () => {
+  it('sets keyed data and plain data maps', async () => {
     await storage.set('album', { title: 'Moon Safari' });
-    await storage.set(createStorableData({ artist: { name: 'Air' } }));
+    await storage.set({ artist: { name: 'Air' } });
 
     await expect(storage.getAll()).resolves.toEqual({
       enabled: true,
@@ -141,8 +141,8 @@ function setChromeLastError(lastError?: chrome.runtime.LastError) {
   });
 }
 
-function createStorageArea(initial: StorableData = {}) {
-  let data: StorableData = { ...initial };
+function createStorageArea(initial: StorageDataMap = {}) {
+  let data: StorageDataMap = { ...initial };
 
   return {
     get: rstest.fn((keys?: string | string[] | null, callback?: Function) => {
@@ -155,7 +155,7 @@ function createStorageArea(initial: StorableData = {}) {
 
       return Promise.resolve(result);
     }),
-    set: rstest.fn((items: StorableData, callback?: Function) => {
+    set: rstest.fn((items: StorageDataMap, callback?: Function) => {
       data = { ...data, ...items };
       callback?.();
       return Promise.resolve();
@@ -181,7 +181,7 @@ function createStorageArea(initial: StorableData = {}) {
   };
 }
 
-function selectData(data: StorableData, keys?: string | string[] | null) {
+function selectData(data: StorageDataMap, keys?: string | string[] | null) {
   if (keys === null || keys === undefined) {
     return { ...data };
   }
@@ -190,14 +190,8 @@ function selectData(data: StorableData, keys?: string | string[] | null) {
     return { [keys]: data[keys] };
   }
 
-  return keys.reduce<StorableData>((result, key) => {
+  return keys.reduce<StorageDataMap>((result, key) => {
     result[key] = data[key];
     return result;
   }, {});
-}
-
-function createStorableData(data: StorableData) {
-  return {
-    toStorableData: () => data,
-  };
 }

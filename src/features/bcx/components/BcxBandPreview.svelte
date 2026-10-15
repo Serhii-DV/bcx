@@ -1,4 +1,5 @@
 <script lang="ts">
+import { watchMusicLibrary } from 'src/bandcamp/domain/storage/musicLibrary';
 import {
   type BandPreview,
   createBandAboutFallback,
@@ -16,7 +17,15 @@ let treeData = $state<TreeData>();
 let loading = $state(false);
 let error = $state('');
 
+let libraryRevision = $state(0);
+$effect(() =>
+  watchMusicLibrary(() => {
+    libraryRevision += 1;
+  }),
+);
+
 $effect(() => {
+  libraryRevision;
   const selected = band;
   let cancelled = false;
   about = undefined;

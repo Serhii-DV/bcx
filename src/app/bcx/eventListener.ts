@@ -1,8 +1,6 @@
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
-import { BandIndexData } from 'src/bandcamp/domain/storage/bandIndexData';
 import {
   SIDE_PANEL_TOUR_COMPLETE_KEY,
-  StorageKey,
   TOUR_COMPLETE_KEY,
 } from 'src/bandcamp/domain/storageKey';
 import { storage } from 'src/core/shared';
@@ -19,7 +17,6 @@ type BCXActionHandler = (data: BCXEventData) => Promise<void> | void;
 const actionHandlers: Record<string, BCXActionHandler> = {
   clearAlbumData,
   getStorageSize,
-  indexBands,
   resetTour,
   sessionStorageClear,
 };
@@ -50,18 +47,15 @@ async function clearAlbumData(data: BCXEventData) {
   if (typeof albumId !== 'number') return;
 
   const albumsRawData = await BandcampStorage.getAlbumsRawDataByIds([albumId]);
-  const trackKeys = albumsRawData.flatMap((albumRawData) =>
-    StorageKey.trackKeys(albumRawData.trackIds),
-  );
-
-  await storage.remove(trackKeys);
+  const trackIds = albumsRawData.flatMap((album) => album.trackIds);
+  await BandcampStorage.removeTracks(trackIds);
 
   window.postMessage(
     {
       source: 'BCX',
       action: BCX_LOGGABLE_ACTION_RESPONSE_NAME,
       albumId,
-      response: trackKeys,
+      response: trackIds,
     },
     '*',
   );
@@ -78,13 +72,6 @@ async function getStorageSize() {
     sizeInKB: (size / 1024).toFixed(2) + ' KB',
     sizeInMB: (size / (1024 * 1024)).toFixed(2) + ' MB',
   });
-}
-
-async function indexBands() {
-  const bandIndexData = await BandIndexData.refresh();
-  postLoggableActionResponse(
-    Object.keys(bandIndexData).length + ' bands indexed',
-  );
 }
 
 async function resetTour() {

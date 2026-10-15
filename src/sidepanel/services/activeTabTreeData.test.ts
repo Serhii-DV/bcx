@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { Band } from 'src/bandcamp/domain/band/band';
-import { libraryKey } from 'src/bandcamp/domain/fanData/library';
+import { readLibrary, saveSnapshot } from 'src/bandcamp/domain/fanData/library';
 import { detectFanDataFromPageData } from 'src/bandcamp/domain/pageData/pageData';
-import { bandDataCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { Url } from 'src/core/url';
 import { createRootSectionTabs } from 'src/features/bcx/components/rootSectionTabs';
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
@@ -100,26 +100,48 @@ describe('active tab fan sections during navigation', () => {
         createRootSectionTabs(tree.items).map((tab) => tab.label),
       ).toContain('Unavailable');
     }
-    const currentGenre = { name: 'Metal', tag_page_url: '/tag/metal' };
+    const currentGenre = {
+      name: 'Metal',
+      tag_page_url:
+        'http://bandcamp.com/discover/metal?tab=all_releases&f=digital',
+    };
     const pastGenre = { name: 'Ambient', tag_page_url: '/tag/ambient' };
-    await chrome.storage.local.set({
-      '/following-genres': [currentGenre, pastGenre],
-      [libraryKey(42)]: {
-        version: 1,
-        account: { fanId: 42, username: 'listener' },
-        revision: 'sync-1',
-        lists: {
-          'following-genres': {
-            records: {
-              'genre:/tag/metal': currentGenre,
-              'genre:/tag/ambient': pastGenre,
-            },
-            current: ['genre:/tag/metal'],
-            syncedAt: '2026-09-29T00:00:00Z',
-          },
-        },
-      },
-    });
+    await saveSnapshot(
+      { fanId: 42, username: 'listener' },
+      'following-genres',
+      [currentGenre, pastGenre],
+    );
+    const initialGenres = (await readLibrary(42))?.lists['following-genres'];
+    expect(initialGenres?.current).toEqual([
+      'g:metal?f=digital&tab=all_releases',
+      'g:tag/ambient',
+    ]);
+    expect(
+      initialGenres?.records['g:metal?f=digital&tab=all_releases'],
+    ).toEqual(currentGenre);
+    const equivalentGenre = {
+      ...currentGenre,
+      tag_page_url: '/discover/metal?f=digital&tab=all_releases#top',
+    };
+    await expect(
+      saveSnapshot({ fanId: 42, username: 'listener' }, 'following-genres', [
+        currentGenre,
+        equivalentGenre,
+      ]),
+    ).rejects.toThrow('Duplicate item');
+    await saveSnapshot(
+      { fanId: 42, username: 'listener' },
+      'following-genres',
+      [equivalentGenre],
+    );
+    const updatedGenres = (await readLibrary(42))?.lists['following-genres'];
+    expect(updatedGenres?.current).toEqual([
+      'g:metal?f=digital&tab=all_releases',
+    ]);
+    expect(Object.keys(updatedGenres?.records ?? {})).toHaveLength(2);
+    expect(
+      updatedGenres?.records['g:metal?f=digital&tab=all_releases'],
+    ).toEqual(equivalentGenre);
     try {
       const genres = first.find(
         (section) => section.fanSync?.dataset === 'following-genres',
@@ -133,7 +155,6 @@ describe('active tab fan sections during navigation', () => {
         'Ambient',
       ]);
     } finally {
-      await chrome.storage.local.remove(['/following-genres', libraryKey(42)]);
       await chrome.storage.session.remove(
         TreeItemCache.subtreeKey(42, 'following-genres'),
       );
@@ -219,6 +240,22 @@ describe('active tab fan sections during navigation', () => {
 
 describe('active tab public profile', () => {
   it('passes the content-script profile into the actual About panel', async () => {
+    const album = Album.create(
+      'https://profile-test.bandcamp.com/album/release',
+      'Example',
+      'Release',
+      1,
+      1,
+      901,
+    );
+    const track = TrackFactory.create(
+      1,
+      1,
+      'Example',
+      'Single',
+      2,
+      'https://profile-test.bandcamp.com/track/single',
+    );
     const profile = {
       location: 'Copenhagen, Denmark',
       biography: 'Independent label.',
@@ -234,9 +271,16 @@ describe('active tab public profile', () => {
           name: 'Example',
           url: 'https://profile-test.bandcamp.com',
           artworkId: 0,
-          metadata: { created: '2020-01-01', currency: 'EUR' },
-          albums: [],
-          tracks: [],
+          metadata: {
+            created: '2020-01-01',
+            currency: 'EUR',
+            releases: [
+              { type: 'track', id: 1 },
+              { type: 'album', id: 1 },
+            ],
+          },
+          albums: [album.toRawData()],
+          tracks: [track.toRawData()],
         },
       },
     }));
@@ -257,6 +301,11 @@ describe('active tab public profile', () => {
       about?.children?.find((item) => item.label === 'Links')?.children?.[0]
         .href,
     ).toBe(profile.links[0].url);
+    expect(
+      tree?.items
+        .find((item) => item.label === 'Releases')
+        ?.children?.map((item) => item.href),
+    ).toEqual([track.url?.toString(), album.url.toString()]);
   });
 
   it('refreshes an older stored profile when live catalog data is unavailable', async () => {
@@ -299,9 +348,9 @@ describe('active tab public profile', () => {
       'https://other-profile.bandcamp.com',
       0,
     );
-    rs.spyOn(BandcampStorage, 'getAllCompressedBandData').mockResolvedValue([
-      bandDataCompressor.compress(otherBand.toRawData()),
-      bandDataCompressor.compress(band.toRawData()),
+    rs.spyOn(BandcampStorage, 'getAllBandsRawData').mockResolvedValue([
+      otherBand.toRawData(),
+      band.toRawData(),
     ]);
     getBands.mockClear();
     const fallback = await createActiveTabSidePanelData({

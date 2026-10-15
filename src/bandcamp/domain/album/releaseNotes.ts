@@ -1,7 +1,6 @@
-import type { CompressedData } from '../compressor';
 import type { MusicAlbumSchema } from '../page/schema';
 
-export interface ReleaseNotes extends CompressedData {
+export interface ReleaseNotes {
   description?: string;
   credits?: string;
   artistUrl?: string;

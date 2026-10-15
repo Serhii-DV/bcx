@@ -2,17 +2,20 @@ import { beforeEach, describe, expect, it, rs } from '@rstest/core';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandMetadata } from 'src/bandcamp/domain/band/metadata';
 import {
-  libraryKey,
+  readAvailability,
   readLibrary,
   readSavedItems,
   saveAvailability,
   saveAvailabilityBatch,
   saveSnapshot,
-  stagingKey,
-  unavailableKey,
 } from 'src/bandcamp/domain/fanData/library';
 import type { FollowingBandItem } from 'src/bandcamp/domain/page/PageCollection';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import {
+  completed,
+  openDatabase,
+  readRequest,
+} from 'src/bandcamp/domain/storage/database';
 import { sessionStorage, storage } from 'src/core/shared';
 import { loadBandPreview } from '../BandPreview';
 import { FollowingBandsTreeItem } from './FollowingBandsTreeItem';
@@ -65,7 +68,48 @@ describe('Following Bands', () => {
         token: `token-${index}`,
       }),
     );
-    await storage.set({ '/following-bands': bands });
+    await saveSnapshot(
+      { fanId: 42, username: 'listener' },
+      'following-bands',
+      bands,
+    );
+    const database = await openDatabase();
+    expect(database.version).toBe(4);
+    expect(database.objectStoreNames.contains('fanMemberships')).toBe(false);
+    const transaction = database.transaction(
+      [
+        'fanCollection',
+        'fanWishlist',
+        'fanFollowingBands',
+        'fanFollowingGenres',
+        'fanLists',
+      ],
+      'readonly',
+    );
+    const done = completed(transaction);
+    const following = transaction.objectStore('fanFollowingBands');
+    expect(following.keyPath).toEqual(['fanId', 'entityKey']);
+    expect(following.index('account').keyPath).toBe('fanId');
+    expect(following.index('current').keyPath).toEqual(['fanId', 'current']);
+    expect(await readRequest(following.index('account').count(42))).toBe(45);
+    expect(await readRequest(following.get([42, 'b:1']))).toMatchObject({
+      entityKey: 'b:1',
+      current: 1,
+      item: bands[0],
+    });
+    for (const name of ['fanCollection', 'fanWishlist', 'fanFollowingGenres'])
+      expect(await readRequest(transaction.objectStore(name).count())).toBe(0);
+    expect(
+      await readRequest(
+        transaction.objectStore('fanLists').get([42, 'following-bands']),
+      ),
+    ).toMatchObject({
+      dataset: 'following-bands',
+      currentCount: 45,
+      savedCount: 45,
+    });
+    await done;
+
     const key = TreeItemCache.subtreeKey('listener', 'following-bands');
     await sessionStorage.setByKey(key, {
       version: 8,
@@ -202,7 +246,6 @@ describe('Following Bands', () => {
           new Date('2020-01-01'),
           'EUR',
           [],
-          [],
           'Copenhagen',
           'Band biography',
           [
@@ -234,48 +277,47 @@ describe('Following Bands', () => {
         (await readLibrary(42))?.lists['following-bands']?.records ?? {},
       ),
     ).toHaveLength(45);
-    await expect(storage.getByKey('/following-bands')).resolves.toEqual([
+    await expect(readSavedItems('following-bands', 42)).resolves.toEqual([
       ...bands.slice(1),
       bands[0],
     ]);
     expect(
-      await storage.getByKey(stagingKey(42, 'following-bands')),
+      await storage.getByKey('/fan-data/account/42/staging/following-bands'),
     ).toBeUndefined();
     expect(
       (
         await FollowingBandsTreeItem.create('listener', 42)
       ).children?.[0].children?.at(-1)?.bandPreview?.following,
     ).toBe(false);
-    const beforeFailure = await storage.getByKey(libraryKey(42));
-    const originalSet = chrome.storage.local.set.bind(chrome.storage.local);
+    const beforeFailure = await readLibrary(42);
+    const originalPut = IDBObjectStore.prototype.put;
     const failedWrite = rs
-      .spyOn(chrome.storage.local, 'set')
-      .mockImplementation((items, callback) => {
-        if (libraryKey(42) in items) {
-          Object.defineProperty(chrome.runtime, 'lastError', {
-            value: { message: 'Storage quota exceeded' },
-            configurable: true,
-          });
-          callback?.();
-          Object.defineProperty(chrome.runtime, 'lastError', {
-            value: undefined,
-            configurable: true,
-          });
-          return Promise.resolve();
-        }
-        return callback ? originalSet(items, callback) : originalSet(items);
+      .spyOn(IDBObjectStore.prototype, 'put')
+      .mockImplementation(function (
+        this: IDBObjectStore,
+        value: unknown,
+        key?: IDBValidKey,
+      ) {
+        if (this.name === 'fanLists')
+          throw new DOMException(
+            'Storage quota exceeded',
+            'QuotaExceededError',
+          );
+        return key === undefined
+          ? originalPut.call(this, value)
+          : originalPut.call(this, value, key);
       });
     await expect(saveSnapshot(account, 'following-bands', [])).rejects.toThrow(
       'Storage quota exceeded',
     );
     failedWrite.mockRestore();
-    expect(await storage.getByKey(libraryKey(42))).toEqual(beforeFailure);
-    expect(await storage.getByKey('/following-bands')).toEqual([
+    expect(await readLibrary(42)).toEqual(beforeFailure);
+    expect(await readSavedItems('following-bands', 42)).toEqual([
       ...bands.slice(1),
       bands[0],
     ]);
     expect(
-      await storage.getByKey(stagingKey(42, 'following-bands')),
+      await storage.getByKey('/fan-data/account/42/staging/following-bands'),
     ).toBeUndefined();
     await expect(
       saveSnapshot(account, 'following-bands', [bands[0], bands[0]]),
@@ -286,13 +328,13 @@ describe('Following Bands', () => {
       url: preview.url,
       reason: 'HTTP 404',
     };
-    await saveAvailability(42, 'band:1', absent);
+    await saveAvailability(42, 'b:1', absent);
     await saveAvailabilityBatch(42, {
-      'band:1': { ...absent, state: 'unknown', reason: 'Network error' },
-      'band:2': { ...absent, state: 'available', reason: 'HTTP 200' },
+      'b:1': { ...absent, state: 'unknown', reason: 'Network error' },
+      'b:2': { ...absent, state: 'available', reason: 'HTTP 200' },
     });
-    expect(await storage.getByKey(unavailableKey(42))).toEqual({
-      'band:1': absent,
+    expect((await readAvailability(42)).unavailable).toEqual({
+      'b:1': absent,
     });
     const scoped = await appendFanArchive(
       await FollowingBandsTreeItem.create('listener', 42),
@@ -318,12 +360,12 @@ describe('Following Bands', () => {
       (await FollowingBandsTreeItem.create('another-listener', 99))
         .children?.[0].childrenCount,
     ).toBe(0);
-    await saveAvailability(42, 'band:1', {
+    await saveAvailability(42, 'b:1', {
       ...absent,
       state: 'available',
       reason: 'Page returned',
     });
-    expect(await storage.getByKey(unavailableKey(42))).toEqual({});
+    expect((await readAvailability(42)).unavailable).toEqual({});
     await saveSnapshot(
       { fanId: 99, username: 'another-listener' },
       'following-bands',

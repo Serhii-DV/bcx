@@ -1,3 +1,6 @@
+import 'fake-indexeddb/auto';
+import { beforeEach } from '@rstest/core';
+
 const storageArea = createStorageArea();
 
 process.env.NODE_ENV = 'test';
@@ -8,7 +11,29 @@ if (!globalThis.chrome) {
       runtime: {
         id: 'test-extension',
         lastError: undefined,
-        sendMessage: () => Promise.resolve(),
+        sendMessage: async (message: { type?: string; request?: unknown }) => {
+          if (!['MUSIC_LIBRARY', 'FAN_LIBRARY'].includes(message.type ?? ''))
+            return;
+          const { handleMusicLibraryRequest } = await import(
+            '../bandcamp/domain/storage/musicDatabase'
+          );
+          const { handleFanLibraryRequest } = await import(
+            '../bandcamp/domain/fanData/database'
+          );
+          try {
+            return {
+              ok: true,
+              data: await (message.type === 'MUSIC_LIBRARY'
+                ? handleMusicLibraryRequest
+                : handleFanLibraryRequest)(message.request),
+            };
+          } catch (error) {
+            return {
+              ok: false,
+              error: error instanceof Error ? error.message : String(error),
+            };
+          }
+        },
         getURL: (path: string) => `chrome-extension://test-extension/${path}`,
       },
       storage: {
@@ -75,3 +100,13 @@ function selectData(
     return result;
   }, {});
 }
+
+// Each existing domain test starts with an empty music database.
+beforeEach(
+  () =>
+    new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase('bcx-library');
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    }),
+);

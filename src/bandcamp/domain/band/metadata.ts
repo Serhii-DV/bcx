@@ -1,30 +1,81 @@
-import type { StorableObject, StorageObject } from 'src/core/storage';
 import { arrayNumberUnique, arrayUnique } from 'src/utils/array';
-import type { Album } from '../album/album';
-import { type Compressable, compress, decompress } from '../compressor';
+import { Album } from '../album/album';
 import { UNKNOWN_YEAR } from '../page/pageMusic';
-import { bandMetadataCompressor } from '../shared';
 import { getArtistNamesFromTracks } from '../track/helper';
-import type { Track } from '../track/track';
-import {
-  BandMetadataCompressor,
-  type CompressedBandMetadata,
-  type RawBandMetadata,
-} from './metadataCompressor';
+import { Track } from '../track/track';
 
-export class BandMetadata implements StorableObject, Compressable {
+export type BandRelease = Album | Track;
+export type BandReleaseRef =
+  | { type: 'album'; id: number }
+  | { type: 'track'; id: number };
+
+export interface RawBandMetadata {
+  location?: string;
+  biography?: string;
+  links?: BandMetadata['links'];
+  created: string;
+  currency: string;
+  /** Missing for unscanned bands; an empty array is authoritative. */
+  releases?: BandReleaseRef[];
+}
+
+export function resolveBandReleases(
+  refs: BandReleaseRef[],
+  albums: Album[],
+  tracks: Track[],
+): BandRelease[] {
+  const albumsById = new Map(albums.map((album) => [album.id, album]));
+  const tracksById = new Map(tracks.map((track) => [track.id, track]));
+  return refs
+    .map((ref) =>
+      ref.type === 'album' ? albumsById.get(ref.id) : tracksById.get(ref.id),
+    )
+    .filter((release): release is BandRelease => release !== undefined);
+}
+
+export class BandMetadata {
+  private catalog?: BandRelease[];
+
   constructor(
     public created: Date,
     public currency: string,
-    public albums: Album[],
-    public tracks: Track[],
+    releases?: readonly BandRelease[],
     public location?: string,
     public biography?: string,
     public links: { label: string; url: string }[] = [],
-  ) {}
+  ) {
+    if (releases !== undefined) this.releases = releases;
+  }
+
+  get releases(): readonly BandRelease[] {
+    return this.catalog ?? [];
+  }
+
+  set releases(releases: readonly BandRelease[]) {
+    const seen = new Set<string>();
+    this.catalog = releases.filter((release) => {
+      const key = `${release instanceof Album ? 'album' : 'track'}:${release.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  get albums(): Album[] {
+    return this.releases.filter(
+      (release): release is Album => release instanceof Album,
+    );
+  }
+
+  get tracks(): Track[] {
+    return this.releases.filter(
+      (release): release is Track => release instanceof Track,
+    );
+  }
 
   get trackReleases(): Track[] {
-    return this.tracks.filter((track: Track) => track.isRelease);
+    // Catalog membership comes from the band page, independently of albumId.
+    return this.tracks;
   }
 
   /**
@@ -56,8 +107,8 @@ export class BandMetadata implements StorableObject, Compressable {
   get releaseYears(): number[] {
     const years: number[] = [];
 
-    this.albumsWithYears.forEach((album: Album) => {
-      const year = album.metadata?.year;
+    this.releases.forEach((release) => {
+      const year = release.metadata?.year;
       if (year) {
         years.push(year);
       }
@@ -109,15 +160,10 @@ export class BandMetadata implements StorableObject, Compressable {
     return queries;
   }
 
-  get compressor(): BandMetadataCompressor {
-    return bandMetadataCompressor;
-  }
-
   static create(
     created: string | Date,
     currency: string,
-    albums: Album[] = [],
-    tracks: Track[] = [],
+    releases?: readonly BandRelease[],
     location?: string,
     biography?: string,
     links: BandMetadata['links'] = [],
@@ -125,16 +171,11 @@ export class BandMetadata implements StorableObject, Compressable {
     return new BandMetadata(
       created instanceof Date ? created : new Date(created),
       currency,
-      albums,
-      tracks,
+      releases,
       location,
       biography,
       links,
     );
-  }
-
-  toStorageObject(): StorageObject {
-    return compress(this);
   }
 
   toRawData(): RawBandMetadata {
@@ -144,32 +185,31 @@ export class BandMetadata implements StorableObject, Compressable {
       location: this.location,
       biography: this.biography,
       links: this.links,
-      // Save Album IDs instead of full Album objects to avoid redundancy
-      albumIds: this.albums.map((album) => album.id),
-      // Save Track IDs instead of full Track objects to avoid redundancy
-      trackIds: this.tracks.map((track) => track.id),
+      releases: this.catalog?.map((release) => ({
+        type: release instanceof Album ? 'album' : 'track',
+        id: release.id,
+      })),
     };
   }
 
-  static fromRawData(rawData: RawBandMetadata): BandMetadata {
+  static fromRawData(
+    rawData: RawBandMetadata,
+    albums: Album[] = [],
+    tracks: Track[] = [],
+  ): BandMetadata {
+    const refs = rawData.releases ?? [];
+    const releases = resolveBandReleases(refs, albums, tracks);
     return BandMetadata.create(
       rawData.created,
       rawData.currency,
-      [], // Albums should be populated elsewhere
-      [], // Tracks should be populated elsewhere
-      rawData.location ?? rawData.profile?.location,
-      rawData.biography ?? rawData.profile?.biography,
-      rawData.links ?? rawData.profile?.links ?? [],
+      // A shallow factory read has not loaded the referenced catalog yet.
+      rawData.releases !== undefined &&
+        (refs.length === 0 || releases.length > 0)
+        ? releases
+        : undefined,
+      rawData.location,
+      rawData.biography,
+      rawData.links ?? [],
     );
-  }
-
-  static fromStorageObject(data: StorageObject): BandMetadata {
-    // Note: albums and tracks arrays will contain IDs, not full objects
-    // The actual Album and Track objects should be reconstructed elsewhere
-    const metadata = decompress(
-      data as CompressedBandMetadata,
-      bandMetadataCompressor,
-    ) as RawBandMetadata;
-    return BandMetadata.fromRawData(metadata);
   }
 }

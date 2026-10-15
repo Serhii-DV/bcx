@@ -29,6 +29,7 @@ import { musicFilterStore } from '../stores/musicFilter';
 import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
+import BcxReleaseItemActions from './BcxReleaseItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreePanel from './BcxTreePanel.svelte';
@@ -233,7 +234,7 @@ let dates = $derived(
 
 {#snippet releaseActions()}
   {@render leadingActions?.()}
-  <BcxPreviewItemActions url={releaseUrl} image={item.previewImage} name={`${information.artist} - ${information.title}`} kind="release" copyValue={`${information.artist} - ${information.title}`} releaseTitle={information.title} previewItem={item} keepInPreview={true} />
+  <BcxReleaseItemActions {item} {information} keepInPreview />
   {#if bandLinks.parent}
     <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} />
   {/if}

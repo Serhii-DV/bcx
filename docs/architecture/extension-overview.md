@@ -23,11 +23,11 @@ flowchart TB
 
     content <-->|Messages| background
     background -->|Browser operations| apis
-    content -->|Save music data| storage
+    background -->|Music library| indexedDB[Extension IndexedDB]
     panel <-->|Read data and cache views| storage
 ```
 
-The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers, while Chrome storage keeps data available across extension contexts.
+The content scripts work within Bandcamp tabs. The side panel presents the collected data and sends page-related requests through the background service worker. Both use shared models and helpers. The background worker owns music-library IndexedDB access; IndexedDB also stores account-scoped fan lists and availability. Chrome storage retains settings, pins, small sync jobs, bounded logs, and session caches.
 
 Dashboard is the first item in the shared main navigation. Bandcamp pages retain
 their contextual default view; when the active tab is outside Bandcamp, the
@@ -42,8 +42,11 @@ store another visit log. Canonical URLs merge band homepage, music, and artists
 visits. Pinned items remain in the main navigation; browser side-panel history events
 refresh recent visits while Dashboard is open. Injected panels load recent visits
 through the existing background history request when Dashboard is selected.
-Title links ask the background worker to navigate the active browser tab; a
-separate link opens a new tab. Same-tab returns to Bandcamp reload the explorer.
+Dashboard renders these destinations with the same TreeBrowser and item rows as
+History's All view, including preview selection, visit times, and shared item
+actions, with the filter hidden on Dashboard. View history
+follows the list and opens the full History panel. Double-clicking a row or using
+its Open action navigates to Bandcamp through the existing extension actions.
 
 ## Main navigation interaction
 

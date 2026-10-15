@@ -2,10 +2,20 @@ import { afterEach, describe, expect, it, rs } from '@rstest/core';
 import { Album } from 'src/bandcamp/domain/album/album';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
-import { saveSnapshot } from 'src/bandcamp/domain/fanData/library';
+import {
+  readSavedItems,
+  saveSnapshot,
+} from 'src/bandcamp/domain/fanData/library';
+import { FAN_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/fanData/protocol';
 import { Metadata } from 'src/bandcamp/domain/metadata';
 import { Price } from 'src/bandcamp/domain/price';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
+import {
+  completed,
+  openDatabase,
+  readRequest,
+} from 'src/bandcamp/domain/storage/database';
+import { MUSIC_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { storage } from 'src/core/shared';
 import { loadReleaseBandLinks } from '../BandPreview';
@@ -82,7 +92,7 @@ describe('release previews', () => {
     const changed = rs.fn();
     const stop = watchSavedPreviewLibrary(changed);
     const getKeys = rs.spyOn(storage, 'getKeys');
-    const getAlbums = rs.spyOn(BandcampStorage, 'getAllAlbumsRawData');
+    const getAlbums = rs.spyOn(BandcampStorage, 'findAlbumsByTitleAndArtist');
     const information = preview!.information;
     try {
       const [links, duplicate] = await Promise.all([
@@ -96,7 +106,7 @@ describe('release previews', () => {
         album.url,
       );
       expect(explicitLinks.artists).toEqual([]);
-      expect(getKeys).toHaveBeenCalledTimes(1);
+      expect(getKeys).not.toHaveBeenCalled();
       expect(getAlbums).toHaveBeenCalledTimes(1);
       const notify = addListener.mock.calls[0][0] as (
         changes: Record<string, chrome.storage.StorageChange>,
@@ -104,28 +114,47 @@ describe('release previews', () => {
       ) => void;
       notify({ '/ui/sidebar-expanded': { newValue: true } }, 'local');
       expect(changed).not.toHaveBeenCalled();
-      rs.useFakeTimers();
-      notify({ '/a/1': { newValue: {} } }, 'local');
-      notify({ '/a/2': { newValue: {} } }, 'local');
-      await rs.advanceTimersByTimeAsync(100);
+      const notifyMusic = addListener.mock.calls[1][0] as typeof notify;
+      notifyMusic(
+        { [MUSIC_LIBRARY_REVISION_KEY]: { newValue: 'revision-1' } },
+        'session',
+      );
+      notifyMusic(
+        { [MUSIC_LIBRARY_REVISION_KEY]: { newValue: 'revision-2' } },
+        'session',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 120));
       expect(changed).toHaveBeenCalledTimes(1);
       await loadReleaseBandLinks(information, album.url);
-      expect(getKeys).toHaveBeenCalledTimes(2);
+      expect(getKeys).not.toHaveBeenCalled();
       expect(getAlbums).toHaveBeenCalledTimes(2);
-      notify({ '/following-bands': { newValue: [] } }, 'local');
-      await rs.advanceTimersByTimeAsync(100);
+      notify(
+        {
+          [FAN_LIBRARY_REVISION_KEY]: {
+            newValue: {
+              fanId: 42,
+              datasets: ['following-bands'],
+              revision: 'fan-1',
+            },
+          },
+        },
+        'session',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 120));
       expect(changed).toHaveBeenCalledTimes(2);
       await loadReleaseBandLinks(information, album.url);
       expect(getAlbums).toHaveBeenCalledTimes(2);
-      notify({ '/b/1': { newValue: {} } }, 'local');
-      await rs.advanceTimersByTimeAsync(100);
+      notifyMusic(
+        { [MUSIC_LIBRARY_REVISION_KEY]: { newValue: 'revision-3' } },
+        'session',
+      );
+      await new Promise((resolve) => setTimeout(resolve, 120));
       await loadReleaseBandLinks(information, album.url);
-      expect(getAlbums).toHaveBeenCalledTimes(2);
+      expect(getAlbums).toHaveBeenCalledTimes(3);
       await getSavedArtistReleases(['Artist']);
-      expect(getAlbums).toHaveBeenCalledTimes(2);
+      expect(getAlbums).toHaveBeenCalledTimes(3);
     } finally {
       stop();
-      rs.useRealTimers();
       expect(removeListener).toHaveBeenCalledWith(addListener.mock.calls[0][0]);
       Object.defineProperty(chrome.storage, 'onChanged', {
         configurable: true,
@@ -253,24 +282,22 @@ describe('release previews', () => {
       stored.metadata,
     );
     await BandcampStorage.saveAlbum(labelRelease);
-    await storage.set({
-      '/following-bands': [
-        {
-          band_id: 13,
-          name: 'ARTIST',
-          image_id: 23,
-          url_hints: { subdomain: 'artist-other' },
-          date_followed: '2024-01-01',
-        },
-        {
-          band_id: 11,
-          name: 'Artist',
-          image_id: 21,
-          url_hints: { subdomain: 'artist' },
-          date_followed: '2024-01-01',
-        },
-      ],
-    });
+    await saveSnapshot({ fanId: 42, username: 'listener' }, 'following-bands', [
+      {
+        band_id: 13,
+        name: 'ARTIST',
+        image_id: 23,
+        url_hints: { subdomain: 'artist-other' },
+        date_followed: '2024-01-01',
+      },
+      {
+        band_id: 11,
+        name: 'Artist',
+        image_id: 21,
+        url_hints: { subdomain: 'artist' },
+        date_followed: '2024-01-01',
+      },
+    ]);
     const links = await loadReleaseBandLinks(preview!.information, stored.url);
     expect(links.artists.map((band) => band.url.toString())).toEqual([
       'https://artist.bandcamp.com/',
@@ -413,12 +440,15 @@ describe('release previews', () => {
     await expect(
       AlbumTreeItemFactory.createWithPreview(album).loadPreview?.(),
     ).rejects.toThrow('Storage unavailable');
-    rs.spyOn(BandcampStorage, 'getAllAlbumsRawData').mockRejectedValue(
+    rs.spyOn(BandcampStorage, 'findAlbumsByTitleAndArtist').mockRejectedValue(
       new Error('Storage unavailable'),
     );
     await expect(
       loadReleaseBandLinks(createReleaseInformation(album), album.url),
     ).rejects.toThrow('Storage unavailable');
+    rs.spyOn(BandcampStorage, 'findAlbumsByArtists').mockRejectedValue(
+      new Error('Storage unavailable'),
+    );
     await expect(
       loadRelatedArtistReleases(['Artist'], album.url.toString()),
     ).rejects.toThrow('Storage unavailable');
@@ -436,7 +466,12 @@ describe('release previews', () => {
       item_title: album.title,
       item_url: album.url.toString(),
     };
-    await storage.set({ '/collection': [saved], '/wishlist': [saved] });
+    await saveSnapshot({ fanId: 42, username: 'listener' }, 'collection', [
+      saved,
+    ]);
+    await saveSnapshot({ fanId: 42, username: 'listener' }, 'wishlist', [
+      saved,
+    ]);
     const preview =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(preview?.information.collectionStatus).toEqual([
@@ -447,6 +482,30 @@ describe('release previews', () => {
     const updated =
       await AlbumTreeItemFactory.createWithPreview(album).loadPreview?.();
     expect(updated?.information.collectionStatus).toEqual(['In collection']);
-    expect(await storage.getByKey('/wishlist')).toEqual([saved]);
+    expect(await readSavedItems('wishlist', 42)).toEqual([saved]);
+    const database = await openDatabase();
+    const transaction = database.transaction(
+      ['fanCollection', 'fanWishlist'],
+      'readonly',
+    );
+    const done = completed(transaction);
+    const entityKey = `a:${saved.tralbum_id}`;
+    expect(
+      await readRequest(
+        transaction.objectStore('fanCollection').get([42, entityKey]),
+      ),
+    ).toMatchObject({
+      current: 1,
+      item: saved,
+    });
+    expect(
+      await readRequest(
+        transaction.objectStore('fanWishlist').get([42, entityKey]),
+      ),
+    ).toMatchObject({
+      current: 0,
+      item: saved,
+    });
+    await done;
   });
 });

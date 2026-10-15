@@ -4,6 +4,7 @@ import {
   readSavedItems,
   savedListRevision,
 } from 'src/bandcamp/domain/fanData/library';
+import { requestMusicLibrary } from 'src/bandcamp/domain/storage/musicLibrary';
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { appendFanArchive } from '../items/fanArchive';
 import { TreeItemCache } from '../items/TreeItemCache';
@@ -60,7 +61,14 @@ export function createFanDataSubtreeSection(
         TreeItemCache.subtreeKey(fanId ?? userKeyPart, options.cacheKey),
         () => options.createTreeItem(fanData.username || '', fanId),
         options.ttl,
-        sync ? await savedListRevision(sync.dataset, fanId) : undefined,
+        sync
+          ? JSON.stringify([
+              await savedListRevision(sync.dataset, fanId),
+              sync.dataset === 'following-genres'
+                ? ''
+                : (await requestMusicLibrary({ action: 'revision' })).revision,
+            ])
+          : undefined,
       );
       if (sync) {
         if (sync.dataset === 'following-genres')

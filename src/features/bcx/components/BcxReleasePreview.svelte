@@ -1,4 +1,5 @@
 <script lang="ts">
+import { watchMusicLibrary } from 'src/bandcamp/domain/storage/musicLibrary';
 import type { ReleasePreview } from 'src/features/treeview/ReleasePreview';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { Snippet } from 'svelte';
@@ -18,7 +19,15 @@ let loading = $state(false);
 let error = $state('');
 let information = $derived(preview?.information ?? item.previewInformation);
 
+let libraryRevision = $state(0);
+$effect(() =>
+  watchMusicLibrary(() => {
+    libraryRevision += 1;
+  }),
+);
+
 $effect(() => {
+  libraryRevision;
   const currentItem = item;
   let cancelled = false;
   preview = null;

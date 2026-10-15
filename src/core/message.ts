@@ -2,9 +2,14 @@ import type {
   FanAccount,
   FanDataset,
 } from 'src/bandcamp/domain/fanData/library';
+import type { FanLibraryRequest } from 'src/bandcamp/domain/fanData/protocol';
 import type { FanSyncAction } from 'src/bandcamp/domain/fanData/sync';
+import type { MusicLibraryRequest } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
 import type { PinCommand } from 'src/features/bcx/pinnedNavigation';
+
 export enum MessageType {
+  FAN_LIBRARY = 'FAN_LIBRARY',
+  MUSIC_LIBRARY = 'MUSIC_LIBRARY',
   UPDATE_PINNED_NAVIGATION = 'UPDATE_PINNED_NAVIGATION',
   MEASURE_STORAGE = 'MEASURE_STORAGE',
   CLEAR_ACTIVITY_LOG = 'CLEAR_ACTIVITY_LOG',
@@ -13,6 +18,7 @@ export enum MessageType {
   START_FAN_SYNC = 'START_FAN_SYNC',
   CANCEL_FAN_SYNC = 'CANCEL_FAN_SYNC',
   LOAD_FAN_DATA = 'LOAD_FAN_DATA',
+  LOG_FAN_SYNC_DEBUG = 'LOG_FAN_SYNC_DEBUG',
   HISTORY_SEARCH = 'HISTORY_SEARCH',
   GET_ACTIVE_BANDCAMP_TAB = 'GET_ACTIVE_BANDCAMP_TAB',
   GET_ACTIVE_BANDCAMP_PAGE_DATA = 'GET_ACTIVE_BANDCAMP_PAGE_DATA',
@@ -50,6 +56,8 @@ export interface ToggleSidePanelMessage {
 }
 
 export type Message =
+  | { type: MessageType.FAN_LIBRARY; request: FanLibraryRequest }
+  | { type: MessageType.MUSIC_LIBRARY; request: MusicLibraryRequest }
   | { type: MessageType.UPDATE_PINNED_NAVIGATION; command: PinCommand }
   | { type: MessageType.MEASURE_STORAGE }
   | { type: MessageType.CLEAR_ACTIVITY_LOG }
@@ -61,6 +69,11 @@ export type Message =
       action: FanSyncAction;
     }
   | { type: MessageType.CANCEL_FAN_SYNC }
+  | {
+      type: MessageType.LOG_FAN_SYNC_DEBUG;
+      label: string;
+      capture: Record<string, unknown>;
+    }
   | {
       type: MessageType.LOAD_FAN_DATA;
       account: FanAccount;

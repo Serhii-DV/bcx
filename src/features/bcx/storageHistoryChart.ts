@@ -37,9 +37,11 @@ export function chartHistory(
     ...new Set(
       rows.flatMap(
         (row) =>
-          row.areas?.flatMap((item) =>
-            item.categories.map((category) => category.label),
-          ) ?? [],
+          row.areas
+            ?.filter((item) => !item.estimated)
+            .flatMap((item) =>
+              item.categories.map((category) => category.label),
+            ) ?? [],
       ),
     ),
   ].sort();

@@ -1,18 +1,20 @@
 import { Album } from 'src/bandcamp/domain/album/album';
-import type { RawAlbumData } from 'src/bandcamp/domain/album/compressor';
+import type { RawAlbumData } from 'src/bandcamp/domain/album/data';
 import { AlbumDetails } from 'src/bandcamp/domain/album/details';
 import { AlbumFactory } from 'src/bandcamp/domain/album/factory';
 import { Band } from 'src/bandcamp/domain/band/band';
 import { BandFactory } from 'src/bandcamp/domain/band/factory';
-import { BandMetadata } from 'src/bandcamp/domain/band/metadata';
+import {
+  BandMetadata,
+  type RawBandMetadata,
+} from 'src/bandcamp/domain/band/metadata';
 import type { BandPage } from 'src/bandcamp/domain/page/BandPage';
 import type {
   MusicAlbumSchema,
   MusicRecordingSchema,
 } from 'src/bandcamp/domain/page/schema';
-import { urlCompressor } from 'src/bandcamp/domain/shared';
 import { BandcampStorage } from 'src/bandcamp/domain/storage';
-import type { RawTrackData } from 'src/bandcamp/domain/track/compressor';
+import type { RawTrackData } from 'src/bandcamp/domain/track/data';
 import { TrackFactory } from 'src/bandcamp/domain/track/factory';
 import { Track } from 'src/bandcamp/domain/track/track';
 import type { FanData } from 'src/bandcamp/domain/types/FanData';
@@ -63,10 +65,7 @@ interface ActiveMusicBandData {
   name: string;
   url: string;
   artworkId: number;
-  metadata: {
-    created: string;
-    currency: string;
-  };
+  metadata: RawBandMetadata;
   albums: RawAlbumData[];
   tracks: RawTrackData[];
 }
@@ -230,12 +229,7 @@ function createBandFromActiveMusicData(data: ActiveMusicBandData): Band {
     data.name,
     data.url,
     data.artworkId,
-    BandMetadata.create(
-      data.metadata.created,
-      data.metadata.currency,
-      albums,
-      tracks,
-    ),
+    BandMetadata.fromRawData(data.metadata, albums, tracks),
   );
 }
 
@@ -263,17 +257,15 @@ async function findBandForUrl(
     return hydratedBand ?? entityBand;
   }
 
-  const bands = await BandcampStorage.getAllCompressedBandData();
+  const bands = await BandcampStorage.getAllBandsRawData();
   const match = bands.find((band) => {
-    if (typeof band.u !== 'string') return false;
+    if (typeof band.url !== 'string') return false;
     try {
-      return Url.create(urlCompressor.decompress(band.u)).hasSameHostname(
-        currentPageUrl,
-      );
+      return Url.create(band.url).hasSameHostname(currentPageUrl);
     } catch {
       return false;
     }
   });
-  if (!match || !Number.isSafeInteger(match.i) || match.i <= 0) return null;
-  return (await BandcampStorage.getBands([match.i]))[0] ?? null;
+  if (!match || !Number.isSafeInteger(match.id) || match.id <= 0) return null;
+  return (await BandcampStorage.getBands([match.id]))[0] ?? null;
 }
