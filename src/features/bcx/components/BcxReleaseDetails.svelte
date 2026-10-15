@@ -43,6 +43,7 @@ let {
   error,
   onPreview,
   leadingActions,
+  trailingActions,
 }: {
   item: TreeItem;
   information: ReleaseInformation;
@@ -51,6 +52,7 @@ let {
   error: string;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
   leadingActions?: Snippet;
+  trailingActions?: Snippet;
 } = $props();
 let releaseUrl = $derived(createItemUrl(item.href ?? item.id));
 
@@ -328,13 +330,15 @@ let dates = $derived(
 <div class="release-details">
   <div class="release-actions">
     <BcxSectionTabs tabs={[]} value="" label="Release actions" actions={releaseActions} wrapActions={true} />
+    {#if trailingActions}<div class="release-trailing-actions">{@render trailingActions()}</div>{/if}
   </div>
   {@render releasePanels()}
 </div>
 
 <style>
-.release-actions { flex-shrink: 0; }
-.release-actions :global(.bcx-section-tabs) { border-color: transparent; background: transparent; box-shadow: none; }
+.release-actions { display: flex; align-items: flex-start; flex-shrink: 0; }
+.release-actions :global(.bcx-section-tabs) { flex: 1; min-width: 0; border-color: transparent; background: transparent; box-shadow: none; }
+.release-trailing-actions { display: flex; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px) 0 0; }
 .release-details { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-preview-tabs { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-info-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }

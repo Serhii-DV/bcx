@@ -31,6 +31,7 @@ let {
   navigationInFilter = false,
   onNavigationChange,
   leadingActions,
+  trailingActions,
 }: {
   treeData?: TreeData;
   about?: TreeItem;
@@ -42,6 +43,7 @@ let {
   navigationInFilter?: boolean;
   onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
   leadingActions?: Snippet;
+  trailingActions?: Snippet;
 } = $props();
 let content = $state<HTMLDivElement>();
 let verticalNavigation = $state(false);
@@ -160,9 +162,10 @@ let catalog = $derived.by(() => {
 {/snippet}
 
 <div class="band-panel">
-  {#if previewUrl || leadingActions}
+  {#if previewUrl || leadingActions || trailingActions}
     <div class="band-actions">
       <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
+      {#if trailingActions}<div class="band-trailing-actions">{@render trailingActions()}</div>{/if}
     </div>
   {/if}
   <div bind:this={content} class="band-content" class:vertical-navigation={verticalNavigation}>
@@ -179,6 +182,7 @@ let catalog = $derived.by(() => {
 .band-panel, .band-content, .band-catalog { display: flex; flex: 1 1 0%; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
 .band-content.vertical-navigation { flex-direction: row; }
 .vertical-navigation > :global(.bcx-section-tabs) { margin-left: var(--bcx-preview-gutter, 16px); margin-right: var(--bcx-preview-column-gap, 12px); }
-.band-actions { flex-shrink: 0; }
-.band-actions :global(.bcx-section-tabs) { border-color: transparent; background: transparent; box-shadow: none; }
+.band-actions { display: flex; align-items: flex-start; flex-shrink: 0; }
+.band-actions :global(.bcx-section-tabs) { flex: 1; min-width: 0; border-color: transparent; background: transparent; box-shadow: none; }
+.band-trailing-actions { display: flex; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px) 0 0; }
 </style>
