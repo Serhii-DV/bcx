@@ -11,6 +11,7 @@ import {
 import { BandcampUrlFactory } from 'src/bandcamp/domain/url/factory';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { BandTreeItemFactory } from '../factories/BandTreeItemFactory';
+import { formatReleasePrice, getFanItemPrice } from '../releasePrice';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { link } from '../TreeItemBuilder';
 
@@ -22,10 +23,13 @@ function archiveItem(
 ): TreeItem {
   let tree: TreeItem;
   if ('tralbum_id' in item) {
-    tree = AlbumTreeItemFactory.createWithPreview(
-      AlbumFactory.fromBandcampItem(item),
-      fanId,
-    );
+    tree = {
+      ...AlbumTreeItemFactory.createWithPreview(
+        AlbumFactory.fromBandcampItem(item),
+        fanId,
+      ),
+      price: formatReleasePrice(getFanItemPrice(item)),
+    };
   } else if ('band_id' in item) {
     tree = BandTreeItemFactory.createWithPreview(
       Band.create(

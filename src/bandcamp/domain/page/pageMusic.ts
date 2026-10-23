@@ -1,4 +1,8 @@
 import type { QueryCountMap } from 'src/features/bcx/types';
+import {
+  formatReleasePrice,
+  getReleasePrice,
+} from 'src/features/treeview/releasePrice';
 import { arrayUnique, createQueryCountMap } from 'src/utils/array';
 import { getExtensionUrl } from 'src/utils/chrome.runtime';
 import { console } from 'src/utils/console';
@@ -72,9 +76,14 @@ export class PageMusic implements BandPage {
 
     console.log('[PageMusic]', '[band]', pageMusic.band);
 
-    pageMusic.queryCountMap = createQueryCountMap(
-      pageMusic.band.metadata.queries,
-    );
+    const priceQueries = pageMusic.band.metadata.releases.flatMap((release) => {
+      const price = formatReleasePrice(getReleasePrice(release.metadata));
+      return price ? [price] : [];
+    });
+    pageMusic.queryCountMap = createQueryCountMap([
+      ...pageMusic.band.metadata.queries,
+      ...priceQueries,
+    ]);
     pageMusic.appendMetadataToReleases();
 
     return pageMusic;
@@ -191,12 +200,31 @@ export class PageMusic implements BandPage {
     );
   }
 
+  private appendPriceBadge(
+    metadataElement: HTMLElement,
+    release: Release,
+  ): void {
+    const price = formatReleasePrice(getReleasePrice(release.metadata));
+    if (!price) return;
+
+    metadataElement.appendChild(
+      this.createBadgeWithCount(
+        price,
+        'Filter by price',
+        'bcx-badge-price',
+        'button',
+      ),
+    );
+  }
+
   private createAlbumMetadataElement(album: Album): HTMLElement {
     const metadataElement = createMetadataElement();
 
     // Show album year first
     const badge = this.createYearBadgeElement(album.metadata?.year);
     metadataElement.appendChild(badge);
+
+    this.appendPriceBadge(metadataElement, album);
 
     // Output artist names
     arrayUnique(album.artistNames)
@@ -218,6 +246,8 @@ export class PageMusic implements BandPage {
     // Show album year first
     const badge = this.createYearBadgeElement(track.metadata?.year);
     metadataElement.appendChild(badge);
+
+    this.appendPriceBadge(metadataElement, track);
 
     // Artist names
     arrayUnique(track.artist?.names || [])

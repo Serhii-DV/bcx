@@ -54,6 +54,9 @@ const tabDescriptions: Record<
     label: 'By Year Added',
     title: 'Browse releases grouped by the year they were added to this list.',
   },
+  'By Prices': {
+    title: 'Browse releases grouped by saved price and currency.',
+  },
   'Latest added': {
     title: 'Browse followed bands, most recently followed first.',
     image: ICON_HEADPHONES,

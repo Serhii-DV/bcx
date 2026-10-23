@@ -54,7 +54,7 @@ describe('TreeItemCache', () => {
           { title: 'Open', icon: undefined, href: 'https://bandcamp.com' },
           { title: 'Refresh', icon: undefined, onClick: rstest.fn() },
         ],
-        children: [{ label: 'Moon Safari' }],
+        children: [{ label: 'Moon Safari', price: 'name your price' }],
       }),
     );
 
@@ -68,7 +68,13 @@ describe('TreeItemCache', () => {
       buttons: [
         { title: 'Open', icon: undefined, href: 'https://bandcamp.com' },
       ],
-      children: [{ label: 'Moon Safari', childrenCount: undefined }],
+      children: [
+        {
+          label: 'Moon Safari',
+          price: 'name your price',
+          childrenCount: undefined,
+        },
+      ],
     });
     expect(second.onClick).toBeUndefined();
     expect(createFn).toHaveBeenCalledTimes(1);

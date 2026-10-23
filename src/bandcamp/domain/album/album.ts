@@ -5,7 +5,7 @@ import { Artist, isVariousArtists } from '../artist/artist';
 import { ArtistFactory } from '../artist/factory';
 import { containsArtistName } from '../artist/helper';
 import { Artwork } from '../artwork/artwork';
-import { Metadata } from '../metadata';
+import type { Metadata } from '../metadata';
 import { getUniqueArtistNamesFromTracks } from '../track/helper';
 import type { Track } from '../track/track';
 import type { RawAlbumData } from './data';
@@ -63,8 +63,7 @@ export class Album {
   }
 
   get fullTitle(): string {
-    const year =
-      this.metadata instanceof Metadata ? ` (${this.metadata.year})` : '';
+    const year = this.metadata?.year ? ` (${this.metadata.year})` : '';
     return `${this.artist.toString()} - ${this.title}${year}`;
   }
 

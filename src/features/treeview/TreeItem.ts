@@ -31,6 +31,7 @@ export interface TreeItem {
   id?: string;
   entityId?: number;
   label?: string;
+  price?: string;
   children?: TreeItem[];
   childrenCount?: number;
   hasChildren?: boolean;

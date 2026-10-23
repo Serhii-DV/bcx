@@ -23,6 +23,7 @@ export type BandcampItem = {
   item_title: string;
   item_url: string;
   price: number;
+  currency?: string;
   added?: string | null;
   purchased?: string;
 

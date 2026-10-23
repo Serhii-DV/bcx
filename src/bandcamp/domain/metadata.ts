@@ -21,16 +21,22 @@ export class Metadata {
     public release?: ReleaseNotes,
   ) {}
 
-  get year(): number {
-    return this.published.getFullYear();
+  get year(): number | undefined {
+    return Number.isFinite(this.published.getTime())
+      ? this.published.getFullYear()
+      : undefined;
   }
 
   get publishedDate(): string {
-    return this.published.toISOString().split('T')[0];
+    return Number.isFinite(this.published.getTime())
+      ? this.published.toISOString().split('T')[0]
+      : '';
   }
 
   get modifiedDate(): string {
-    return this.modified.toISOString().split('T')[0];
+    return Number.isFinite(this.modified.getTime())
+      ? this.modified.toISOString().split('T')[0]
+      : '';
   }
 
   static create(
@@ -55,8 +61,12 @@ export class Metadata {
     return {
       price: this.price.toRawData(),
       publisher: this.publisher,
-      published: this.published.toISOString(),
-      modified: this.modified.toISOString(),
+      published: Number.isFinite(this.published.getTime())
+        ? this.published.toISOString()
+        : '',
+      modified: Number.isFinite(this.modified.getTime())
+        ? this.modified.toISOString()
+        : '',
       keywords: this.keywords,
       release: this.release,
     };

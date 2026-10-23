@@ -21,6 +21,7 @@ import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { generateTreeHierarchy, hydrateTreeItemChildren } from '../utils';
 import { loadCatalogArtistRows } from './artistPanel';
 import { CollectionTreeItem } from './collection/CollectionTreeItem';
+import { appendFanArchive } from './fanArchive';
 import { withReleaseCatalog } from './releaseCatalog';
 import { TreeItemCache } from './TreeItemCache';
 import { WishlistTreeItem } from './WishlistTreeItem';
@@ -148,8 +149,8 @@ describe('release catalog previews', () => {
     ]);
   });
 
-  it('provides artist and year groups with previewable releases, preserving other roots', async () => {
-    const albums = createItems(2).map(AlbumFactory.fromBandcampItem);
+  it('provides artist, year, and price groups with previewable releases, preserving other roots', async () => {
+    const albums = createItems(4).map(AlbumFactory.fromBandcampItem);
     albums[0].metadata = Metadata.create(
       Price.create(0, 'USD'),
       'Label',
@@ -157,11 +158,22 @@ describe('release catalog previews', () => {
       '2025-01-01',
     );
     albums[1].metadata = Metadata.create(
-      Price.create(0, 'USD'),
+      Price.create(5.5, 'USD'),
       'Label',
       '2026-01-01',
       '2026-01-01',
     );
+    for (const [index, amount] of [
+      [2, 10],
+      [3, 2],
+    ]) {
+      albums[index].metadata = Metadata.create(
+        Price.create(amount, 'CAD'),
+        'Label',
+        '2026-01-01',
+        '2026-01-01',
+      );
+    }
     const track = TrackFactory.create(
       1,
       1,
@@ -171,18 +183,23 @@ describe('release catalog previews', () => {
       'https://artist0.bandcamp.com/track/single',
       undefined,
       undefined,
-      albums[0].metadata,
+      Metadata.create(
+        Price.create(5.5, 'EUR'),
+        'Label',
+        '2025-01-01',
+        '2025-01-01',
+      ),
     );
     const tree = withReleaseCatalog(
       { label: 'Label', children: [{ label: 'About' }] },
-      [albums[0], track, albums[1]],
+      [albums[0], track, ...albums.slice(1)],
       { groupByYear: true },
     );
     const rootLabels = tree.children?.map((item) => item.label) ?? [];
     expect(rootLabels.indexOf('Release years')).toBeLessThan(
       rootLabels.indexOf('About'),
     );
-    for (const name of ['Artists', 'Releases', 'Release years']) {
+    for (const name of ['Artists', 'Releases', 'Release years', 'By Prices']) {
       const root = tree.children?.find((item) => item.label === name);
       expect(root?.releasePreview).toBe(true);
       expect(root?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
@@ -209,6 +226,51 @@ describe('release catalog previews', () => {
     const key = TreeItemCache.subtreeKey('label', 'Years');
     await TreeItemCache.set(key, tree);
     const restored = await TreeItemCache.get(key);
+    for (const catalog of [tree, restored]) {
+      const prices = catalog?.children?.find(
+        (item) => item.label === 'By Prices',
+      );
+      expect(prices?.children?.map((group) => group.label)).toEqual([
+        'name your price',
+        'CAD',
+        'EUR',
+        'USD',
+      ]);
+      expect(prices?.children?.[0].children?.[0].price).toBe('name your price');
+      const cad = prices?.children?.find((group) => group.label === 'CAD');
+      expect(cad?.children?.map((group) => group.label)).toEqual([
+        '2 CAD',
+        '10 CAD',
+      ]);
+      expect(cad?.children?.map((group) => group.children?.[0].price)).toEqual([
+        '2 CAD',
+        '10 CAD',
+      ]);
+      for (const group of cad?.children ?? [])
+        assertPreview(group.children?.[0]);
+      const eur = prices?.children?.find((group) => group.label === 'EUR');
+      expect(eur?.children?.[0].label).toBe('5.5 EUR');
+      expect(
+        eur?.children?.[0].children?.[0].previewInformation?.releaseType,
+      ).toBe('Track');
+      expect(eur?.children?.[0].children?.[0].price).toBe('5.5 EUR');
+      expect(eur?.pathKey).not.toContain('.');
+      expect(eur?.children?.[0].pathKey).not.toContain('.');
+      const usd = prices?.children?.find((group) => group.label === 'USD');
+      expect(usd?.children?.[0].children?.[0].price).toBe('5.5 USD');
+      const matches = filterTreeBrowserItems(prices?.children, 'EUR', prices);
+      expect(matches.map((group) => group.label)).toEqual(['EUR']);
+      expect(getTreeItemFilterSuggestions(prices?.children)).toEqual([
+        '10 CAD',
+        '2 CAD',
+        '5.5 EUR',
+        '5.5 USD',
+        'CAD',
+        'EUR',
+        'USD',
+        'name your price',
+      ]);
+    }
     const restoredYears = restored?.children?.find(
       (item) => item.label === 'Release years',
     );
@@ -227,6 +289,8 @@ describe('release catalog previews', () => {
       albums[0].url.toString(),
       track.url?.toString(),
       albums[1].url.toString(),
+      albums[2].url.toString(),
+      albums[3].url.toString(),
     ]);
     expect(
       restored?.children
@@ -306,7 +370,12 @@ describe('release catalog previews', () => {
     ['Wishlist', () => WishlistTreeItem.create('listener')],
   ] as const) {
     it(`${label} preserves nested previews and list loading behavior after a session cache round trip`, async () => {
-      const collectionItems = createItems(25).map((item, index) => ({
+      const priceItems = createItems(25).map((item, index) => ({
+        ...item,
+        price: index === 0 ? 9.5 : index === 1 ? 0 : index === 2 ? -1 : 5,
+        currency: index === 0 || index === 2 ? 'eur' : undefined,
+      }));
+      const collectionItems = priceItems.map((item, index) => ({
         ...item,
         purchased:
           index < 20 ? '02 Jan 2025 03:04:05 GMT' : '03 Feb 2024 04:05:06 GMT',
@@ -319,7 +388,7 @@ describe('release catalog previews', () => {
       await saveSnapshot(
         { fanId: 42, username: 'listener' },
         'wishlist',
-        createItems(25).map((item, index) => ({
+        priceItems.map((item, index) => ({
           ...item,
           added:
             index === 24
@@ -329,6 +398,30 @@ describe('release catalog previews', () => {
                 : '03 Feb 2024 04:05:06 GMT',
         })),
       );
+      const syncedAlbums = await BandcampStorage.getAlbumsRawDataByIds([
+        1, 2, 3,
+      ]);
+      expect(syncedAlbums[0]).toMatchObject({
+        id: 1,
+        bandId: 1,
+        title: 'Release 0',
+        artist: 'Artist 0',
+        artworkId: 1,
+        trackIds: [],
+        metadata: {
+          price: { amount: 9.5, currency: 'EUR' },
+          published: '',
+          modified: '',
+        },
+      });
+      expect(syncedAlbums[1].metadata).toBeUndefined();
+      expect(syncedAlbums[2].metadata).toBeUndefined();
+      const syncedAlbum = AlbumFactory.fromRawData(syncedAlbums[0]);
+      expect(syncedAlbum.toString()).toBe('Artist 0 - Release 0');
+      expect(syncedAlbum.toRawData().metadata?.published).toBe('');
+      expect(
+        (await BandcampStorage.getByUuids([syncedAlbum.url.uuid]))[0].id,
+      ).toBe(1);
       if (label === 'Collection') {
         const storedAlbum = AlbumFactory.fromBandcampItem(collectionItems[0]);
         storedAlbum.metadata = Metadata.create(
@@ -336,6 +429,8 @@ describe('release catalog previews', () => {
           'Artist 0',
           '1999-01-01',
           '1999-01-01',
+          [],
+          { minimumPrice: 0, credits: 'Saved credits' },
         );
         await BandcampStorage.saveAlbum(storedAlbum);
       }
@@ -354,6 +449,15 @@ describe('release catalog previews', () => {
       expect((await createScoped()).releaseCatalog?.albums).toHaveLength(25);
       expect(await readCurrentItems(dataset, 42)).toHaveLength(24);
       expect(await readCurrentItems(dataset)).toHaveLength(24);
+      const archived = await appendFanArchive(
+        await createScoped(),
+        42,
+        dataset,
+      );
+      expect(
+        archived.children?.find((root) => root.label === 'No longer listed')
+          ?.children?.[0].price,
+      ).toBe('9.5 EUR');
       const reads = rs.spyOn(chrome.runtime, 'sendMessage');
       const currentLists = await readCurrentLists(
         ['collection', 'wishlist'],
@@ -370,6 +474,15 @@ describe('release catalog previews', () => {
       ).toBeUndefined();
       // Restore the source order for the existing catalog/cache assertions below.
       await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, saved);
+      if (label === 'Collection') {
+        const [preserved] = await BandcampStorage.getAlbumsRawDataByIds([1]);
+        expect(preserved.metadata).toMatchObject({
+          price: { amount: 9.5, currency: 'EUR' },
+          publisher: 'Artist 0',
+          published: '1999-01-01T00:00:00.000Z',
+          release: { minimumPrice: 9.5, credits: 'Saved credits' },
+        });
+      }
       const original = await create();
       const originalReleases = original.children?.find(
         (item) => item.label === 'Releases',
@@ -387,6 +500,7 @@ describe('release catalog previews', () => {
           'Releases',
           'Release years',
           'Added years',
+          'By Prices',
           'Releases: Reverse',
           'Releases: Title A–Z',
           'Releases: Title Z–A',
@@ -442,6 +556,7 @@ describe('release catalog previews', () => {
           'Releases',
           'Release years',
           'Added years',
+          'By Prices',
           'Releases: Reverse',
           'Releases: Title A–Z',
           'Releases: Title Z–A',
@@ -471,14 +586,15 @@ describe('release catalog previews', () => {
         expect(releaseYears?.releasePreview).toBe(true);
         expect(releaseYears?.layout).toBe(TREE_ITEM_LAYOUT.BROWSER);
         expect(releaseYears?.children?.map((item) => item.label)).toEqual([
+          '1999',
           'Unknown year',
         ]);
-        expect(releaseYears?.childrenCount).toBe(1);
+        expect(releaseYears?.childrenCount).toBe(2);
         expect(
           createRootSectionTabs(
             generateTreeHierarchy(restored?.children ?? []),
           ).find((tab) => tab.id === '2')?.label,
-        ).toBe('Release years (1)');
+        ).toBe('Release years (2)');
 
         const fetchMock = rs
           .spyOn(globalThis, 'fetch')
@@ -617,6 +733,102 @@ describe('release catalog previews', () => {
 
       expect(artists.children).toHaveLength(25);
       assertPreview(artists.children?.[24].children?.[0]);
+      expect(releases.children?.[0].price).toBe('9.5 EUR');
+      expect(releases.children?.[1].price).toBe('name your price');
+      expect(artists.children?.[0].children?.[0].price).toBe('9.5 EUR');
+      const prices = restored?.children?.find(
+        (item) => item.label === 'By Prices',
+      );
+      expect(prices?.children?.map((group) => group.label)).toEqual([
+        'name your price',
+        'EUR',
+        'Price unknown',
+      ]);
+      expect(prices?.children?.[1].children?.[0].label).toBe('9.5 EUR');
+      expect(prices?.children?.[1].children?.[0].children?.[0].price).toBe(
+        '9.5 EUR',
+      );
+      const unknownPrices = prices?.children?.find(
+        (group) => group.label === 'Price unknown',
+      );
+      if (unknownPrices) await hydrateTreeItemChildren(unknownPrices);
+      expect(unknownPrices?.children).toHaveLength(23);
+      expect(
+        unknownPrices?.children?.every((item) => item.price === undefined),
+      ).toBe(true);
+
+      const track = TrackFactory.create(
+        1,
+        0,
+        'Artist 0',
+        'Saved single',
+        1,
+        'https://artist0.bandcamp.com/track/saved-single',
+        undefined,
+        undefined,
+        Metadata.create(
+          Price.create(5.5, 'EUR'),
+          'Artist 0',
+          '2025-01-01',
+          '2025-01-01',
+        ),
+      );
+      await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, [
+        ...saved,
+        {
+          ...createItems(1)[0],
+          tralbum_type: 't',
+          tralbum_id: track.id,
+          album_id: 42,
+          item_title: track.title,
+          item_url: track.url!.toString(),
+          price: 0,
+          currency: 'gbp',
+        },
+      ]);
+      const [newTrack] = await BandcampStorage.getTracksByTrackIds([track.id]);
+      expect(newTrack.toRawData()).toMatchObject({
+        id: track.id,
+        albumId: 42,
+        url: track.url?.toString(),
+        title: 'Saved single',
+        metadata: {
+          price: { amount: 0, currency: 'GBP' },
+          published: '',
+          modified: '',
+        },
+      });
+      await BandcampStorage.saveTrack(track);
+      await saveSnapshot({ fanId: 42, username: 'listener' }, dataset, [
+        ...saved,
+        {
+          ...createItems(1)[0],
+          tralbum_type: 't',
+          tralbum_id: track.id,
+          item_title: track.title,
+          item_url: track.url!.toString(),
+          price: 2.5,
+          currency: 'gbp',
+        },
+      ]);
+      const [syncedTrack] = await BandcampStorage.getTracksByTrackIds([
+        track.id,
+      ]);
+      expect(syncedTrack.metadata?.price.toRawData()).toEqual({
+        amount: 2.5,
+        currency: 'GBP',
+      });
+      expect(syncedTrack.metadata?.publishedDate).toBe('2025-01-01');
+      const refreshed = await createScoped();
+      const trackPrices = refreshed.children
+        ?.find((item) => item.label === 'By Prices')
+        ?.children?.find((group) => group.label === 'GBP')
+        ?.children?.find((group) => group.label === '2.5 GBP');
+      expect(trackPrices?.children?.[0]).toMatchObject({
+        price: '2.5 GBP',
+        href: track.url?.toString(),
+        previewInformation: { releaseType: 'Track' },
+      });
     });
   }
 });

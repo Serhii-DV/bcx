@@ -13,6 +13,7 @@ import {
   ReleasePreview,
   releaseCollectionStatus,
 } from '../ReleasePreview';
+import { formatReleasePrice, getReleasePrice } from '../releasePrice';
 import { TreeData } from '../TreeData';
 import { type TreeItem } from '../TreeItem';
 import {
@@ -46,6 +47,9 @@ export class AlbumTreeItemFactory {
     return linkOrText(album.toString(), album.url?.toString())
       .withImage(album.artwork.tinySizeUrl)
       .withKeywords(album.artistNames)
+      .apply((item) => {
+        item.price = formatReleasePrice(getReleasePrice(album.metadata));
+      })
       .build();
   }
 
@@ -132,7 +136,9 @@ export class AlbumTreeItemFactory {
         .add(
           ...artistNames.map((artistName) => searchQuery(artistName)),
           searchQuery(displayTitle),
-          album.metadata ? searchQuery(String(album.metadata.year)) : undefined,
+          album.metadata?.year
+            ? searchQuery(String(album.metadata.year))
+            : undefined,
           ...keywords.map((keyword) => searchQuery(keyword)),
         )
         .withImage(ICON_FUNNEL),
@@ -161,7 +167,7 @@ export class AlbumTreeItemFactory {
       );
     }
 
-    if (album.metadata) {
+    if (album.metadata?.year) {
       builder.add(
         searchQuery(String(album.metadata.year)).withImage(ICON_CALENDAR_DAYS),
       );

@@ -133,13 +133,21 @@ the fragment. Other path segments, including `tag/`, remain part of the key.
 For example, `http://bandcamp.com/discover/dark-ambient?tab=all_releases&f=digital`
 becomes `g:dark-ambient?f=digital&tab=all_releases`. The original URL remains
 unchanged in `item.tag_page_url`.
-These summaries support unvisited releases and profiles; detailed music records
-remain separate and are not overwritten by list sync. Dataset-specific added,
+Collection and Wishlist snapshots also create album and track records from their
+release summaries, keyed by `tralbum_id` and `tralbum_type`. They retain titles,
+artwork, URLs, band IDs for albums, known parent album IDs for tracks, and valid
+nonnegative prices with an explicit currency. Missing release and modification
+dates use empty strings; membership dates never substitute for release dates.
+List summaries fill missing music fields and refresh valid prices while preserving
+saved page details, artist credits, track order, durations, and album track lists.
+No extra release-page requests are made. Dataset-specific added,
 purchased, and followed dates remain in each membership's source item.
 
 Complete snapshots are validated before starting a transaction. Publishing updates
 memberships, list metadata/counts, account metadata, and a durable fan revision in
-one transaction. Missing items become former members and remain saved. Non-empty
+one transaction. Collection and Wishlist include music records, URL references,
+and the music revision in that transaction and publish both revision notifications
+only after commit. Missing items become former members and remain saved. Non-empty
 incoming fields enrich existing summaries. There are no staging snapshots and no
 import or fallback from previous Chrome local data. A failed transaction leaves
 previous membership and metadata intact. Fresh databases create all four dataset
