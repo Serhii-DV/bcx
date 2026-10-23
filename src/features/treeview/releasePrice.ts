@@ -2,6 +2,8 @@ import type { RawMetadataData } from 'src/bandcamp/domain/metadata';
 import type { BandcampItem } from 'src/bandcamp/domain/page/PageCollection';
 import type { RawPriceData } from 'src/bandcamp/domain/price';
 
+const NAME_YOUR_PRICE = 'name your price';
+
 export function getFanItemPrice(
   item: Pick<BandcampItem, 'price' | 'currency'>,
 ): RawPriceData | undefined {
@@ -32,6 +34,6 @@ export function getReleasePrice(
 export function formatReleasePrice(price?: RawPriceData): string | undefined {
   if (!price) return undefined;
   return price.amount === 0
-    ? 'name your price'
+    ? NAME_YOUR_PRICE
     : `${price.amount} ${price.currency}`;
 }

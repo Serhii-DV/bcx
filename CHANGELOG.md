@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Band music pages show clickable price filter badges on albums and standalone tracks, such as "7 EUR" or "10 USD", with matching search suggestions and exact price filtering. Zero prices use "name your price"; unavailable pricing is omitted.
+
 - Collection and Wishlist sync automatically save album and track records with list-provided titles, artwork, URLs, relationships, and valid prices. Records and list membership commit together; existing page details and track lists are preserved, and unknown release dates remain unknown.
 
 - Album and track TreeView rows show their saved prices, with zero displayed as "name your price". Band, Collection, and Wishlist catalogs include a By Prices panel showing name your price first, currencies alphabetically with exact price groups ascending inside each currency, and Price unknown last for missing pricing. Collection and Wishlist use each fan-list item's price and currency for rows, archives, and grouping, including releases whose pages have not been visited; saved release metadata still supplies other details. Standalone tracks retain track previews.

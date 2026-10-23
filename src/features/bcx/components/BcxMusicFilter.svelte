@@ -11,6 +11,10 @@ import { UNKNOWN_YEAR } from 'src/bandcamp/domain/page/pageMusic';
 import { getUniqueArtistNamesFromTracks } from 'src/bandcamp/domain/track/helper';
 import { currentPageUrl, MUSIC_FILTER_QUERY_PARAM } from 'src/core/shared';
 import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
+import {
+  formatReleasePrice,
+  getReleasePrice,
+} from 'src/features/treeview/releasePrice';
 import { console } from 'src/utils/console';
 import { createDataListForInput, element } from 'src/utils/dom';
 import { removeParentheses } from 'src/utils/string';
@@ -38,6 +42,7 @@ let previousQuery = '';
 let visibleCount = $state(0);
 let totalCount = $state(0);
 let storeUnsubscribe: (() => void) | null = null;
+const priceQueries = new Set<string>();
 
 // Reactive values
 $effect(() => {
@@ -118,6 +123,11 @@ function setupDataList(): void {
     options.push(createQueryCountString(keyword, count));
   });
 
+  priceQueries.forEach((price) => {
+    const count = queryCountMap?.get(price) || 0;
+    options.push(createQueryCountString(price, count));
+  });
+
   createDataListForInput(options, filterInput);
 }
 
@@ -154,6 +164,22 @@ function initMusicIsotope(): void {
       'data-filter-value',
       (track.artist.toString() + ' - ' + track.title).toLowerCase(),
     );
+  });
+
+  band.metadata.releases.forEach((release) => {
+    const price = formatReleasePrice(getReleasePrice(release.metadata));
+    if (!price) return;
+
+    priceQueries.add(price);
+    const type = 'tracks' in release ? 'album' : 'track';
+    const gridElement = musicGrid.querySelector<HTMLElement>(
+      `[data-item-id="${type}-${release.id}"]`,
+    );
+    if (!gridElement) return;
+
+    gridElement.dataset.filterPrice = price.toLowerCase();
+    gridElement.dataset.filterValue =
+      `${gridElement.dataset.filterValue || ''}, ${price}`.toLowerCase();
   });
 
   // Initialize Isotope with options
@@ -209,15 +235,18 @@ function handleChange(event: Event): void {
 function filterItems(query: string): void {
   if (!musicIsotope) return;
 
-  const filter = query ? `[data-filter-value*="${query}"]` : '*';
-  musicIsotope.arrange({ filter });
+  const isPriceQuery = [...priceQueries].some(
+    (price) => price.toLowerCase() === query,
+  );
+  const matchesFilter = (item: HTMLElement): boolean =>
+    isPriceQuery
+      ? item.dataset.filterPrice === query
+      : (item.getAttribute('data-filter-value') || '').includes(query);
+  musicIsotope.arrange({ filter: matchesFilter });
 
   // Update visible count
   if (query) {
-    const visibleItems = musicGridItems.filter((musicGridItem) => {
-      const filterValue = musicGridItem.getAttribute('data-filter-value') || '';
-      return filterValue.includes(query);
-    });
+    const visibleItems = musicGridItems.filter(matchesFilter);
 
     // Lazy load images for visible items
     visibleItems.forEach((item) => {
