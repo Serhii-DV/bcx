@@ -9,13 +9,15 @@ let {
   information,
   keepInPreview = false,
   iconOnly = false,
+  toolbar = false,
 }: {
   item: TreeItem;
   information: ReleaseInformation;
   keepInPreview?: boolean;
   iconOnly?: boolean;
+  toolbar?: boolean;
 } = $props();
 let name = $derived(`${information.artist} - ${information.title}`);
 </script>
 
-<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseTitle={information.title} previewItem={item} {keepInPreview} {iconOnly} />
+<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseTitle={information.title} previewItem={item} {keepInPreview} {iconOnly} {toolbar} />

@@ -97,6 +97,7 @@ let {
   aboutContent,
   sectionContent,
   actions,
+  navigationActions,
   heading,
   responsiveSidebar = false,
   compactWhenOverflowing = false,
@@ -114,6 +115,7 @@ let {
   aboutContent?: Snippet<[TreeItem]>;
   sectionContent?: Snippet<[TreeItem]>;
   actions?: Snippet;
+  navigationActions?: Snippet;
   heading?: Snippet;
   responsiveSidebar?: boolean;
   compactWhenOverflowing?: boolean;
@@ -601,7 +603,7 @@ onDestroy(() => onNavigationChange?.(undefined));
     {/if}
     {#if navigationInToolbar}
       <div class="bcx-root-section-navigation">
-        <BcxSectionTabs tabs={localNavigationTabs} value={selectedRoot} {label} {actions} onValueChange={selectSidebarRoot} {compactWhenOverflowing} hideCountsWhenOverflowing={true} vertical={orientation === 'vertical'} />
+        <BcxSectionTabs tabs={localNavigationTabs} value={selectedRoot} {label} {actions} {navigationActions} onValueChange={selectSidebarRoot} {compactWhenOverflowing} hideCountsWhenOverflowing={true} vertical={orientation === 'vertical'} />
       </div>
     {:else if actions}
       <BcxSectionTabs tabs={[]} value="" {label} {actions} />
@@ -614,7 +616,7 @@ onDestroy(() => onNavigationChange?.(undefined));
   </div>
 {:else if tabs.length}
   <Tabs.Root bind:ref={container} bind:value={selectedRoot} {orientation} class="bcx-panel-body bcx-root-sections">
-    <BcxSectionTabs tabs={localNavigationTabs} bind:value={selectedRoot} {label} {actions} {compactWhenOverflowing} vertical={orientation === 'vertical'} />
+    <BcxSectionTabs tabs={localNavigationTabs} bind:value={selectedRoot} {label} {actions} {navigationActions} {compactWhenOverflowing} vertical={orientation === 'vertical'} />
     {#each tabs as tab (tab.id)}
       <Tabs.Content value={tab.id} class="bcx-tab-content">{@render rootContent(tab.id)}</Tabs.Content>
     {/each}

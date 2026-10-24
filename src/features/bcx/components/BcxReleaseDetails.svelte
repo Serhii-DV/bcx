@@ -31,7 +31,6 @@ import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxReleaseItemActions from './BcxReleaseItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
-import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreePanel from './BcxTreePanel.svelte';
 import { createItemUrl } from './itemUrl';
 
@@ -235,10 +234,9 @@ let dates = $derived(
 </script>
 
 {#snippet releaseActions()}
-  {@render leadingActions?.()}
-  <BcxReleaseItemActions {item} {information} keepInPreview />
+  <BcxReleaseItemActions {item} {information} keepInPreview toolbar />
   {#if bandLinks.parent}
-    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} />
+    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} toolbar />
   {/if}
 {/snippet}
 
@@ -323,22 +321,23 @@ let dates = $derived(
   {#if loading}<p class="release-status" role="status">Loading release details…</p>{/if}
   {#if error}<p class="band-links-error" role="alert">{error}</p>{/if}
   <div class="release-preview-tabs">
-    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} responsiveSidebar={true} compactWhenOverflowing={true} countBadges={true} />
+    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} navigationActions={releaseActions} responsiveSidebar={true} compactWhenOverflowing={true} countBadges={true} />
   </div>
 {/snippet}
 
 <div class="release-details">
-  <div class="release-actions">
-    <BcxSectionTabs tabs={[]} value="" label="Release actions" actions={releaseActions} wrapActions={true} />
-    {#if trailingActions}<div class="release-trailing-actions">{@render trailingActions()}</div>{/if}
-  </div>
+  {#if leadingActions || trailingActions}
+    <div class="release-actions">
+      {@render leadingActions?.()}
+      {#if trailingActions}<div class="release-trailing-actions">{@render trailingActions()}</div>{/if}
+    </div>
+  {/if}
   {@render releasePanels()}
 </div>
 
 <style>
-.release-actions { display: flex; align-items: flex-start; flex-shrink: 0; }
-.release-actions :global(.bcx-section-tabs) { flex: 1; min-width: 0; border-color: transparent; background: transparent; box-shadow: none; }
-.release-trailing-actions { display: flex; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px) 0 0; }
+.release-actions { display: flex; align-items: flex-start; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px); }
+.release-trailing-actions { display: flex; flex-shrink: 0; margin-left: auto; }
 .release-details { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-preview-tabs { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-info-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }

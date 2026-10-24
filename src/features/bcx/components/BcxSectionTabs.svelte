@@ -27,6 +27,7 @@ let {
   label = 'Music Explorer sections',
   actions,
   leadingActions,
+  navigationActions,
   onValueChange,
   wrapActions = false,
   vertical = false,
@@ -38,6 +39,7 @@ let {
   label?: string;
   actions?: Snippet;
   leadingActions?: Snippet;
+  navigationActions?: Snippet;
   onValueChange?: (id: string) => void;
   wrapActions?: boolean;
   vertical?: boolean;
@@ -47,6 +49,7 @@ let {
 let bar = $state<HTMLDivElement>();
 let actionsElement = $state<HTMLDivElement>();
 let leadingActionsElement = $state<HTMLDivElement>();
+let navigationActionsElement = $state<HTMLDivElement>();
 let measurements: HTMLDivElement;
 let iconMeasurements = $state<HTMLDivElement>();
 let iconCountMeasurements = $state<HTMLDivElement>();
@@ -82,6 +85,7 @@ $effect(() => {
   }
   const currentActions = actionsElement;
   const currentLeadingActions = leadingActionsElement;
+  const currentNavigationActions = navigationActionsElement;
   const useActionButtons = !!onValueChange;
   const currentIconMeasurements = iconMeasurements;
   const currentIconCountMeasurements = iconCountMeasurements;
@@ -101,6 +105,9 @@ $effect(() => {
     const availableWidth =
       barElement.clientWidth -
       8 -
+      (currentNavigationActions
+        ? currentNavigationActions.getBoundingClientRect().width + 4
+        : 0) -
       (currentLeadingActions
         ? currentLeadingActions.getBoundingClientRect().width + 4
         : 0) -
@@ -167,6 +174,7 @@ $effect(() => {
     observer.observe(currentIconCountMeasurements);
   if (currentActions) observer.observe(currentActions);
   if (currentLeadingActions) observer.observe(currentLeadingActions);
+  if (currentNavigationActions) observer.observe(currentNavigationActions);
   measure();
   return () => observer.disconnect();
 });
@@ -228,6 +236,9 @@ async function handleCloseAutoFocus(event: Event) {
 {/snippet}
 
 {#snippet navigationButtons()}
+    {#if navigationActions}
+      <div bind:this={navigationActionsElement} class="bcx-navigation-actions" role="group" aria-label="Page actions">{@render navigationActions()}</div>
+    {/if}
     {#each visibleTabs as tab (tab.id)}
       {#if tab.sortOptions}
         <div class="bcx-sort-tab-group">
@@ -287,11 +298,11 @@ async function handleCloseAutoFocus(event: Event) {
     {/each}
 {/snippet}
 
-<div bind:this={bar} class="bcx-section-tabs" class:vertical class:compact class:icon-only={iconOnly} class:hide-counts={hideCounts} class:action-navigation={!!onValueChange} class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
+<div bind:this={bar} class="bcx-section-tabs" class:vertical class:compact class:icon-only={iconOnly} class:hide-counts={hideCounts} class:action-navigation={!!onValueChange} class:has-navigation-actions={!!navigationActions} class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
   {#if leadingActions}
     <div bind:this={leadingActionsElement} class="bcx-section-leading-actions">{@render leadingActions()}</div>
   {/if}
-  {#if tabs.length}
+  {#if tabs.length || navigationActions}
     {#if onValueChange}
       <div class="bcx-visible-tabs" role="group" aria-label={label}>{@render navigationButtons()}</div>
     {:else}
@@ -369,6 +380,8 @@ async function handleCloseAutoFocus(event: Event) {
 </div>
 
 <style>
+  .has-navigation-actions :global(.bcx-visible-tabs) { flex: 1 1 0%; align-items: center; }
+  .bcx-navigation-actions { display: flex; flex: 0 0 auto; align-items: center; flex-wrap: wrap; gap: 4px; min-width: 0; max-width: 100%; }
   .bcx-section-leading-actions { display: flex; flex-shrink: 0; align-items: center; gap: 8px; max-width: 100%; }
   .action-navigation { flex-wrap: wrap; }
   .action-navigation :global(.bcx-visible-tabs) { flex: 1 1 0%; min-width: min-content; flex-wrap: wrap; overflow: visible; }
@@ -535,5 +548,8 @@ async function handleCloseAutoFocus(event: Event) {
     overflow-y: auto;
   }
   .vertical :global(.bcx-visible-tabs) { flex: 0 0 auto; flex-direction: column; flex-wrap: nowrap; min-width: 0; overflow: visible; }
+  .vertical .bcx-navigation-actions { flex-direction: column; align-items: stretch; max-width: 100%; width: 100%; margin-bottom: 4px; }
+  .vertical .bcx-navigation-actions :global(.bcx-section-tab) { width: 100%; max-width: none; justify-content: flex-start; }
+  .vertical.has-navigation-actions :global(.bcx-visible-tabs) { align-items: stretch; }
   .vertical :global(.bcx-visible-tabs > .bcx-section-tab) { max-width: none; justify-content: flex-start; }
 </style>

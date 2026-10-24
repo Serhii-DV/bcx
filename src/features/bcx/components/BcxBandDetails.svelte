@@ -5,7 +5,9 @@ import { Url } from 'src/core/url';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
+import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
+import BcxSectionTabs from './BcxSectionTabs.svelte';
 import { createItemUrl } from './itemUrl';
 
 let {
@@ -22,7 +24,30 @@ let {
   error?: string;
 } = $props();
 let profile = $derived(about.aboutProfile);
+let bandName = $derived(profile?.name ?? about.label ?? 'Band');
 let pageUrl = $derived(createItemUrl(bandUrl ?? profile?.url));
+const bandActionProps = $derived({
+  url: pageUrl,
+  image: profile?.image,
+  name: bandName,
+  kind: 'band' as const,
+  copyValue: bandName,
+  keepInPreview: true,
+  previewItem: pageUrl
+    ? {
+        label: bandName,
+        href: pageUrl.toString(),
+        image: profile?.image,
+        bandPreview: {
+          id: profile?.id,
+          name: bandName,
+          url: pageUrl.toString(),
+          image: profile?.image,
+          cached: false,
+        },
+      }
+    : undefined,
+});
 let biography = $derived(
   profile?.biography
     ?.trim()
@@ -76,6 +101,7 @@ let catalogYears = $derived(
 {/snippet}
 
 {#snippet bandInformation()}
+  <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandToolbar} wrapActions={true} />
   <div class="band-information">
   {#if links.length}
     <section class="band-links" aria-label="Band links">
@@ -95,10 +121,14 @@ let catalogYears = $derived(
   </div>
 {/snippet}
 
+{#snippet bandToolbar()}
+  <BcxPreviewItemActions {...bandActionProps} variant="toolbar" toolbar={true} />
+{/snippet}
+
 <BcxItemDetailsLayout
   image={profile?.image}
   imageAlt={`${profile?.name ?? 'Band'} profile`}
-  heading={profile?.name ?? about.label ?? 'Band'}
+  heading={bandName}
   headingSize={2}
   subheading={location}
   subheadingSize={1}

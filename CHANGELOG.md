@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Band navigation starts with the current band title, opening band information and indicating the active view without a separate About button. The About panel has a toolbar below the profile header with Copy and Search dropdowns followed by separate Preview, Pin/Unpin, and Open on Bandcamp actions; the header dropdown is removed. Release action menus and pin buttons remain at the beginning of preview navigation with short Release, Label, and Pin labels. Navigation adapts between horizontal and vertical layouts, with full names available in tooltips and accessible labels.
+
 - Band music pages show clickable price filter badges on albums and standalone tracks, such as "7 EUR" or "10 USD", with matching search suggestions and exact price filtering. Zero prices use "name your price"; unavailable pricing is omitted.
 
 - Collection and Wishlist sync automatically save album and track records with list-provided titles, artwork, URLs, relationships, and valid prices. Records and list membership commit together; existing page details and track lists are preserved, and unknown release dates remain unknown.
