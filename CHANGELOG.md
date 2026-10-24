@@ -64,6 +64,8 @@
 
 ### Patch Changes
 
+- Tree row action menus use a three-dot button with matching item-action styling and keyboard focus feedback.
+
 - Band catalogs preserve the page order of albums and standalone tracks through scanning, IndexedDB storage, previews, and sorting. Stored band metadata uses only typed release references; the database is built from scratch without migration or compatibility reads for older band formats.
 
 - Following Bands sync accepts complete API pagination when Bandcamp's displayed total includes bands the API no longer returns, preventing false incomplete-data errors while retaining saved history and pagination safeguards.

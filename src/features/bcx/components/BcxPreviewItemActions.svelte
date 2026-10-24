@@ -4,6 +4,7 @@ import {
   ChevronDown,
   Copy,
   Disc,
+  Ellipsis,
   ExternalLink,
   Eye,
   Pin,
@@ -223,15 +224,23 @@ async function copy(value: string) {
   {:else}
   <DropdownMenu.Root>
     <DropdownMenu.Trigger class={iconOnly ? 'item-button item-menu-trigger' : 'bcx-section-tab'} aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`} onclick={(event) => { if (iconOnly) event.stopPropagation(); }} onkeydown={(event) => { if (iconOnly) event.stopPropagation(); }} ondblclick={(event) => { if (iconOnly) event.stopPropagation(); }}>
-      {#if copied}
-        <Check size={toolbar ? 16 : 14} class="shrink-0 text-emerald-300" aria-hidden="true" />
-      {:else if !iconOnly && image && image !== failedImage}
-        <img src={image} alt="" class="item-image" onerror={() => { failedImage = image; }} />
-      {:else if !iconOnly && (kind === 'band' || toolbar)}
-        <Disc size={toolbar ? 16 : 14} class="shrink-0" aria-hidden="true" />
-      {/if}
-      {#if !iconOnly}<span class="item-name">{menuLabel ?? (toolbar ? toolbarLabel : name)}</span>{/if}
-      {#if !iconOnly || !copied}<ChevronDown size={iconOnly ? 16 : 14} class="shrink-0" aria-hidden="true" />{/if}
+      {#snippet child({ props })}
+        <button {...props} type="button">
+          {#if copied}
+            <Check size={iconOnly || toolbar ? 16 : 14} class="shrink-0 text-emerald-300" aria-hidden="true" />
+          {:else if iconOnly}
+            <Ellipsis size={16} class="shrink-0" aria-hidden="true" />
+          {:else if image && image !== failedImage}
+            <img src={image} alt="" class="item-image" onerror={() => { failedImage = image; }} />
+          {:else if kind === 'band' || toolbar}
+            <Disc size={toolbar ? 16 : 14} class="shrink-0" aria-hidden="true" />
+          {/if}
+          {#if !iconOnly}
+            <span class="item-name">{menuLabel ?? (toolbar ? toolbarLabel : name)}</span>
+            <ChevronDown size={14} class="shrink-0" aria-hidden="true" />
+          {/if}
+        </button>
+      {/snippet}
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
       <DropdownMenu.Content class="preview-item-menu" align="start" sideOffset={4} strategy="fixed" onCloseAutoFocus={(event) => { if (previewSelected) { event.preventDefault(); previewSelected = false; } }}>
