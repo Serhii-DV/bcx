@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Release copy menus use clearer labels and offer artist/title formats with the year at the end or between them, plus Copy year. Copy release date uses the full month format, such as October 24, 2026. Year and date options appear only when their metadata is available.
+
 - Band and Release navigation start with the current band or release title and artwork, opening the information view without separate About or Release Info navigation buttons. Both information panels have a toolbar above the profile header starting with Open and Pin/Unpin, followed by Copy and Search dropdowns and Preview. Release Info places its parent Band/Label dropdown immediately after Pin/Unpin and displays the actual band or label name. Navigation adapts between horizontal and vertical layouts, with full names available in tooltips and accessible labels.
 
 - Band music pages show clickable price filter badges on albums and standalone tracks, such as "7 EUR" or "10 USD", with matching search suggestions and exact price filtering. Zero prices use "name your price"; unavailable pricing is omitted.

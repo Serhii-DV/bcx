@@ -23,6 +23,12 @@ let {
   relatedActions?: Snippet;
 } = $props();
 let name = $derived(`${information.artist} - ${information.title}`);
+let releaseYear = $derived(
+  information.releaseYear ??
+    (information.date
+      ? new Date(information.date).getUTCFullYear()
+      : undefined),
+);
 </script>
 
-<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseTitle={information.title} previewItem={item} {keepInPreview} {iconOnly} {toolbar} {variant} {relatedActions} />
+<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseArtist={information.artist} releaseDate={information.date} releaseTitle={information.title} {releaseYear} previewItem={item} {keepInPreview} {iconOnly} {toolbar} {variant} {relatedActions} />

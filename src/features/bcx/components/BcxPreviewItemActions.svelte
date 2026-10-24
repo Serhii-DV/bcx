@@ -29,7 +29,10 @@ let {
   name,
   kind,
   copyValue,
+  releaseArtist,
+  releaseDate,
   releaseTitle,
+  releaseYear,
   previewItem,
   keepInPreview = false,
   iconOnly = false,
@@ -43,7 +46,10 @@ let {
   name: string;
   kind: 'release' | 'artist' | 'label' | 'band';
   copyValue: string;
+  releaseArtist?: string;
+  releaseDate?: string;
   releaseTitle?: string;
+  releaseYear?: number;
   previewItem?: TreeItem;
   keepInPreview?: boolean;
   iconOnly?: boolean;
@@ -65,7 +71,7 @@ let actionTitle = $derived(
 );
 const toolbarLabel = $derived(`${kind[0].toUpperCase()}${kind.slice(1)}`);
 let copyLabel = $derived(
-  kind === 'release' ? 'Copy full release title' : `Copy ${kind} name`,
+  kind === 'release' ? 'Copy artist and release title' : `Copy ${kind} name`,
 );
 let pageUrl = $derived(url?.toString());
 let pinPage = $derived(
@@ -96,8 +102,43 @@ async function pinPageFromMenu() {
     if (!destroyed) pinSaving = false;
   }
 }
+let formattedReleaseDate = $derived.by(() => {
+  if (kind !== 'release' || !releaseDate) return undefined;
+  const date = new Date(releaseDate);
+  return Number.isFinite(date.getTime())
+    ? date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC',
+      })
+    : undefined;
+});
 let copyItems = $derived([
   { label: copyLabel, value: copyValue },
+  ...(kind === 'release' &&
+  releaseYear &&
+  Number.isInteger(releaseYear) &&
+  releaseYear > 0
+    ? [
+        ...(releaseArtist && releaseTitle
+          ? [
+              {
+                label: 'Copy artist and release title (year)',
+                value: `${copyValue} (${releaseYear})`,
+              },
+              {
+                label: 'Copy artist, year, and release title',
+                value: `${releaseArtist} - ${releaseYear} - ${releaseTitle}`,
+              },
+            ]
+          : []),
+        { label: 'Copy year', value: String(releaseYear) },
+      ]
+    : []),
+  ...(formattedReleaseDate
+    ? [{ label: 'Copy release date', value: formattedReleaseDate }]
+    : []),
   ...(kind === 'release' && releaseTitle
     ? [{ label: 'Copy release title', value: releaseTitle }]
     : []),
