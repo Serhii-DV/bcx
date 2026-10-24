@@ -2,6 +2,8 @@
 
 These instructions apply throughout this repository. Follow more specific nested `AGENTS.md` instructions when present.
 
+No gratuitous text/additions or eyebrow elements, read less is more by jakub.
+
 ## Development Principles
 
 - Act as a senior developer with TypeScript and JavaScript expertise; use this repository's TypeScript/Svelte stack for implementation.
