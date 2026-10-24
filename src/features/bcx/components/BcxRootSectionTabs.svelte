@@ -96,6 +96,7 @@ let {
   sortBands = false,
   aboutContent,
   sectionContent,
+  sectionLabels,
   actions,
   navigationActions,
   heading,
@@ -114,6 +115,7 @@ let {
   sortBands?: boolean;
   aboutContent?: Snippet<[TreeItem]>;
   sectionContent?: Snippet<[TreeItem]>;
+  sectionLabels?: Readonly<Record<string, string>>;
   actions?: Snippet;
   navigationActions?: Snippet;
   heading?: Snippet;
@@ -181,21 +183,24 @@ const tabs = $derived.by(() => {
 });
 const displayTabs = $derived.by<SectionTab[]>(() => {
   const labeledTabs = tabs.map((tab) => {
-    const rootLabel = displayedTreeData.items.find(
-      (item) => item.path === tab.id,
-    )?.label;
+    const root = displayedTreeData.items.find((item) => item.path === tab.id);
+    const rootLabel = root?.label;
     const description = rootLabel ? tabDescriptions[rootLabel] : undefined;
+    const sectionLabel = sectionLabels?.[root?.pathKey ?? tab.id];
+    const title =
+      description?.title ??
+      (rootLabel?.startsWith('About')
+        ? 'View artist or label information and links.'
+        : `Open ${rootLabel ?? 'section'}.`);
     const labeledTab = {
       ...tab,
       image: tab.image ?? description?.image,
-      label: description?.label
-        ? tab.label.replace(rootLabel ?? '', description.label)
-        : tab.label,
-      title:
-        description?.title ??
-        (rootLabel?.startsWith('About')
-          ? 'View artist or label information and links.'
-          : `Open ${rootLabel ?? 'section'}.`),
+      label:
+        sectionLabel ??
+        (description?.label
+          ? tab.label.replace(rootLabel ?? '', description.label)
+          : tab.label),
+      title: sectionLabel ? `${sectionLabel}\n${title}` : title,
     };
     if (isReleaseCatalog && rootLabel === 'Artists') {
       return {

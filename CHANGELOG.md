@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Band navigation starts with the current band title, opening band information and indicating the active view without a separate About button. The About panel has a toolbar below the profile header with Copy and Search dropdowns followed by separate Preview, Pin/Unpin, and Open on Bandcamp actions; the header dropdown is removed. Release action menus and pin buttons remain at the beginning of preview navigation with short Release, Label, and Pin labels. Navigation adapts between horizontal and vertical layouts, with full names available in tooltips and accessible labels.
+- Band and Release navigation start with the current band or release title and artwork, opening the information view without separate About or Release Info navigation buttons. Both information panels have a toolbar above the profile header starting with Open and Pin/Unpin, followed by Copy and Search dropdowns and Preview. Release Info places its parent Band/Label dropdown immediately after Pin/Unpin and displays the actual band or label name. Navigation adapts between horizontal and vertical layouts, with full names available in tooltips and accessible labels.
 
 - Band music pages show clickable price filter badges on albums and standalone tracks, such as "7 EUR" or "10 USD", with matching search suggestions and exact price filtering. Zero prices use "name your price"; unavailable pricing is omitted.
 

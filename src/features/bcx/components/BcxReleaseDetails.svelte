@@ -18,8 +18,8 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { items, text } from 'src/features/treeview/TreeItemBuilder';
 import {
+  ICON_DISC,
   ICON_FILE_TEXT,
-  ICON_INFO,
   ICON_LIST_MUSIC,
   ICON_MIC,
   ICON_TAGS,
@@ -144,7 +144,7 @@ let tabTree = $derived.by(() => {
   data.add({
     label: 'Release Info',
     pathKey: 'release-info',
-    image: ICON_INFO,
+    image: item.previewImage ?? ICON_DISC,
     hasChildren: true,
     showChildrenCount: false,
     children: releaseTree.items.filter(
@@ -233,11 +233,14 @@ let dates = $derived(
 );
 </script>
 
-{#snippet releaseActions()}
-  <BcxReleaseItemActions {item} {information} keepInPreview toolbar />
+{#snippet parentActions()}
   {#if bandLinks.parent}
-    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} toolbar />
+    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} menuLabel={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} toolbar />
   {/if}
+{/snippet}
+
+{#snippet releaseActions()}
+  <BcxReleaseItemActions {item} {information} keepInPreview toolbar variant="toolbar" relatedActions={parentActions} />
 {/snippet}
 
 {#snippet releaseNotes()}
@@ -258,6 +261,8 @@ let dates = $derived(
   subheading={information.artist}
   subheadingSize={1.125}
   details={releaseNotes}
+  actions={releaseActions}
+  actionsBeforeHeader={true}
   fitContent={true}
   treeData={emptyTree}
   detailsLabel="Detailed release information"
@@ -321,7 +326,7 @@ let dates = $derived(
   {#if loading}<p class="release-status" role="status">Loading release details…</p>{/if}
   {#if error}<p class="band-links-error" role="alert">{error}</p>{/if}
   <div class="release-preview-tabs">
-    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} navigationActions={releaseActions} responsiveSidebar={true} compactWhenOverflowing={true} countBadges={true} />
+    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} sectionLabels={{ 'release-info': information.title }} responsiveSidebar={true} compactWhenOverflowing={true} countBadges={true} />
   </div>
 {/snippet}
 

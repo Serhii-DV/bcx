@@ -15,7 +15,7 @@ import type { Url } from 'src/core/url';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import BandcampIcon from 'src/lib/components/BandcampIcon.svelte';
 import { copyToClipboard } from 'src/utils/clipboard';
-import { onDestroy } from 'svelte';
+import { onDestroy, type Snippet } from 'svelte';
 import { createPinnedPage, samePinnedPage } from '../pinnedNavigation';
 import { pinnedPageFromItem } from '../pinnedPage';
 import { getItemPreviewContext } from '../stores/itemPreview';
@@ -34,6 +34,8 @@ let {
   iconOnly = false,
   toolbar = false,
   variant = 'menu',
+  menuLabel,
+  relatedActions,
 }: {
   url?: Url;
   image?: string;
@@ -46,6 +48,8 @@ let {
   iconOnly?: boolean;
   toolbar?: boolean;
   variant?: 'menu' | 'toolbar';
+  menuLabel?: string;
+  relatedActions?: Snippet;
 } = $props();
 const preview = getItemPreviewContext();
 let container = $state<HTMLDivElement>();
@@ -184,6 +188,14 @@ async function copy(value: string) {
 
 <div bind:this={container} class="preview-item-actions" class:toolbar class:named-title={!toolbar && (kind === 'band' || (kind === 'release' && keepInPreview))}>
   {#if variant === 'toolbar'}
+    {#if pageUrl}
+      {@const destination = pageUrl}
+      <a class="bcx-section-tab" href={destination} title={`Open ${name} on Bandcamp\n${destination}`} onclick={(event) => void openPage(event, destination)}>
+        <BandcampIcon size={16} class="shrink-0" aria-hidden="true" /><span>Open</span><ExternalLink size={12} class="shrink-0" aria-hidden="true" />
+      </a>
+    {/if}
+    {#if pinPage}<BcxPinButton page={pinPage} toolbar={true} />{/if}
+    {@render relatedActions?.()}
     <DropdownMenu.Root>
       <DropdownMenu.Trigger class="bcx-section-tab" aria-label={`Copy ${kind} details: ${name}`} title={`Copy ${kind} details: ${name}`}>
         {#if copied}<Check size={16} class="shrink-0 text-emerald-300" aria-hidden="true" />{:else}<Copy size={16} aria-hidden="true" />{/if}
@@ -208,13 +220,6 @@ async function copy(value: string) {
         <Eye size={16} aria-hidden="true" /><span>Preview</span>
       </button>
     {/if}
-    {#if pinPage}<BcxPinButton page={pinPage} toolbar={true} />{/if}
-    {#if pageUrl}
-      {@const destination = pageUrl}
-      <a class="bcx-section-tab" href={destination} title={`Open ${name} on Bandcamp\n${destination}`} onclick={(event) => void openPage(event, destination)}>
-        <BandcampIcon size={16} class="shrink-0" aria-hidden="true" /><span>Open on Bandcamp</span><ExternalLink size={12} class="shrink-0" aria-hidden="true" />
-      </a>
-    {/if}
   {:else}
   <DropdownMenu.Root>
     <DropdownMenu.Trigger class={iconOnly ? 'item-button item-menu-trigger' : 'bcx-section-tab'} aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`} onclick={(event) => { if (iconOnly) event.stopPropagation(); }} onkeydown={(event) => { if (iconOnly) event.stopPropagation(); }} ondblclick={(event) => { if (iconOnly) event.stopPropagation(); }}>
@@ -225,7 +230,7 @@ async function copy(value: string) {
       {:else if !iconOnly && (kind === 'band' || toolbar)}
         <Disc size={toolbar ? 16 : 14} class="shrink-0" aria-hidden="true" />
       {/if}
-      {#if !iconOnly}<span class="item-name">{toolbar ? toolbarLabel : name}</span>{/if}
+      {#if !iconOnly}<span class="item-name">{menuLabel ?? (toolbar ? toolbarLabel : name)}</span>{/if}
       {#if !iconOnly || !copied}<ChevronDown size={iconOnly ? 16 : 14} class="shrink-0" aria-hidden="true" />{/if}
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>

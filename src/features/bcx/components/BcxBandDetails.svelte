@@ -7,7 +7,6 @@ import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/country
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
-import BcxSectionTabs from './BcxSectionTabs.svelte';
 import { createItemUrl } from './itemUrl';
 
 let {
@@ -101,7 +100,6 @@ let catalogYears = $derived(
 {/snippet}
 
 {#snippet bandInformation()}
-  <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandToolbar} wrapActions={true} />
   <div class="band-information">
   {#if links.length}
     <section class="band-links" aria-label="Band links">
@@ -136,6 +134,8 @@ let catalogYears = $derived(
   compactImage={true}
   imageScale={2}
   details={bandInformation}
+  actions={bandToolbar}
+  actionsBeforeHeader={true}
   detailsLabel="Detailed band information"
   {loading}
   loadingMessage="Loading saved band details…"
