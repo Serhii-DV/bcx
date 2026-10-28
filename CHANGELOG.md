@@ -4,17 +4,13 @@
 
 ### Minor Changes
 
-- Release copy menus use clearer labels and offer artist/title formats with the year at the end or between them, plus Copy year. Copy release date uses the full month format, such as October 24, 2026. Year and date options appear only when their metadata is available.
-
-- Band and Release navigation start with the current band or release title and artwork, opening the information view without separate About or Release Info navigation buttons. Both information panels have a toolbar above the profile header starting with Open and Pin/Unpin, followed by Copy and Search dropdowns and Preview. Release Info places its parent Band/Label dropdown immediately after Pin/Unpin and displays the actual band or label name. Navigation adapts between horizontal and vertical layouts, with full names available in tooltips and accessible labels.
-
 - Band music pages show clickable price filter badges on albums and standalone tracks, such as "7 EUR" or "10 USD", with matching search suggestions and exact price filtering. Zero prices use "name your price"; unavailable pricing is omitted.
 
 - Collection and Wishlist sync automatically save album and track records with list-provided titles, artwork, URLs, relationships, and valid prices. Records and list membership commit together; existing page details and track lists are preserved, and unknown release dates remain unknown.
 
 - Album and track TreeView rows show their saved prices, with zero displayed as "name your price". Band, Collection, and Wishlist catalogs include a By Prices panel showing name your price first, currencies alphabetically with exact price groups ascending inside each currency, and Price unknown last for missing pricing. Collection and Wishlist use each fan-list item's price and currency for rows, archives, and grouping, including releases whose pages have not been visited; saved release metadata still supplies other details. Standalone tracks retain track previews.
 
-- The shared Preview Panel has a header showing "Preview Artist - Release" or "Preview Artist" beside a right-aligned close button. Long titles truncate with the full text available on hover. The panel stays closed while browsing until a release, band, or track Preview action reopens it, retaining its selected details and saved split size.
+- Added an X button at the top right of the shared Preview Panel so lists can use the full panel height. The panel stays closed while browsing until a release, band, or track Preview action reopens it, retaining its selected details and saved split size.
 
 - Artist action dropdowns now sit inside the tree row’s button group. Band rows, including saved and unsaved History entries, and Release and track rows share the Preview Panel’s action menu for opening, previewing, pinning, copying names, titles and URLs, and searching Bandcamp.
 
@@ -65,8 +61,6 @@
 - Added an unknown-year music filter, accurate per-album year counts, and compact keyword badges with accessible popovers.
 
 ### Patch Changes
-
-- Tree row action menus use a three-dot button with matching item-action styling and keyboard focus feedback.
 
 - Band catalogs preserve the page order of albums and standalone tracks through scanning, IndexedDB storage, previews, and sorting. Stored band metadata uses only typed release references; the database is built from scratch without migration or compatibility reads for older band formats.
 

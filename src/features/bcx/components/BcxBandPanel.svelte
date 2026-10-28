@@ -11,8 +11,10 @@ import {
 } from 'src/features/treeview/utils/icon';
 import type { Snippet } from 'svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
+import { createItemUrl } from './itemUrl';
 import {
   isSectionItemSelected,
   type SectionNavigation,
@@ -63,19 +65,17 @@ const viewActions = $derived(
   catalogNavigation?.items.map(
     ({ id, label, count, image, title, contentId }) => ({
       id,
-      label:
-        id === 'band-about'
-          ? (bandAbout?.aboutProfile?.name ?? 'Band')
-          : label === 'Release years'
-            ? 'Years'
-            : label,
+      label: label.startsWith('About')
+        ? 'About'
+        : label === 'Release years'
+          ? 'Years'
+          : label,
       count,
       keepLabelWhenCompact:
-        id === 'band-about' || label === 'Releases' || label === 'Artists',
-      image:
-        id === 'band-about'
-          ? (bandAbout?.aboutProfile?.image ?? ICON_DISC)
-          : (image ?? ICON_MENU),
+        label.startsWith('About') ||
+        label === 'Releases' ||
+        label === 'Artists',
+      image: image ?? ICON_MENU,
       title,
       contentId,
     }),
@@ -103,6 +103,9 @@ function selectView(id: string) {
 
 let bandAbout = $derived(
   about ?? treeData?.items.find((item) => item.aboutProfile),
+);
+let previewUrl = $derived(
+  createItemUrl(bandUrl ?? bandAbout?.aboutProfile?.url),
 );
 let catalog = $derived.by(() => {
   const roots = treeData?.items.filter((item) => !item.aboutProfile) ?? [];
@@ -151,10 +154,17 @@ let catalog = $derived.by(() => {
   <BcxBandDetails about={item} {fallbackLocation} {bandUrl} {loading} {error} />
 {/snippet}
 
+{#snippet bandActions()}
+  {@render leadingActions?.()}
+  {#if previewUrl}
+    <BcxPreviewItemActions url={previewUrl} image={bandAbout?.aboutProfile?.image} name={bandAbout?.aboutProfile?.name ?? 'Band'} kind="band" copyValue={bandAbout?.aboutProfile?.name ?? 'Band'} keepInPreview={true} previewItem={{ label: bandAbout?.aboutProfile?.name, href: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, bandPreview: { id: bandAbout?.aboutProfile?.id, name: bandAbout?.aboutProfile?.name ?? 'Band', url: previewUrl.toString(), image: bandAbout?.aboutProfile?.image, cached: false } }} />
+  {/if}
+{/snippet}
+
 <div class="band-panel">
-  {#if leadingActions || trailingActions}
+  {#if previewUrl || leadingActions || trailingActions}
     <div class="band-actions">
-      {@render leadingActions?.()}
+      <BcxSectionTabs tabs={[]} value="" label="Band actions" actions={bandActions} wrapActions={true} />
       {#if trailingActions}<div class="band-trailing-actions">{@render trailingActions()}</div>{/if}
     </div>
   {/if}
@@ -172,6 +182,7 @@ let catalog = $derived.by(() => {
 .band-panel, .band-content, .band-catalog { display: flex; flex: 1 1 0%; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
 .band-content.vertical-navigation { flex-direction: row; }
 .vertical-navigation > :global(.bcx-section-tabs) { margin-left: var(--bcx-preview-gutter, 16px); margin-right: var(--bcx-preview-column-gap, 12px); }
-.band-actions { display: flex; align-items: flex-start; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px); }
-.band-trailing-actions { display: flex; flex-shrink: 0; margin-left: auto; }
+.band-actions { display: flex; align-items: flex-start; flex-shrink: 0; }
+.band-actions :global(.bcx-section-tabs) { flex: 1; min-width: 0; border-color: transparent; background: transparent; box-shadow: none; }
+.band-trailing-actions { display: flex; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px) 0 0; }
 </style>

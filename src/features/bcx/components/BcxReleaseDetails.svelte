@@ -18,8 +18,8 @@ import {
 } from 'src/features/treeview/TreeItem';
 import { items, text } from 'src/features/treeview/TreeItemBuilder';
 import {
-  ICON_DISC,
   ICON_FILE_TEXT,
+  ICON_INFO,
   ICON_LIST_MUSIC,
   ICON_MIC,
   ICON_TAGS,
@@ -31,6 +31,7 @@ import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxReleaseItemActions from './BcxReleaseItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
+import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreePanel from './BcxTreePanel.svelte';
 import { createItemUrl } from './itemUrl';
 
@@ -144,7 +145,7 @@ let tabTree = $derived.by(() => {
   data.add({
     label: 'Release Info',
     pathKey: 'release-info',
-    image: item.previewImage ?? ICON_DISC,
+    image: ICON_INFO,
     hasChildren: true,
     showChildrenCount: false,
     children: releaseTree.items.filter(
@@ -233,14 +234,12 @@ let dates = $derived(
 );
 </script>
 
-{#snippet parentActions()}
-  {#if bandLinks.parent}
-    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} menuLabel={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} toolbar />
-  {/if}
-{/snippet}
-
 {#snippet releaseActions()}
-  <BcxReleaseItemActions {item} {information} keepInPreview toolbar variant="toolbar" relatedActions={parentActions} />
+  {@render leadingActions?.()}
+  <BcxReleaseItemActions {item} {information} keepInPreview />
+  {#if bandLinks.parent}
+    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} />
+  {/if}
 {/snippet}
 
 {#snippet releaseNotes()}
@@ -261,8 +260,6 @@ let dates = $derived(
   subheading={information.artist}
   subheadingSize={1.125}
   details={releaseNotes}
-  actions={releaseActions}
-  actionsBeforeHeader={true}
   fitContent={true}
   treeData={emptyTree}
   detailsLabel="Detailed release information"
@@ -326,23 +323,22 @@ let dates = $derived(
   {#if loading}<p class="release-status" role="status">Loading release details…</p>{/if}
   {#if error}<p class="band-links-error" role="alert">{error}</p>{/if}
   <div class="release-preview-tabs">
-    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} sectionLabels={{ 'release-info': information.title }} responsiveSidebar={true} compactWhenOverflowing={true} countBadges={true} />
+    <BcxRootSectionTabs treeData={tabTree} label="Release preview sections" sectionContent={releasePanel} responsiveSidebar={true} compactWhenOverflowing={true} countBadges={true} />
   </div>
 {/snippet}
 
 <div class="release-details">
-  {#if leadingActions || trailingActions}
-    <div class="release-actions">
-      {@render leadingActions?.()}
-      {#if trailingActions}<div class="release-trailing-actions">{@render trailingActions()}</div>{/if}
-    </div>
-  {/if}
+  <div class="release-actions">
+    <BcxSectionTabs tabs={[]} value="" label="Release actions" actions={releaseActions} wrapActions={true} />
+    {#if trailingActions}<div class="release-trailing-actions">{@render trailingActions()}</div>{/if}
+  </div>
   {@render releasePanels()}
 </div>
 
 <style>
-.release-actions { display: flex; align-items: flex-start; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px); }
-.release-trailing-actions { display: flex; flex-shrink: 0; margin-left: auto; }
+.release-actions { display: flex; align-items: flex-start; flex-shrink: 0; }
+.release-actions :global(.bcx-section-tabs) { flex: 1; min-width: 0; border-color: transparent; background: transparent; box-shadow: none; }
+.release-trailing-actions { display: flex; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px) 0 0; }
 .release-details { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-preview-tabs { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow: hidden; }
 .release-info-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }

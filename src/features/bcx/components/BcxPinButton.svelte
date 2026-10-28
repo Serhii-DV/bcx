@@ -4,11 +4,8 @@ import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { type PinnedPage, samePinnedPage } from '../pinnedNavigation';
 import { changePin, pinnedNavigation } from '../stores/pinnedNavigation';
 
-let {
-  page,
-  iconOnly = false,
-  toolbar = false,
-}: { page: PinnedPage; iconOnly?: boolean; toolbar?: boolean } = $props();
+let { page, iconOnly = false }: { page: PinnedPage; iconOnly?: boolean } =
+  $props();
 let saving = $state(false);
 let error = $state('');
 const saved = $derived(
@@ -42,16 +39,15 @@ async function activate() {
 }
 </script>
 
-<span class="pin-action" class:toolbar>
+<span class="pin-action">
   <button type="button" class={iconOnly ? 'item-button pin-icon-button' : 'bcx-section-tab'} {disabled} title={`${label}: ${page.title}`} aria-label={`${label}: ${page.title}`} aria-pressed={!!saved} onclick={(event) => { if (iconOnly) event.stopPropagation(); void activate(); }} onkeydown={(event) => { if (iconOnly) event.stopPropagation(); }} ondblclick={(event) => { if (iconOnly) event.stopPropagation(); }}>
-    <Pin size={iconOnly || toolbar ? 16 : 14} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" />{#if !iconOnly}<span>{toolbar ? (saved ? 'Unpin' : 'Pin') : label}</span>{/if}
+    <Pin size={iconOnly ? 16 : 14} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" />{#if !iconOnly}<span>{label}</span>{/if}
   </button>
   {#if error}<span role="alert" class="pin-error">{error}<button type="button" class="item-button" onclick={(event) => { event.preventDefault(); event.stopPropagation(); void activate(); }}>Retry</button></span>{/if}
 </span>
 
 <style>
 .pin-action { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; }
-.toolbar { display: contents; }
 .pin-icon-button { display: inline-flex; align-items: center; justify-content: center; padding: 4px; border: 0; border-radius: 4px; background: transparent; color: #d1d5db; cursor: pointer; }
 .pin-icon-button:hover { background: rgb(255 255 255 / 10%); color: #fff; }
 .pin-icon-button:focus-visible { outline: 2px solid #38bdf8; }
