@@ -1,5 +1,8 @@
 <script lang="ts">
-import type { ReleaseInformation } from 'src/features/treeview/ReleasePreview';
+import {
+  getReleaseArtistNames,
+  type ReleaseInformation,
+} from 'src/features/treeview/ReleasePreview';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { Snippet } from 'svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
@@ -13,6 +16,7 @@ let {
   toolbar = false,
   variant = 'menu',
   relatedActions,
+  onFilter,
 }: {
   item: TreeItem;
   information: ReleaseInformation;
@@ -21,6 +25,7 @@ let {
   toolbar?: boolean;
   variant?: 'menu' | 'toolbar';
   relatedActions?: Snippet;
+  onFilter?: (query: string) => void;
 } = $props();
 let name = $derived(`${information.artist} - ${information.title}`);
 let releaseYear = $derived(
@@ -31,4 +36,4 @@ let releaseYear = $derived(
 );
 </script>
 
-<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseArtist={information.artist} releaseDate={information.date} releaseTitle={information.title} {releaseYear} previewItem={item} {keepInPreview} {iconOnly} {toolbar} {variant} {relatedActions} />
+<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseArtist={information.artist} releaseDate={information.date} releaseTitle={information.title} {releaseYear} previewItem={item} {keepInPreview} {iconOnly} {toolbar} {variant} {relatedActions} filterArtists={onFilter ? getReleaseArtistNames(information) : []} {onFilter} />

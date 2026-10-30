@@ -10,12 +10,13 @@ import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
-import type { Snippet } from 'svelte';
+import { getContext, type Snippet } from 'svelte';
 import { pinnedPageFromItem } from '../pinnedPage';
 import BcxPinButton from './BcxPinButton.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxReleaseItemActions from './BcxReleaseItemActions.svelte';
 import { createItemUrl } from './itemUrl';
+import { type TreeFilterContext, treeFilterContext } from './treeFilterContext';
 
 interface Props {
   item: TreeItem;
@@ -24,6 +25,7 @@ interface Props {
 }
 
 let { item, showActions = true, itemActions }: Props = $props();
+const treeFilter = getContext<TreeFilterContext | undefined>(treeFilterContext);
 let showArtwork = $derived(
   item.showArtwork ?? !!(item.previewInformation || item.bandPreview),
 );
@@ -128,7 +130,7 @@ async function openBrowserPage(url: string) {
     <BcxPreviewItemActions url={createItemUrl(item.bandPreview.url)} image={item.bandPreview.image ?? item.image} name={item.bandPreview.name} kind="band" copyValue={item.bandPreview.name} previewItem={item} iconOnly />
   {/if}
   {#if item.previewInformation}
-    <BcxReleaseItemActions {item} information={item.previewInformation} iconOnly />
+    <BcxReleaseItemActions {item} information={item.previewInformation} iconOnly onFilter={treeFilter?.enabled() ? treeFilter.setQuery : undefined} />
   {/if}
 </div>
   {/if}

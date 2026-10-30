@@ -15,6 +15,7 @@ import { Track } from 'src/bandcamp/domain/track/track';
 import { console } from 'src/utils/console';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TrackTreeItemFactory } from '../factories/TrackTreeItemFactory';
+import { getReleaseArtistNames } from '../ReleasePreview';
 import { formatReleasePrice, getReleasePrice } from '../releasePrice';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
@@ -124,6 +125,12 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         : undefined);
     return {
       ...release,
+      keywords: [
+        ...(release.keywords ?? []),
+        ...(release.previewInformation
+          ? getReleaseArtistNames(release.previewInformation)
+          : []),
+      ],
       price: formatReleasePrice(priceByRelease.get(album)),
       timestamp: addedAt
         ? { label: 'Added', dateTime: addedAt }

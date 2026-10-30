@@ -21,12 +21,20 @@ import {
   ICON_CHEVRON_RIGHT,
   ICON_CORNER_RIGHT_UP,
 } from 'src/features/treeview/utils/icon';
-import { onDestroy, onMount, type Snippet, tick, untrack } from 'svelte';
+import {
+  onDestroy,
+  onMount,
+  type Snippet,
+  setContext,
+  tick,
+  untrack,
+} from 'svelte';
 import { getItemPreviewContext } from '../stores/itemPreview';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
 import BcxTreeRenderer from './BcxTreeRenderer.svelte';
+import { type TreeFilterContext, treeFilterContext } from './treeFilterContext';
 import {
   activateTreeItem,
   collapseTreeNodeElement,
@@ -65,6 +73,7 @@ interface Props {
   doubleClickToExpand?: boolean;
   isLoading?: boolean;
   loadingMessage?: string;
+  enableReleaseFilterActions?: boolean;
 }
 
 const DRILL_UP_PATH = '__bcx_tree_drill_up__';
@@ -87,7 +96,12 @@ let {
   doubleClickToExpand = true,
   isLoading = false,
   loadingMessage = 'Loading',
+  enableReleaseFilterActions = false,
 }: Props = $props();
+setContext<TreeFilterContext>(treeFilterContext, {
+  enabled: () => enableReleaseFilterActions,
+  setQuery: setFilterQuery,
+});
 const sharedPreview = getItemPreviewContext();
 const selectPreview = $derived(onSelect ?? sharedPreview?.select);
 const showPreview = $derived(onPreview ?? sharedPreview?.show);

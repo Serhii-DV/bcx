@@ -7,6 +7,7 @@ import {
   Ellipsis,
   ExternalLink,
   Eye,
+  Filter,
   Pin,
   Search,
 } from '@lucide/svelte';
@@ -40,6 +41,8 @@ let {
   variant = 'menu',
   menuLabel,
   relatedActions,
+  filterArtists = [],
+  onFilter,
 }: {
   url?: Url;
   image?: string;
@@ -57,6 +60,8 @@ let {
   variant?: 'menu' | 'toolbar';
   menuLabel?: string;
   relatedActions?: Snippet;
+  filterArtists?: string[];
+  onFilter?: (query: string) => void;
 } = $props();
 const preview = getItemPreviewContext();
 let container = $state<HTMLDivElement>();
@@ -312,6 +317,17 @@ async function copy(value: string) {
           <DropdownMenu.Separator class="preview-item-menu-separator" />
         {/if}
         {@render copyMenuItems()}
+        {#if onFilter && filterArtists.length}
+          <DropdownMenu.Separator class="preview-item-menu-separator" />
+          <DropdownMenu.Group>
+            <DropdownMenu.GroupHeading class="preview-item-menu-heading">Filter</DropdownMenu.GroupHeading>
+            {#each filterArtists as artist (artist)}
+              <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => onFilter?.(artist)}>
+                <Filter size={14} class="shrink-0" aria-hidden="true" /><span>Artist: {artist}</span>
+              </DropdownMenu.Item>
+            {/each}
+          </DropdownMenu.Group>
+        {/if}
         {#if search}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
           {@render searchMenuItems()}
@@ -339,6 +355,7 @@ async function copy(value: string) {
 :global(.preview-item-menu-action) { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.25rem; font-size: 0.8125rem; cursor: pointer; }
 :global(.preview-item-menu-action[data-highlighted]) { background: #293548; outline: none; }
 :global(.preview-item-menu-separator) { height: 1px; margin: 0.25rem; background: #4b5563; }
+:global(.preview-item-menu-heading) { padding: 0.25rem 0.5rem; color: #9ca3af; font-size: 0.75rem; }
 .action-text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 0.125rem; }
 .action-value { color: #9ca3af; font-size: 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 [role='alert'] { color: #fca5a5; font-size: 0.75rem; }

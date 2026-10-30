@@ -107,9 +107,11 @@ let {
   navigationInFilter = false,
   navigationInToolbar = false,
   showFilterNavigation = true,
+  releaseFilterActions = false,
   onNavigationChange,
 }: {
   treeData: TreeData;
+  releaseFilterActions?: boolean;
   label: string;
   initialSelectedHref?: string;
   sortBands?: boolean;
@@ -593,6 +595,7 @@ onDestroy(() => onNavigationChange?.(undefined));
                 onRootLoaded={refreshTabs}
                 nativeTabNavigation={true}
                 filterActions={navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
+                enableReleaseFilterActions={releaseFilterActions && (root?.label === 'Releases' || !!root?.label?.startsWith('Releases: '))}
                 bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
               />
             {/if}

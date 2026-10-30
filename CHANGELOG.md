@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Band and Band preview release menus include artist filters that apply to the current Releases list, including artists detected on tracks.
+
 - Restored the Band and Release information toolbars, contextual navigation labels, preview panel title, and release copy options for artist, title, year, and release date.
 
 - Band music pages show clickable price filter badges on albums and standalone tracks, such as "7 EUR" or "10 USD", with matching search suggestions and exact price filtering. Zero prices use "name your price"; unavailable pricing is omitted.
