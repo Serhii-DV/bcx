@@ -139,7 +139,8 @@ async function handleCloseAutoFocus(event: Event) {
 }
 
 function handlePointerEnter(event: PointerEvent) {
-  if (event.pointerType === 'mouse' && !sidebar.open) hoverExpanded = true;
+  if (event.pointerType === 'mouse' && sidebar.overlay && !sidebar.open)
+    hoverExpanded = true;
 }
 
 function handlePointerLeave(event: PointerEvent) {
