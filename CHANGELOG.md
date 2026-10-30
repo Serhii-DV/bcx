@@ -4,13 +4,15 @@
 
 ### Minor Changes
 
+- Restored the Band and Release information toolbars, contextual navigation labels, preview panel title, and release copy options for artist, title, year, and release date.
+
 - Band music pages show clickable price filter badges on albums and standalone tracks, such as "7 EUR" or "10 USD", with matching search suggestions and exact price filtering. Zero prices use "name your price"; unavailable pricing is omitted.
 
 - Collection and Wishlist sync automatically save album and track records with list-provided titles, artwork, URLs, relationships, and valid prices. Records and list membership commit together; existing page details and track lists are preserved, and unknown release dates remain unknown.
 
 - Album and track TreeView rows show their saved prices, with zero displayed as "name your price". Band, Collection, and Wishlist catalogs include a By Prices panel showing name your price first, currencies alphabetically with exact price groups ascending inside each currency, and Price unknown last for missing pricing. Collection and Wishlist use each fan-list item's price and currency for rows, archives, and grouping, including releases whose pages have not been visited; saved release metadata still supplies other details. Standalone tracks retain track previews.
 
-- Added an X button at the top right of the shared Preview Panel so lists can use the full panel height. The panel stays closed while browsing until a release, band, or track Preview action reopens it, retaining its selected details and saved split size.
+- The shared Preview Panel has a header showing "Preview Artist - Release" or "Preview Artist" beside a right-aligned close button. Long titles truncate with the full text available on hover. The panel stays closed while browsing until a release, band, or track Preview action reopens it, retaining its selected details and saved split size.
 
 - Artist action dropdowns now sit inside the tree row’s button group. Band rows, including saved and unsaved History entries, and Release and track rows share the Preview Panel’s action menu for opening, previewing, pinning, copying names, titles and URLs, and searching Bandcamp.
 
@@ -61,6 +63,8 @@
 - Added an unknown-year music filter, accurate per-album year counts, and compact keyword badges with accessible popovers.
 
 ### Patch Changes
+
+- Restored the three-dot action button and keyboard focus styling on tree rows.
 
 - Main navigation starts expanded in panels at least 700px wide and collapsed in narrower panels. Narrow navigation still expands over the content on hover; resizing resets navigation to the appropriate default.
 
