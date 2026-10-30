@@ -314,12 +314,10 @@ async function copy(value: string) {
             <Pin size={14} fill={savedPin ? 'currentColor' : 'none'} aria-hidden="true" /><span>{savedPin ? 'Unpin' : 'Pin'} {pinPage.kind}</span>
           </DropdownMenu.Item>
         {/if}
-        {#if pageUrl || (preview && previewItem)}
+        {#if pageUrl || (preview && previewItem) || pinPage}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
         {/if}
-        {@render copyMenuItems()}
         {#if onFilter && filterOptions.length}
-          <DropdownMenu.Separator class="preview-item-menu-separator" />
           <DropdownMenu.Group>
             <DropdownMenu.GroupHeading class="preview-item-menu-heading">Filter</DropdownMenu.GroupHeading>
             {#each filterOptions as option (option.label)}
@@ -328,6 +326,15 @@ async function copy(value: string) {
               </DropdownMenu.Item>
             {/each}
           </DropdownMenu.Group>
+          <DropdownMenu.Separator class="preview-item-menu-separator" />
+        {/if}
+        {#if kind === 'release'}
+          <DropdownMenu.Group>
+            <DropdownMenu.GroupHeading class="preview-item-menu-heading">Copy</DropdownMenu.GroupHeading>
+            {@render copyMenuItems()}
+          </DropdownMenu.Group>
+        {:else}
+          {@render copyMenuItems()}
         {/if}
         {#if search}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
