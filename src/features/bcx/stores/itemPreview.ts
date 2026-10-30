@@ -23,7 +23,10 @@ export function getItemPreviewId(item: TreeItem): string {
   );
 }
 
-export function getItemPreviewLabel(item: TreeItem): string {
+export function getItemPreviewLabel(
+  item: TreeItem,
+  { includeYear = true }: { includeYear?: boolean } = {},
+): string {
   if (item.bandPreview) return item.bandPreview.name;
   const information = item.previewInformation;
   const title = information?.title ?? item.label ?? 'Release';
@@ -32,5 +35,5 @@ export function getItemPreviewLabel(item: TreeItem): string {
     (information?.date
       ? new Date(information.date).getUTCFullYear()
       : undefined);
-  return `${information?.artist ? `${information.artist} - ` : ''}${title}${year && Number.isFinite(year) ? ` (${year})` : ''}`;
+  return `${information?.artist ? `${information.artist} - ` : ''}${title}${includeYear && year && Number.isFinite(year) ? ` (${year})` : ''}`;
 }

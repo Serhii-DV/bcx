@@ -41,11 +41,6 @@ import {
 import { pinnedPageFromItem } from '../pinnedPage';
 import { getItemPreviewId, getItemPreviewLabel } from '../stores/itemPreview';
 import { pinnedNavigation } from '../stores/pinnedNavigation';
-import {
-  restoreSidebarExpanded,
-  saveSidebarExpanded,
-  sidebarExpanded,
-} from '../stores/sidebarExpanded';
 import BcxActivityLog from './BcxActivityLog.svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
 import BcxBandPreview from './BcxBandPreview.svelte';
@@ -84,16 +79,23 @@ let {
   onClose = () => {},
 }: Props = $props();
 let sectionsContainer: HTMLDivElement;
-onMount(() => {
-  void restoreSidebarExpanded();
-});
 let mainNavigation = $state<BcxMainNavigation>();
 let hoverExpanded = $state(false);
-const navigationExpanded = $derived($sidebarExpanded || hoverExpanded);
+let navigationOverlay = $state(true);
+let navigationOverride = $state<boolean | null>(null);
+const navigationExpanded = $derived(
+  (navigationOverride ?? !navigationOverlay) || hoverExpanded,
+);
+
+$effect(() => {
+  navigationOverlay;
+  navigationOverride = null;
+  hoverExpanded = false;
+});
 
 function setNavigationExpanded(expanded: boolean) {
   hoverExpanded = false;
-  saveSidebarExpanded(expanded);
+  navigationOverride = expanded;
 }
 const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
@@ -745,7 +747,7 @@ $effect(() => {
         <div class="bcx-panel-body">
 
           <div bind:this={sectionsContainer} class="bcx-sections">
-            <Sidebar.Provider class="bcx-panel-body bcx-main-layout" open={navigationExpanded} onOpenChange={setNavigationExpanded}>
+            <Sidebar.Provider class="bcx-panel-body bcx-main-layout" open={navigationExpanded} bind:overlay={navigationOverlay} onOpenChange={setNavigationExpanded}>
               <BcxMainNavigation
                 bind:this={mainNavigation}
                 bind:hoverExpanded

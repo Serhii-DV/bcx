@@ -8,16 +8,17 @@ import { setSidebar } from './context.svelte.js';
 let {
   ref = $bindable(null),
   open = $bindable(false),
+  overlay = $bindable(true),
   onOpenChange = () => {},
   class: className,
   children,
   ...restProps
 }: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
   open?: boolean;
+  overlay?: boolean;
   onOpenChange?: (open: boolean) => void;
 } = $props();
 
-let overlay = $state(true);
 setSidebar({
   open: () => open,
   overlay: () => overlay,

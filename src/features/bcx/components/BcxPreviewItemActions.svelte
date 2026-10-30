@@ -4,9 +4,11 @@ import {
   ChevronDown,
   Copy,
   Disc,
+  Ellipsis,
   ExternalLink,
   Eye,
   Pin,
+  Search,
 } from '@lucide/svelte';
 import { DropdownMenu } from 'bits-ui';
 import { openUrlInActiveTab } from 'src/core/extensionActions';
@@ -14,7 +16,7 @@ import type { Url } from 'src/core/url';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import BandcampIcon from 'src/lib/components/BandcampIcon.svelte';
 import { copyToClipboard } from 'src/utils/clipboard';
-import { onDestroy } from 'svelte';
+import { onDestroy, type Snippet } from 'svelte';
 import { createPinnedPage, samePinnedPage } from '../pinnedNavigation';
 import { pinnedPageFromItem } from '../pinnedPage';
 import { getItemPreviewContext } from '../stores/itemPreview';
@@ -27,20 +29,34 @@ let {
   name,
   kind,
   copyValue,
+  releaseArtist,
+  releaseDate,
   releaseTitle,
+  releaseYear,
   previewItem,
   keepInPreview = false,
   iconOnly = false,
+  toolbar = false,
+  variant = 'menu',
+  menuLabel,
+  relatedActions,
 }: {
   url?: Url;
   image?: string;
   name: string;
   kind: 'release' | 'artist' | 'label' | 'band';
   copyValue: string;
+  releaseArtist?: string;
+  releaseDate?: string;
   releaseTitle?: string;
+  releaseYear?: number;
   previewItem?: TreeItem;
   keepInPreview?: boolean;
   iconOnly?: boolean;
+  toolbar?: boolean;
+  variant?: 'menu' | 'toolbar';
+  menuLabel?: string;
+  relatedActions?: Snippet;
 } = $props();
 const preview = getItemPreviewContext();
 let container = $state<HTMLDivElement>();
@@ -53,8 +69,9 @@ let destroyed = false;
 let actionTitle = $derived(
   `${kind[0].toUpperCase()}${kind.slice(1)} actions: ${name}`,
 );
+const toolbarLabel = $derived(`${kind[0].toUpperCase()}${kind.slice(1)}`);
 let copyLabel = $derived(
-  kind === 'release' ? 'Copy full release title' : `Copy ${kind} name`,
+  kind === 'release' ? 'Copy artist and release title' : `Copy ${kind} name`,
 );
 let pageUrl = $derived(url?.toString());
 let pinPage = $derived(
@@ -85,8 +102,43 @@ async function pinPageFromMenu() {
     if (!destroyed) pinSaving = false;
   }
 }
+let formattedReleaseDate = $derived.by(() => {
+  if (kind !== 'release' || !releaseDate) return undefined;
+  const date = new Date(releaseDate);
+  return Number.isFinite(date.getTime())
+    ? date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC',
+      })
+    : undefined;
+});
 let copyItems = $derived([
   { label: copyLabel, value: copyValue },
+  ...(kind === 'release' &&
+  releaseYear &&
+  Number.isInteger(releaseYear) &&
+  releaseYear > 0
+    ? [
+        ...(releaseArtist && releaseTitle
+          ? [
+              {
+                label: 'Copy artist and release title (year)',
+                value: `${copyValue} (${releaseYear})`,
+              },
+              {
+                label: 'Copy artist, year, and release title',
+                value: `${releaseArtist} - ${releaseYear} - ${releaseTitle}`,
+              },
+            ]
+          : []),
+        { label: 'Copy year', value: String(releaseYear) },
+      ]
+    : []),
+  ...(formattedReleaseDate
+    ? [{ label: 'Copy release date', value: formattedReleaseDate }]
+    : []),
   ...(kind === 'release' && releaseTitle
     ? [{ label: 'Copy release title', value: releaseTitle }]
     : []),
@@ -152,18 +204,84 @@ async function copy(value: string) {
 }
 </script>
 
-<div bind:this={container} class="preview-item-actions" class:named-title={kind === 'band' || (kind === 'release' && keepInPreview)}>
+{#snippet copyMenuItems()}
+  {#each copyItems as item (item.label)}
+    <DropdownMenu.Item class="preview-item-menu-action" title={item.value} onSelect={() => { void copy(item.value); }}>
+      <Copy size={14} class="shrink-0" aria-hidden="true" />
+      <span class="action-text"><span>{item.label}</span><span class="action-value">{item.value}</span></span>
+    </DropdownMenu.Item>
+  {/each}
+{/snippet}
+
+{#snippet searchMenuItems()}
+  {#if search}
+    {@const option = search}
+    <DropdownMenu.Item class="preview-item-menu-action" title={`Search Bandcamp for ${option.query}\n${option.url}`}>
+      {#snippet child({ props })}
+        <a {...props} href={option.url} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); void openPage(event, option.url); }}>
+          <BandcampIcon size={14} class="shrink-0" aria-hidden="true" />
+          <span class="action-text"><span>{option.label}</span><span class="action-value">{option.query}</span></span>
+          <ExternalLink size={12} class="shrink-0" aria-hidden="true" />
+        </a>
+      {/snippet}
+    </DropdownMenu.Item>
+  {/if}
+{/snippet}
+
+<div bind:this={container} class="preview-item-actions" class:toolbar class:named-title={!toolbar && (kind === 'band' || (kind === 'release' && keepInPreview))}>
+  {#if variant === 'toolbar'}
+    {#if pageUrl}
+      {@const destination = pageUrl}
+      <a class="bcx-section-tab" href={destination} title={`Open ${name} on Bandcamp\n${destination}`} onclick={(event) => void openPage(event, destination)}>
+        <BandcampIcon size={16} class="shrink-0" aria-hidden="true" /><span>Open</span><ExternalLink size={12} class="shrink-0" aria-hidden="true" />
+      </a>
+    {/if}
+    {#if pinPage}<BcxPinButton page={pinPage} toolbar={true} />{/if}
+    {@render relatedActions?.()}
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger class="bcx-section-tab" aria-label={`Copy ${kind} details: ${name}`} title={`Copy ${kind} details: ${name}`}>
+        {#if copied}<Check size={16} class="shrink-0 text-emerald-300" aria-hidden="true" />{:else}<Copy size={16} aria-hidden="true" />{/if}
+        <span>Copy</span><ChevronDown size={14} aria-hidden="true" />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
+        <DropdownMenu.Content class="preview-item-menu" align="start" sideOffset={4} strategy="fixed">{@render copyMenuItems()}</DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+    {#if search}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger class="bcx-section-tab" aria-label={`Search ${kind}: ${name}`} title={`Search ${kind}: ${name}`}>
+          <Search size={16} aria-hidden="true" /><span>Search</span><ChevronDown size={14} aria-hidden="true" />
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
+          <DropdownMenu.Content class="preview-item-menu" align="start" sideOffset={4} strategy="fixed">{@render searchMenuItems()}</DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+    {/if}
+    {#if preview && previewItem}
+      <button type="button" class="bcx-section-tab" aria-label={`${previewLabel}: ${name}`} title={`${previewLabel}: ${name}`} onclick={() => { if (previewItem) preview.show(previewItem); }}>
+        <Eye size={16} aria-hidden="true" /><span>Preview</span>
+      </button>
+    {/if}
+  {:else}
   <DropdownMenu.Root>
     <DropdownMenu.Trigger class={iconOnly ? 'item-button item-menu-trigger' : 'bcx-section-tab'} aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`} onclick={(event) => { if (iconOnly) event.stopPropagation(); }} onkeydown={(event) => { if (iconOnly) event.stopPropagation(); }} ondblclick={(event) => { if (iconOnly) event.stopPropagation(); }}>
-      {#if copied}
-        <Check size={14} class="shrink-0 text-emerald-300" aria-hidden="true" />
-      {:else if !iconOnly && image && image !== failedImage}
-        <img src={image} alt="" class="item-image" onerror={() => { failedImage = image; }} />
-      {:else if !iconOnly && kind === 'band'}
-        <Disc size={14} class="shrink-0" aria-hidden="true" />
-      {/if}
-      {#if !iconOnly}<span class="item-name">{name}</span>{/if}
-      {#if !iconOnly || !copied}<ChevronDown size={iconOnly ? 16 : 14} class="shrink-0" aria-hidden="true" />{/if}
+      {#snippet child({ props })}
+        <button {...props} type="button">
+          {#if copied}
+            <Check size={iconOnly || toolbar ? 16 : 14} class="shrink-0 text-emerald-300" aria-hidden="true" />
+          {:else if iconOnly}
+            <Ellipsis size={16} class="shrink-0" aria-hidden="true" />
+          {:else if image && image !== failedImage}
+            <img src={image} alt="" class="item-image" onerror={() => { failedImage = image; }} />
+          {:else if kind === 'band' || toolbar}
+            <Disc size={toolbar ? 16 : 14} class="shrink-0" aria-hidden="true" />
+          {/if}
+          {#if !iconOnly}
+            <span class="item-name">{menuLabel ?? (toolbar ? toolbarLabel : name)}</span>
+            <ChevronDown size={14} class="shrink-0" aria-hidden="true" />
+          {/if}
+        </button>
+      {/snippet}
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
       <DropdownMenu.Content class="preview-item-menu" align="start" sideOffset={4} strategy="fixed" onCloseAutoFocus={(event) => { if (previewSelected) { event.preventDefault(); previewSelected = false; } }}>
@@ -193,35 +311,23 @@ async function copy(value: string) {
         {#if pageUrl || (preview && previewItem)}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
         {/if}
-        {#each copyItems as item (item.label)}
-          <DropdownMenu.Item class="preview-item-menu-action" title={item.value} onSelect={() => { void copy(item.value); }}>
-            <Copy size={14} class="shrink-0" aria-hidden="true" />
-            <span class="action-text"><span>{item.label}</span><span class="action-value">{item.value}</span></span>
-          </DropdownMenu.Item>
-        {/each}
+        {@render copyMenuItems()}
         {#if search}
-          {@const option = search}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
-          <DropdownMenu.Item class="preview-item-menu-action" title={`Search Bandcamp for ${option.query}\n${option.url}`}>
-            {#snippet child({ props })}
-              <a {...props} href={option.url} onclick={(event) => { if (typeof props.onclick === 'function') props.onclick(event); void openPage(event, option.url); }}>
-                <BandcampIcon size={14} class="shrink-0" aria-hidden="true" />
-                <span class="action-text"><span>{option.label}</span><span class="action-value">{option.query}</span></span>
-                <ExternalLink size={12} class="shrink-0" aria-hidden="true" />
-              </a>
-            {/snippet}
-          </DropdownMenu.Item>
+          {@render searchMenuItems()}
         {/if}
       </DropdownMenu.Content>
     </DropdownMenu.Portal>
   </DropdownMenu.Root>
-  {#if keepInPreview && pinPage}<BcxPinButton page={pinPage} />{/if}
+  {#if keepInPreview && !iconOnly && pinPage}<BcxPinButton page={pinPage} {toolbar} />{/if}
+  {/if}
   <span role="status" class="sr-only">{copied ? 'Copied' : ''}</span>
   {#if error}<span role="alert">{error}</span>{/if}
 </div>
 
 <style>
 .preview-item-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.375rem; min-width: 0; max-width: 100%; }
+.toolbar { display: contents; }
 .named-title :global(.bcx-section-tab) { max-width: 100%; }
 .named-title .item-name { overflow: visible; white-space: normal; overflow-wrap: anywhere; text-align: left; }
 .item-menu-trigger { display: inline-flex; align-items: center; justify-content: center; padding: 4px; border: 0; border-radius: 4px; background: transparent; color: #d1d5db; cursor: pointer; }

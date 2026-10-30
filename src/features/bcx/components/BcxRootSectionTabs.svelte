@@ -96,7 +96,9 @@ let {
   sortBands = false,
   aboutContent,
   sectionContent,
+  sectionLabels,
   actions,
+  navigationActions,
   heading,
   responsiveSidebar = false,
   compactWhenOverflowing = false,
@@ -113,7 +115,9 @@ let {
   sortBands?: boolean;
   aboutContent?: Snippet<[TreeItem]>;
   sectionContent?: Snippet<[TreeItem]>;
+  sectionLabels?: Readonly<Record<string, string>>;
   actions?: Snippet;
+  navigationActions?: Snippet;
   heading?: Snippet;
   responsiveSidebar?: boolean;
   compactWhenOverflowing?: boolean;
@@ -179,21 +183,24 @@ const tabs = $derived.by(() => {
 });
 const displayTabs = $derived.by<SectionTab[]>(() => {
   const labeledTabs = tabs.map((tab) => {
-    const rootLabel = displayedTreeData.items.find(
-      (item) => item.path === tab.id,
-    )?.label;
+    const root = displayedTreeData.items.find((item) => item.path === tab.id);
+    const rootLabel = root?.label;
     const description = rootLabel ? tabDescriptions[rootLabel] : undefined;
+    const sectionLabel = sectionLabels?.[root?.pathKey ?? tab.id];
+    const title =
+      description?.title ??
+      (rootLabel?.startsWith('About')
+        ? 'View artist or label information and links.'
+        : `Open ${rootLabel ?? 'section'}.`);
     const labeledTab = {
       ...tab,
       image: tab.image ?? description?.image,
-      label: description?.label
-        ? tab.label.replace(rootLabel ?? '', description.label)
-        : tab.label,
-      title:
-        description?.title ??
-        (rootLabel?.startsWith('About')
-          ? 'View artist or label information and links.'
-          : `Open ${rootLabel ?? 'section'}.`),
+      label:
+        sectionLabel ??
+        (description?.label
+          ? tab.label.replace(rootLabel ?? '', description.label)
+          : tab.label),
+      title: sectionLabel ? `${sectionLabel}\n${title}` : title,
     };
     if (isReleaseCatalog && rootLabel === 'Artists') {
       return {
@@ -601,7 +608,7 @@ onDestroy(() => onNavigationChange?.(undefined));
     {/if}
     {#if navigationInToolbar}
       <div class="bcx-root-section-navigation">
-        <BcxSectionTabs tabs={localNavigationTabs} value={selectedRoot} {label} {actions} onValueChange={selectSidebarRoot} {compactWhenOverflowing} hideCountsWhenOverflowing={true} vertical={orientation === 'vertical'} />
+        <BcxSectionTabs tabs={localNavigationTabs} value={selectedRoot} {label} {actions} {navigationActions} onValueChange={selectSidebarRoot} {compactWhenOverflowing} hideCountsWhenOverflowing={true} vertical={orientation === 'vertical'} />
       </div>
     {:else if actions}
       <BcxSectionTabs tabs={[]} value="" {label} {actions} />
@@ -614,7 +621,7 @@ onDestroy(() => onNavigationChange?.(undefined));
   </div>
 {:else if tabs.length}
   <Tabs.Root bind:ref={container} bind:value={selectedRoot} {orientation} class="bcx-panel-body bcx-root-sections">
-    <BcxSectionTabs tabs={localNavigationTabs} bind:value={selectedRoot} {label} {actions} {compactWhenOverflowing} vertical={orientation === 'vertical'} />
+    <BcxSectionTabs tabs={localNavigationTabs} bind:value={selectedRoot} {label} {actions} {navigationActions} {compactWhenOverflowing} vertical={orientation === 'vertical'} />
     {#each tabs as tab (tab.id)}
       <Tabs.Content value={tab.id} class="bcx-tab-content">{@render rootContent(tab.id)}</Tabs.Content>
     {/each}
