@@ -34,6 +34,7 @@ import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
 import BcxTreeRenderer from './BcxTreeRenderer.svelte';
+import { matchesReleaseFilter } from './releaseFilter';
 import { type TreeFilterContext, treeFilterContext } from './treeFilterContext';
 import {
   activateTreeItem,
@@ -142,6 +143,17 @@ let itemFilterQuery = $derived(
     ? ''
     : debouncedFilterQuery,
 );
+let releaseFieldFilter = $derived(
+  enableReleaseFilterActions &&
+    matchesReleaseFilter({}, itemFilterQuery) !== undefined,
+);
+let filteredLevelItems = $derived(
+  releaseFieldFilter
+    ? currentLevelItems.filter((item) =>
+        matchesReleaseFilter(item, itemFilterQuery),
+      )
+    : currentLevelItems,
+);
 let breadcrumbItems = $derived.by(() => {
   treeVersion;
   return rootPath ? buildBreadcrumbItems(treeData.items, rootPath) : [];
@@ -149,8 +161,8 @@ let breadcrumbItems = $derived.by(() => {
 let browserItems = $derived.by(() => {
   treeVersion;
   return filterTreeBrowserItems(
-    currentLevelItems,
-    itemFilterQuery,
+    filteredLevelItems,
+    releaseFieldFilter ? '' : itemFilterQuery,
     currentRootItem,
   );
 });
@@ -164,14 +176,16 @@ let treeLayoutItems = $derived.by(() => {
   treeVersion;
 
   if (!isTreeLayout) {
-    return currentLevelItems;
+    return filteredLevelItems;
   }
 
   if (!itemFilterQuery.trim()) {
     return currentLevelItems;
   }
 
-  return createFilteredTreeItems(currentLevelItems || [], itemFilterQuery);
+  return releaseFieldFilter
+    ? filteredLevelItems
+    : createFilteredTreeItems(currentLevelItems || [], itemFilterQuery);
 });
 let treeLayoutVisibleData = $derived.by(() => {
   treeVersion;

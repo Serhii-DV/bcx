@@ -23,6 +23,7 @@ import { pinnedPageFromItem } from '../pinnedPage';
 import { getItemPreviewContext } from '../stores/itemPreview';
 import { changePin, pinnedNavigation } from '../stores/pinnedNavigation';
 import BcxPinButton from './BcxPinButton.svelte';
+import type { ReleaseFilterOption } from './releaseFilter';
 
 let {
   url,
@@ -41,7 +42,7 @@ let {
   variant = 'menu',
   menuLabel,
   relatedActions,
-  filterArtists = [],
+  filterOptions = [],
   onFilter,
 }: {
   url?: Url;
@@ -60,7 +61,7 @@ let {
   variant?: 'menu' | 'toolbar';
   menuLabel?: string;
   relatedActions?: Snippet;
-  filterArtists?: string[];
+  filterOptions?: ReleaseFilterOption[];
   onFilter?: (query: string) => void;
 } = $props();
 const preview = getItemPreviewContext();
@@ -317,13 +318,13 @@ async function copy(value: string) {
           <DropdownMenu.Separator class="preview-item-menu-separator" />
         {/if}
         {@render copyMenuItems()}
-        {#if onFilter && filterArtists.length}
+        {#if onFilter && filterOptions.length}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
           <DropdownMenu.Group>
             <DropdownMenu.GroupHeading class="preview-item-menu-heading">Filter</DropdownMenu.GroupHeading>
-            {#each filterArtists as artist (artist)}
-              <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => onFilter?.(artist)}>
-                <Filter size={14} class="shrink-0" aria-hidden="true" /><span>Artist: {artist}</span>
+            {#each filterOptions as option (option.label)}
+              <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => onFilter?.(option.query)}>
+                <Filter size={14} class="shrink-0" aria-hidden="true" /><span>{option.label}</span>
               </DropdownMenu.Item>
             {/each}
           </DropdownMenu.Group>

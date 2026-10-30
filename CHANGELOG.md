@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Band and Band preview release menus include artist filters that apply to the current Releases list, including artists detected on tracks.
+- Band and Band preview release menus filter the current Releases list by detected artists, year, or price when available. Year and price filters match their respective fields.
 
 - Restored the Band and Release information toolbars, contextual navigation labels, preview panel title, and release copy options for artist, title, year, and release date.
 
