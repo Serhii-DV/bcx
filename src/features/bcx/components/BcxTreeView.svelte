@@ -295,6 +295,7 @@ function focusTreeItem(item?: TreeItem | null) {
 
 function collapseNode(item: TreeItem) {
   collapseTreeNodeElement(treeContainer, item);
+  refreshTreeRendering();
 }
 
 function refreshTreeRendering() {
@@ -348,6 +349,8 @@ function handleNodeClick(item: TreeItem, event: MouseEvent) {
     bind:this={filterRef}
     bind:value={filterQuery}
     suggestions={filterSuggestions}
+    visibleCount={filterQuery === debouncedFilterQuery ? getNavigableItems().length : undefined}
+    totalCount={treeData.visible.length}
     onArrowDown={handleFilterArrowDown}
   />
   {/if}

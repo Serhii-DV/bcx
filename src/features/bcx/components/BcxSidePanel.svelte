@@ -292,6 +292,8 @@ const accountSyncJob = $derived(
     : undefined,
 );
 let sectionFilterQueryById: Record<string, string> = $state({});
+let sectionVisibleCountById: Record<string, number> = $state({});
+let sectionTotalCountById: Record<string, number> = $state({});
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
 const sectionRequests = new Map<string, number>();
@@ -820,6 +822,8 @@ $effect(() => {
                       <BcxTreeBrowserFilter
                         bind:value={sectionFilterQueryById[section.id]}
                         suggestions={getTreeDataForSection(section).filterSuggestions}
+                        visibleCount={sectionVisibleCountById[section.id]}
+                        totalCount={sectionTotalCountById[section.id]}
                         onArrowDown={handleSectionFilterArrowDown}
                       />
                       <div class="bcx-section-tree-browser">
@@ -837,6 +841,8 @@ $effect(() => {
                             treeData={getTreeDataForSection(section)}
                             isLoading={isSectionLoading(section)}
                             filterQuery={sectionFilterQueryById[section.id] ?? ''}
+                            bind:visibleCount={sectionVisibleCountById[section.id]}
+                            bind:totalCount={sectionTotalCountById[section.id]}
                             bind:rootPath={sectionRootPathById[section.id]}
                             showBreadcrumb={false}
                             showFilter={false}

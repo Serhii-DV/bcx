@@ -4,6 +4,8 @@ import BcxTreeFilterInput from './BcxTreeFilterInput.svelte';
 interface Props {
   value: string;
   suggestions: string[];
+  visibleCount?: number;
+  totalCount?: number;
   onArrowDown?: () => void;
   onUnmatchedSubmit?: (value: string) => void | Promise<void>;
 }
@@ -11,6 +13,8 @@ interface Props {
 let {
   value = $bindable(''),
   suggestions,
+  visibleCount,
+  totalCount,
   onArrowDown,
   onUnmatchedSubmit,
 }: Props = $props();
@@ -28,6 +32,8 @@ export function focus() {
   {id}
   bind:value
   {suggestions}
+  {visibleCount}
+  {totalCount}
   placeholder="Filter browser items..."
   {onArrowDown}
   {onUnmatchedSubmit}

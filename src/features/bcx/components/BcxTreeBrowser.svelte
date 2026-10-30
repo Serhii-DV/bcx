@@ -75,6 +75,8 @@ interface Props {
   isLoading?: boolean;
   loadingMessage?: string;
   enableReleaseFilterActions?: boolean;
+  visibleCount?: number;
+  totalCount?: number;
 }
 
 const DRILL_UP_PATH = '__bcx_tree_drill_up__';
@@ -98,6 +100,8 @@ let {
   isLoading = false,
   loadingMessage = 'Loading',
   enableReleaseFilterActions = false,
+  visibleCount = $bindable(),
+  totalCount = $bindable(),
 }: Props = $props();
 setContext<TreeFilterContext>(treeFilterContext, {
   enabled: () => enableReleaseFilterActions,
@@ -201,6 +205,38 @@ let treeLayoutVisibleData = $derived.by(() => {
 });
 let treeLayoutVisiblePaths = $derived(treeLayoutVisibleData.paths);
 let treeLayoutVisibleChildCounts = $derived(treeLayoutVisibleData.childCounts);
+$effect(() => {
+  treeVersion;
+  visibleCount =
+    effectiveFilterQuery !== debouncedFilterQuery
+      ? undefined
+      : isTreeLayout
+        ? getTreeLayoutNavigableItems().length
+        : browserItems.length;
+  const baseline =
+    filterSearchBaseline?.rootPath === rootPath ? filterSearchBaseline : null;
+  const allItems = baseline?.children ?? currentLevelItems;
+  const filterGroupsOnly =
+    currentRootItem?.releasePreview &&
+    ['Artists', 'Release years', 'By Prices'].includes(
+      currentRootItem.label ?? '',
+    );
+  function countItems(items: TreeItem[]): number {
+    return items.reduce(
+      (count, item) => count + 1 + countItems(item.children ?? []),
+      0,
+    );
+  }
+  totalCount = isTreeLayout
+    ? getVisibleItems(allItems).length
+    : Math.max(
+        baseline?.childrenCount ??
+          (baseline ? 0 : (currentRootItem?.childrenCount ?? 0)),
+        filterGroupsOnly || releaseFieldFilter
+          ? allItems.length
+          : countItems(allItems),
+      );
+});
 let effectiveFilterQuery = $derived(externalFilterQuery ?? localFilterQuery);
 let emptyStateMessage = $derived.by(() => {
   if (isLoading || filterSearchLoading) {
@@ -650,6 +686,7 @@ function refreshTreeRendering() {
 
 function collapseCurrentTreeNode(item: TreeItem) {
   collapseTreeNodeElement(treeContainer, item);
+  refreshTreeRendering();
 }
 
 function showItemFeedback(
@@ -1126,6 +1163,8 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       bind:this={filterRef}
       bind:value={() => effectiveFilterQuery, setFilterQuery}
       suggestions={filterSuggestions}
+      {visibleCount}
+      {totalCount}
       onArrowDown={handleFilterArrowDown}
       onUnmatchedSubmit={handleUnmatchedFilterSubmit}
     />
