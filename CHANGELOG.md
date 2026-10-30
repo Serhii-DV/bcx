@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- Tree filters show visible and total item counts in a compact badge while a filter is active, updating after the filter is applied.
+- Tree filters show visible and total item counts in a compact badge before the clear button while a filter is active, updating after the filter is applied.
 
 - Band and Band preview release menus filter the current Releases list by detected artists, year, or price when available. The Filter section precedes the labelled Copy section; year and price filters match their respective fields.
 

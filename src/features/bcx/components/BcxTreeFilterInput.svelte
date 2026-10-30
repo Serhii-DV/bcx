@@ -69,8 +69,10 @@ function clearFilter() {
     onkeydown={handleKeyDown}
     list={datalistId}
     class="bcx-tree-filter-input"
-    class:has-value={Boolean(value)}
   />
+  {#if value.trim() && visibleCount !== undefined && totalCount !== undefined}
+    <span class="bcx-tree-filter-count" role="status" aria-label={`${visibleCount} of ${totalCount} items visible`} title={`${visibleCount} of ${totalCount} items visible`}>{visibleCount} / {totalCount}</span>
+  {/if}
   {#if value}
     <button
       type="button"
@@ -82,9 +84,6 @@ function clearFilter() {
     </button>
   {/if}
   </div>
-  {#if value.trim() && visibleCount !== undefined && totalCount !== undefined}
-    <span class="bcx-tree-filter-count" role="status" aria-label={`${visibleCount} of ${totalCount} items visible`} title={`${visibleCount} of ${totalCount} items visible`}>{visibleCount} / {totalCount}</span>
-  {/if}
 </div>
 <datalist id={datalistId}>
   {#each suggestions as suggestion}
@@ -100,21 +99,19 @@ function clearFilter() {
   width: 100%;
 }
 
-.bcx-tree-filter-field { position: relative; flex: 1 1 0%; min-width: 0; }
-.bcx-tree-filter-count { flex: none; margin-left: 0.375rem; padding: 0.125rem 0.5rem; border-radius: 9999px; background: rgb(255 255 255 / 10%); color: #d1d5db; font-size: 0.75rem; line-height: 1.25rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bcx-tree-filter-field { display: flex; align-items: center; flex: 1 1 0%; min-width: 0; background-color: oklch(37.3% 0.034 259.733 / 50%); }
+.bcx-tree-filter-field:focus-within { box-shadow: 0 0 0 2px oklch(70.7% 0.165 254.624); }
+.bcx-tree-filter-count { flex: none; padding: 0.125rem 0.5rem; color: #d1d5db; font-size: 0.75rem; line-height: 1.25rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .bcx-tree-filter-input {
-  width: 100%;
+  flex: 1 1 0%;
+  min-width: 0;
   padding: 0.5rem 0.75rem;
-  background-color: oklch(37.3% 0.034 259.733);
+  background-color: transparent;
   color: #fff;
   font-size: 0.875rem;
   line-height: 1.25rem;
   opacity: 0.5;
-}
-
-.bcx-tree-filter-input.has-value {
-  padding-right: 2rem;
 }
 
 .bcx-tree-filter-input::placeholder {
@@ -123,18 +120,14 @@ function clearFilter() {
 
 .bcx-tree-filter-input:focus {
   outline-style: none;
-  box-shadow: 0 0 0 2px oklch(70.7% 0.165 254.624);
 }
 
 .bcx-tree-filter-clear {
-  position: absolute;
-  right: 0.5rem;
-  top: 25%;
-  translate: 0 -50%;
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  margin: 9px 0 0;
+  margin: 0 0.5rem;
   padding: 0;
   background-color: transparent;
   color: oklch(70.7% 0.022 261.325);
