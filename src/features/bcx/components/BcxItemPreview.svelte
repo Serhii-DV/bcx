@@ -1,5 +1,5 @@
 <script lang="ts">
-import { X } from '@lucide/svelte';
+import { PanelTop, X } from '@lucide/svelte';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { setContext } from 'svelte';
 import {
@@ -14,10 +14,12 @@ import BcxReleasePreview from './BcxReleasePreview.svelte';
 let {
   item,
   onPreview,
+  onOpen,
   onClose,
 }: {
   item?: TreeItem;
   onPreview: (item: TreeItem) => void;
+  onOpen?: (item: TreeItem) => void;
   onClose: () => void;
 } = $props();
 let container: HTMLDivElement;
@@ -29,6 +31,7 @@ const title = $derived(
 
 setContext<ItemPreviewContext>(ITEM_PREVIEW_CONTEXT, {
   show: (selected) => onPreview(selected),
+  open: (selected) => onOpen?.(selected),
 });
 
 export function focus() {
@@ -39,6 +42,9 @@ export function focus() {
 <div bind:this={container} class="item-preview" tabindex="-1">
   <header class="preview-header">
     <h2 title={title}>{title}</h2>
+    {#if item && onOpen}
+      <button type="button" class="bcx-section-tab" aria-label={`Open ${getItemPreviewLabel(item)} in side panel`} title={`Open ${getItemPreviewLabel(item)} in side panel`} onclick={() => { if (item) onOpen(item); }}><PanelTop size={16} aria-hidden="true" /><span>Open</span></button>
+    {/if}
     <button type="button" class="bcx-section-tab preview-close" aria-label="Close Preview Panel" title="Close Preview Panel" onclick={onClose}>
       <X size={16} aria-hidden="true" />
     </button>

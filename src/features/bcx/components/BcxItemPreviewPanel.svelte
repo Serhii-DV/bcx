@@ -19,18 +19,18 @@ const KEYBOARD_RESIZE_STEP = 5;
 
 let {
   children,
+  sectionId,
   visible = true,
   previewSize = itemPreviewSize,
   onShowPreview,
-  onPreview,
-  selectedItem = $bindable(),
+  onOpen,
 }: {
   children: Snippet;
+  sectionId: string;
   visible?: boolean;
   previewSize?: ItemPreviewSizeStore;
   onShowPreview?: () => void;
-  onPreview?: (item: TreeItem) => void;
-  selectedItem?: TreeItem;
+  onOpen?: (item: TreeItem) => string;
 } = $props();
 const componentId = $props.id();
 const itemListId = `${componentId}-item-list`;
@@ -38,7 +38,10 @@ const itemPreviewId = `${componentId}-item-preview`;
 let previewPanel: HTMLDivElement;
 let itemList: HTMLDivElement;
 let preview = $state<BcxItemPreview>();
-let closed = $state(false);
+let closedBySection = $state<Record<string, boolean>>({});
+let selectedBySection = $state<Record<string, TreeItem>>({});
+const closed = $derived(closedBySection[sectionId] ?? false);
+const selectedItem = $derived(selectedBySection[sectionId]);
 const previewVisible = $derived(visible && !closed);
 let previewTrigger: HTMLElement | undefined;
 let isResizing = $state(false);
@@ -53,7 +56,7 @@ function selectItem(item: TreeItem) {
       !selectedItem ||
       getItemPreviewId(selectedItem) !== getItemPreviewId(item)
     )
-      selectedItem = item;
+      selectedBySection[sectionId] = item;
   });
 }
 
@@ -64,16 +67,15 @@ async function previewItem(item: TreeItem) {
     itemList.contains(document.activeElement)
   )
     previewTrigger = document.activeElement;
-  closed = false;
+  closedBySection[sectionId] = false;
   onShowPreview?.();
-  onPreview?.(item);
-  selectedItem = item;
+  selectedBySection[sectionId] = item;
   await tick();
   preview?.focus();
 }
 
 async function closePreview() {
-  closed = true;
+  closedBySection[sectionId] = true;
   await tick();
   const trigger =
     previewTrigger?.isConnected && !previewTrigger.closest('[hidden]')
@@ -84,9 +86,17 @@ async function closePreview() {
   (trigger ?? itemList).focus({ preventScroll: true });
 }
 
+async function openPreviewedItem(item: TreeItem) {
+  const destinationId = onOpen?.(item);
+  if (destinationId) closedBySection[destinationId] = true;
+  await tick();
+  itemList.focus({ preventScroll: true });
+}
+
 setContext<ItemPreviewContext>(ITEM_PREVIEW_CONTEXT, {
   select: selectItem,
   show: (item) => void previewItem(item),
+  open: (item) => onOpen?.(item),
 });
 onMount(() => {
   void previewSize.restore();
@@ -193,7 +203,7 @@ function handleLostPointerCapture() {
     <span aria-hidden="true"></span>
   </div>
   <section id={itemPreviewId} class="item-preview-panel-details" aria-label="Preview" hidden={!previewVisible}>
-    <BcxItemPreview bind:this={preview} item={selectedItem} onPreview={previewItem} onClose={closePreview} />
+    <BcxItemPreview bind:this={preview} item={selectedItem} onPreview={previewItem} onOpen={onOpen ? openPreviewedItem : undefined} onClose={closePreview} />
   </section>
 </div>
 

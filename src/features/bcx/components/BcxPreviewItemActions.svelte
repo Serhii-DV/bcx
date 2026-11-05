@@ -8,6 +8,7 @@ import {
   ExternalLink,
   Eye,
   Filter,
+  PanelTop,
   Pin,
   Search,
 } from '@lucide/svelte';
@@ -157,9 +158,7 @@ let copyItems = $derived([
       ]
     : []),
 ]);
-let previewLabel = $derived(
-  keepInPreview ? 'Keep in Preview' : `Preview ${kind}`,
-);
+let previewLabel = $derived(`Preview ${kind}`);
 let search = $derived.by(() => {
   if (!copyValue.trim()) return undefined;
   return {
@@ -263,7 +262,7 @@ async function copy(value: string) {
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
     {/if}
-    {#if preview && previewItem}
+    {#if preview && previewItem && !keepInPreview}
       <button type="button" class="bcx-section-tab" aria-label={`${previewLabel}: ${name}`} title={`${previewLabel}: ${name}`} onclick={() => { if (previewItem) preview.show(previewItem); }}>
         <Eye size={16} aria-hidden="true" /><span>Preview</span>
       </button>
@@ -303,10 +302,16 @@ async function copy(value: string) {
             {/snippet}
           </DropdownMenu.Item>
         {/if}
-        {#if preview && previewItem}
+        {#if preview && previewItem && !keepInPreview}
           <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => { if (previewItem) { previewSelected = true; preview.show(previewItem); } }}>
             <Eye size={14} class="shrink-0" aria-hidden="true" />
             <span>{previewLabel}</span>
+          </DropdownMenu.Item>
+        {/if}
+        {#if preview?.open && previewItem}
+          <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => { if (previewItem) preview.open?.(previewItem); }}>
+            <PanelTop size={14} class="shrink-0" aria-hidden="true" />
+            <span>Open in side panel</span>
           </DropdownMenu.Item>
         {/if}
         {#if pinPage}

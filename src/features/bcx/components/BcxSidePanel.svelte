@@ -100,12 +100,11 @@ function setNavigationExpanded(expanded: boolean) {
 const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let releaseVisitedById: Record<string, boolean> = $state({});
-let requestedPreviewSectionId = $state('');
+let requestedPreviewSections = $state<Record<string, boolean>>({});
 let openedPreviews = $state<
   { id: string; item: TreeItem; pinnedPage?: PinnedPage }[]
 >([]);
 let previewVisitedById: Record<string, boolean> = $state({});
-let selectedPreviewItem = $state<TreeItem>();
 let closedPageSectionIds = $state<string[]>([]);
 const additionalPreviews = $derived(
   openedPreviews.filter(({ item }) => !findPagePreviewSection(item)),
@@ -177,7 +176,6 @@ async function closePreview(id: string) {
   );
   const index = destinations.findIndex((section) => section.id === id);
   const pageSection = sections.find((section) => section.id === id);
-  const closed = openedPreviews.find((preview) => preview.id === id);
   if (pageSection) {
     closedPageSectionIds = [...closedPageSectionIds, id];
     openedPreviews = openedPreviews.filter(
@@ -190,16 +188,14 @@ async function closePreview(id: string) {
   const remaining = destinations.filter((section) => section.id !== id);
   const next = remaining[Math.min(index, remaining.length - 1)];
   if (selectedSectionId === id) selectedSectionId = next?.id ?? dashboardTabId;
-  const closedItem = pageSection?.releasePreview ?? closed?.item;
-  if (
-    selectedPreviewItem &&
-    (closedItem
-      ? getItemPreviewId(selectedPreviewItem) === getItemPreviewId(closedItem)
-      : pageSection && findPagePreviewSection(selectedPreviewItem)?.id === id)
-  )
-    selectedPreviewItem = undefined;
   await tick();
   mainNavigation?.focusSelected();
+}
+
+function openItem(item: TreeItem): string {
+  const id = keepPreview(item);
+  selectedSectionId = id;
+  return id;
 }
 
 const selectedPinId = $derived.by(() => {
@@ -431,11 +427,12 @@ function containsPreviewItems(items: TreeItem[]): boolean {
 }
 
 const showPreview = $derived.by(() => {
+  if (requestedPreviewSections[selectedSectionId]) return true;
   if (additionalPreviews.some((preview) => preview.id === selectedSectionId))
-    return requestedPreviewSectionId === selectedSectionId;
+    return false;
   const section = sections.find((section) => section.id === selectedSectionId);
   if (!section || section.label === 'Following Genres') return false;
-  if (section.releasePreview) return requestedPreviewSectionId === section.id;
+  if (section.releasePreview) return false;
   const data = sectionTreeDataById[section.id];
   return data ? containsPreviewItems(data.items) : true;
 });
@@ -667,7 +664,7 @@ $effect(() => {
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
   releaseVisitedById = {};
-  requestedPreviewSectionId = '';
+  requestedPreviewSections = {};
   sectionLoadingById = {};
   sectionErrorById = {};
   sectionRootPathById = {};
@@ -770,7 +767,7 @@ $effect(() => {
                   {@render closeAction()}
                 {/if}
               {/if}
-              <BcxItemPreviewPanel visible={showPreview} bind:selectedItem={selectedPreviewItem} onPreview={(item) => keepPreview(item)} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
+              <BcxItemPreviewPanel sectionId={selectedSectionId} visible={showPreview} onOpen={openItem} onShowPreview={() => (requestedPreviewSections[selectedSectionId] = true)}>
               <div id={`${mainContentId}-${dashboardTabId}`} data-bcx-main-section role="region" aria-label="Dashboard" hidden={selectedSectionId !== dashboardTabId} class="bcx-tab-content bcx-info-scroll">
                 {#if selectedSectionId === dashboardTabId}<BcxDashboard errorMessage={dashboardError} onViewHistory={sections.some((section) => section.id === 'history') ? viewHistory : undefined} />{/if}
               </div>

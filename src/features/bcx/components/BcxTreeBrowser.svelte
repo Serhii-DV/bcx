@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Eye } from '@lucide/svelte';
+import { Eye, PanelTop } from '@lucide/svelte';
 import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import {
@@ -455,8 +455,20 @@ function withPreviewButton(item: TreeItem): TreeItem {
       {
         icon: Eye,
         title: `Preview ${item.bandPreview?.name ?? item.previewInformation?.title ?? item.label ?? 'item'}`,
-        onClick: (trigger) => showPreview?.(item, trigger),
+        onClick: (trigger) => {
+          focusedPath = item.path ?? null;
+          showPreview?.(item, trigger);
+        },
       },
+      ...(sharedPreview?.open
+        ? [
+            {
+              icon: PanelTop,
+              title: `Open ${item.bandPreview?.name ?? item.previewInformation?.title ?? item.label ?? 'item'} in side panel`,
+              onClick: () => sharedPreview.open?.(item),
+            },
+          ]
+        : []),
       ...(item.buttons ?? []),
     ],
   };
