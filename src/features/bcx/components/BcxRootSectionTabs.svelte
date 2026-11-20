@@ -11,6 +11,7 @@ import {
 import { onDestroy, type Snippet, tick, untrack } from 'svelte';
 import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxCatalogSplitPanel from './BcxCatalogSplitPanel.svelte';
 import BcxSectionFilter from './BcxSectionFilter.svelte';
 import BcxSectionSort from './BcxSectionSort.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
@@ -108,12 +109,12 @@ let {
   navigationInToolbar = false,
   showFilterNavigation = true,
   releaseFilterActions = false,
-  splitArtists = false,
+  splitCatalogGroups = false,
   onNavigationChange,
 }: {
   treeData: TreeData;
   releaseFilterActions?: boolean;
-  splitArtists?: boolean;
+  splitCatalogGroups?: boolean;
   label: string;
   initialSelectedHref?: string;
   sortBands?: boolean;
@@ -583,24 +584,38 @@ onDestroy(() => onNavigationChange?.(undefined));
               <BcxArtistsPanel
                 root={treeData.items.find((item) => item.path === tabId) ?? root}
                 catalog={true}
-                splitView={splitArtists}
+                splitView={splitCatalogGroups}
                 catalogSort={artistSort}
                 filterActions={filterControls}
                 bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
               />
             {:else}
-              <BcxTreeBrowser
-                treeData={displayedTreeData}
-                initialRootPath={tabId}
-                lockInitialRoot={true}
-                showBreadcrumb={false}
-                initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
-                onRootLoaded={refreshTabs}
-                nativeTabNavigation={true}
-                filterActions={navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
-                enableReleaseFilterActions={releaseFilterActions && (root?.label === 'Releases' || !!root?.label?.startsWith('Releases: '))}
-                bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
-              />
+              {#snippet sectionBrowser(onActivateNode: ((item: TreeItem) => void) | undefined, activeNodePath: string | undefined)}
+                <BcxTreeBrowser
+                  treeData={displayedTreeData}
+                  initialRootPath={tabId}
+                  lockInitialRoot={true}
+                  showBreadcrumb={false}
+                  initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
+                  onRootLoaded={refreshTabs}
+                  nativeTabNavigation={true}
+                  {onActivateNode}
+                  {activeNodePath}
+                  filterActions={navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
+                  enableReleaseFilterActions={releaseFilterActions && (root?.label === 'Releases' || !!root?.label?.startsWith('Releases: '))}
+                  bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
+                />
+              {/snippet}
+              {#if splitCatalogGroups && root?.releasePreview && root.label === 'Release years'}
+                <BcxCatalogSplitPanel
+                  root={treeData.items.find((item) => item.path === tabId) ?? root}
+                  groupLabel="Years"
+                  emptyMessage="Select a year to see its releases."
+                  groups={sectionBrowser}
+                />
+              {:else}
+                {@render sectionBrowser(undefined, undefined)}
+              {/if}
             {/if}
             {/if}
           </div>

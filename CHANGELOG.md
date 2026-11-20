@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- The Band panel’s By Release Year tab shows filterable, sortable years on the left and the selected year’s releases on the right. Click a year or press Enter to browse its releases.
+
 - The Band panel’s Artists tab keeps names, artwork, and release counts beside the selected artist’s releases, with the artist filter and sort menu on one line. The first row shows an “Artist” label, the name, and the Bandcamp address on separate lines when available. Saved profiles use the same bottom preview as History. Artists without a saved profile retain Copy and Search actions. Switching artists preserves the current preview until a profile or release is selected.
 
 - The Band panel’s Artists list uses artwork from each artist’s first release in catalog order when a saved profile image is unavailable.
