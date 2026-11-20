@@ -21,11 +21,18 @@ import { type TreeFilterContext, treeFilterContext } from './treeFilterContext';
 interface Props {
   item: TreeItem;
   showActions?: boolean;
+  showButtons?: boolean;
   itemActions?: Snippet<[TreeItem]>;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
 }
 
-let { item, showActions = true, itemActions, onPreview }: Props = $props();
+let {
+  item,
+  showActions = true,
+  showButtons = true,
+  itemActions,
+  onPreview,
+}: Props = $props();
 const treeFilter = getContext<TreeFilterContext | undefined>(treeFilterContext);
 let showArtwork = $derived(
   item.showArtwork ?? !!(item.previewInformation || item.bandPreview),
@@ -183,6 +190,7 @@ async function openBrowserPage(url: string) {
 
 {@render treeItemImage(item)}
 <span class="item-label-content">
+  {#if item.labelPrefix}<span class="item-label-prefix text-gray-400">{item.labelPrefix}</span>{/if}
   <span class="item-label">{item.label}</span>
   {#if item.price}
     <span class="item-price text-gray-300 text-xs">{item.price}</span>
@@ -199,7 +207,7 @@ async function openBrowserPage(url: string) {
 </span>
 {#if showActions}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
-  {@render treeItemButtons()}
+  {#if showButtons}{@render treeItemButtons()}{/if}
   {#if childrenCount > 0}
     <span class="item-count text-gray-400">{childrenCount}</span>
   {/if}
@@ -266,6 +274,13 @@ async function openBrowserPage(url: string) {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.item-label-prefix {
+  font-size: 0.75rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
 }
 
 .item-url {

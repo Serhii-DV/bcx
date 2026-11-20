@@ -60,6 +60,7 @@ interface Props {
   nativeTabNavigation?: boolean;
   initialSelectedHref?: string;
   onSelect?: (item: TreeItem | null) => void;
+  autoSelectPreview?: boolean;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
   onRootLoaded?: () => void;
   filterQuery?: string | null;
@@ -71,6 +72,8 @@ interface Props {
   filterActions?: Snippet;
   itemActions?: Snippet<[TreeItem]>;
   doubleClickToExpand?: boolean;
+  onActivateNode?: (item: TreeItem) => void;
+  activeNodePath?: string;
   isLoading?: boolean;
   loadingMessage?: string;
   enableReleaseFilterActions?: boolean;
@@ -83,6 +86,7 @@ const DRILL_UP_PATH = '__bcx_tree_drill_up__';
 let {
   treeData,
   onSelect,
+  autoSelectPreview = true,
   onPreview,
   onRootLoaded,
   nativeTabNavigation = false,
@@ -96,6 +100,8 @@ let {
   filterActions,
   itemActions,
   doubleClickToExpand = true,
+  onActivateNode,
+  activeNodePath,
   isLoading = false,
   loadingMessage = 'Loading',
   enableReleaseFilterActions = false,
@@ -107,7 +113,9 @@ setContext<TreeFilterContext>(treeFilterContext, {
   setQuery: setFilterQuery,
 });
 const sharedPreview = getItemPreviewContext();
-const selectPreview = $derived(onSelect ?? sharedPreview?.select);
+const selectPreview = $derived(
+  onActivateNode ? undefined : (onSelect ?? sharedPreview?.select),
+);
 const previewFromMenu = $derived(
   onPreview || sharedPreview
     ? (item: TreeItem, trigger: HTMLElement) => {
@@ -273,7 +281,7 @@ $effect(() => {
 });
 
 $effect(() => {
-  if (selectPreview && isVisible) {
+  if (autoSelectPreview && selectPreview && isVisible) {
     const selected =
       browserItems.find((item) => item.path === focusedPath) ??
       browserItems.find(hasItemPreview) ??
@@ -436,6 +444,10 @@ function handleItemDoubleClick(item: TreeItem, event: MouseEvent) {
 }
 
 function getItemTitle(item: TreeItem): string | undefined {
+  if (onActivateNode && isNode(item)) {
+    const actionHint = `Click or press Enter to show subitems${item.href ? '\nCtrl+Enter to open the page' : ''}`;
+    return item.hint ? `${item.hint}\n${actionHint}` : actionHint;
+  }
   if (doubleClickToExpand && isDrillUpItem(item)) {
     return `${getDrillUpLabel()}\nClick to select\nDouble-click to go back`;
   }
@@ -866,6 +878,7 @@ async function handleBrowserItemClick(
   if (
     doubleClickToExpand &&
     (isDrillUpItem(item) || isNode(item)) &&
+    !onActivateNode &&
     event instanceof MouseEvent &&
     event.type === 'click'
   ) {
@@ -881,7 +894,12 @@ async function handleBrowserItemClick(
 
   if (isNode(item)) {
     event?.preventDefault();
-    await enterBrowserItem(item, event);
+    if (onActivateNode) {
+      focusTreeItem(item);
+      onActivateNode(item);
+    } else {
+      await enterBrowserItem(item, event);
+    }
     return;
   }
 
@@ -982,7 +1000,7 @@ function withBrowserChildCount(item: TreeItem): TreeItem {
 function withBrowserTreeItemState(item: TreeItem): TreeItem {
   return {
     ...withBrowserChildCount(item),
-    actionIcon: ICON_CHEVRON_RIGHT,
+    actionIcon: onActivateNode ? undefined : ICON_CHEVRON_RIGHT,
   };
 }
 
@@ -1066,13 +1084,16 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       role="button"
       class="tree-item bcx-browser-row"
       class:focused={focusedPath === item.path}
+      class:active-node={!!onActivateNode && activeNodePath === item.path}
       data-level="{item.level}"
       data-path="{item.path}"
       tabindex={focusedPath === item.path ? 0 : -1}
       title={getItemTitle(item)}
+      aria-pressed={onActivateNode ? activeNodePath === item.path : undefined}
       onclick={(event) => handleBrowserItemClick(item, event)}
       ondblclick={(event) => handleItemDoubleClick(item, event)}
       onkeydown={(event) => {
+        if (event.target instanceof Element && event.target.closest('.item-button')) return;
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           event.stopPropagation();
@@ -1080,7 +1101,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
         }
       }}
     >
-      <BcxTreeItem item={withBrowserTreeItemState(item)} {itemActions} onPreview={previewFromMenu} />
+      <BcxTreeItem item={withBrowserTreeItemState(item)} {itemActions} onPreview={previewFromMenu} showButtons={!onActivateNode} />
     </div>
   {:else}
     <a
@@ -1250,6 +1271,11 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
   text-decoration: none;
   transition: background-color 150ms;
   vertical-align: middle;
+}
+
+.bcx-browser-row.active-node {
+  background-color: rgb(56 189 248 / 0.13);
+  box-shadow: inset 2px 0 #38bdf8;
 }
 
 </style>

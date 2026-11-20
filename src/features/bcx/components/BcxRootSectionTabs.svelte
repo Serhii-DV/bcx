@@ -108,10 +108,12 @@ let {
   navigationInToolbar = false,
   showFilterNavigation = true,
   releaseFilterActions = false,
+  splitArtists = false,
   onNavigationChange,
 }: {
   treeData: TreeData;
   releaseFilterActions?: boolean;
+  splitArtists?: boolean;
   label: string;
   initialSelectedHref?: string;
   sortBands?: boolean;
@@ -581,6 +583,7 @@ onDestroy(() => onNavigationChange?.(undefined));
               <BcxArtistsPanel
                 root={treeData.items.find((item) => item.path === tabId) ?? root}
                 catalog={true}
+                splitView={splitArtists}
                 catalogSort={artistSort}
                 filterActions={filterControls}
                 bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}

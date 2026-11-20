@@ -163,7 +163,7 @@ let catalog = $derived.by(() => {
       <BcxSectionTabs tabs={viewActions} value={selectedView} label="Band catalog sections" onValueChange={selectView} compactWhenOverflowing={true} hideCountsWhenOverflowing={true} vertical={verticalNavigation} />
     {/if}
     <div class="band-catalog">
-      <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} sortInToolbar={true} countBadges={true} {navigationInFilter} releaseFilterActions={true} showFilterNavigation={!navigationInFilter} onNavigationChange={updateNavigation} />
+      <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} sortInToolbar={true} countBadges={true} {navigationInFilter} releaseFilterActions={true} splitArtists={true} showFilterNavigation={!navigationInFilter} onNavigationChange={updateNavigation} />
     </div>
   </div>
 </div>
