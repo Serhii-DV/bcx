@@ -125,6 +125,7 @@ function withReleasePreviews(
     band.metadata.releases,
     {
       groupByYear: true,
+      groupPricesByCurrency: false,
       useReleaseArtworkForArtists: true,
       paginateReleases: false,
       showReleaseDate: true,

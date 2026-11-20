@@ -33,6 +33,19 @@ import {
 
 type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
 
+const splitCatalogSections: Readonly<
+  Record<string, { groupLabel: string; emptyMessage: string }>
+> = {
+  'Release years': {
+    groupLabel: 'Years',
+    emptyMessage: 'Select a year to see its releases.',
+  },
+  'By Prices': {
+    groupLabel: 'Prices',
+    emptyMessage: 'Select a price to see its releases.',
+  },
+};
+
 const tabDescriptions: Record<
   string,
   { label?: string; title: string; image?: string }
@@ -590,6 +603,7 @@ onDestroy(() => onNavigationChange?.(undefined));
                 bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
               />
             {:else}
+              {@const splitSection = splitCatalogGroups && root?.releasePreview && root.label ? splitCatalogSections[root.label] : undefined}
               {#snippet sectionBrowser(onActivateNode: ((item: TreeItem) => void) | undefined, activeNodePath: string | undefined)}
                 <BcxTreeBrowser
                   treeData={displayedTreeData}
@@ -606,11 +620,10 @@ onDestroy(() => onNavigationChange?.(undefined));
                   bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
                 />
               {/snippet}
-              {#if splitCatalogGroups && root?.releasePreview && root.label === 'Release years'}
+              {#if splitSection && root}
                 <BcxCatalogSplitPanel
                   root={treeData.items.find((item) => item.path === tabId) ?? root}
-                  groupLabel="Years"
-                  emptyMessage="Select a year to see its releases."
+                  {...splitSection}
                   groups={sectionBrowser}
                 />
               {:else}

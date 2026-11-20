@@ -39,6 +39,7 @@ export interface ReleaseCatalog {
   prices?: Array<RawPriceData | null>;
   addedYearSource?: 'collection' | 'wishlist';
   groupByYear?: boolean;
+  groupPricesByCurrency?: boolean;
   useReleaseArtworkForArtists?: boolean;
   paginateReleases?: boolean;
   showReleaseDate?: boolean;
@@ -285,7 +286,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         image: ICON_BANKNOTE,
         pathKey: `price-${encodeURIComponent(label).replaceAll('.', '%2E')}`,
       };
-      if (group.amount === 0) {
+      if (catalog.groupPricesByCurrency === false || group.amount === 0) {
         groups.push(priceGroup);
       } else {
         const prices = currencies.get(group.currency) ?? [];
