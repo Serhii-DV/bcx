@@ -39,6 +39,7 @@ export interface ReleaseCatalog {
   prices?: Array<RawPriceData | null>;
   addedYearSource?: 'collection' | 'wishlist';
   groupByYear?: boolean;
+  useReleaseArtworkForArtists?: boolean;
   paginateReleases?: boolean;
   showReleaseDate?: boolean;
 }
@@ -139,15 +140,19 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     };
   };
   const artistGroups = [...groupReleasesByArtist(releases)].map(
-    ([name, releases]) => ({
-      ...createReleaseGroup(name, releases, createReleaseItem),
-      includeInFilterSuggestions: true,
-    }),
+    ([name, artistReleases]) => {
+      const artwork = artistReleases[0]?.artwork;
+      return {
+        ...createReleaseGroup(name, artistReleases, createReleaseItem),
+        image:
+          catalog.useReleaseArtworkForArtists && artwork && artwork.id > 0
+            ? artwork.smallSizeUrl
+            : ICON_MIC,
+        includeInFilterSuggestions: true,
+      };
+    },
   );
-  const artists = items('Artists', artistGroups)
-    .withImage(ICON_MIC)
-    .withChildrenImage(ICON_MIC)
-    .build();
+  const artists = items('Artists', artistGroups).withImage(ICON_MIC).build();
   const collator = new Intl.Collator(undefined, {
     numeric: true,
     sensitivity: 'base',

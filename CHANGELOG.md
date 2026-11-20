@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- The Band panel’s Artists list uses artwork from each artist’s first release in catalog order when a saved profile image is unavailable.
+
 - Band and release rows in the Tree Browser use one three-dot menu for Preview, Open in side panel, Pin or Unpin, and Open on Bandcamp, alongside existing copy, search, and applicable filter actions.
 
 - Tree item artwork aligns with the text and action buttons sit at the top right, keeping controls easy to find beside multi-line details.
