@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- The Band panel’s Artists, Years, and Prices sort buttons show the selected option’s icon at a fixed width, leaving room for the filter. Prices can be sorted low to high or high to low within each currency.
+
 - The Band panel’s By Prices tab shows filterable price groups on the left and releases at the selected price on the right. Exact prices can be selected directly, including name your price and Price unknown.
 
 - The Band panel’s By Release Year tab shows filterable, sortable years on the left and the selected year’s releases on the right. Click a year or press Enter to browse its releases.

@@ -259,7 +259,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
   if (releases.length > 0) {
     const priceGroups = new Map<
       string,
-      { amount: number; currency: string; releases: BandRelease[] }
+      RawPriceData & { releases: BandRelease[] }
     >();
     const unknown: BandRelease[] = [];
     for (const release of releases) {
@@ -281,17 +281,19 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         : a.currency.localeCompare(b.currency) || a.amount - b.amount,
     );
     for (const [label, group] of orderedPrices) {
+      const { amount, currency, releases } = group;
       const priceGroup = {
-        ...createReleaseGroup(label, group.releases, createReleaseItem),
+        ...createReleaseGroup(label, releases, createReleaseItem),
         image: ICON_BANKNOTE,
+        priceGroup: { amount, currency },
         pathKey: `price-${encodeURIComponent(label).replaceAll('.', '%2E')}`,
       };
-      if (catalog.groupPricesByCurrency === false || group.amount === 0) {
+      if (catalog.groupPricesByCurrency === false || amount === 0) {
         groups.push(priceGroup);
       } else {
-        const prices = currencies.get(group.currency) ?? [];
+        const prices = currencies.get(currency) ?? [];
         prices.push(priceGroup);
-        currencies.set(group.currency, prices);
+        currencies.set(currency, prices);
       }
     }
     for (const [currency, prices] of currencies) {

@@ -112,9 +112,9 @@ The tab strip presents Release years as By Release Year and Added years as By
 Year Added. These display labels leave the cached root names and paths intact.
 The Band panel's By Release Year and By Prices tabs share the Artists split
 layout. Year or price groups remain visible beside the selected group's releases.
-The Band price list exposes each exact amount and currency directly, keeping
-name your price first and Price unknown last. Selecting a release updates the
-bottom preview.
+The Band price list exposes each exact amount and currency directly and sorts
+amounts within each currency, keeping name your price first and Price unknown
+last. Selecting a release updates the bottom preview.
 
 Following Bands stores every loaded band in its tree snapshot without pagination.
 Snapshot version 15 invalidates older snapshots that predate the Latest added,

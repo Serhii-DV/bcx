@@ -67,7 +67,6 @@ function selectGroup(group: TreeItem) {
   flex-wrap: nowrap;
   gap: 0.25rem;
 }
-.catalog-group-list :global(.bcx-section-sort) { flex: none; }
 .catalog-group-list :global(.bcx-tree-item-img) { width: 1.5rem; height: 1.5rem; }
 .catalog-group-list :global(.item-url) { display: none; }
 .catalog-release-list {
@@ -75,15 +74,6 @@ function selectGroup(group: TreeItem) {
   padding-inline-start: 0.5rem;
 }
 @container (max-width: 10rem) {
-  .catalog-group-list :global(.bcx-section-sort) {
-    justify-content: center;
-    width: 2rem;
-    padding-inline: 0;
-  }
-  .catalog-group-list :global(.bcx-section-sort-label),
-  .catalog-group-list :global(.bcx-section-sort > svg:last-child) {
-    display: none;
-  }
   .catalog-group-list :global(.bcx-tree-filter-input) {
     padding-inline: 0.25rem;
   }
