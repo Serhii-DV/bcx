@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Tree item artwork aligns with the text and action buttons sit at the top right, keeping controls easy to find beside multi-line details.
+
 - Preview actions show details in the bottom panel. Open actions show bands and releases in the main side panel under Open items; opening from the Preview panel hides it in the destination while preserving the previous view's preview state.
 
 - Tree filters show visible and total item counts in a compact badge before the clear button while a filter is active, updating after the filter is applied.

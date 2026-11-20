@@ -213,9 +213,10 @@ async function openBrowserPage(url: string) {
   width: 25px;
   height: 25px;
   display: inline-flex;
+  align-self: flex-start;
   align-items: center;
   justify-content: center;
-  margin-top: 0.125rem;
+  margin-top: 0.25rem;
   margin-right: 0.5rem;
 }
 
@@ -283,6 +284,7 @@ async function openBrowserPage(url: string) {
 }
 
 .item-actions {
+  align-self: flex-start;
   padding-right: 5px;
 }
 
