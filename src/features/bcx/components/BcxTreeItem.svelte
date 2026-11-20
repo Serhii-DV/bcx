@@ -22,9 +22,10 @@ interface Props {
   item: TreeItem;
   showActions?: boolean;
   itemActions?: Snippet<[TreeItem]>;
+  onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
 }
 
-let { item, showActions = true, itemActions }: Props = $props();
+let { item, showActions = true, itemActions, onPreview }: Props = $props();
 const treeFilter = getContext<TreeFilterContext | undefined>(treeFilterContext);
 let showArtwork = $derived(
   item.showArtwork ?? !!(item.previewInformation || item.bandPreview),
@@ -116,21 +117,20 @@ async function openBrowserPage(url: string) {
 {#snippet treeItemButtons()}
   {#if primaryButtons.length || pinPage || itemActions || item.previewInformation || item.bandPreview}
 <div class="item-buttons">
-  {#each primaryButtons as button}
-    {@render treeItemButton(button)}
-  {/each}
-  {#if pinPage}<BcxPinButton page={pinPage} iconOnly />{/if}
-  {#each browserButtons as button}
-    {@render treeItemButton(button)}
-  {/each}
-  {#if browserButton}{@render treeItemButton(browserButton)}{/if}
-  {#if itemActions}
-    {@render itemActions(item)}
-  {:else if item.bandPreview}
-    <BcxPreviewItemActions url={createItemUrl(item.bandPreview.url)} image={item.bandPreview.image ?? item.image} name={item.bandPreview.name} kind="band" copyValue={item.bandPreview.name} previewItem={item} iconOnly />
-  {/if}
-  {#if item.previewInformation}
-    <BcxReleaseItemActions {item} information={item.previewInformation} iconOnly onFilter={treeFilter?.enabled() ? treeFilter.setQuery : undefined} />
+  {#if item.bandPreview}
+    <BcxPreviewItemActions url={createItemUrl(item.bandPreview.url)} image={item.bandPreview.image ?? item.image} name={item.bandPreview.name} kind="band" copyValue={item.bandPreview.name} previewItem={item} {onPreview} iconOnly />
+  {:else if item.previewInformation}
+    <BcxReleaseItemActions {item} information={item.previewInformation} {onPreview} iconOnly onFilter={treeFilter?.enabled() ? treeFilter.setQuery : undefined} />
+  {:else}
+    {#each primaryButtons as button}
+      {@render treeItemButton(button)}
+    {/each}
+    {#if pinPage}<BcxPinButton page={pinPage} iconOnly />{/if}
+    {#each browserButtons as button}
+      {@render treeItemButton(button)}
+    {/each}
+    {#if browserButton}{@render treeItemButton(browserButton)}{/if}
+    {@render itemActions?.(item)}
   {/if}
 </div>
   {/if}

@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Band and release rows in the Tree Browser use one three-dot menu for Preview, Open in side panel, Pin or Unpin, and Open on Bandcamp, alongside existing copy, search, and applicable filter actions.
+
 - Tree item artwork aligns with the text and action buttons sit at the top right, keeping controls easy to find beside multi-line details.
 
 - Preview actions show details in the bottom panel. Open actions show bands and releases in the main side panel under Open items; opening from the Preview panel hides it in the destination while preserving the previous view's preview state.

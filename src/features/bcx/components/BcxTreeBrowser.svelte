@@ -1,5 +1,4 @@
 <script lang="ts">
-import { Eye, PanelTop } from '@lucide/svelte';
 import { musicFilterStore } from 'src/features/bcx/stores/musicFilter';
 import type { TreeData } from 'src/features/treeview/TreeData';
 import {
@@ -109,7 +108,15 @@ setContext<TreeFilterContext>(treeFilterContext, {
 });
 const sharedPreview = getItemPreviewContext();
 const selectPreview = $derived(onSelect ?? sharedPreview?.select);
-const showPreview = $derived(onPreview ?? sharedPreview?.show);
+const previewFromMenu = $derived(
+  onPreview || sharedPreview
+    ? (item: TreeItem, trigger: HTMLElement) => {
+        focusedPath = item.path ?? null;
+        if (onPreview) onPreview(item, trigger);
+        else sharedPreview?.show(item);
+      }
+    : undefined,
+);
 let isVisible = $state(false);
 let treeContainer = $state<HTMLDivElement>();
 let filterRef: BcxTreeBrowserFilter | undefined = $state();
@@ -445,33 +452,6 @@ function getItemTitle(item: TreeItem): string | undefined {
       : `Click to select\n${navigationHint}`;
 
   return item.hint ? `${item.hint}\n${actionHint}` : actionHint;
-}
-
-function withPreviewButton(item: TreeItem): TreeItem {
-  if (!showPreview || !hasItemPreview(item)) return item;
-  return {
-    ...item,
-    buttons: [
-      {
-        icon: Eye,
-        title: `Preview ${item.bandPreview?.name ?? item.previewInformation?.title ?? item.label ?? 'item'}`,
-        onClick: (trigger) => {
-          focusedPath = item.path ?? null;
-          showPreview?.(item, trigger);
-        },
-      },
-      ...(sharedPreview?.open
-        ? [
-            {
-              icon: PanelTop,
-              title: `Open ${item.bandPreview?.name ?? item.previewInformation?.title ?? item.label ?? 'item'} in side panel`,
-              onClick: () => sharedPreview.open?.(item),
-            },
-          ]
-        : []),
-      ...(item.buttons ?? []),
-    ],
-  };
 }
 
 async function handleKeyDown(event: KeyboardEvent) {
@@ -1079,7 +1059,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
         }
       }}
     >
-      <BcxTreeItem item={withPreviewButton(withBrowserChildCount(item))} {itemActions} />
+      <BcxTreeItem item={withBrowserChildCount(item)} {itemActions} onPreview={previewFromMenu} />
     </div>
   {:else if hasChildren}
     <div
@@ -1100,7 +1080,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
         }
       }}
     >
-      <BcxTreeItem item={withPreviewButton(withBrowserTreeItemState(item))} {itemActions} />
+      <BcxTreeItem item={withBrowserTreeItemState(item)} {itemActions} onPreview={previewFromMenu} />
     </div>
   {:else}
     <a
@@ -1147,7 +1127,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
             onItemClick={handleItemClick}
             onItemDoubleClick={handleItemDoubleClick}
             {getItemTitle}
-            decorateItem={withPreviewButton}
+            onPreview={previewFromMenu}
             {itemActions}
             onNodeClick={handleTreeLayoutNodeClick}
           />

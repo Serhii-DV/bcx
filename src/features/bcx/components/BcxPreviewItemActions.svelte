@@ -45,6 +45,7 @@ let {
   relatedActions,
   filterOptions = [],
   onFilter,
+  onPreview,
 }: {
   url?: Url;
   image?: string;
@@ -63,9 +64,11 @@ let {
   menuLabel?: string;
   relatedActions?: Snippet;
   filterOptions?: ReleaseFilterOption[];
+  onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
   onFilter?: (query: string) => void;
 } = $props();
 const preview = getItemPreviewContext();
+let menuTrigger = $state<HTMLButtonElement>();
 let container = $state<HTMLDivElement>();
 let failedImage = $state<string>();
 let copied = $state(false);
@@ -192,6 +195,13 @@ async function openPage(event: MouseEvent, destination: string) {
   }
 }
 
+function showItemPreview() {
+  if (!previewItem) return;
+  previewSelected = true;
+  if (onPreview && menuTrigger) onPreview(previewItem, menuTrigger);
+  else preview?.show(previewItem);
+}
+
 async function copy(value: string) {
   clearTimeout(feedbackTimer);
   copied = false;
@@ -271,11 +281,11 @@ async function copy(value: string) {
   <DropdownMenu.Root>
     <DropdownMenu.Trigger class={iconOnly ? 'item-button item-menu-trigger' : 'bcx-section-tab'} aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`} onclick={(event) => { if (iconOnly) event.stopPropagation(); }} onkeydown={(event) => { if (iconOnly) event.stopPropagation(); }} ondblclick={(event) => { if (iconOnly) event.stopPropagation(); }}>
       {#snippet child({ props })}
-        <button {...props} type="button">
-          {#if copied}
-            <Check size={iconOnly || toolbar ? 16 : 14} class="shrink-0 text-emerald-300" aria-hidden="true" />
-          {:else if iconOnly}
+        <button {...props} bind:this={menuTrigger} type="button">
+          {#if iconOnly}
             <Ellipsis size={16} class="shrink-0" aria-hidden="true" />
+          {:else if copied}
+            <Check size={toolbar ? 16 : 14} class="shrink-0 text-emerald-300" aria-hidden="true" />
           {:else if image && image !== failedImage}
             <img src={image} alt="" class="item-image" onerror={() => { failedImage = image; }} />
           {:else if kind === 'band' || toolbar}
@@ -302,8 +312,8 @@ async function copy(value: string) {
             {/snippet}
           </DropdownMenu.Item>
         {/if}
-        {#if preview && previewItem && !keepInPreview}
-          <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => { if (previewItem) { previewSelected = true; preview.show(previewItem); } }}>
+        {#if (onPreview || preview) && previewItem && !keepInPreview}
+          <DropdownMenu.Item class="preview-item-menu-action" onSelect={showItemPreview}>
             <Eye size={14} class="shrink-0" aria-hidden="true" />
             <span>{previewLabel}</span>
           </DropdownMenu.Item>
@@ -319,7 +329,7 @@ async function copy(value: string) {
             <Pin size={14} fill={savedPin ? 'currentColor' : 'none'} aria-hidden="true" /><span>{savedPin ? 'Unpin' : 'Pin'} {pinPage.kind}</span>
           </DropdownMenu.Item>
         {/if}
-        {#if pageUrl || (preview && previewItem) || pinPage}
+        {#if pageUrl || ((onPreview || preview) && previewItem) || pinPage}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
         {/if}
         {#if onFilter && filterOptions.length}

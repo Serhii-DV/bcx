@@ -18,6 +18,7 @@ let {
   variant = 'menu',
   relatedActions,
   onFilter,
+  onPreview,
 }: {
   item: TreeItem;
   information: ReleaseInformation;
@@ -26,6 +27,7 @@ let {
   toolbar?: boolean;
   variant?: 'menu' | 'toolbar';
   relatedActions?: Snippet;
+  onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
   onFilter?: (query: string) => void;
 } = $props();
 let name = $derived(`${information.artist} - ${information.title}`);
@@ -37,4 +39,4 @@ let releaseYear = $derived(
 );
 </script>
 
-<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseArtist={information.artist} releaseDate={information.date} releaseTitle={information.title} {releaseYear} previewItem={item} {keepInPreview} {iconOnly} {toolbar} {variant} {relatedActions} filterOptions={onFilter ? [...getReleaseArtistNames(information).map((artist) => ({ label: `Artist: ${artist}`, query: artist })), ...getReleaseFilterOptions(information, item.price)] : []} {onFilter} />
+<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseArtist={information.artist} releaseDate={information.date} releaseTitle={information.title} {releaseYear} previewItem={item} {keepInPreview} {iconOnly} {toolbar} {variant} {relatedActions} filterOptions={onFilter ? [...getReleaseArtistNames(information).map((artist) => ({ label: `Artist: ${artist}`, query: artist })), ...getReleaseFilterOptions(information, item.price)] : []} {onFilter} {onPreview} />
