@@ -50,6 +50,7 @@ import {
   visibleItemIndex as getVisibleItemIndex,
   visibleNext as getVisibleNext,
   visiblePrev as getVisiblePrev,
+  isReleaseCatalogGroup,
   shouldIgnoreTreeKeyDown,
   showTreeItemActionFeedback,
   waitForLoadingStatePaint,
@@ -156,6 +157,9 @@ let currentLevelItems = $derived.by(() => {
   treeVersion;
   return currentRootItem ? (currentRootItem.children ?? []) : treeData.items;
 });
+const filterGroupsOnly = $derived(
+  !!onActivateNode || isReleaseCatalogGroup(currentRootItem),
+);
 let itemFilterQuery = $derived(
   debouncedFilterQuery.trim().toLocaleLowerCase() ===
     activeFilterSearchQuery.toLocaleLowerCase()
@@ -183,6 +187,7 @@ let browserItems = $derived.by(() => {
     filteredLevelItems,
     releaseFieldFilter ? '' : itemFilterQuery,
     currentRootItem,
+    filterGroupsOnly,
   );
 });
 let filterSuggestions = $derived.by(() => {
@@ -231,11 +236,6 @@ $effect(() => {
   const baseline =
     filterSearchBaseline?.rootPath === rootPath ? filterSearchBaseline : null;
   const allItems = baseline?.children ?? currentLevelItems;
-  const filterGroupsOnly =
-    currentRootItem?.releasePreview &&
-    ['Artists', 'Release years', 'By Prices', 'Tags'].includes(
-      currentRootItem.label ?? '',
-    );
   function countItems(items: TreeItem[]): number {
     return items.reduce(
       (count, item) => count + 1 + countItems(item.children ?? []),

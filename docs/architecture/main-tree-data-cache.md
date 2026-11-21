@@ -93,10 +93,10 @@ inside `releaseCatalog`, so restoring runtime loaders preserves their positions
 among albums. Cache keys, TTLs,
 snapshot version, and invalidation rules are unchanged.
 
-Catalogs also rebuild By Prices, preserving exact amounts and currencies,
-showing name your price first, currencies alphabetically with ascending price
-groups inside each currency, and Price unknown last for missing or unavailable
-pricing. Zero prices share the top-level name your price group across currencies.
+Catalogs also rebuild By Prices, preserving exact amounts and currencies.
+Collection nests price groups under their currencies. Band and Wishlist show
+exact prices directly. All three put name your price first and Price unknown
+last for missing or unavailable pricing.
 Collection and Wishlist use each fan-list item's
 price and currency for rows, archives, and grouping. Catalog snapshots preserve
 these prices in source release order, independently of stored release metadata,
@@ -110,11 +110,11 @@ sections also expose all catalog URLs, including releases beyond the first page,
 to preserve the mounted side panel during release navigation.
 The tab strip presents Release years as By Release Year and Added years as By
 Year Added. These display labels leave the cached root names and paths intact.
-The Band panel's By Release Year and By Prices tabs share the Artists split
-layout. Year or price groups remain visible beside the selected group's releases.
-The Band price list exposes each exact amount and currency directly and sorts
-amounts within each currency, keeping name your price first and Price unknown
-last. Selecting a release updates the bottom preview.
+The Band and Wishlist panels use the Artists split layout for By Release Year
+and By Prices. Wishlist also uses it for By Year Added. Groups remain visible
+beside the selected group's releases.
+The Band and Wishlist price lists sort amounts within each currency. Selecting
+a release updates the bottom preview.
 
 Following Bands stores every loaded band in its tree snapshot without pagination.
 Snapshot version 15 invalidates older snapshots that predate the Latest added,

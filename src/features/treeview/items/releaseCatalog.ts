@@ -79,6 +79,9 @@ export function withReleaseCatalog(
 export function restoreReleaseCatalog(item: TreeItem): TreeItem {
   const catalog = item.releaseCatalog;
   if (!catalog) return item;
+  const isWishlist = catalog.addedYearSource === 'wishlist';
+  const useReleaseArtwork = catalog.useReleaseArtworkForArtists ?? isWishlist;
+  const groupPricesByCurrency = catalog.groupPricesByCurrency ?? !isWishlist;
   const savedAlbums = catalog.albums.map((album) =>
     AlbumFactory.fromRawData(album),
   );
@@ -147,7 +150,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
       return {
         ...createReleaseGroup(name, artistReleases, createReleaseItem),
         image:
-          catalog.useReleaseArtworkForArtists && artwork && artwork.id > 0
+          useReleaseArtwork && artwork && artwork.id > 0
             ? artwork.smallSizeUrl
             : ICON_MIC,
         includeInFilterSuggestions: true,
@@ -316,7 +319,7 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         priceGroup: { amount, currency },
         pathKey: `price-${encodeURIComponent(label).replaceAll('.', '%2E')}`,
       };
-      if (catalog.groupPricesByCurrency === false || amount === 0) {
+      if (!groupPricesByCurrency || amount === 0) {
         groups.push(priceGroup);
       } else {
         const prices = currencies.get(currency) ?? [];

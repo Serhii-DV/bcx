@@ -74,12 +74,21 @@ function selectGroup(group: TreeItem) {
   padding-inline-start: 0.5rem;
 }
 @container (max-width: 10rem) {
+  .catalog-group-list :global(.bcx-browser-toolbar:has(.bcx-tree-filter-clear)) {
+    flex-wrap: wrap;
+  }
   .catalog-group-list :global(.bcx-tree-filter-input) {
     padding-inline: 0.25rem;
   }
 }
 @container (max-width: 7rem) {
   .catalog-group-list :global(.bcx-tree-item-img) { display: none; }
+  .catalog-group-list :global(.bcx-tree-filter-field:has(.bcx-tree-filter-clear)) {
+    flex-wrap: wrap;
+  }
+  .catalog-group-list :global(.bcx-tree-filter-field:has(.bcx-tree-filter-clear) .bcx-tree-filter-input) {
+    flex-basis: 100%;
+  }
 }
 p { margin: 0; overflow-wrap: anywhere; color: #9ca3af; font-size: 0.875rem; }
 </style>

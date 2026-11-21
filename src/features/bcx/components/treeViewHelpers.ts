@@ -428,18 +428,20 @@ export function treeItemMatchesQuery(item: TreeItem, query: string): boolean {
   );
 }
 
+export function isReleaseCatalogGroup(root?: TreeItem | null): boolean {
+  return (
+    !!root?.releasePreview &&
+    ['Artists', 'Release years', 'By Prices', 'Tags'].includes(root.label ?? '')
+  );
+}
+
 export function filterTreeBrowserItems(
   items: TreeItem[] | undefined,
   query: string,
   root?: TreeItem | null,
+  groupsOnly = isReleaseCatalogGroup(root),
 ): TreeItem[] {
-  if (
-    root?.releasePreview &&
-    (root.label === 'Artists' ||
-      root.label === 'Release years' ||
-      root.label === 'By Prices' ||
-      root.label === 'Tags')
-  ) {
+  if (groupsOnly) {
     return query.trim()
       ? (items ?? []).filter((item) => treeItemMatchesQuery(item, query))
       : (items ?? []);

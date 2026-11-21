@@ -45,6 +45,10 @@ const splitCatalogSections: Readonly<
     groupLabel: 'Years',
     emptyMessage: 'Select a year to see its releases.',
   },
+  'Added years': {
+    groupLabel: 'Years added',
+    emptyMessage: 'Select a year to see the releases added that year.',
+  },
   'By Prices': {
     groupLabel: 'Prices',
     emptyMessage: 'Select a price to see its releases.',

@@ -741,13 +741,15 @@ describe('release catalog previews', () => {
       );
       expect(prices?.children?.map((group) => group.label)).toEqual([
         'name your price',
-        'EUR',
+        label === 'Wishlist' ? '9.5 EUR' : 'EUR',
         'Price unknown',
       ]);
-      expect(prices?.children?.[1].children?.[0].label).toBe('9.5 EUR');
-      expect(prices?.children?.[1].children?.[0].children?.[0].price).toBe(
-        '9.5 EUR',
-      );
+      const exactPrice =
+        label === 'Wishlist'
+          ? prices?.children?.[1]
+          : prices?.children?.[1].children?.[0];
+      expect(exactPrice?.label).toBe('9.5 EUR');
+      expect(exactPrice?.children?.[0].price).toBe('9.5 EUR');
       const unknownPrices = prices?.children?.find(
         (group) => group.label === 'Price unknown',
       );
@@ -820,10 +822,14 @@ describe('release catalog previews', () => {
       });
       expect(syncedTrack.metadata?.publishedDate).toBe('2025-01-01');
       const refreshed = await createScoped();
-      const trackPrices = refreshed.children
-        ?.find((item) => item.label === 'By Prices')
-        ?.children?.find((group) => group.label === 'GBP')
-        ?.children?.find((group) => group.label === '2.5 GBP');
+      const priceGroups = refreshed.children?.find(
+        (item) => item.label === 'By Prices',
+      )?.children;
+      const trackPrices = (
+        label === 'Wishlist'
+          ? priceGroups
+          : priceGroups?.find((group) => group.label === 'GBP')?.children
+      )?.find((group) => group.label === '2.5 GBP');
       expect(trackPrices?.children?.[0]).toMatchObject({
         price: '2.5 GBP',
         href: track.url?.toString(),
