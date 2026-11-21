@@ -805,7 +805,7 @@ $effect(() => {
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#if section.fanSync || section.fanAccount}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} splitCatalogGroups={section.fanSync?.dataset === 'wishlist'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} splitCatalogGroups={section.fanSync?.dataset === 'wishlist' || section.fanSync?.dataset === 'collection'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}

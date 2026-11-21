@@ -94,9 +94,8 @@ among albums. Cache keys, TTLs,
 snapshot version, and invalidation rules are unchanged.
 
 Catalogs also rebuild By Prices, preserving exact amounts and currencies.
-Collection nests price groups under their currencies. Band and Wishlist show
-exact prices directly. All three put name your price first and Price unknown
-last for missing or unavailable pricing.
+Band, Wishlist, and Collection show exact prices directly, with name your price
+first and Price unknown last for missing or unavailable pricing.
 Collection and Wishlist use each fan-list item's
 price and currency for rows, archives, and grouping. Catalog snapshots preserve
 these prices in source release order, independently of stored release metadata,
@@ -110,11 +109,11 @@ sections also expose all catalog URLs, including releases beyond the first page,
 to preserve the mounted side panel during release navigation.
 The tab strip presents Release years as By Release Year and Added years as By
 Year Added. These display labels leave the cached root names and paths intact.
-The Band and Wishlist panels use the Artists split layout for By Release Year
-and By Prices. Wishlist also uses it for By Year Added. Groups remain visible
-beside the selected group's releases.
-The Band and Wishlist price lists sort amounts within each currency. Selecting
-a release updates the bottom preview.
+The Band, Wishlist, and Collection panels use the Artists split layout for By
+Release Year and By Prices. Wishlist and Collection also use it for By Year
+Added, including an Unknown year group for releases without a saved date. Groups
+remain visible beside the selected group's releases. The price lists sort amounts
+within each currency. Selecting a release updates the bottom preview.
 
 Following Bands stores every loaded band in its tree snapshot without pagination.
 Snapshot version 15 invalidates older snapshots that predate the Latest added,
@@ -219,14 +218,15 @@ show the hosting band's name and image, falling back to its subdomain and releas
 artwork. These additional dropdowns follow the artist/label dropdowns.
 Release, Band, Wishlist, and Collection Artists views use `BcxArtistsPanel` for
 artwork rows, filtering, sorting, and artist actions. Catalog views enrich their
-existing artist groups with saved profile information at render time. The Band
-Artists view keeps a compact artist list beside the release list at every width.
+existing artist groups with saved profile information at render time. The Band,
+Wishlist, and Collection Artists views keep a compact artist list beside the
+release list at every width.
 A click or Enter loads the selected artist's releases while the artist list
 retains its filter and scroll position. The releases pane starts with an artist
 row that uses the standard band preview and menu for saved profiles, or Copy and
 Search actions for unsaved artists. This row is excluded from release counts.
 The bottom preview follows selection in the releases pane and is preserved when
-switching artists. The other Artists views retain double-click and keyboard
+switching artists. The Release Artists view retains double-click and keyboard
 drill-down. Ctrl+Enter opens an artist's saved page URL in the
 active browser tab when available, without entering its subitems. Artists without
 a saved page URL remain selected. Artist, release, and band rows use native
