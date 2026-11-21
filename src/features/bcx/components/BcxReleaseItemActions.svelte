@@ -5,7 +5,9 @@ import {
 } from 'src/features/treeview/ReleasePreview';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { Snippet } from 'svelte';
-import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
+import BcxPreviewItemActions, {
+  type CopyItem,
+} from './BcxPreviewItemActions.svelte';
 import { createItemUrl } from './itemUrl';
 import { getReleaseFilterOptions } from './releaseFilter';
 
@@ -17,6 +19,7 @@ let {
   toolbar = false,
   variant = 'menu',
   relatedActions,
+  additionalCopyItems,
   onFilter,
   onPreview,
 }: {
@@ -27,6 +30,7 @@ let {
   toolbar?: boolean;
   variant?: 'menu' | 'toolbar';
   relatedActions?: Snippet;
+  additionalCopyItems?: CopyItem[];
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
   onFilter?: (query: string) => void;
 } = $props();
@@ -39,4 +43,4 @@ let releaseYear = $derived(
 );
 </script>
 
-<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseArtist={information.artist} releaseDate={information.date} releaseTitle={information.title} {releaseYear} previewItem={item} {keepInPreview} {iconOnly} {toolbar} {variant} {relatedActions} filterOptions={onFilter ? [...getReleaseArtistNames(information).map((artist) => ({ label: `Artist: ${artist}`, query: artist })), ...getReleaseFilterOptions(information, item.price)] : []} {onFilter} {onPreview} />
+<BcxPreviewItemActions url={createItemUrl(item.href ?? item.id)} image={item.previewImage} {name} kind="release" copyValue={name} releaseArtist={information.artist} releaseDate={information.date} releaseTitle={information.title} {releaseYear} previewItem={item} {keepInPreview} {iconOnly} {toolbar} {variant} {relatedActions} {additionalCopyItems} filterOptions={onFilter ? [...getReleaseArtistNames(information).map((artist) => ({ label: `Artist: ${artist}`, query: artist })), ...getReleaseFilterOptions(information, item.price)] : []} {onFilter} {onPreview} />

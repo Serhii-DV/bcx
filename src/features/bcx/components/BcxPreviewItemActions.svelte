@@ -1,3 +1,10 @@
+<script module lang="ts">
+export interface CopyItem {
+  label: string;
+  value: string;
+}
+</script>
+
 <script lang="ts">
 import {
   Check,
@@ -36,6 +43,7 @@ let {
   releaseDate,
   releaseTitle,
   releaseYear,
+  additionalCopyItems = [],
   previewItem,
   keepInPreview = false,
   iconOnly = false,
@@ -56,6 +64,7 @@ let {
   releaseDate?: string;
   releaseTitle?: string;
   releaseYear?: number;
+  additionalCopyItems?: CopyItem[];
   previewItem?: TreeItem;
   keepInPreview?: boolean;
   iconOnly?: boolean;
@@ -152,6 +161,7 @@ let copyItems = $derived([
   ...(kind === 'release' && releaseTitle
     ? [{ label: 'Copy release title', value: releaseTitle }]
     : []),
+  ...additionalCopyItems,
   ...(pageUrl
     ? [
         {
