@@ -8,13 +8,11 @@ import BcxReleaseDetails from './BcxReleaseDetails.svelte';
 let {
   item,
   onPreview,
-  splitArtists = false,
   leadingActions,
   trailingActions,
 }: {
   item: TreeItem;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
-  splitArtists?: boolean;
   leadingActions?: Snippet;
   trailingActions?: Snippet;
 } = $props();
@@ -60,7 +58,7 @@ $effect(() => {
 
 <div class="release-preview">
   {#if information}
-    <BcxReleaseDetails {item} {information} {preview} {loading} {error} {onPreview} {splitArtists} {leadingActions} {trailingActions} />
+    <BcxReleaseDetails {item} {information} {preview} {loading} {error} {onPreview} {leadingActions} {trailingActions} />
   {:else}
     {#if leadingActions || trailingActions}
       <div class="release-leading-actions">

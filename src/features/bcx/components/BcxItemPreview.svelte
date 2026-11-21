@@ -54,7 +54,7 @@ export function focus() {
       {#if item.bandPreview}
         <BcxBandPreview band={item.bandPreview} />
       {:else}
-        <BcxReleasePreview {item} {onPreview} splitArtists />
+        <BcxReleasePreview {item} {onPreview} />
       {/if}
     {/key}
   {:else}
