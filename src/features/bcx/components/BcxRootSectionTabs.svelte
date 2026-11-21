@@ -34,8 +34,11 @@ import {
 
 type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
 
-const splitCatalogSections: Readonly<
-  Record<string, { groupLabel: string; emptyMessage: string }>
+const splitSections: Readonly<
+  Record<
+    string,
+    { groupLabel: string; itemLabel?: string; emptyMessage: string }
+  >
 > = {
   Tags: {
     groupLabel: 'Tags',
@@ -52,6 +55,16 @@ const splitCatalogSections: Readonly<
   'By Prices': {
     groupLabel: 'Prices',
     emptyMessage: 'Select a price to see its releases.',
+  },
+  'Followed by Year': {
+    groupLabel: 'Years followed',
+    itemLabel: 'Followed bands',
+    emptyMessage: 'Select a year to see the bands you followed that year.',
+  },
+  Countries: {
+    groupLabel: 'Countries',
+    itemLabel: 'Followed bands',
+    emptyMessage: 'Select a country to see its bands.',
   },
 };
 
@@ -608,7 +621,7 @@ onDestroy(() => onNavigationChange?.(undefined));
 {#snippet rootContent(tabId: string)}
         {#if visitedRoots[tabId]}
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
-          {@const splitSection = splitCatalogGroups && root?.releasePreview && root.label ? splitCatalogSections[root.label] : undefined}
+          {@const splitSection = root?.label && ((splitCatalogGroups && root.releasePreview) || (sortBands && root.itemPreview)) ? splitSections[root.label] : undefined}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
           {#snippet filterControls()}
             {#if navigationInFilter && showFilterNavigation && !navigationInToolbar}

@@ -111,7 +111,7 @@ async function handleSortCloseAutoFocus(event: Event) {
 
 <div bind:this={container} class="artists-panel">
   {#if splitView}
-    <BcxCatalogSplitPanel {root} groupLabel="Artists" releaseLabel="Artist releases" emptyMessage="Select an artist to see their releases." releases={artistReleases}>
+    <BcxCatalogSplitPanel {root} groupLabel="Artists" itemLabel="Artist releases" emptyMessage="Select an artist to see their releases." items={artistReleases}>
       {#snippet groups(selectArtist, activeNodePath)}
         <BcxTreePanel root={artistRoot} {onPreview} filterActions={filterActions ?? artistSortControls} bind:filterQuery compareChildren={compareArtists} onActivateNode={selectArtist} {activeNodePath} />
       {/snippet}

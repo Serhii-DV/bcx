@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Following Bands shows filterable, sortable years or countries on the left and the selected group’s bands on the right. Select a group with a click or Enter, then select a band to preview it.
+
 - Wishlist and Collection show filterable, sortable groups on the left and the selected group’s releases on the right in Artists, By Release Year, By Year Added, and By Prices. Select an artist, year, or exact price with a click or Enter. By Year Added includes an Unknown year group for releases without a saved date.
 
 - In the Band panel and artist preview, Tags shows a filterable tag list on the left and the selected tag’s releases on the right. Click a tag or press Enter to browse its releases.

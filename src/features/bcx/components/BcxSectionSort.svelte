@@ -22,6 +22,8 @@ const sortIcons: Partial<Record<string, typeof ArrowDownUp>> = {
   oldest: CalendarArrowUp,
   'most-releases': ArrowDownWideNarrow,
   'fewest-releases': ArrowDownNarrowWide,
+  'most-bands': ArrowDownWideNarrow,
+  'fewest-bands': ArrowDownNarrowWide,
   'low-to-high': ArrowDown01,
   'high-to-low': ArrowDown10,
 };

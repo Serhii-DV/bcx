@@ -120,8 +120,10 @@ Snapshot version 15 invalidates older snapshots that predate the Latest added,
 A–Z, Z–A, and Years root tabs and followed timestamps. Cache keys, TTLs, and
 refresh behavior stay the same.
 The side panel presents the three order roots as one Bands tab with a sort menu,
-and labels the year and country tabs By Year and By Country. The cached roots
-and their paths remain separate.
+and labels the year and country tabs By Year and By Country. These grouped views
+show filterable and sortable groups beside the selected group's bands. A click
+or Enter selects a group, and selecting a band opens the shared preview. The
+cached roots and their paths remain separate.
 Snapshot version 24 rebuilds Following Bands with the Followed by Year label and
 a Countries tab. Countries use the last part of each stored location, with
 missing locations grouped under Unknown country. Recognized country names

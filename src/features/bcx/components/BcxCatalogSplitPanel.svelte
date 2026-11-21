@@ -6,17 +6,17 @@ import BcxTreePanel from './BcxTreePanel.svelte';
 let {
   root,
   groupLabel,
-  releaseLabel = 'Releases',
+  itemLabel = 'Releases',
   emptyMessage,
   groups,
-  releases,
+  items,
 }: {
   root: TreeItem;
   groupLabel: string;
-  releaseLabel?: string;
+  itemLabel?: string;
   emptyMessage: string;
   groups: Snippet<[(group: TreeItem) => void, string | undefined]>;
-  releases?: Snippet<[TreeItem]>;
+  items?: Snippet<[TreeItem]>;
 } = $props();
 let selection = $state.raw<{ root: TreeItem; group: TreeItem }>();
 const selectedGroup = $derived(
@@ -32,11 +32,11 @@ function selectGroup(group: TreeItem) {
   <div class="catalog-group-list" role="region" aria-label={groupLabel}>
     {@render groups(selectGroup, selectedGroup?.path)}
   </div>
-  <div class="catalog-release-list" role="region" aria-label={releaseLabel}>
+  <div class="catalog-item-list" role="region" aria-label={itemLabel}>
     {#if selectedGroup}
       {#key selectedGroup}
-        {#if releases}
-          {@render releases(selectedGroup)}
+        {#if items}
+          {@render items(selectedGroup)}
         {:else}
           <BcxTreePanel root={selectedGroup} showFilter={false} autoSelectPreview={false} />
         {/if}
@@ -56,7 +56,7 @@ function selectGroup(group: TreeItem) {
   min-height: 0;
   min-width: 0;
 }
-.catalog-group-list, .catalog-release-list {
+.catalog-group-list, .catalog-item-list {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -69,7 +69,7 @@ function selectGroup(group: TreeItem) {
 }
 .catalog-group-list :global(.bcx-tree-item-img) { width: 1.5rem; height: 1.5rem; }
 .catalog-group-list :global(.item-url) { display: none; }
-.catalog-release-list {
+.catalog-item-list {
   border-inline-start: 1px solid rgb(156 163 175 / 0.25);
   padding-inline-start: 0.5rem;
 }
@@ -82,7 +82,7 @@ function selectGroup(group: TreeItem) {
   }
 }
 @container (max-width: 7rem) {
-  .catalog-group-list :global(.bcx-tree-item-img) { display: none; }
+  .catalog-group-list :global(.bcx-tree-item-img:not(:has([class^='flag:']))) { display: none; }
   .catalog-group-list :global(.bcx-tree-filter-field:has(.bcx-tree-filter-clear)) {
     flex-wrap: wrap;
   }
