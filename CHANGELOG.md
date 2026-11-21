@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Release Preview’s Artists tab shows a filterable, sortable artist list beside the selected artist’s profile and related saved releases. Select an artist with a click or Enter.
+
 - Following Bands shows filterable, sortable years or countries on the left and the selected group’s bands on the right. Select a group with a click or Enter, then select a band to preview it.
 
 - Wishlist and Collection show filterable, sortable groups on the left and the selected group’s releases on the right in Artists, By Release Year, By Year Added, and By Prices. Select an artist, year, or exact price with a click or Enter. By Year Added includes an Unknown year group for releases without a saved date.

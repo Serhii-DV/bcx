@@ -221,14 +221,14 @@ artwork. These additional dropdowns follow the artist/label dropdowns.
 Release, Band, Wishlist, and Collection Artists views use `BcxArtistsPanel` for
 artwork rows, filtering, sorting, and artist actions. Catalog views enrich their
 existing artist groups with saved profile information at render time. The Band,
-Wishlist, and Collection Artists views keep a compact artist list beside the
-release list at every width.
+Wishlist, and Collection Artists views and the bottom Release Preview keep a
+compact artist list beside the release list at every width.
 A click or Enter loads the selected artist's releases while the artist list
 retains its filter and scroll position. The releases pane starts with an artist
 row that uses the standard band preview and menu for saved profiles, or Copy and
 Search actions for unsaved artists. This row is excluded from release counts.
 The bottom preview follows selection in the releases pane and is preserved when
-switching artists. The Release Artists view retains double-click and keyboard
+switching artists. The main Release view uses double-click and keyboard
 drill-down. Ctrl+Enter opens an artist's saved page URL in the
 active browser tab when available, without entering its subitems. Artists without
 a saved page URL remain selected. Artist, release, and band rows use native

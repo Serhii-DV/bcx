@@ -89,7 +89,7 @@ async function handleSortCloseAutoFocus(event: Event) {
 </script>
 
 {#snippet artistSortControls()}
-  <BcxSectionSort item={artistSortItem} onValueChange={setArtistSort} onCloseAutoFocus={handleSortCloseAutoFocus} />
+  <BcxSectionSort item={artistSortItem} iconOnly={splitView} onValueChange={setArtistSort} onCloseAutoFocus={handleSortCloseAutoFocus} />
 {/snippet}
 
 {#snippet artistItemActions(artist: TreeItem)}

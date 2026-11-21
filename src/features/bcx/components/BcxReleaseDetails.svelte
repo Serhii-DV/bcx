@@ -41,6 +41,7 @@ let {
   loading,
   error,
   onPreview,
+  splitArtists,
   leadingActions,
   trailingActions,
 }: {
@@ -50,6 +51,7 @@ let {
   loading: boolean;
   error: string;
   onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
+  splitArtists: boolean;
   leadingActions?: Snippet;
   trailingActions?: Snippet;
 } = $props();
@@ -303,7 +305,7 @@ let dates = $derived(
   {#if root.pathKey === 'release-info'}
     <div class="release-info-content bcx-info-scroll">{@render releaseInfo()}</div>
   {:else if root.pathKey === 'artists'}
-    <BcxArtistsPanel {root} {onPreview} />
+    <BcxArtistsPanel {root} {onPreview} splitView={splitArtists} />
   {:else if root.pathKey === 'credits'}
     <div class="release-info-content">
       <section class="release-notes" aria-label="Release credits"><h4>Credits</h4><p>{information.credits}</p></section>
