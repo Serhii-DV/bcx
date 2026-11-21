@@ -169,7 +169,7 @@ describe('Artist/Label release browser', () => {
     ).toBe(track.url?.toString());
   });
 
-  it('shows sorted unique release tags in their own subtab, including after cache restoration', async () => {
+  it('groups releases by sorted unique tags, including after cache restoration', async () => {
     const band = Band.create(9, 'Label', 'https://label.bandcamp.com', 1);
     const release = AlbumFactory.fromRawData(album.toRawData());
     release.metadata = Metadata.create(
@@ -220,16 +220,16 @@ describe('Artist/Label release browser', () => {
       expect(tags?.[0].children?.map((item) => item.childrenCount)).toEqual([
         2, 1, 1,
       ]);
+      expect(tags?.[0].children?.map((item) => item.image)).toEqual([
+        'tag',
+        'tag',
+        'tag',
+      ]);
       expect(
-        tags?.[0].children?.every(
-          (item) => !item.children && !item.hasChildren,
+        tags?.[0].children?.map((group) =>
+          group.children?.map((item) => item.previewInformation?.title),
         ),
-      ).toBe(true);
-      expect(
-        tags?.[0].children?.every(
-          (item) => item.image === 'tag' && item.query === item.label,
-        ),
-      ).toBe(true);
+      ).toEqual([['Release', 'Track'], ['Track'], ['Release']]);
       expect(
         createRootSectionTabs(data?.items ?? []).some(
           (tab) => tab.label === 'Tags (3)',

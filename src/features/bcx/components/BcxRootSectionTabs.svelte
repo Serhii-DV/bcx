@@ -37,6 +37,10 @@ type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
 const splitCatalogSections: Readonly<
   Record<string, { groupLabel: string; emptyMessage: string }>
 > = {
+  Tags: {
+    groupLabel: 'Tags',
+    emptyMessage: 'Select a tag to see its releases.',
+  },
   'Release years': {
     groupLabel: 'Years',
     emptyMessage: 'Select a year to see its releases.',

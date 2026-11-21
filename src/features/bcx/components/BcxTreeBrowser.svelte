@@ -233,7 +233,7 @@ $effect(() => {
   const allItems = baseline?.children ?? currentLevelItems;
   const filterGroupsOnly =
     currentRootItem?.releasePreview &&
-    ['Artists', 'Release years', 'By Prices'].includes(
+    ['Artists', 'Release years', 'By Prices', 'Tags'].includes(
       currentRootItem.label ?? '',
     );
   function countItems(items: TreeItem[]): number {

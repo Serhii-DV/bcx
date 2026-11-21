@@ -25,6 +25,7 @@ import {
   ICON_CALENDAR_DAYS,
   ICON_DISC,
   ICON_MIC,
+  ICON_TAG,
 } from '../utils/icon';
 import { createPagedTreeItem } from './createPagedTreeItem';
 import { RELEASE_BATCH_SIZE } from './pagedReleasesTreeItem';
@@ -198,6 +199,33 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         releases.length > RELEASE_BATCH_SIZE,
     ),
   ];
+
+  const tagsRoot = item.children?.find((child) => child.label === 'Tags');
+  if (tagsRoot) {
+    const releasesByTag = new Map<string, BandRelease[]>();
+    for (const release of releases) {
+      for (const tag of new Set(release.metadata?.keywords)) {
+        const matches = releasesByTag.get(tag) ?? [];
+        matches.push(release);
+        releasesByTag.set(tag, matches);
+      }
+    }
+    const groups = [...releasesByTag.keys()].sort().map((tag) => ({
+      ...createReleaseGroup(
+        tag,
+        releasesByTag.get(tag) ?? [],
+        createReleaseItem,
+      ),
+      image: ICON_TAG,
+      includeInFilterSuggestions: true,
+    }));
+    roots.push({
+      ...tagsRoot,
+      children: groups,
+      childrenCount: groups.length,
+      hasChildren: true,
+    });
+  }
 
   if ((catalog.groupByYear || catalog.addedYearSource) && releases.length > 0) {
     const createReleaseYears = (years: Map<string, number>): TreeItem => {

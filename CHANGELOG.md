@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- In the Band panel and artist preview, Tags shows a filterable tag list on the left and the selected tag’s releases on the right. Click a tag or press Enter to browse its releases.
+
 - The Band panel’s Artists, Years, and Prices sort buttons show the selected option’s icon at a fixed width, leaving room for the filter. Prices can be sorted low to high or high to low within each currency.
 
 - The Band panel’s By Prices tab shows filterable price groups on the left and releases at the selected price on the right. Exact prices can be selected directly, including name your price and Price unknown.
