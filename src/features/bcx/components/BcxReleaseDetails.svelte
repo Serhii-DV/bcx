@@ -257,7 +257,8 @@ let dates = $derived(
 
 {#snippet parentActions()}
   {#if bandLinks.parent}
-    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} menuLabel={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} toolbar />
+    {@const kind = bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'}
+    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} menuLabel={bandLinks.parent.name} {kind} copyValue={bandLinks.parent.name} copyLabelHashtag={kind === 'label'} previewItem={bandPreviewItem(bandLinks.parent)} toolbar />
   {/if}
 {/snippet}
 

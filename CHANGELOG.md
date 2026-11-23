@@ -6,6 +6,8 @@
 
 - The Release Copy menu can copy a Telegram-ready artist hashtag and the label or Bandcamp band page name.
 
+- The Release preview’s Label menu and the Band preview’s Copy menu can copy a Telegram-ready label hashtag.
+
 - The Artists tab in the main Release panel and Release Preview shows a filterable, sortable artist list beside the selected artist’s profile and related saved releases. Select an artist with a click or Enter.
 
 - Following Bands shows filterable, sortable years or countries on the left and the selected group’s bands on the right. Select a group with a click or Enter, then select a band to preview it.

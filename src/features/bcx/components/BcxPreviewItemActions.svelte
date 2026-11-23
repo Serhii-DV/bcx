@@ -25,6 +25,7 @@ import type { Url } from 'src/core/url';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import BandcampIcon from 'src/lib/components/BandcampIcon.svelte';
 import { copyToClipboard } from 'src/utils/clipboard';
+import { formatTelegramHashtag } from 'src/utils/telegramHashtag';
 import { onDestroy, type Snippet } from 'svelte';
 import { createPinnedPage, samePinnedPage } from '../pinnedNavigation';
 import { pinnedPageFromItem } from '../pinnedPage';
@@ -39,6 +40,7 @@ let {
   name,
   kind,
   copyValue,
+  copyLabelHashtag = false,
   releaseArtist,
   releaseDate,
   releaseTitle,
@@ -60,6 +62,7 @@ let {
   name: string;
   kind: 'release' | 'artist' | 'label' | 'band';
   copyValue: string;
+  copyLabelHashtag?: boolean;
   releaseArtist?: string;
   releaseDate?: string;
   releaseTitle?: string;
@@ -133,8 +136,14 @@ let formattedReleaseDate = $derived.by(() => {
       })
     : undefined;
 });
+let labelHashtag = $derived(
+  copyLabelHashtag ? formatTelegramHashtag(copyValue) : undefined,
+);
 let copyItems = $derived([
   { label: copyLabel, value: copyValue },
+  ...(labelHashtag
+    ? [{ label: 'Copy label hashtag', value: labelHashtag }]
+    : []),
   ...(kind === 'release' &&
   releaseYear &&
   Number.isInteger(releaseYear) &&
