@@ -16,7 +16,7 @@
 
 - Wishlist and Collection show filterable, sortable groups on the left and the selected group’s releases on the right in Artists, By Release Year, By Year Added, and By Prices. Select an artist, year, or exact price with a click or Enter. By Year Added includes an Unknown year group for releases without a saved date.
 
-- In the Band panel and Band preview, Filters opens a searchable list of artists, release years, tags, or prices on the left. Use Multi-select to combine values or Single select to apply one value across all categories. The Releases list, search, and sort stay on the right.
+- In the Band panel and Band preview, Filters uses icon tabs for artists, release years, tags, and prices, with each tab’s available value count in its title. Use the Single and Multiple radio buttons to choose one value or combine values. The Releases list, search, and sort stay on the right.
 
 - Band and release rows in the Tree Browser use one three-dot menu for Preview, Open in side panel, Pin or Unpin, and Open on Bandcamp, alongside existing copy, search, and applicable filter actions.
 

@@ -1,10 +1,16 @@
 import type { TreeItem } from 'src/features/treeview/TreeItem';
+import {
+  ICON_BANKNOTE,
+  ICON_CALENDAR,
+  ICON_MIC,
+  ICON_TAGS,
+} from 'src/features/treeview/utils/icon';
 
 export const bandReleaseFilterCategories = [
-  { rootLabel: 'Artists', label: 'Artists' },
-  { rootLabel: 'Release years', label: 'By Release Year' },
-  { rootLabel: 'Tags', label: 'Tags' },
-  { rootLabel: 'By Prices', label: 'By Prices' },
+  { rootLabel: 'Artists', label: 'Artists', icon: ICON_MIC },
+  { rootLabel: 'Release years', label: 'By Release Year', icon: ICON_CALENDAR },
+  { rootLabel: 'Tags', label: 'Tags', icon: ICON_TAGS },
+  { rootLabel: 'By Prices', label: 'By Prices', icon: ICON_BANKNOTE },
 ] as const;
 
 export type BandReleaseFilterCategory =
