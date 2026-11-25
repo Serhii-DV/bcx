@@ -93,9 +93,14 @@ profiles.
 
 Every committed write records a revision in IndexedDB and publishes it at
 `/music-library/revision` in Chrome session storage. Mounted previews invalidate
-their query caches and reload saved details on changes. Band and music-dependent
-fan subtree snapshots include the revision while retaining their keys, TTLs, and
-serialization. Following Genres keeps its fan-data revision alone.
+their query caches and reload saved details on changes. Release Calendar scans
+saved albums and standalone tracks in the worker and returns matching publication
+dates from the last 30 calendar days onward. The Dashboard shows up to three
+upcoming releases or three recently released items, using the same publication
+dates and ordering as the Release Calendar. Both views refresh on music
+revisions and at local midnight. Band and music-dependent fan subtree snapshots
+include the revision while retaining their keys, TTLs, and serialization.
+Following Genres keeps its fan-data revision alone.
 Connections close on version changes; blocked upgrades and storage failures
 produce explicit errors. No permission removes database quota or eviction limits.
 

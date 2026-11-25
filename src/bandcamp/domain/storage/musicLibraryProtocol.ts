@@ -1,6 +1,7 @@
 import type { RawAlbumData } from '../album/data';
 import type { RawBandData } from '../band/data';
 import type { RawMetadataData } from '../metadata';
+import { isCalendarDay } from '../releaseDate';
 import type { RawTrackData } from '../track/data';
 
 export const MUSIC_LIBRARY_REVISION_KEY = '/music-library/revision';
@@ -21,6 +22,7 @@ export type MusicLibraryRequest =
   | { action: 'lookup'; uuids: string[] }
   | { action: 'save'; data: MusicBatch }
   | { action: 'find-albums'; artists: string[] }
+  | { action: 'find-dated-releases'; since: string }
   | { action: 'match-albums'; title: string; artist: string }
   | { action: 'find-bands'; names: string[] }
   | { action: 'remove-tracks'; ids: number[] }
@@ -170,6 +172,8 @@ export function isMusicLibraryRequest(
       return isStrings(value.uuids);
     case 'find-albums':
       return isStrings(value.artists);
+    case 'find-dated-releases':
+      return isCalendarDay(value.since);
     case 'match-albums':
       return (
         typeof value.title === 'string' && typeof value.artist === 'string'

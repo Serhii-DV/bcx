@@ -161,11 +161,15 @@ async function openBrowserPage(url: string) {
 {#snippet treeItemTimestamp(timestamp: NonNullable<TreeItem['timestamp']>)}
   <span class="item-timestamp text-gray-400">
     {timestamp.label}
+    {#if timestamp.dateOnly}
+      <time datetime={timestamp.dateTime}>{new Date(timestamp.dateTime).toLocaleDateString(undefined, { dateStyle: 'medium', timeZone: 'UTC' })}</time>
+    {:else}
     <relative-time
       datetime={timestamp.dateTime}
       format="relative"
       precision="minute"
     >{new Date(timestamp.dateTime).toLocaleString()}</relative-time>
+    {/if}
   </span>
 {/snippet}
 

@@ -87,6 +87,7 @@ export interface TreeItem {
   timestamp?: {
     label: string;
     dateTime: string;
+    dateOnly?: boolean;
   };
   secondaryTimestamp?: TreeItem['timestamp'];
 }

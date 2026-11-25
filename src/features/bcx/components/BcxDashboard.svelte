@@ -6,12 +6,18 @@ import { TreeData } from 'src/features/treeview/TreeData';
 import { TREE_ITEM_LAYOUT } from 'src/features/treeview/TreeItem';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount } from 'svelte';
+import BcxDashboardReleaseCalendar from './BcxDashboardReleaseCalendar.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 
 let {
   errorMessage = '',
+  onViewReleaseCalendar,
   onViewHistory,
-}: { errorMessage?: string; onViewHistory?: () => void } = $props();
+}: {
+  errorMessage?: string;
+  onViewReleaseCalendar?: () => void;
+  onViewHistory?: () => void;
+} = $props();
 let recent = $state(new TreeData([], TREE_ITEM_LAYOUT.BROWSER));
 let loading = $state(true);
 let historyError = $state('');
@@ -59,7 +65,8 @@ onMount(() => {
 
 <div class="dashboard">
   {#if errorMessage}<p class="error" role="alert">{errorMessage}</p>{/if}
-  <section aria-labelledby="return-history-heading" aria-busy={loading} class:has-recent={recent.items.length > 0}>
+  <BcxDashboardReleaseCalendar onOpen={onViewReleaseCalendar} />
+  <section aria-labelledby="return-history-heading" aria-busy={loading}>
     <h2 id="return-history-heading"><History size={16} aria-hidden="true" />Recently visited <span class="count">{recent.items.length}</span></h2>
     {#if historyError}
       <p class="error" role="alert">{historyError} <button type="button" onclick={() => void loadRecentPages()}>Retry</button></p>
@@ -81,9 +88,8 @@ onMount(() => {
 </div>
 
 <style>
-  .dashboard { box-sizing: border-box; display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; padding: 0 16px 16px; color: #f9fafb; }
+  .dashboard { box-sizing: border-box; display: flex; flex: 0 0 auto; flex-direction: column; padding: 0 16px 16px; color: #f9fafb; }
   section { display: flex; flex-shrink: 0; flex-direction: column; min-height: 0; min-width: 0; margin-bottom: 24px; }
-  section.has-recent { flex: 1 1 0%; }
   h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 0.875rem; font-weight: 600; }
   .count { padding: 1px 6px; border-radius: 4px; background: rgb(255 255 255 / 8%); color: #9ca3af; font-size: 0.6875rem; }
   .empty { margin: 0; color: #9ca3af; font-size: 0.875rem; line-height: 1.5; }

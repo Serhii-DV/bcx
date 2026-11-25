@@ -77,6 +77,7 @@ interface Props {
   activeNodePath?: string;
   isLoading?: boolean;
   loadingMessage?: string;
+  emptyMessage?: string;
   enableReleaseFilterActions?: boolean;
   visibleCount?: number;
   totalCount?: number;
@@ -105,6 +106,7 @@ let {
   activeNodePath,
   isLoading = false,
   loadingMessage = 'Loading',
+  emptyMessage = 'No items here',
   enableReleaseFilterActions = false,
   visibleCount = $bindable(),
   totalCount = $bindable(),
@@ -264,7 +266,7 @@ let emptyStateMessage = $derived.by(() => {
 
   return debouncedFilterQuery.trim()
     ? 'No items match your filter'
-    : 'No items here';
+    : emptyMessage;
 });
 
 $effect(() => {

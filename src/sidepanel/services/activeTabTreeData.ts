@@ -31,6 +31,7 @@ import {
 import { MainSidePanelSections } from 'src/features/treeview/items/MainSidePanelSections';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
 import { AlbumSidePanelSection } from 'src/features/treeview/sections/AlbumSidePanelSection';
+import { releaseCalendarSection } from 'src/features/treeview/sections/ReleaseCalendarSection';
 import { TrackSidePanelSection } from 'src/features/treeview/sections/TrackSidePanelSection';
 import type { PageDataContext } from 'src/features/treeview/sections/types';
 
@@ -110,10 +111,13 @@ export async function createActiveTabSidePanelData(
       },
     };
 
+  const sections = await MainSidePanelSections.create(currentPageUrl, page, {
+    pageData: fanPageContext,
+  });
   return {
-    sections: await MainSidePanelSections.create(currentPageUrl, page, {
-      pageData: fanPageContext,
-    }),
+    sections: sections.flatMap((section) =>
+      section.id === 'history' ? [section, releaseCalendarSection] : [section],
+    ),
     header: createSidePanelHeader(currentPageUrl, page, pageData?.trackSchema),
   };
 }
