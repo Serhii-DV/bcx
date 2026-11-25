@@ -3,6 +3,7 @@ import { Check, ChevronDown, Ellipsis, X } from '@lucide/svelte';
 import { DropdownMenu, Tabs, Tooltip } from 'bits-ui';
 import { makeIcon } from 'src/features/treeview/utils/icon';
 import { type Snippet, tick } from 'svelte';
+import type { SectionNavigationItem } from './sectionNavigation';
 import { getVisibleSectionTabIds } from './sectionTabOverflow';
 
 interface SectionTab {
@@ -14,7 +15,7 @@ interface SectionTab {
   contentId?: string;
   keepLabelWhenCompact?: boolean;
   compactLabel?: string;
-  sortOptions?: { id: string; label: string; title?: string }[];
+  sortOptions?: SectionNavigationItem['sortOptions'];
   sortValue?: string;
   sortLabel?: string;
   onSortChange?: (id: string) => void;

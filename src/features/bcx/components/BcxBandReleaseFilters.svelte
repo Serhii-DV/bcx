@@ -2,12 +2,14 @@
 import { Tabs } from 'bits-ui';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { makeIcon } from 'src/features/treeview/utils/icon';
+import BcxSectionSort from './BcxSectionSort.svelte';
 import BcxTreeFilterInput from './BcxTreeFilterInput.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
 import {
   type BandReleaseFilterCategory,
   type BandReleaseFilterMode,
   type BandReleaseFilterSelection,
+  type BandReleaseFilterSorts,
   bandReleaseFilterCategories,
   readBandReleaseFilterGroups,
 } from './bandReleaseFilters';
@@ -16,6 +18,7 @@ let {
   roots,
   category = $bindable(),
   query = $bindable(),
+  sorts = $bindable(),
   mode,
   onModeChange,
   selections,
@@ -28,6 +31,7 @@ let {
   roots: TreeItem[];
   category: BandReleaseFilterCategory;
   query: string;
+  sorts: BandReleaseFilterSorts;
   mode: BandReleaseFilterMode;
   onModeChange: (mode: BandReleaseFilterMode) => void;
   selections: BandReleaseFilterSelection[];
@@ -101,15 +105,23 @@ function selectCategory(value: string) {
 }
 </script>
 
-{#snippet categoryContent()}
+{#snippet categoryContent(option: (typeof bandReleaseFilterCategories)[number])}
   {#await groups}
     <p role="status">Loading filter values…</p>
   {:then items}
     {@const options = getOptions(items, selectedValues)}
-    {@const suggestions = [...options.keys()]}
+    {@const sortValue = sorts[option.rootLabel] ?? option.sort.defaultSort}
+    {@const compare = option.sort.comparator(sortValue)}
+    {@const sortedOptions = compare ? [...options].sort(([, a], [, b]) => compare(a, b)) : [...options]}
+    {@const suggestions = sortedOptions.map(([label]) => label)}
     {@const normalizedQuery = query.trim().toLocaleLowerCase()}
-    {@const visibleOptions = [...options].filter(([label]) => label.toLocaleLowerCase().includes(normalizedQuery))}
-    <BcxTreeFilterInput id={filterId} bind:value={query} {suggestions} placeholder="Filter values…" visibleCount={visibleOptions.length} totalCount={options.size} />
+    {@const visibleOptions = sortedOptions.filter(([label]) => label.toLocaleLowerCase().includes(normalizedQuery))}
+    <div class="release-filter-toolbar">
+      <div class="release-filter-input">
+        <BcxTreeFilterInput id={filterId} bind:value={query} {suggestions} placeholder="Filter values…" visibleCount={visibleOptions.length} totalCount={options.size} />
+      </div>
+      <BcxSectionSort item={{ sortLabel: option.sort.sortLabel, sortOptions: option.sort.sortOptions, sortValue }} iconOnly onValueChange={(id) => { sorts = { ...sorts, [option.rootLabel]: id }; }} />
+    </div>
     <div class="bcx-tree-view release-filter-values">
       {#each visibleOptions as [value, item] (value)}
         <button type="button" class="release-filter-row" aria-pressed={selectedValues.includes(value)} title={value} onclick={() => onToggle(category, value)}>
@@ -159,7 +171,7 @@ function selectCategory(value: string) {
   </fieldset>
   {#each bandReleaseFilterCategories as option (option.rootLabel)}
     <Tabs.Content value={option.rootLabel} class="release-filter-tab-content">
-      {#if category === option.rootLabel}{@render categoryContent()}{/if}
+      {#if category === option.rootLabel}{@render categoryContent(option)}{/if}
     </Tabs.Content>
   {/each}
 </Tabs.Root>
@@ -178,6 +190,14 @@ function selectCategory(value: string) {
 .release-filter-modes label:has(:checked) { background: #374151; color: #f9fafb; box-shadow: inset 0 -1px #38bdf8; }
 @container (max-width: 6rem) {
   :global(.release-filter-tab-list) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.release-filter-toolbar { display: flex; align-items: flex-start; gap: 0.25rem; }
+.release-filter-input { flex: 1 1 0%; min-width: 0; }
+@container (max-width: 10rem) {
+  .release-filter-input :global(.bcx-tree-filter-field:has(.bcx-tree-filter-clear)) { flex-wrap: wrap; }
+  .release-filter-input :global(.bcx-tree-filter-field:has(.bcx-tree-filter-clear) .bcx-tree-filter-input) { flex-basis: 100%; }
+  .release-filter-input :global(.bcx-tree-filter-count) { padding-inline: 0; }
+  .release-filter-input :global(.bcx-tree-filter-clear) { margin-inline: 0; }
 }
 .release-filter-action { margin-top: 0.25rem; }
 .release-filter-action:hover { background: #374151; }

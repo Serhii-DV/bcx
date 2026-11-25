@@ -34,10 +34,10 @@ let {
   onValueChange,
   onCloseAutoFocus,
 }: {
-  item: SectionNavigationItem;
+  item: Pick<SectionNavigationItem, 'sortOptions' | 'sortValue' | 'sortLabel'>;
   iconOnly?: boolean;
   onValueChange: (id: string) => void;
-  onCloseAutoFocus: (event: Event) => void;
+  onCloseAutoFocus?: (event: Event) => void;
 } = $props();
 let trigger = $state<HTMLButtonElement | null>(null);
 const selectedOption = $derived(

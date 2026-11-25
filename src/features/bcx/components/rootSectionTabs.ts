@@ -25,7 +25,67 @@ export type CatalogYearSort =
   | 'fewest-releases';
 export type CatalogPriceSort = 'low-to-high' | 'high-to-low';
 
-function compareHighestPrice(a: TreeItem, b: TreeItem): number {
+export function createCatalogGroupSortOptions(group: 'artists' | 'tags') {
+  return [
+    { id: 'az', label: 'A–Z', title: `Show ${group} in alphabetical order.` },
+    {
+      id: 'za',
+      label: 'Z–A',
+      title: `Show ${group} in reverse alphabetical order.`,
+    },
+    {
+      id: 'most-releases',
+      label: 'Most releases',
+      title: `Show ${group} with the most releases first.`,
+    },
+    {
+      id: 'fewest-releases',
+      label: 'Fewest releases',
+      title: `Show ${group} with the fewest releases first.`,
+    },
+  ] as const;
+}
+
+export const catalogYearSortOptions = [
+  {
+    id: 'newest',
+    label: 'Newest first',
+    title: 'Show the newest years first.',
+  },
+  {
+    id: 'oldest',
+    label: 'Oldest first',
+    title: 'Show the oldest years first.',
+  },
+  {
+    id: 'most-releases',
+    label: 'Most releases',
+    title: 'Show years with the most releases first.',
+  },
+  {
+    id: 'fewest-releases',
+    label: 'Fewest releases',
+    title: 'Show years with the fewest releases first.',
+  },
+] as const;
+
+export const catalogPriceSortOptions = [
+  {
+    id: 'low-to-high',
+    label: 'Low to high',
+    title: 'Show lower prices first within each currency.',
+  },
+  {
+    id: 'high-to-low',
+    label: 'High to low',
+    title: 'Show higher prices first within each currency.',
+  },
+] as const;
+
+const releaseCount = (item: TreeItem) =>
+  item.childrenCount ?? item.children?.length ?? 0;
+
+export function compareHighestPrice(a: TreeItem, b: TreeItem): number {
   const first = a.priceGroup;
   const second = b.priceGroup;
   if (!first || !second) return Number(!first) - Number(!second);
@@ -36,13 +96,11 @@ function compareHighestPrice(a: TreeItem, b: TreeItem): number {
   );
 }
 
-export function createCatalogArtistComparator(sort: CatalogGroupSort) {
+export function createCatalogGroupComparator(sort: CatalogGroupSort) {
   const collator = new Intl.Collator(undefined, {
     numeric: true,
     sensitivity: 'base',
   });
-  const releaseCount = (item: TreeItem) =>
-    item.childrenCount ?? item.children?.length ?? 0;
   return (a: TreeItem, b: TreeItem) => {
     const nameOrder = collator.compare(a.label ?? '', b.label ?? '');
     switch (sort) {
@@ -58,6 +116,29 @@ export function createCatalogArtistComparator(sort: CatalogGroupSort) {
   };
 }
 
+export function createCatalogYearComparator(sort: CatalogYearSort) {
+  const newestYear = (a: TreeItem, b: TreeItem) => {
+    if (a.label === b.label) return 0;
+    if (a.label === 'Unknown year') return 1;
+    if (b.label === 'Unknown year') return -1;
+    return Number(b.label) - Number(a.label);
+  };
+  return (a: TreeItem, b: TreeItem) => {
+    switch (sort) {
+      case 'oldest':
+        return a.label === 'Unknown year' || b.label === 'Unknown year'
+          ? newestYear(a, b)
+          : -newestYear(a, b);
+      case 'most-releases':
+        return releaseCount(b) - releaseCount(a) || newestYear(a, b);
+      case 'fewest-releases':
+        return releaseCount(a) - releaseCount(b) || newestYear(a, b);
+      default:
+        return newestYear(a, b);
+    }
+  };
+}
+
 export function sortCatalogGroups(
   treeData: TreeData,
   artistSort: CatalogGroupSort,
@@ -65,14 +146,7 @@ export function sortCatalogGroups(
   addedYearSort: CatalogYearSort,
   priceSort: CatalogPriceSort = 'low-to-high',
 ): TreeData {
-  const releaseCount = (item: TreeItem) =>
-    item.childrenCount ?? item.children?.length ?? 0;
-  const compareArtists = createCatalogArtistComparator(artistSort);
-  const newestYear = (a: TreeItem, b: TreeItem) => {
-    if (a.label === 'Unknown year') return 1;
-    if (b.label === 'Unknown year') return -1;
-    return Number(b.label) - Number(a.label);
-  };
+  const compareArtists = createCatalogGroupComparator(artistSort);
 
   return new TreeData(
     treeData.items.map((root) => {
@@ -90,20 +164,7 @@ export function sortCatalogGroups(
           root.label === 'Release years' ? releaseYearSort : addedYearSort;
         return {
           ...root,
-          children: [...root.children].sort((a, b) => {
-            switch (sort) {
-              case 'oldest':
-                return a.label === 'Unknown year' || b.label === 'Unknown year'
-                  ? newestYear(a, b)
-                  : -newestYear(a, b);
-              case 'most-releases':
-                return releaseCount(b) - releaseCount(a) || newestYear(a, b);
-              case 'fewest-releases':
-                return releaseCount(a) - releaseCount(b) || newestYear(a, b);
-              default:
-                return newestYear(a, b);
-            }
-          }),
+          children: [...root.children].sort(createCatalogYearComparator(sort)),
         };
       }
       if (root.label === 'By Prices' && priceSort === 'high-to-low') {

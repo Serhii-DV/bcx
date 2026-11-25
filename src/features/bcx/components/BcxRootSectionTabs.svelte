@@ -21,6 +21,9 @@ import {
   type CatalogGroupSort,
   type CatalogPriceSort,
   type CatalogYearSort,
+  catalogPriceSortOptions,
+  catalogYearSortOptions,
+  createCatalogGroupSortOptions,
   createRootSectionTabs,
   type FollowingBandCountrySort,
   type FollowingBandYearSort,
@@ -33,6 +36,8 @@ import {
 } from './sectionNavigation';
 
 type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
+
+const artistSortOptions = createCatalogGroupSortOptions('artists');
 
 const splitSections: Readonly<
   Record<
@@ -259,28 +264,7 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
         sortValue: artistSort,
         sortLabel: 'Sort artists',
         onSortChange: setArtistSort,
-        sortOptions: [
-          {
-            id: 'az',
-            label: 'A–Z',
-            title: 'Show artists in alphabetical order.',
-          },
-          {
-            id: 'za',
-            label: 'Z–A',
-            title: 'Show artists in reverse alphabetical order.',
-          },
-          {
-            id: 'most-releases',
-            label: 'Most releases',
-            title: 'Show artists with the most releases first.',
-          },
-          {
-            id: 'fewest-releases',
-            label: 'Fewest releases',
-            title: 'Show artists with the fewest releases first.',
-          },
-        ],
+        sortOptions: artistSortOptions,
       };
     }
     if (
@@ -297,28 +281,7 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
             : 'Sort years added',
         onSortChange:
           rootLabel === 'Release years' ? setReleaseYearSort : setAddedYearSort,
-        sortOptions: [
-          {
-            id: 'newest',
-            label: 'Newest first',
-            title: 'Show the newest years first.',
-          },
-          {
-            id: 'oldest',
-            label: 'Oldest first',
-            title: 'Show the oldest years first.',
-          },
-          {
-            id: 'most-releases',
-            label: 'Most releases',
-            title: 'Show years with the most releases first.',
-          },
-          {
-            id: 'fewest-releases',
-            label: 'Fewest releases',
-            title: 'Show years with the fewest releases first.',
-          },
-        ],
+        sortOptions: catalogYearSortOptions,
       };
     }
     if (splitCatalogGroups && isReleaseCatalog && rootLabel === 'By Prices') {
@@ -327,18 +290,7 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
         sortValue: priceSort,
         sortLabel: 'Sort prices',
         onSortChange: setPriceSort,
-        sortOptions: [
-          {
-            id: 'low-to-high',
-            label: 'Low to high',
-            title: 'Show lower prices first within each currency.',
-          },
-          {
-            id: 'high-to-low',
-            label: 'High to low',
-            title: 'Show higher prices first within each currency.',
-          },
-        ],
+        sortOptions: catalogPriceSortOptions,
       };
     }
     if (!sortBands) return labeledTab;

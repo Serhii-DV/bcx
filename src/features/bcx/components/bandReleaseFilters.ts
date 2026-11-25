@@ -5,16 +5,85 @@ import {
   ICON_MIC,
   ICON_TAGS,
 } from 'src/features/treeview/utils/icon';
+import {
+  catalogPriceSortOptions,
+  catalogYearSortOptions,
+  compareHighestPrice,
+  createCatalogGroupComparator,
+  createCatalogGroupSortOptions,
+  createCatalogYearComparator,
+} from './rootSectionTabs';
+
+function createFilterSort<Sort extends string>(
+  sortLabel: string,
+  sortOptions: readonly [
+    { id: Sort; label: string; title: string },
+    ...{ id: Sort; label: string; title: string }[],
+  ],
+  createComparator: (
+    id: Sort,
+  ) => ((a: TreeItem, b: TreeItem) => number) | undefined,
+) {
+  const defaultSort = sortOptions[0].id;
+  return {
+    sortLabel,
+    sortOptions,
+    defaultSort,
+    comparator(id: string) {
+      return createComparator(
+        sortOptions.find((option) => option.id === id)?.id ?? defaultSort,
+      );
+    },
+  };
+}
 
 export const bandReleaseFilterCategories = [
-  { rootLabel: 'Artists', label: 'Artists', icon: ICON_MIC },
-  { rootLabel: 'Release years', label: 'By Release Year', icon: ICON_CALENDAR },
-  { rootLabel: 'Tags', label: 'Tags', icon: ICON_TAGS },
-  { rootLabel: 'By Prices', label: 'By Prices', icon: ICON_BANKNOTE },
+  {
+    rootLabel: 'Artists',
+    label: 'Artists',
+    icon: ICON_MIC,
+    sort: createFilterSort(
+      'Sort artists',
+      createCatalogGroupSortOptions('artists'),
+      createCatalogGroupComparator,
+    ),
+  },
+  {
+    rootLabel: 'Release years',
+    label: 'By Release Year',
+    icon: ICON_CALENDAR,
+    sort: createFilterSort(
+      'Sort release years',
+      catalogYearSortOptions,
+      createCatalogYearComparator,
+    ),
+  },
+  {
+    rootLabel: 'Tags',
+    label: 'Tags',
+    icon: ICON_TAGS,
+    sort: createFilterSort(
+      'Sort tags',
+      createCatalogGroupSortOptions('tags'),
+      createCatalogGroupComparator,
+    ),
+  },
+  {
+    rootLabel: 'By Prices',
+    label: 'By Prices',
+    icon: ICON_BANKNOTE,
+    sort: createFilterSort('Sort prices', catalogPriceSortOptions, (id) =>
+      id === 'high-to-low' ? compareHighestPrice : undefined,
+    ),
+  },
 ] as const;
 
 export type BandReleaseFilterCategory =
   (typeof bandReleaseFilterCategories)[number]['rootLabel'];
+
+export type BandReleaseFilterSorts = Partial<
+  Record<BandReleaseFilterCategory, string>
+>;
 
 export type BandReleaseFilterMode = 'single' | 'multiple';
 

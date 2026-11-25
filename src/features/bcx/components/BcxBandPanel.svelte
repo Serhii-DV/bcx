@@ -16,6 +16,7 @@ import {
   type BandReleaseFilterCategory,
   type BandReleaseFilterMode,
   type BandReleaseFilterSelection,
+  type BandReleaseFilterSorts,
   createBandReleasePredicate,
   isBandReleaseFilterRoot,
 } from './bandReleaseFilters';
@@ -82,6 +83,7 @@ let filterPaneOpen = $state(false);
 let filterCategory = $state<BandReleaseFilterCategory>('Artists');
 let filterMode = $state<BandReleaseFilterMode>(DEFAULT_FILTER_MODE);
 let filterValueQuery = $state('');
+let filterSorts = $state.raw<BandReleaseFilterSorts>({});
 let applyingFilters = $state(false);
 let filterApplyFailed = $state(false);
 let filterRetry = $state(0);
@@ -108,6 +110,7 @@ $effect(() => {
   filterCategory = 'Artists';
   filterMode = DEFAULT_FILTER_MODE;
   filterValueQuery = '';
+  filterSorts = {};
 });
 
 $effect(() => {
@@ -214,7 +217,7 @@ let catalog = $derived.by(() => {
 {/snippet}
 
 {#snippet releaseFilterPane()}
-  <BcxBandReleaseFilters roots={filterRoots} bind:category={filterCategory} bind:query={filterValueQuery} mode={filterMode} onModeChange={setFilterMode} {selections} applying={applyingFilters} applyFailed={filterApplyFailed} onToggle={toggleFilter} onClear={() => { selections = []; }} onRetry={() => { filterRetry += 1; }} />
+  <BcxBandReleaseFilters roots={filterRoots} bind:category={filterCategory} bind:query={filterValueQuery} bind:sorts={filterSorts} mode={filterMode} onModeChange={setFilterMode} {selections} applying={applyingFilters} applyFailed={filterApplyFailed} onToggle={toggleFilter} onClear={() => { selections = []; }} onRetry={() => { filterRetry += 1; }} />
 {/snippet}
 
 {#snippet panelHeading()}

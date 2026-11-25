@@ -5,7 +5,7 @@ export interface SectionNavigationItem {
   image?: string;
   title?: string;
   contentId: string;
-  sortOptions?: { id: string; label: string; title?: string }[];
+  sortOptions?: readonly { id: string; label: string; title?: string }[];
   sortValue?: string;
   sortLabel?: string;
   onSortChange?: (id: string) => void;

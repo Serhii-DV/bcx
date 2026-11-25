@@ -9,7 +9,7 @@ import BcxTreePanel from './BcxTreePanel.svelte';
 import { createItemUrl } from './itemUrl';
 import {
   type CatalogGroupSort,
-  createCatalogArtistComparator,
+  createCatalogGroupComparator,
 } from './rootSectionTabs';
 import type { SectionNavigationItem } from './sectionNavigation';
 
@@ -44,7 +44,7 @@ const artistRoot = $derived(
     : root,
 );
 const compareArtists = $derived(
-  createCatalogArtistComparator(catalog ? catalogSort : artistSort),
+  createCatalogGroupComparator(catalog ? catalogSort : artistSort),
 );
 const artistSortItem = $derived<SectionNavigationItem>({
   id: root.path ?? 'artists',
