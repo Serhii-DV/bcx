@@ -75,6 +75,9 @@ const hasReleases = $derived(
   (releases?.childrenCount ?? releases?.children?.length ?? 0) > 0,
 );
 let selections = $state.raw<BandReleaseFilterSelection[]>([]);
+const filterButtonLabel = $derived(
+  selections.length ? `Filters, ${selections.length} selected` : 'Filters',
+);
 let filterPaneOpen = $state(false);
 let filterCategory = $state<BandReleaseFilterCategory>('Artists');
 let filterMode = $state<BandReleaseFilterMode>(DEFAULT_FILTER_MODE);
@@ -204,9 +207,9 @@ let catalog = $derived.by(() => {
 {/snippet}
 
 {#snippet releaseFilterControls()}
-  <button type="button" class="bcx-section-tab release-filters-trigger" aria-expanded={filterPaneOpen} aria-label={selections.length ? `Filters, ${selections.length} selected` : 'Filters'} onclick={() => { filterPaneOpen = !filterPaneOpen; }}>
+  <button type="button" class="bcx-section-tab release-filters-trigger" aria-expanded={filterPaneOpen} aria-label={filterButtonLabel} title={filterButtonLabel} onclick={() => { filterPaneOpen = !filterPaneOpen; }}>
     <ListFilter size={14} aria-hidden="true" />
-    Filters{selections.length ? ` (${selections.length})` : ''}
+    <span class="release-filters-label">Filters{selections.length ? ` (${selections.length})` : ''}</span>
   </button>
 {/snippet}
 

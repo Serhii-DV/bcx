@@ -57,7 +57,7 @@ const SelectedIcon = $derived(
     <SelectedIcon size={14} aria-hidden="true" />
     {#if !iconOnly}
       <span class="bcx-section-sort-label">{selectedOption?.label ?? 'Sort'}</span>
-      <ChevronDown size={14} aria-hidden="true" />
+      <ChevronDown size={14} class="bcx-section-sort-chevron" aria-hidden="true" />
     {/if}
   </DropdownMenu.Trigger>
   <DropdownMenu.Portal to={trigger?.closest('.bcx-side-panel-shell') ?? undefined}>
