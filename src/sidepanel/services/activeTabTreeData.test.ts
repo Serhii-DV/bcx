@@ -26,11 +26,11 @@ describe('active tab fan sections during navigation', () => {
     const createSections = rs.spyOn(MainSidePanelSections, 'create');
     const sharedLabels = [
       'History',
+      'Release Calendar',
       'Wishlist',
       'Collection',
       'Following Bands',
       'Following Genres',
-      'Release Calendar',
     ];
     const { sections: initial, header: initialHeader } =
       await createActiveTabSidePanelData(null);

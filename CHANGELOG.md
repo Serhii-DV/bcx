@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- The Side Panel’s Release Calendar shows upcoming releases and the last 30 days of releases from the saved music library, with exact dates and release previews.
+- The Side Panel’s Release Calendar sits directly below History and shows upcoming releases and the last 30 days of releases from the saved music library, with exact dates and release previews.
 
 - The Release Copy menu can copy a Telegram-ready artist hashtag and the label or Bandcamp band page name.
 

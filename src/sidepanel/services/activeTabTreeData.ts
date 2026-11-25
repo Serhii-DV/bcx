@@ -111,13 +111,13 @@ export async function createActiveTabSidePanelData(
       },
     };
 
+  const sections = await MainSidePanelSections.create(currentPageUrl, page, {
+    pageData: fanPageContext,
+  });
   return {
-    sections: [
-      ...(await MainSidePanelSections.create(currentPageUrl, page, {
-        pageData: fanPageContext,
-      })),
-      releaseCalendarSection,
-    ],
+    sections: sections.flatMap((section) =>
+      section.id === 'history' ? [section, releaseCalendarSection] : [section],
+    ),
     header: createSidePanelHeader(currentPageUrl, page, pageData?.trackSchema),
   };
 }
