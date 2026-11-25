@@ -30,6 +30,7 @@ describe('active tab fan sections during navigation', () => {
       'Collection',
       'Following Bands',
       'Following Genres',
+      'Release Calendar',
     ];
     const { sections: initial, header: initialHeader } =
       await createActiveTabSidePanelData(null);

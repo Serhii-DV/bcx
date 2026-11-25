@@ -9,9 +9,11 @@ import {
   type FanSyncJob,
   syncJobStorage,
 } from 'src/bandcamp/domain/fanData/sync';
+import { localCalendarDay } from 'src/bandcamp/domain/releaseDate';
 import { MUSIC_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
+import { RELEASE_CALENDAR_ID } from 'src/features/treeview/sections/ReleaseCalendarSection';
 import { TreeData } from 'src/features/treeview/TreeData';
 import {
   hasItemPreview,
@@ -239,6 +241,7 @@ function usesToolbarNavigation(section: SidePanelSection): boolean {
       'History',
       'Wishlist',
       'Collection',
+      'Release Calendar',
       'Following Bands',
       'Following Genres',
     ].includes(section.label)
@@ -298,6 +301,8 @@ const sectionTitles: Record<string, string> = {
   Collection: 'Browse releases in your Bandcamp collection.',
   Wishlist: 'Browse releases saved to your Bandcamp wishlist.',
   History: 'Revisit Bandcamp artists, labels, and releases you have viewed.',
+  'Release Calendar':
+    'Browse upcoming and recently released music saved by BCX.',
   'Following Bands': 'Browse artists and labels you follow on Bandcamp.',
   'Following Genres': 'Browse genres you follow on Bandcamp.',
 };
@@ -511,6 +516,11 @@ async function loadSectionTreeData(section: SidePanelSection, force = false) {
       loadGeneration === sectionLoadGeneration &&
       sectionRequests.get(section.id) === request
     ) {
+      if (section.id === RELEASE_CALENDAR_ID) {
+        const next = { ...sectionTreeDataById };
+        delete next[section.id];
+        sectionTreeDataById = next;
+      }
       sectionErrorById = {
         ...sectionErrorById,
         [section.id]:
@@ -565,8 +575,9 @@ onMount(() => {
       const account = section.fanSync?.account ?? section.fanAccount;
       if (
         (musicChanged &&
-          section.fanSync &&
-          section.fanSync.dataset !== 'following-genres') ||
+          (section.id === RELEASE_CALENDAR_ID ||
+            (section.fanSync &&
+              section.fanSync.dataset !== 'following-genres'))) ||
         (fanChanged &&
           (!account || account.fanId === fanChanged.fanId) &&
           (section.fanSync
@@ -597,6 +608,43 @@ onMount(() => {
     jobReadGeneration++;
     clearTimeout(timer);
     chrome.storage.onChanged.removeListener(changed);
+  };
+});
+
+$effect(() => {
+  const section = sections.find(({ id }) => id === RELEASE_CALENDAR_ID);
+  if (!section) return;
+
+  let day = localCalendarDay();
+  let timer: ReturnType<typeof setTimeout>;
+  const checkDate = () => {
+    clearTimeout(timer);
+    const now = new Date();
+    const today = localCalendarDay(now);
+    if (today !== day) {
+      day = today;
+      untrack(() => {
+        if (
+          selectedSectionId === RELEASE_CALENDAR_ID ||
+          sectionLoadingById[RELEASE_CALENDAR_ID] ||
+          sectionTreeDataById[RELEASE_CALENDAR_ID]
+        ) {
+          void loadSectionTreeData(section, true);
+        }
+      });
+    }
+    const nextDay = new Date(now);
+    nextDay.setHours(24, 0, 0, 0);
+    timer = setTimeout(checkDate, nextDay.getTime() - now.getTime());
+  };
+
+  checkDate();
+  window.addEventListener('focus', checkDate);
+  document.addEventListener('visibilitychange', checkDate);
+  return () => {
+    clearTimeout(timer);
+    window.removeEventListener('focus', checkDate);
+    document.removeEventListener('visibilitychange', checkDate);
   };
 });
 
@@ -804,7 +852,7 @@ $effect(() => {
                     {/if}
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
-                      {#if section.fanSync || section.fanAccount}
+                      {#if section.fanSync || section.fanAccount || section.id === RELEASE_CALENDAR_ID}
                         <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} splitCatalogGroups={section.fanSync?.dataset === 'wishlist' || section.fanSync?.dataset === 'collection'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}

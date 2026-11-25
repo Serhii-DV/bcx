@@ -2,6 +2,7 @@ import { v5 as uuid5 } from 'uuid';
 import type { RawAlbumData } from '../album/data';
 import { Artist } from '../artist/artist';
 import type { RawBandData } from '../band/data';
+import { publishedDay } from '../releaseDate';
 import type { RawTrackData } from '../track/data';
 import {
   completed,
@@ -53,6 +54,30 @@ function canonicalUrl(url: string, store: MusicStore): string {
   parsed.search = '';
   if (store === 'bands') parsed.pathname = '/';
   return parsed.href;
+}
+
+function readDatedReleases<T extends RawAlbumData | RawTrackData>(
+  store: IDBObjectStore,
+  since: string,
+  include: (release: T) => boolean,
+): Promise<T[]> {
+  return new Promise((resolve, reject) => {
+    const matches: T[] = [];
+    const request = store.openCursor();
+    request.onerror = () =>
+      reject(request.error ?? new Error('Could not read saved release dates.'));
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor) {
+        resolve(matches);
+        return;
+      }
+      const { data } = cursor.value as SavedEntity<T>;
+      const day = publishedDay(data.metadata?.published);
+      if (day && day >= since && include(data)) matches.push(data);
+      cursor.continue();
+    };
+  });
 }
 
 // Missing fields in catalog summaries must not erase detailed page metadata.
@@ -241,6 +266,19 @@ export async function handleMusicLibraryRequest(
           .filter((record) => record !== undefined)
           .map((record) => record.data),
       });
+    } else if (value.action === 'find-dated-releases') {
+      [result.albums, result.tracks] = await Promise.all([
+        readDatedReleases<RawAlbumData>(
+          transaction.objectStore('albums'),
+          value.since,
+          () => true,
+        ),
+        readDatedReleases<RawTrackData>(
+          transaction.objectStore('tracks'),
+          value.since,
+          (track) => track.albumId === undefined && !!track.url,
+        ),
+      ]);
     } else if (value.action === 'lookup') {
       const references = await Promise.all(
         [...new Set(value.uuids)].map((uuid) =>

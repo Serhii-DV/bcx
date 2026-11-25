@@ -70,13 +70,21 @@ const splitSections: Readonly<
 
 const tabDescriptions: Record<
   string,
-  { label?: string; title: string; image?: string }
+  { label?: string; title: string; image?: string; emptyMessage?: string }
 > = {
   'Release Info': { title: 'View release information, artwork, and notes.' },
   Credits: { title: 'View release credits and contributors.' },
   All: { title: 'Browse all items in this section.', image: ICON_MENU },
   Artists: { title: 'Browse releases grouped by artist.' },
   Releases: { title: 'Browse releases in this section.' },
+  Upcoming: {
+    title: 'Browse saved releases with a future release date.',
+    emptyMessage: 'No upcoming releases in your saved library.',
+  },
+  'Recently Released': {
+    title: 'Browse saved releases dated within the last 30 calendar days.',
+    emptyMessage: 'No saved releases in the last 30 calendar days.',
+  },
   'Releases: Reverse': { title: 'Browse releases in reverse catalog order.' },
   'Releases: Title A–Z': { title: 'Browse releases by title, A to Z.' },
   'Releases: Title Z–A': { title: 'Browse releases by title, Z to A.' },
@@ -665,6 +673,7 @@ onDestroy(() => onNavigationChange?.(undefined));
                   showBreadcrumb={false}
                   initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
                   onRootLoaded={refreshTabs}
+                  emptyMessage={root?.label ? tabDescriptions[root.label]?.emptyMessage : undefined}
                   nativeTabNavigation={true}
                   {onActivateNode}
                   {activeNodePath}
