@@ -20,6 +20,8 @@ import {
   isBandReleaseFilterRoot,
 } from './bandReleaseFilters';
 
+const DEFAULT_FILTER_MODE: BandReleaseFilterMode = 'single';
+
 let {
   treeData,
   about,
@@ -75,7 +77,7 @@ const hasReleases = $derived(
 let selections = $state.raw<BandReleaseFilterSelection[]>([]);
 let filterPaneOpen = $state(false);
 let filterCategory = $state<BandReleaseFilterCategory>('Artists');
-let filterMode = $state<BandReleaseFilterMode>('multiple');
+let filterMode = $state<BandReleaseFilterMode>(DEFAULT_FILTER_MODE);
 let filterValueQuery = $state('');
 let applyingFilters = $state(false);
 let filterApplyFailed = $state(false);
@@ -101,7 +103,7 @@ $effect(() => {
   appliedFilter = undefined;
   filterPaneOpen = false;
   filterCategory = 'Artists';
-  filterMode = 'multiple';
+  filterMode = DEFAULT_FILTER_MODE;
   filterValueQuery = '';
 });
 

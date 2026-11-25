@@ -113,8 +113,8 @@ The Band panel and Band preview use the existing Artists, Release years, Tags,
 and By Prices groups as filters in a split Releases view. The left pane shows
 the selected filter category. The right pane keeps the release list, search,
 and sort. Multi-select matches any selected value within a category and requires
-a match in every active category. Single select limits the selection to one
-value across all categories.
+a match in every active category. Single select is the default and limits the
+selection to one value across all categories.
 Wishlist and Collection use the Artists split layout for By Release Year, By
 Prices, and By Year Added, including an Unknown year group for releases without
 a saved date. Groups remain visible beside the selected group's releases, and
