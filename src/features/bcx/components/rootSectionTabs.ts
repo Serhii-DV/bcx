@@ -1,6 +1,7 @@
 import { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { isNode } from 'src/features/treeview/utils';
+import { ICON_INFO } from 'src/features/treeview/utils/icon';
 
 export type FollowingBandYearSort =
   | 'newest'
@@ -198,30 +199,29 @@ export function sortFollowingBandGroups(
 
 export function createRootSectionTabs(items: TreeItem[], countBadges = false) {
   const hasBandAbout = items.some((item) => item.aboutProfile);
-  const tabOrder = (item: TreeItem) =>
-    item.aboutProfile
-      ? -1
-      : ((item.releasePreview || hasBandAbout) && item.label === 'Releases') ||
-          item.label === 'Latest added' ||
-          item.label === 'All'
-        ? 0
-        : item.releasePreview && item.label === 'Artists'
-          ? 1
-          : 2;
+  const tabOrder = (item: TreeItem) => {
+    if (hasBandAbout && item.label === 'Releases') return -2;
+    if (item.aboutProfile) return -1;
+    if (
+      (item.releasePreview && item.label === 'Releases') ||
+      item.label === 'Latest added' ||
+      item.label === 'All'
+    )
+      return 0;
+    return item.releasePreview && item.label === 'Artists' ? 1 : 2;
+  };
   const orderedItems = [...items].sort((a, b) => tabOrder(a) - tabOrder(b));
 
   return orderedItems.flatMap((item) => {
     if (!item.path || !isNode(item)) return [];
     const count = item.childrenCount ?? item.children?.length ?? 0;
     const showCount = count > 0 && item.showChildrenCount !== false;
-    const label = item.aboutProfile
-      ? `About ${item.aboutProfile.name ?? 'Band'}`
-      : (item.label ?? '');
+    const label = item.aboutProfile ? 'About' : (item.label ?? '');
     return [
       {
         id: item.path,
         label: showCount && !countBadges ? `${label} (${count})` : label,
-        image: item.image,
+        image: item.aboutProfile ? ICON_INFO : item.image,
         ...(showCount && countBadges ? { count } : {}),
       },
     ];

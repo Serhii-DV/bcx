@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Info, X } from '@lucide/svelte';
+import { X } from '@lucide/svelte';
 import {
   FAN_LIBRARY_REVISION_KEY,
   isFanLibraryChange,
@@ -29,7 +29,6 @@ import {
   ICON_LAYOUT_DASHBOARD,
   ICON_MIC,
   ICON_REFRESH_CCW,
-  makeIcon,
 } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
 import { onMount, tick, untrack } from 'svelte';
@@ -52,6 +51,7 @@ import BcxExtensionInfo from './BcxExtensionInfo.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxMainNavigation from './BcxMainNavigation.svelte';
+import BcxPanelHeading from './BcxPanelHeading.svelte';
 import BcxPinnedPage from './BcxPinnedPage.svelte';
 import BcxReleasePreview from './BcxReleasePreview.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
@@ -399,11 +399,9 @@ const selectedSectionHasNavigationHeader = $derived(
       !!sectionTreeDataById[section.id],
   ),
 );
-const selectedBandHasActions = $derived(
+const selectedBandHasHeading = $derived(
   selectedNavigationSection?.id.startsWith('band-') &&
-    sectionTreeDataById[selectedSectionId]?.items.some(
-      (item) => item.aboutProfile?.url,
-    ),
+    !!sectionTreeDataById[selectedSectionId],
 );
 const navigationSyncStatus = $derived(
   hasFanSync
@@ -743,22 +741,7 @@ $effect(() => {
 {/snippet}
 
 {#snippet sectionHeading(section: { label: string; image?: string; title?: string }, inline = false)}
-  {@const HeadingIcon = makeIcon(section.image?.includes('/') ? undefined : section.image)}
-  <div class="bcx-main-heading" class:inline={inline} class:with-close={!browserPanel && !navigationExpanded}>
-    {#if !browserPanel && !navigationExpanded}{@render closeAction()}{/if}
-    <div class="bcx-main-heading-identity">
-      <span class="bcx-main-heading-icon" aria-hidden="true">
-        {#if HeadingIcon}
-          <HeadingIcon size={22} />
-        {:else if section.image}
-          <img src={section.image} alt="" />
-        {:else}
-          <Info size={22} />
-        {/if}
-      </span>
-      <h3 class="bcx-main-section-title" title={`${section.label}\n${section.title ?? ''}`}>{section.label}</h3>
-    </div>
-  </div>
+  <BcxPanelHeading {...section} {inline} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
 {/snippet}
 
 <div
@@ -786,7 +769,7 @@ $effect(() => {
                 {selectedPinId}
               />
               <div class="bcx-panel-body">
-              {#if !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('__preview__') && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasActions && (selectedNavigationSection || (!browserPanel && !navigationExpanded))}
+              {#if !selectedSectionHasNavigationHeader && !selectedNavigationSection?.id.startsWith('__preview__') && !selectedNavigationSection?.id.startsWith('album-') && !selectedNavigationSection?.id.startsWith('track-') && !selectedBandHasHeading && (selectedNavigationSection || (!browserPanel && !navigationExpanded))}
                 {#if selectedNavigationSection}
                   {@render sectionHeading(selectedNavigationSection)}
                 {:else}
@@ -975,74 +958,11 @@ $effect(() => {
     flex-direction: row;
   }
 
-  .bcx-main-heading {
-    box-sizing: border-box;
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-    min-height: 40px;
-    margin: 0 var(--bcx-preview-gutter, 16px) 8px;
-    padding: 4px 0;
-  }
-
-  .bcx-main-heading.with-close {
-    margin-left: 0;
-    padding-left: 5px;
-  }
-
-  .bcx-main-heading.inline {
-    flex: 1 1 0%;
-    margin: 0;
-    padding: 0;
-    min-height: 32px;
-  }
-
-  .bcx-main-heading-identity {
-    display: flex;
-    flex: 1 1 0%;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
-
-  .bcx-main-heading-icon {
-    box-sizing: border-box;
-    display: grid;
-    flex: 0 0 24px;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    color: #fff;
-  }
-
-  .bcx-main-heading-icon img {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    object-fit: cover;
-  }
-
   .bcx-side-panel-shell :global(.bcx-side-panel-close-button) {
     flex: 0 0 36px;
     justify-content: center;
     width: 36px;
     padding-inline: 0;
-  }
-
-  .bcx-main-section-title {
-    min-width: 0;
-    flex: 1 1 0%;
-    margin: 0;
-    overflow: hidden;
-    color: #f9fafb;
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.25;
-    letter-spacing: -0.015em;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   :global(.bcx-side-panel-shell .bcx-tab-content.bcx-info-scroll:not([hidden])) {

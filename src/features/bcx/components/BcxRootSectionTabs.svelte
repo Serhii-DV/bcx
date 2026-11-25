@@ -8,7 +8,7 @@ import {
   ICON_INFO,
   ICON_MENU,
 } from 'src/features/treeview/utils/icon';
-import { onDestroy, type Snippet, tick, untrack } from 'svelte';
+import { type Snippet, tick } from 'svelte';
 import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxCatalogSplitLayout from './BcxCatalogSplitLayout.svelte';
@@ -29,7 +29,6 @@ import {
 } from './rootSectionTabs';
 import {
   isSectionItemSelected,
-  type SectionNavigation,
   type SectionNavigationItem,
 } from './sectionNavigation';
 
@@ -149,16 +148,13 @@ let {
   responsiveSidebar = false,
   compactWhenOverflowing = false,
   countBadges = false,
-  sortInToolbar = false,
   navigationInFilter = false,
   navigationInToolbar = false,
-  showFilterNavigation = true,
   releaseFilterActions = false,
   releaseFilterControls,
   releaseFilterPane,
   releaseItemFilter,
   splitCatalogGroups = false,
-  onNavigationChange,
 }: {
   treeData: TreeData;
   releaseFilterActions?: boolean;
@@ -179,19 +175,11 @@ let {
   responsiveSidebar?: boolean;
   compactWhenOverflowing?: boolean;
   countBadges?: boolean;
-  sortInToolbar?: boolean;
   navigationInFilter?: boolean;
   navigationInToolbar?: boolean;
-  showFilterNavigation?: boolean;
-  onNavigationChange?: (navigation: SectionNavigation | undefined) => void;
 } = $props();
 const contentId = $props.id();
-const toolbarSorting = $derived(
-  sortInToolbar ||
-    navigationInFilter ||
-    navigationInToolbar ||
-    !!onNavigationChange,
-);
+const toolbarSorting = $derived(navigationInFilter || navigationInToolbar);
 let container = $state<HTMLDivElement | null>(null);
 let containerWidth = $state(0);
 const orientation = $derived(
@@ -201,7 +189,6 @@ const orientation = $derived(
 $effect(() => {
   const element = container;
   if (
-    onNavigationChange ||
     (navigationInFilter && !navigationInToolbar) ||
     !responsiveSidebar ||
     !element
@@ -622,18 +609,6 @@ $effect(() => {
     lastRootSort = selectedRoot;
   }
 });
-
-$effect(() => {
-  if (!onNavigationChange) return;
-  const navigation: SectionNavigation = {
-    items: navigationItems,
-    value: selectedRoot,
-    select: selectSidebarRoot,
-  };
-  untrack(() => onNavigationChange?.(navigation));
-});
-
-onDestroy(() => onNavigationChange?.(undefined));
 </script>
 
 {#snippet rootContent(tabId: string)}
@@ -644,7 +619,7 @@ onDestroy(() => onNavigationChange?.(undefined));
           {@const splitSection = root?.label && ((splitCatalogGroups && root.releasePreview) || (sortBands && root.itemPreview)) ? splitSections[root.label] : undefined}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
           {#snippet filterControls()}
-            {#if navigationInFilter && showFilterNavigation && !navigationInToolbar}
+            {#if navigationInFilter && !navigationInToolbar}
               <BcxSectionFilter items={navigationItems} {label} value={selectedRoot} onValueChange={selectFilterRoot} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
             {#if hasReleaseControls}
@@ -655,7 +630,7 @@ onDestroy(() => onNavigationChange?.(undefined));
             {/if}
           {/snippet}
           <div class="bcx-section-tree-browser">
-            {#if navigationInFilter && (root?.aboutProfile || sectionContent) && ((showFilterNavigation && !navigationInToolbar) || navigationItem?.sortOptions?.length)}
+            {#if navigationInFilter && (root?.aboutProfile || sectionContent) && (!navigationInToolbar || navigationItem?.sortOptions?.length)}
               <div class="bcx-section-view-toolbar">{@render filterControls()}</div>
             {/if}
             {#if root && sectionContent}
@@ -717,8 +692,8 @@ onDestroy(() => onNavigationChange?.(undefined));
         {/if}
 {/snippet}
 
-{#if tabs.length && (onNavigationChange || navigationInFilter || navigationInToolbar)}
-  <div bind:this={container} class="bcx-panel-body bcx-root-sections" class:has-heading={!!heading} class:stacked-heading={!!heading && orientation === 'horizontal' && containerWidth <= 480} data-navigation={navigationInToolbar ? 'toolbar' : navigationInFilter ? 'filter' : 'sidebar'} data-orientation={navigationInToolbar ? orientation : undefined}>
+{#if tabs.length && (navigationInFilter || navigationInToolbar)}
+  <div bind:this={container} class="bcx-panel-body bcx-root-sections" class:has-heading={!!heading} class:stacked-heading={!!heading && responsiveSidebar && orientation === 'horizontal' && containerWidth <= 480} data-navigation={navigationInToolbar ? 'toolbar' : navigationInFilter ? 'filter' : 'sidebar'} data-orientation={navigationInToolbar ? orientation : undefined}>
     {#if heading}
       <div class="bcx-root-section-heading">{@render heading()}</div>
     {/if}

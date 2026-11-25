@@ -186,12 +186,9 @@ is saved. Band About shows a compact profile, full biography, saved release
 counts, catalog artist counts and years, currency, and the Bandcamp page creation
 date when available, using `relative-time-element` with the exact date on hover.
 External links render directly before Biography without a tree browser.
-A named band action dropdown includes Copy band name, Copy URL, and Search band in its own
-action bar above the catalog sections, matching the Release preview layout. Band
-catalog sections also use the shared responsive sidebar: About, Releases, Artists,
-Release years, and Tags move to the left at widths of 640px or more and remain
-horizontal in narrower panels. Release
-previews separate Release, Artist, and Label action dropdowns
+Band catalog navigation sits to the right of the band name and artwork, with
+Releases first, About second, and the band actions alongside the subpanels.
+Release previews separate Release, Artist, and Label action dropdowns
 from navigation: a left-aligned action toolbar precedes `BcxRootSectionTabs`.
 The default Release Info panel contains
 the shared `item-details-header` with artwork, original artist/title/year
