@@ -581,7 +581,7 @@ $effect(() => {
               <BcxSectionSort item={navigationItem} iconOnly={!!splitSection || (splitCatalogGroups && !!root?.releasePreview && root.label === 'Artists')} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
           {/snippet}
-          <div class="bcx-section-tree-browser" class:band-release-results={releaseFilterActions && isReleaseRoot}>
+          <div class="bcx-section-tree-browser" class:release-catalog-results={releaseFilterActions && isReleaseRoot}>
             {#if navigationInFilter && (root?.aboutProfile || sectionContent) && (!navigationInToolbar || navigationItem?.sortOptions?.length)}
               <div class="bcx-section-view-toolbar">{@render filterControls()}</div>
             {/if}
@@ -716,24 +716,24 @@ $effect(() => {
 :global(.bcx-root-sections[data-navigation='sidebar'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
 :global(.bcx-root-sections[data-navigation='filter'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
 .bcx-section-view-toolbar { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 8px; min-width: 0; margin-bottom: 8px; }
-.band-release-results :global(.bcx-browser-toolbar) { container: band-release-toolbar / inline-size; }
-@container band-release-toolbar (max-width: 27rem) {
-  .band-release-results :global(.bcx-browser-filter) { flex-basis: 5rem; }
-  .band-release-results :global(.bcx-section-tab.release-filters-trigger),
-  .band-release-results :global(.bcx-section-tab.bcx-section-sort) {
+.release-catalog-results :global(.bcx-browser-toolbar) { container: release-catalog-toolbar / inline-size; }
+@container release-catalog-toolbar (max-width: 27rem) {
+  .release-catalog-results :global(.bcx-browser-filter) { flex-basis: 5rem; }
+  .release-catalog-results :global(.bcx-section-tab.release-filters-trigger),
+  .release-catalog-results :global(.bcx-section-tab.bcx-section-sort) {
     align-self: flex-start;
     flex: none;
     justify-content: center;
     width: 2rem;
     padding-inline: 0;
   }
-  .band-release-results :global(.release-filters-label),
-  .band-release-results :global(.bcx-section-sort-label),
-  .band-release-results :global(.bcx-section-sort-chevron) { display: none; }
+  .release-catalog-results :global(.release-filters-label),
+  .release-catalog-results :global(.bcx-section-sort-label),
+  .release-catalog-results :global(.bcx-section-sort-chevron) { display: none; }
 }
-@container band-release-toolbar (max-width: 13rem) {
-  .band-release-results :global(.bcx-tree-filter-field:has(.bcx-tree-filter-count):has(.bcx-tree-filter-clear)) { flex-wrap: wrap; }
-  .band-release-results :global(.bcx-tree-filter-field:has(.bcx-tree-filter-count):has(.bcx-tree-filter-clear) .bcx-tree-filter-input) { flex-basis: 100%; }
+@container release-catalog-toolbar (max-width: 13rem) {
+  .release-catalog-results :global(.bcx-tree-filter-field:has(.bcx-tree-filter-count):has(.bcx-tree-filter-clear)) { flex-wrap: wrap; }
+  .release-catalog-results :global(.bcx-tree-filter-field:has(.bcx-tree-filter-count):has(.bcx-tree-filter-clear) .bcx-tree-filter-input) { flex-basis: 100%; }
 }
 .about-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
 </style>

@@ -2,6 +2,7 @@ import type { TreeItem } from 'src/features/treeview/TreeItem';
 import {
   ICON_BANKNOTE,
   ICON_CALENDAR,
+  ICON_CALENDAR_DAYS,
   ICON_MIC,
   ICON_TAGS,
 } from 'src/features/treeview/utils/icon';
@@ -37,7 +38,7 @@ function createFilterSort<Sort extends string>(
   };
 }
 
-export const bandReleaseFilterCategories = [
+const releaseFilterCategories = [
   {
     rootLabel: 'Artists',
     label: 'Artists',
@@ -54,6 +55,16 @@ export const bandReleaseFilterCategories = [
     icon: ICON_CALENDAR,
     sort: createFilterSort(
       'Sort release years',
+      catalogYearSortOptions,
+      createCatalogYearComparator,
+    ),
+  },
+  {
+    rootLabel: 'Added years',
+    label: 'By Year Added',
+    icon: ICON_CALENDAR_DAYS,
+    sort: createFilterSort(
+      'Sort years added',
       catalogYearSortOptions,
       createCatalogYearComparator,
     ),
@@ -78,24 +89,25 @@ export const bandReleaseFilterCategories = [
   },
 ] as const;
 
-export type BandReleaseFilterCategory =
-  (typeof bandReleaseFilterCategories)[number]['rootLabel'];
+export type ReleaseFilterCategory =
+  (typeof releaseFilterCategories)[number]['rootLabel'];
 
-export type BandReleaseFilterSorts = Partial<
-  Record<BandReleaseFilterCategory, string>
->;
+export type ReleaseFilterDefinition = (typeof releaseFilterCategories)[number];
 
-export type BandReleaseFilterMode = 'single' | 'multiple';
+export const bandReleaseFilterCategories = releaseFilterCategories.filter(
+  ({ rootLabel }) => rootLabel !== 'Added years',
+);
+export const wishlistReleaseFilterCategories = releaseFilterCategories.filter(
+  ({ rootLabel }) => rootLabel !== 'Tags',
+);
 
-export interface BandReleaseFilterSelection {
-  category: BandReleaseFilterCategory;
+export type ReleaseFilterSorts = Partial<Record<ReleaseFilterCategory, string>>;
+
+export type ReleaseFilterMode = 'single' | 'multiple';
+
+export interface ReleaseFilterSelection {
+  category: ReleaseFilterCategory;
   value: string;
-}
-
-export function isBandReleaseFilterRoot(item: TreeItem): boolean {
-  return bandReleaseFilterCategories.some(
-    ({ rootLabel }) => rootLabel === item.label,
-  );
 }
 
 const childrenByItem = new WeakMap<TreeItem, Promise<TreeItem[]>>();
@@ -130,22 +142,22 @@ function releaseKey(item: TreeItem): string | undefined {
   );
 }
 
-export async function readBandReleaseFilterGroups(
+export async function readReleaseFilterGroups(
   roots: readonly TreeItem[],
-  category: BandReleaseFilterCategory,
+  category: ReleaseFilterCategory,
 ): Promise<TreeItem[]> {
   const root = roots.find((item) => item.label === category);
   return root ? readChildren(root) : [];
 }
 
-export async function createBandReleasePredicate(
+export async function createReleasePredicate(
   roots: readonly TreeItem[],
-  selections: readonly BandReleaseFilterSelection[],
+  selections: readonly ReleaseFilterSelection[],
 ): Promise<(item: TreeItem) => boolean> {
-  const keysByCategory = new Map<BandReleaseFilterCategory, Set<string>>();
+  const keysByCategory = new Map<ReleaseFilterCategory, Set<string>>();
   await Promise.all(
     selections.map(async ({ category, value }) => {
-      const groups = await readBandReleaseFilterGroups(roots, category);
+      const groups = await readReleaseFilterGroups(roots, category);
       const group = groups.find((item) => item.label === value);
       const releases = group ? await readChildren(group) : [];
       const keys = keysByCategory.get(category) ?? new Set<string>();

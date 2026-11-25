@@ -6,16 +6,17 @@ import BcxSectionSort from './BcxSectionSort.svelte';
 import BcxTreeFilterInput from './BcxTreeFilterInput.svelte';
 import BcxTreeItem from './BcxTreeItem.svelte';
 import {
-  type BandReleaseFilterCategory,
-  type BandReleaseFilterMode,
-  type BandReleaseFilterSelection,
-  type BandReleaseFilterSorts,
-  bandReleaseFilterCategories,
-  readBandReleaseFilterGroups,
-} from './bandReleaseFilters';
+  type ReleaseFilterCategory,
+  type ReleaseFilterDefinition,
+  type ReleaseFilterMode,
+  type ReleaseFilterSelection,
+  type ReleaseFilterSorts,
+  readReleaseFilterGroups,
+} from './releaseFilters';
 
 let {
   roots,
+  categories,
   category = $bindable(),
   query = $bindable(),
   sorts = $bindable(),
@@ -29,15 +30,16 @@ let {
   onRetry,
 }: {
   roots: TreeItem[];
-  category: BandReleaseFilterCategory;
+  categories: readonly ReleaseFilterDefinition[];
+  category: ReleaseFilterCategory;
   query: string;
-  sorts: BandReleaseFilterSorts;
-  mode: BandReleaseFilterMode;
-  onModeChange: (mode: BandReleaseFilterMode) => void;
-  selections: BandReleaseFilterSelection[];
+  sorts: ReleaseFilterSorts;
+  mode: ReleaseFilterMode;
+  onModeChange: (mode: ReleaseFilterMode) => void;
+  selections: ReleaseFilterSelection[];
   applying: boolean;
   applyFailed: boolean;
-  onToggle: (category: BandReleaseFilterCategory, value: string) => void;
+  onToggle: (category: ReleaseFilterCategory, value: string) => void;
   onClear: () => void;
   onRetry: () => void;
 } = $props();
@@ -49,16 +51,16 @@ const filterId = $props.id();
 let groupRetry = $state(0);
 const groups = $derived.by(() => {
   groupRetry;
-  return readBandReleaseFilterGroups(roots, category);
+  return readReleaseFilterGroups(roots, category);
 });
 const selectedValues = $derived(
   selections
     .filter((selection) => selection.category === category)
     .map(({ value }) => value),
 );
-let optionCounts = $state.raw<
-  Partial<Record<BandReleaseFilterCategory, number>>
->({});
+let optionCounts = $state.raw<Partial<Record<ReleaseFilterCategory, number>>>(
+  {},
+);
 
 $effect(() => {
   groupRetry;
@@ -66,8 +68,8 @@ $effect(() => {
   let current = true;
   optionCounts = {};
   void Promise.allSettled(
-    bandReleaseFilterCategories.map(async ({ rootLabel }) => {
-      const items = await readBandReleaseFilterGroups(catalogRoots, rootLabel);
+    categories.map(async ({ rootLabel }) => {
+      const items = await readReleaseFilterGroups(catalogRoots, rootLabel);
       return [rootLabel, getOptions(items).size] as const;
     }),
   ).then((results) => {
@@ -96,16 +98,14 @@ function getOptions(items: TreeItem[], selected: string[] = []) {
 }
 
 function selectCategory(value: string) {
-  const next = bandReleaseFilterCategories.find(
-    ({ rootLabel }) => rootLabel === value,
-  );
+  const next = categories.find(({ rootLabel }) => rootLabel === value);
   if (!next || category === next.rootLabel) return;
   category = next.rootLabel;
   query = '';
 }
 </script>
 
-{#snippet categoryContent(option: (typeof bandReleaseFilterCategories)[number])}
+{#snippet categoryContent(option: ReleaseFilterDefinition)}
   {#await groups}
     <p role="status">Loading filter values…</p>
   {:then items}
@@ -148,7 +148,7 @@ function selectCategory(value: string) {
 
 <Tabs.Root value={category} onValueChange={selectCategory} class="release-filter-tabs">
   <Tabs.List aria-label="Filter category" class="release-filter-tab-list">
-    {#each bandReleaseFilterCategories as option (option.rootLabel)}
+    {#each categories as option (option.rootLabel)}
       {@const Icon = makeIcon(option.icon)}
       {@const count = selections.filter((selection) => selection.category === option.rootLabel).length}
       {@const total = optionCounts[option.rootLabel]}
@@ -169,7 +169,7 @@ function selectCategory(value: string) {
       </label>
     {/each}
   </fieldset>
-  {#each bandReleaseFilterCategories as option (option.rootLabel)}
+  {#each categories as option (option.rootLabel)}
     <Tabs.Content value={option.rootLabel} class="release-filter-tab-content">
       {#if category === option.rootLabel}{@render categoryContent(option)}{/if}
     </Tabs.Content>
@@ -179,7 +179,7 @@ function selectCategory(value: string) {
 <style>
 .release-filter-action { min-width: 0; padding: 0.375rem 0.25rem; border: 1px solid #4b5563; border-radius: 0.25rem; background: #111827; font-size: 0.8125rem; }
 :global(.release-filter-tabs), :global(.release-filter-tab-content:not([hidden])) { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; min-width: 0; }
-:global(.release-filter-tab-list) { display: grid; flex: none; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 0.25rem; }
+:global(.release-filter-tab-list) { display: grid; flex: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin-bottom: 0.25rem; }
 :global(.release-filter-tab) { position: relative; display: grid; place-items: center; min-height: 1.75rem; border-bottom: 2px solid transparent; cursor: pointer; color: #d1d5db; }
 :global(.release-filter-tab:hover), :global(.release-filter-tab[data-state='active']) { background: #374151; color: #f9fafb; }
 :global(.release-filter-tab[data-state='active']) { border-bottom-color: #38bdf8; }

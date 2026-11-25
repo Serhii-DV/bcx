@@ -14,7 +14,9 @@
 
 - Following Bands shows filterable, sortable years or countries on the left and the selected group’s bands on the right. Select a group with a click or Enter, then select a band to preview it.
 
-- Wishlist and Collection show filterable, sortable groups on the left and the selected group’s releases on the right in Artists, By Release Year, By Year Added, and By Prices. Select an artist, year, or exact price with a click or Enter. By Year Added includes an Unknown year group for releases without a saved date.
+- Wishlist’s Releases subpanel now includes Artists, By Release Year, By Year Added, and By Prices in its Filters pane. Search and sort filter values, select one in Single mode, or combine them in Multiple mode. By Year Added includes an Unknown year option for releases without a saved date.
+
+- Collection shows filterable, sortable groups on the left and the selected group’s releases on the right in Artists, By Release Year, By Year Added, and By Prices. Select an artist, year, or exact price with a click or Enter. By Year Added includes an Unknown year group for releases without a saved date.
 
 - In the Band panel and Band preview, the Releases Filters pane stays open or closed when switching bands. Filters uses icon tabs for artists, release years, tags, and prices, with each tab’s available value count in its title. Each filter category has a sort icon beside its search input and keeps its own sort order. Single is the default for choosing one filter value. Switch to Multiple to combine values. The subpanel navigation sits to the right of the band name and image, with Releases first and About second with an info icon. Releases opens by default, with search and sort in the catalog. When the Releases toolbar is narrow, Filters and Sort switch to icon buttons beside the search field. Narrow panels also use compact action icons.
 

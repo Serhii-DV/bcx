@@ -53,12 +53,14 @@ import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxMainNavigation from './BcxMainNavigation.svelte';
 import BcxPanelHeading from './BcxPanelHeading.svelte';
 import BcxPinnedPage from './BcxPinnedPage.svelte';
+import BcxReleaseCatalog from './BcxReleaseCatalog.svelte';
 import BcxReleasePreview from './BcxReleasePreview.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxStoragePanel from './BcxStoragePanel.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
+import { wishlistReleaseFilterCategories } from './releaseFilters';
 
 interface Props {
   sections: SidePanelSection[];
@@ -819,8 +821,10 @@ $effect(() => {
                     {/if}
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
-                      {#if section.fanSync || section.fanAccount || section.id === RELEASE_CALENDAR_ID}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} splitCatalogGroups={section.fanSync?.dataset === 'wishlist' || section.fanSync?.dataset === 'collection'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
+                      {#if section.fanSync?.dataset === 'wishlist'}
+                        <BcxReleaseCatalog treeData={sectionTreeDataById[section.id]} categories={wishlistReleaseFilterCategories} label="Wishlist sections" initialSelectedHref={section.initialSelectedHref} heading={panelHeading} navigationInFilter navigationInToolbar compactWhenOverflowing countBadges responsiveSidebar />
+                      {:else if section.fanSync || section.fanAccount || section.id === RELEASE_CALENDAR_ID}
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} splitCatalogGroups={section.fanSync?.dataset === 'collection'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
