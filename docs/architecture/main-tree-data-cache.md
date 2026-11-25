@@ -109,11 +109,17 @@ sections also expose all catalog URLs, including releases beyond the first page,
 to preserve the mounted side panel during release navigation.
 The tab strip presents Release years as By Release Year and Added years as By
 Year Added. These display labels leave the cached root names and paths intact.
-The Band, Wishlist, and Collection panels use the Artists split layout for By
-Release Year and By Prices. Wishlist and Collection also use it for By Year
-Added, including an Unknown year group for releases without a saved date. Groups
-remain visible beside the selected group's releases. The price lists sort amounts
-within each currency. Selecting a release updates the bottom preview.
+The Band panel and Band preview use the existing Artists, Release years, Tags,
+and By Prices groups as filters in a split Releases view. The left pane shows
+the selected filter category. The right pane keeps the release list, search,
+and sort. Multi-select matches any selected value within a category and requires
+a match in every active category. Single select limits the selection to one
+value across all categories.
+Wishlist and Collection use the Artists split layout for By Release Year, By
+Prices, and By Year Added, including an Unknown year group for releases without
+a saved date. Groups remain visible beside the selected group's releases, and
+price lists sort amounts within each currency. Selecting a release updates the
+bottom preview.
 
 Following Bands stores every loaded band in its tree snapshot without pagination.
 Snapshot version 15 invalidates older snapshots that predate the Latest added,

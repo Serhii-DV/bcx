@@ -1,0 +1,89 @@
+import type { TreeItem } from 'src/features/treeview/TreeItem';
+
+export const bandReleaseFilterCategories = [
+  { rootLabel: 'Artists', label: 'Artists' },
+  { rootLabel: 'Release years', label: 'By Release Year' },
+  { rootLabel: 'Tags', label: 'Tags' },
+  { rootLabel: 'By Prices', label: 'By Prices' },
+] as const;
+
+export type BandReleaseFilterCategory =
+  (typeof bandReleaseFilterCategories)[number]['rootLabel'];
+
+export type BandReleaseFilterMode = 'single' | 'multiple';
+
+export interface BandReleaseFilterSelection {
+  category: BandReleaseFilterCategory;
+  value: string;
+}
+
+export function isBandReleaseFilterRoot(item: TreeItem): boolean {
+  return bandReleaseFilterCategories.some(
+    ({ rootLabel }) => rootLabel === item.label,
+  );
+}
+
+const childrenByItem = new WeakMap<TreeItem, Promise<TreeItem[]>>();
+
+function readChildren(item: TreeItem): Promise<TreeItem[]> {
+  const cached = childrenByItem.get(item);
+  if (cached) return cached;
+
+  const load = async (): Promise<TreeItem[]> => {
+    if (!item.loadChildren || item.childrenLoaded) return item.children ?? [];
+    const loaded = await item.loadChildren();
+    if (Array.isArray(loaded)) return loaded;
+    if (!loaded) throw new Error('Could not load release filter data');
+    // Deferring a root can wrap a catalog item that has its own loader.
+    return readChildren(loaded);
+  };
+  const pending = load().catch((error) => {
+    childrenByItem.delete(item);
+    throw error;
+  });
+  childrenByItem.set(item, pending);
+  return pending;
+}
+
+function releaseKey(item: TreeItem): string | undefined {
+  return (
+    item.href ??
+    (item.previewInformation?.releaseType === 'Track' &&
+    item.entityId !== undefined
+      ? `track:${item.entityId}`
+      : undefined)
+  );
+}
+
+export async function readBandReleaseFilterGroups(
+  roots: readonly TreeItem[],
+  category: BandReleaseFilterCategory,
+): Promise<TreeItem[]> {
+  const root = roots.find((item) => item.label === category);
+  return root ? readChildren(root) : [];
+}
+
+export async function createBandReleasePredicate(
+  roots: readonly TreeItem[],
+  selections: readonly BandReleaseFilterSelection[],
+): Promise<(item: TreeItem) => boolean> {
+  const keysByCategory = new Map<BandReleaseFilterCategory, Set<string>>();
+  await Promise.all(
+    selections.map(async ({ category, value }) => {
+      const groups = await readBandReleaseFilterGroups(roots, category);
+      const group = groups.find((item) => item.label === value);
+      const releases = group ? await readChildren(group) : [];
+      const keys = keysByCategory.get(category) ?? new Set<string>();
+      for (const release of releases) {
+        const key = releaseKey(release);
+        if (key !== undefined) keys.add(key);
+      }
+      keysByCategory.set(category, keys);
+    }),
+  );
+  const activeCategories = [...keysByCategory.values()];
+  return (item) => {
+    const key = releaseKey(item);
+    return key !== undefined && activeCategories.every((keys) => keys.has(key));
+  };
+}

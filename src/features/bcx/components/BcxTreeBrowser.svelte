@@ -71,6 +71,7 @@ interface Props {
   showBreadcrumb?: boolean;
   showFilter?: boolean;
   filterActions?: Snippet;
+  itemFilter?: (item: TreeItem) => boolean;
   itemActions?: Snippet<[TreeItem]>;
   doubleClickToExpand?: boolean;
   onActivateNode?: (item: TreeItem) => void;
@@ -100,6 +101,7 @@ let {
   showBreadcrumb = true,
   showFilter = true,
   filterActions,
+  itemFilter,
   itemActions,
   doubleClickToExpand = true,
   onActivateNode,
@@ -172,12 +174,15 @@ let releaseFieldFilter = $derived(
   enableReleaseFilterActions &&
     matchesReleaseFilter({}, itemFilterQuery) !== undefined,
 );
+const matchingLevelItems = $derived(
+  itemFilter ? currentLevelItems.filter(itemFilter) : currentLevelItems,
+);
 let filteredLevelItems = $derived(
   releaseFieldFilter
-    ? currentLevelItems.filter((item) =>
+    ? matchingLevelItems.filter((item) =>
         matchesReleaseFilter(item, itemFilterQuery),
       )
-    : currentLevelItems,
+    : matchingLevelItems,
 );
 let breadcrumbItems = $derived.by(() => {
   treeVersion;
@@ -194,7 +199,7 @@ let browserItems = $derived.by(() => {
 });
 let filterSuggestions = $derived.by(() => {
   treeVersion;
-  return getTreeItemFilterSuggestions(currentLevelItems);
+  return getTreeItemFilterSuggestions(matchingLevelItems);
 });
 let effectiveLayout = $derived(treeData.layout ?? currentRootItem?.layout);
 let isTreeLayout = $derived(effectiveLayout === TREE_ITEM_LAYOUT.TREE);
@@ -206,12 +211,12 @@ let treeLayoutItems = $derived.by(() => {
   }
 
   if (!itemFilterQuery.trim()) {
-    return currentLevelItems;
+    return matchingLevelItems;
   }
 
   return releaseFieldFilter
     ? filteredLevelItems
-    : createFilteredTreeItems(currentLevelItems || [], itemFilterQuery);
+    : createFilteredTreeItems(matchingLevelItems, itemFilterQuery);
 });
 let treeLayoutVisibleData = $derived.by(() => {
   treeVersion;
@@ -249,20 +254,22 @@ $effect(() => {
     : Math.max(
         baseline?.childrenCount ??
           (baseline ? 0 : (currentRootItem?.childrenCount ?? 0)),
-        filterGroupsOnly || releaseFieldFilter
+        filterGroupsOnly || releaseFieldFilter || itemFilter
           ? allItems.length
           : countItems(allItems),
       );
 });
 let effectiveFilterQuery = $derived(externalFilterQuery ?? localFilterQuery);
 let emptyStateMessage = $derived.by(() => {
-  if (isLoading || filterSearchLoading) {
+  if (isLoading || filterSearchLoading || currentRootItem?.isLoadingChildren) {
     return loadingMessage;
   }
 
   if (filterSearchError) {
     return filterSearchError;
   }
+
+  if (itemFilter) return 'No releases match your filters';
 
   return debouncedFilterQuery.trim()
     ? 'No items match your filter'
@@ -1180,6 +1187,7 @@ function handleTreeLayoutNodeClick(item: TreeItem, event: MouseEvent) {
       suggestions={filterSuggestions}
       {visibleCount}
       {totalCount}
+      showCount={!!itemFilter}
       onArrowDown={handleFilterArrowDown}
       onUnmatchedSubmit={handleUnmatchedFilterSubmit}
     />

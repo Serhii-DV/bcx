@@ -1,4 +1,5 @@
 <script lang="ts">
+import { ListFilter } from '@lucide/svelte';
 import { TreeData } from 'src/features/treeview/TreeData';
 import {
   TREE_ITEM_LAYOUT,
@@ -11,8 +12,16 @@ import {
 } from 'src/features/treeview/utils/icon';
 import type { Snippet } from 'svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxBandReleaseFilters from './BcxBandReleaseFilters.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
+import {
+  type BandReleaseFilterCategory,
+  type BandReleaseFilterMode,
+  type BandReleaseFilterSelection,
+  createBandReleasePredicate,
+  isBandReleaseFilterRoot,
+} from './bandReleaseFilters';
 import {
   isSectionItemSelected,
   type SectionNavigation,
@@ -64,14 +73,9 @@ const viewActions = $derived(
     ({ id, label, count, image, title, contentId }) => ({
       id,
       label:
-        id === 'band-about'
-          ? (bandAbout?.aboutProfile?.name ?? 'Band')
-          : label === 'Release years'
-            ? 'Years'
-            : label,
+        id === 'band-about' ? (bandAbout?.aboutProfile?.name ?? 'Band') : label,
       count,
-      keepLabelWhenCompact:
-        id === 'band-about' || label === 'Releases' || label === 'Artists',
+      keepLabelWhenCompact: id === 'band-about' || label === 'Releases',
       image:
         id === 'band-about'
           ? (bandAbout?.aboutProfile?.image ?? ICON_DISC)
@@ -104,11 +108,99 @@ function selectView(id: string) {
 let bandAbout = $derived(
   about ?? treeData?.items.find((item) => item.aboutProfile),
 );
+const bandIdentity = $derived(bandUrl ?? bandAbout?.aboutProfile?.url);
+const filterRoots = $derived(
+  treeData?.items.filter(isBandReleaseFilterRoot) ?? [],
+);
+const releases = $derived(
+  treeData?.items.find((item) => item.label === 'Releases'),
+);
+const hasReleases = $derived(
+  (releases?.childrenCount ?? releases?.children?.length ?? 0) > 0,
+);
+let selections = $state.raw<BandReleaseFilterSelection[]>([]);
+let filterPaneOpen = $state(false);
+let filterCategory = $state<BandReleaseFilterCategory>('Artists');
+let filterMode = $state<BandReleaseFilterMode>('multiple');
+let filterValueQuery = $state('');
+let applyingFilters = $state(false);
+let filterApplyFailed = $state(false);
+let filterRetry = $state(0);
+let appliedFilter = $state.raw<{
+  roots: TreeItem[];
+  band: string | undefined;
+  matches: (item: TreeItem) => boolean;
+}>();
+const releaseItemFilter = $derived(
+  selections.length &&
+    appliedFilter?.roots === filterRoots &&
+    appliedFilter.band === bandIdentity
+    ? appliedFilter.matches
+    : undefined,
+);
+let lastBandIdentity: string | undefined;
+
+$effect(() => {
+  if (!bandIdentity || lastBandIdentity === bandIdentity) return;
+  lastBandIdentity = bandIdentity;
+  selections = [];
+  appliedFilter = undefined;
+  filterPaneOpen = false;
+  filterCategory = 'Artists';
+  filterMode = 'multiple';
+  filterValueQuery = '';
+});
+
+$effect(() => {
+  filterRetry;
+  const selected = selections;
+  const band = bandIdentity;
+  const roots = filterRoots;
+  const shouldApply = selected.length > 0 && hasReleases;
+  filterApplyFailed = false;
+  applyingFilters = shouldApply;
+  if (!selected.length) appliedFilter = undefined;
+  if (!shouldApply) return;
+
+  let current = true;
+  void createBandReleasePredicate(roots, selected)
+    .then((matches) => {
+      if (current) appliedFilter = { roots, band, matches };
+    })
+    .catch(() => {
+      if (current) filterApplyFailed = true;
+    })
+    .finally(() => {
+      if (current) applyingFilters = false;
+    });
+  return () => {
+    current = false;
+  };
+});
+
+function setFilterMode(mode: BandReleaseFilterMode) {
+  filterMode = mode;
+  if (mode === 'single' && selections.length > 1) {
+    selections = selections.slice(-1);
+  }
+}
+
+function toggleFilter(category: BandReleaseFilterCategory, value: string) {
+  const matches = (selection: BandReleaseFilterSelection) =>
+    selection.category === category && selection.value === value;
+  if (selections.some(matches)) {
+    selections = selections.filter((selection) => !matches(selection));
+    return;
+  }
+  const selected = { category, value };
+  selections = filterMode === 'single' ? [selected] : [...selections, selected];
+}
+
 let catalog = $derived.by(() => {
-  const roots = treeData?.items.filter((item) => !item.aboutProfile) ?? [];
-  const releases = roots.find((item) => item.label === 'Releases');
-  const hasReleases =
-    (releases?.childrenCount ?? releases?.children?.length ?? 0) > 0;
+  const roots =
+    treeData?.items.filter(
+      (item) => !item.aboutProfile && !isBandReleaseFilterRoot(item),
+    ) ?? [];
   const emptyReleases: TreeItem = {
     label: 'Releases',
     image: releases?.image ?? ICON_DISC,
@@ -151,6 +243,17 @@ let catalog = $derived.by(() => {
   <BcxBandDetails about={item} {fallbackLocation} {bandUrl} {loading} {error} />
 {/snippet}
 
+{#snippet releaseFilterControls()}
+  <button type="button" class="bcx-section-tab release-filters-trigger" aria-expanded={filterPaneOpen} aria-label={selections.length ? `Filters, ${selections.length} selected` : 'Filters'} onclick={() => { filterPaneOpen = !filterPaneOpen; }}>
+    <ListFilter size={14} aria-hidden="true" />
+    Filters{selections.length ? ` (${selections.length})` : ''}
+  </button>
+{/snippet}
+
+{#snippet releaseFilterPane()}
+  <BcxBandReleaseFilters roots={filterRoots} bind:category={filterCategory} bind:query={filterValueQuery} mode={filterMode} onModeChange={setFilterMode} {selections} applying={applyingFilters} applyFailed={filterApplyFailed} onToggle={toggleFilter} onClear={() => { selections = []; }} onRetry={() => { filterRetry += 1; }} />
+{/snippet}
+
 <div class="band-panel">
   {#if leadingActions || trailingActions}
     <div class="band-actions">
@@ -163,7 +266,7 @@ let catalog = $derived.by(() => {
       <BcxSectionTabs tabs={viewActions} value={selectedView} label="Band catalog sections" onValueChange={selectView} compactWhenOverflowing={true} hideCountsWhenOverflowing={true} vertical={verticalNavigation} />
     {/if}
     <div class="band-catalog">
-      <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} sortInToolbar={true} countBadges={true} {navigationInFilter} releaseFilterActions={true} splitCatalogGroups={true} showFilterNavigation={!navigationInFilter} onNavigationChange={updateNavigation} />
+      <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} sortInToolbar={true} countBadges={true} {navigationInFilter} releaseFilterActions={true} {releaseItemFilter} releaseFilterControls={hasReleases && filterRoots.length ? releaseFilterControls : undefined} releaseFilterPane={filterPaneOpen ? releaseFilterPane : undefined} showFilterNavigation={!navigationInFilter} onNavigationChange={updateNavigation} />
     </div>
   </div>
 </div>
@@ -174,4 +277,6 @@ let catalog = $derived.by(() => {
 .vertical-navigation > :global(.bcx-section-tabs) { margin-left: var(--bcx-preview-gutter, 16px); margin-right: var(--bcx-preview-column-gap, 12px); }
 .band-actions { display: flex; align-items: flex-start; flex-shrink: 0; padding: 4px var(--bcx-preview-gutter, 16px); }
 .band-trailing-actions { display: flex; flex-shrink: 0; margin-left: auto; }
+.bcx-section-tab.release-filters-trigger { flex: none; min-height: 36px; gap: 0.375rem; padding: 6px 8px; border: 1px solid #4b5563; background: #374151; }
+.release-filters-trigger[aria-expanded='true'] { border-color: #38bdf8; }
 </style>

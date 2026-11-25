@@ -7,6 +7,7 @@ interface Props {
   clearLabel?: string;
   visibleCount?: number;
   totalCount?: number;
+  showCount?: boolean;
   onArrowDown?: () => void;
   onUnmatchedSubmit?: (value: string) => void | Promise<void>;
 }
@@ -19,6 +20,7 @@ let {
   clearLabel = 'Clear filter',
   visibleCount,
   totalCount,
+  showCount = false,
   onArrowDown,
   onUnmatchedSubmit,
 }: Props = $props();
@@ -70,7 +72,7 @@ function clearFilter() {
     list={datalistId}
     class="bcx-tree-filter-input"
   />
-  {#if value.trim() && visibleCount !== undefined && totalCount !== undefined}
+  {#if (showCount || value.trim()) && visibleCount !== undefined && totalCount !== undefined}
     <span class="bcx-tree-filter-count" role="status" aria-label={`${visibleCount} of ${totalCount} items visible`} title={`${visibleCount} of ${totalCount} items visible`}>{visibleCount} / {totalCount}</span>
   {/if}
   {#if value}

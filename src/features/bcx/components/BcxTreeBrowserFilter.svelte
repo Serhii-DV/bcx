@@ -6,6 +6,7 @@ interface Props {
   suggestions: string[];
   visibleCount?: number;
   totalCount?: number;
+  showCount?: boolean;
   onArrowDown?: () => void;
   onUnmatchedSubmit?: (value: string) => void | Promise<void>;
 }
@@ -15,6 +16,7 @@ let {
   suggestions,
   visibleCount,
   totalCount,
+  showCount,
   onArrowDown,
   onUnmatchedSubmit,
 }: Props = $props();
@@ -34,6 +36,7 @@ export function focus() {
   {suggestions}
   {visibleCount}
   {totalCount}
+  {showCount}
   placeholder="Filter browser items..."
   {onArrowDown}
   {onUnmatchedSubmit}

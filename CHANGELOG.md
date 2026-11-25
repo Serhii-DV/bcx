@@ -16,17 +16,7 @@
 
 - Wishlist and Collection show filterable, sortable groups on the left and the selected group’s releases on the right in Artists, By Release Year, By Year Added, and By Prices. Select an artist, year, or exact price with a click or Enter. By Year Added includes an Unknown year group for releases without a saved date.
 
-- In the Band panel and artist preview, Tags shows a filterable tag list on the left and the selected tag’s releases on the right. Click a tag or press Enter to browse its releases.
-
-- The Band panel’s Artists, Years, and Prices sort buttons show the selected option’s icon at a fixed width, leaving room for the filter. Prices can be sorted low to high or high to low within each currency.
-
-- The Band panel’s By Prices tab shows filterable price groups on the left and releases at the selected price on the right. Exact prices can be selected directly, including name your price and Price unknown.
-
-- The Band panel’s By Release Year tab shows filterable, sortable years on the left and the selected year’s releases on the right. Click a year or press Enter to browse its releases.
-
-- The Band panel’s Artists tab keeps names, artwork, and release counts beside the selected artist’s releases, with the artist filter and sort menu on one line. The first row shows an “Artist” label, the name, and the Bandcamp address on separate lines when available. Saved profiles use the same bottom preview as History. Artists without a saved profile retain Copy and Search actions. Switching artists preserves the current preview until a profile or release is selected.
-
-- The Band panel’s Artists list uses artwork from each artist’s first release in catalog order when a saved profile image is unavailable.
+- In the Band panel and Band preview, Filters opens a searchable list of artists, release years, tags, or prices on the left. Use Multi-select to combine values or Single select to apply one value across all categories. The Releases list, search, and sort stay on the right.
 
 - Band and release rows in the Tree Browser use one three-dot menu for Preview, Open in side panel, Pin or Unpin, and Open on Bandcamp, alongside existing copy, search, and applicable filter actions.
 

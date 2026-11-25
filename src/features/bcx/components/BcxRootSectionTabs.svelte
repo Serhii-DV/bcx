@@ -11,6 +11,7 @@ import {
 import { onDestroy, type Snippet, tick, untrack } from 'svelte';
 import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxCatalogSplitLayout from './BcxCatalogSplitLayout.svelte';
 import BcxCatalogSplitPanel from './BcxCatalogSplitPanel.svelte';
 import BcxSectionFilter from './BcxSectionFilter.svelte';
 import BcxSectionSort from './BcxSectionSort.svelte';
@@ -152,11 +153,17 @@ let {
   navigationInToolbar = false,
   showFilterNavigation = true,
   releaseFilterActions = false,
+  releaseFilterControls,
+  releaseFilterPane,
+  releaseItemFilter,
   splitCatalogGroups = false,
   onNavigationChange,
 }: {
   treeData: TreeData;
   releaseFilterActions?: boolean;
+  releaseFilterControls?: Snippet;
+  releaseFilterPane?: Snippet;
+  releaseItemFilter?: (item: TreeItem) => boolean;
   splitCatalogGroups?: boolean;
   label: string;
   initialSelectedHref?: string;
@@ -629,11 +636,16 @@ onDestroy(() => onNavigationChange?.(undefined));
 {#snippet rootContent(tabId: string)}
         {#if visitedRoots[tabId]}
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
+          {@const isReleaseRoot = root?.label === 'Releases' || !!root?.label?.startsWith('Releases: ')}
+          {@const hasReleaseControls = !!root?.releasePreview && isReleaseRoot && !!releaseFilterControls}
           {@const splitSection = root?.label && ((splitCatalogGroups && root.releasePreview) || (sortBands && root.itemPreview)) ? splitSections[root.label] : undefined}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
           {#snippet filterControls()}
             {#if navigationInFilter && showFilterNavigation && !navigationInToolbar}
               <BcxSectionFilter items={navigationItems} {label} value={selectedRoot} onValueChange={selectFilterRoot} onCloseAutoFocus={handleControlCloseAutoFocus} />
+            {/if}
+            {#if hasReleaseControls}
+              {@render releaseFilterControls?.()}
             {/if}
             {#if toolbarSorting && navigationItem?.sortOptions?.length}
               <BcxSectionSort item={navigationItem} iconOnly={!!splitSection || (splitCatalogGroups && !!root?.releasePreview && root.label === 'Artists')} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
@@ -677,8 +689,9 @@ onDestroy(() => onNavigationChange?.(undefined));
                   nativeTabNavigation={true}
                   {onActivateNode}
                   {activeNodePath}
-                  filterActions={navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
-                  enableReleaseFilterActions={releaseFilterActions && (root?.label === 'Releases' || !!root?.label?.startsWith('Releases: '))}
+                  filterActions={hasReleaseControls || navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
+                  enableReleaseFilterActions={releaseFilterActions && isReleaseRoot}
+                  itemFilter={isReleaseRoot ? releaseItemFilter : undefined}
                   bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
                 />
               {/snippet}
@@ -688,6 +701,10 @@ onDestroy(() => onNavigationChange?.(undefined));
                   {...splitSection}
                   groups={sectionBrowser}
                 />
+              {:else if hasReleaseControls}
+                <BcxCatalogSplitLayout groupLabel="Release filters" itemLabel="Release results" groups={selectedRoot === tabId ? releaseFilterPane : undefined}>
+                  {@render sectionBrowser(undefined, undefined)}
+                </BcxCatalogSplitLayout>
               {:else}
                 {@render sectionBrowser(undefined, undefined)}
               {/if}
