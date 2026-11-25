@@ -9,7 +9,6 @@ import {
   type FanSyncJob,
   syncJobStorage,
 } from 'src/bandcamp/domain/fanData/sync';
-import { localCalendarDay } from 'src/bandcamp/domain/releaseDate';
 import { MUSIC_LIBRARY_REVISION_KEY } from 'src/bandcamp/domain/storage/musicLibraryProtocol';
 import type { SidePanelHeader } from 'src/features/bcx/sidePanelHeader';
 import type { SidePanelSection } from 'src/features/treeview/SidePanelSection';
@@ -43,6 +42,7 @@ import {
 import { pinnedPageFromItem } from '../pinnedPage';
 import { getItemPreviewId, getItemPreviewLabel } from '../stores/itemPreview';
 import { pinnedNavigation } from '../stores/pinnedNavigation';
+import { watchLocalCalendarDay } from '../watchLocalCalendarDay';
 import BcxActivityLog from './BcxActivityLog.svelte';
 import BcxBandPanel from './BcxBandPanel.svelte';
 import BcxBandPreview from './BcxBandPreview.svelte';
@@ -266,8 +266,8 @@ const activityTabId = '__activity-log__';
 function viewActivity() {
   selectedSectionId = activityTabId;
 }
-async function viewHistory() {
-  selectedSectionId = 'history';
+async function openDashboardSection(id: string) {
+  selectedSectionId = id;
   await tick();
   mainNavigation?.focusSelected();
 }
@@ -615,37 +615,15 @@ $effect(() => {
   const section = sections.find(({ id }) => id === RELEASE_CALENDAR_ID);
   if (!section) return;
 
-  let day = localCalendarDay();
-  let timer: ReturnType<typeof setTimeout>;
-  const checkDate = () => {
-    clearTimeout(timer);
-    const now = new Date();
-    const today = localCalendarDay(now);
-    if (today !== day) {
-      day = today;
-      untrack(() => {
-        if (
-          selectedSectionId === RELEASE_CALENDAR_ID ||
-          sectionLoadingById[RELEASE_CALENDAR_ID] ||
-          sectionTreeDataById[RELEASE_CALENDAR_ID]
-        ) {
-          void loadSectionTreeData(section, true);
-        }
-      });
+  return watchLocalCalendarDay(() => {
+    if (
+      selectedSectionId === RELEASE_CALENDAR_ID ||
+      sectionLoadingById[RELEASE_CALENDAR_ID] ||
+      sectionTreeDataById[RELEASE_CALENDAR_ID]
+    ) {
+      void loadSectionTreeData(section, true);
     }
-    const nextDay = new Date(now);
-    nextDay.setHours(24, 0, 0, 0);
-    timer = setTimeout(checkDate, nextDay.getTime() - now.getTime());
-  };
-
-  checkDate();
-  window.addEventListener('focus', checkDate);
-  document.addEventListener('visibilitychange', checkDate);
-  return () => {
-    clearTimeout(timer);
-    window.removeEventListener('focus', checkDate);
-    document.removeEventListener('visibilitychange', checkDate);
-  };
+  });
 });
 
 function handleSectionFilterArrowDown() {
@@ -817,7 +795,13 @@ $effect(() => {
               {/if}
               <BcxItemPreviewPanel sectionId={selectedSectionId} visible={showPreview} onOpen={openItem} onShowPreview={() => (requestedPreviewSections[selectedSectionId] = true)}>
               <div id={`${mainContentId}-${dashboardTabId}`} data-bcx-main-section role="region" aria-label="Dashboard" hidden={selectedSectionId !== dashboardTabId} class="bcx-tab-content bcx-info-scroll">
-                {#if selectedSectionId === dashboardTabId}<BcxDashboard errorMessage={dashboardError} onViewHistory={sections.some((section) => section.id === 'history') ? viewHistory : undefined} />{/if}
+                {#if selectedSectionId === dashboardTabId}
+                  <BcxDashboard
+                    errorMessage={dashboardError}
+                    onViewReleaseCalendar={sections.some(({ id }) => id === RELEASE_CALENDAR_ID) ? () => openDashboardSection(RELEASE_CALENDAR_ID) : undefined}
+                    onViewHistory={sections.some(({ id }) => id === 'history') ? () => openDashboardSection('history') : undefined}
+                  />
+                {/if}
               </div>
               {#each additionalPreviews as preview (preview.id)}
                 <div id={`${mainContentId}-${preview.id}`} data-bcx-main-section role="region" aria-label={getItemPreviewLabel(preview.item)} hidden={selectedSectionId !== preview.id} class="bcx-tab-content">
