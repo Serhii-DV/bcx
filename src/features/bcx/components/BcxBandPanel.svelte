@@ -1,7 +1,3 @@
-<script module lang="ts">
-let filterPaneOpen = $state(false);
-</script>
-
 <script lang="ts">
 import { TreeData } from 'src/features/treeview/TreeData';
 import {
@@ -12,8 +8,8 @@ import { ICON_DISC, ICON_INFO } from 'src/features/treeview/utils/icon';
 import type { Snippet } from 'svelte';
 import BcxBandActions from './BcxBandActions.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
-import BcxPanelHeading from './BcxPanelHeading.svelte';
 import BcxFilteredCatalog from './BcxFilteredCatalog.svelte';
+import BcxPanelHeading from './BcxPanelHeading.svelte';
 import { bandReleaseFilterCategories } from './catalogFilters';
 
 let {
@@ -66,10 +62,7 @@ const hasReleases = $derived(
   (releases?.childrenCount ?? releases?.children?.length ?? 0) > 0,
 );
 let catalog = $derived.by(() => {
-  const roots =
-    treeData?.items.filter(
-      (item) => !item.aboutProfile,
-    ) ?? [];
+  const roots = treeData?.items.filter((item) => !item.aboutProfile) ?? [];
   const emptyReleases: TreeItem = {
     label: 'Releases',
     image: releases?.image ?? ICON_DISC,
@@ -121,7 +114,7 @@ let catalog = $derived.by(() => {
 {/snippet}
 
 <div bind:this={panel} class="band-panel">
-  <BcxFilteredCatalog treeData={catalog} categories={bandReleaseFilterCategories} catalogIdentity={bandIdentity} bind:filterPaneOpen label="Band catalog sections" defaultRootPath={releasesPath} {initialSelectedHref} {aboutContent} heading={panelHeading} navigationInToolbar {navigationInFilter} navigationActions={bandAbout ? bandActions : undefined} compactWhenOverflowing countBadges />
+  <BcxFilteredCatalog treeData={catalog} categories={bandReleaseFilterCategories} catalogIdentity={bandIdentity} label="Band catalog sections" defaultRootPath={releasesPath} {initialSelectedHref} {aboutContent} heading={panelHeading} navigationInToolbar {navigationInFilter} navigationActions={bandAbout ? bandActions : undefined} compactWhenOverflowing countBadges />
 </div>
 
 <style>

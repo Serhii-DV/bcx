@@ -1,3 +1,7 @@
+<script module lang="ts">
+let filterPaneOpen = $state(false);
+</script>
+
 <script lang="ts">
 import { ListFilter } from '@lucide/svelte';
 import { TreeData } from 'src/features/treeview/TreeData';
@@ -21,7 +25,6 @@ let {
   categories,
   sortBands = false,
   catalogIdentity,
-  filterPaneOpen = $bindable(false),
   ...tabs
 }: Omit<
   ComponentProps<typeof BcxRootSectionTabs>,
@@ -32,7 +35,6 @@ let {
 > & {
   categories: readonly CatalogFilterDefinition[];
   catalogIdentity?: string;
-  filterPaneOpen?: boolean;
 } = $props();
 
 const filterRoots = $derived(

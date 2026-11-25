@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- The Filters pane shares its open or closed state across Band Releases, Band previews, Wishlist, Collection, and Following Bands.
+
 - The Side Panel’s Release Calendar sits directly below History and shows upcoming releases and the last 30 days of releases from the saved music library, with exact dates and release previews. Its Dashboard widget sits above Recently visited and switches between the next three scheduled releases and the three most recently released. The widget title opens the full calendar.
 
 - The Release Copy menu can copy a Telegram-ready artist hashtag and the label or Bandcamp band page name.
