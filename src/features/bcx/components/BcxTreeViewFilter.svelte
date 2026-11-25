@@ -4,10 +4,18 @@ import BcxTreeFilterInput from './BcxTreeFilterInput.svelte';
 interface Props {
   value: string;
   suggestions: string[];
+  visibleCount?: number;
+  totalCount?: number;
   onArrowDown?: () => void;
 }
 
-let { value = $bindable(''), suggestions, onArrowDown }: Props = $props();
+let {
+  value = $bindable(''),
+  suggestions,
+  visibleCount,
+  totalCount,
+  onArrowDown,
+}: Props = $props();
 let filterInput: BcxTreeFilterInput;
 
 export function focus() {
@@ -20,6 +28,8 @@ export function focus() {
   id="bcx-tree-view-filter"
   bind:value
   {suggestions}
+  {visibleCount}
+  {totalCount}
   placeholder="Filter items..."
   {onArrowDown}
 />

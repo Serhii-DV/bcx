@@ -11,12 +11,14 @@ import {
 import { onDestroy, type Snippet, tick, untrack } from 'svelte';
 import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
+import BcxCatalogSplitPanel from './BcxCatalogSplitPanel.svelte';
 import BcxSectionFilter from './BcxSectionFilter.svelte';
 import BcxSectionSort from './BcxSectionSort.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import {
   type CatalogGroupSort,
+  type CatalogPriceSort,
   type CatalogYearSort,
   createRootSectionTabs,
   type FollowingBandCountrySort,
@@ -31,6 +33,40 @@ import {
 } from './sectionNavigation';
 
 type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
+
+const splitSections: Readonly<
+  Record<
+    string,
+    { groupLabel: string; itemLabel?: string; emptyMessage: string }
+  >
+> = {
+  Tags: {
+    groupLabel: 'Tags',
+    emptyMessage: 'Select a tag to see its releases.',
+  },
+  'Release years': {
+    groupLabel: 'Years',
+    emptyMessage: 'Select a year to see its releases.',
+  },
+  'Added years': {
+    groupLabel: 'Years added',
+    emptyMessage: 'Select a year to see the releases added that year.',
+  },
+  'By Prices': {
+    groupLabel: 'Prices',
+    emptyMessage: 'Select a price to see its releases.',
+  },
+  'Followed by Year': {
+    groupLabel: 'Years followed',
+    itemLabel: 'Followed bands',
+    emptyMessage: 'Select a year to see the bands you followed that year.',
+  },
+  Countries: {
+    groupLabel: 'Countries',
+    itemLabel: 'Followed bands',
+    emptyMessage: 'Select a country to see its bands.',
+  },
+};
 
 const tabDescriptions: Record<
   string,
@@ -107,9 +143,13 @@ let {
   navigationInFilter = false,
   navigationInToolbar = false,
   showFilterNavigation = true,
+  releaseFilterActions = false,
+  splitCatalogGroups = false,
   onNavigationChange,
 }: {
   treeData: TreeData;
+  releaseFilterActions?: boolean;
+  splitCatalogGroups?: boolean;
   label: string;
   initialSelectedHref?: string;
   sortBands?: boolean;
@@ -165,6 +205,7 @@ let countrySort = $state<FollowingBandCountrySort>('az');
 let artistSort = $state<CatalogGroupSort>('az');
 let releaseYearSort = $state<CatalogYearSort>('newest');
 let addedYearSort = $state<CatalogYearSort>('newest');
+let priceSort = $state<CatalogPriceSort>('low-to-high');
 const isReleaseCatalog = $derived(
   treeData.items.some(
     (item) => item.releasePreview && item.label === 'Releases',
@@ -175,7 +216,13 @@ const displayedTreeData = $derived.by(() => {
   return sortBands
     ? sortFollowingBandGroups(treeData, yearSort, countrySort)
     : isReleaseCatalog
-      ? sortCatalogGroups(treeData, artistSort, releaseYearSort, addedYearSort)
+      ? sortCatalogGroups(
+          treeData,
+          artistSort,
+          releaseYearSort,
+          addedYearSort,
+          priceSort,
+        )
       : treeData;
 });
 const tabs = $derived.by(() => {
@@ -266,6 +313,26 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
             id: 'fewest-releases',
             label: 'Fewest releases',
             title: 'Show years with the fewest releases first.',
+          },
+        ],
+      };
+    }
+    if (splitCatalogGroups && isReleaseCatalog && rootLabel === 'By Prices') {
+      return {
+        ...labeledTab,
+        sortValue: priceSort,
+        sortLabel: 'Sort prices',
+        onSortChange: setPriceSort,
+        sortOptions: [
+          {
+            id: 'low-to-high',
+            label: 'Low to high',
+            title: 'Show lower prices first within each currency.',
+          },
+          {
+            id: 'high-to-low',
+            label: 'High to low',
+            title: 'Show higher prices first within each currency.',
           },
         ],
       };
@@ -481,6 +548,10 @@ function setAddedYearSort(id: string) {
   if (isCatalogYearSort(id)) addedYearSort = id;
 }
 
+function setPriceSort(id: string) {
+  if (id === 'low-to-high' || id === 'high-to-low') priceSort = id;
+}
+
 $effect(() => {
   if (!tabs.some((tab) => tab.id === selectedRoot)) {
     selectedRoot = tabs[0]?.id ?? '';
@@ -550,13 +621,14 @@ onDestroy(() => onNavigationChange?.(undefined));
 {#snippet rootContent(tabId: string)}
         {#if visitedRoots[tabId]}
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
+          {@const splitSection = root?.label && ((splitCatalogGroups && root.releasePreview) || (sortBands && root.itemPreview)) ? splitSections[root.label] : undefined}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
           {#snippet filterControls()}
             {#if navigationInFilter && showFilterNavigation && !navigationInToolbar}
               <BcxSectionFilter items={navigationItems} {label} value={selectedRoot} onValueChange={selectFilterRoot} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
             {#if toolbarSorting && navigationItem?.sortOptions?.length}
-              <BcxSectionSort item={navigationItem} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
+              <BcxSectionSort item={navigationItem} iconOnly={!!splitSection || (splitCatalogGroups && !!root?.releasePreview && root.label === 'Artists')} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
           {/snippet}
           <div class="bcx-section-tree-browser">
@@ -579,22 +651,37 @@ onDestroy(() => onNavigationChange?.(undefined));
               <BcxArtistsPanel
                 root={treeData.items.find((item) => item.path === tabId) ?? root}
                 catalog={true}
+                splitView={splitCatalogGroups}
                 catalogSort={artistSort}
                 filterActions={filterControls}
                 bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
               />
             {:else}
-              <BcxTreeBrowser
-                treeData={displayedTreeData}
-                initialRootPath={tabId}
-                lockInitialRoot={true}
-                showBreadcrumb={false}
-                initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
-                onRootLoaded={refreshTabs}
-                nativeTabNavigation={true}
-                filterActions={navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
-                bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
-              />
+              {#snippet sectionBrowser(onActivateNode: ((item: TreeItem) => void) | undefined, activeNodePath: string | undefined)}
+                <BcxTreeBrowser
+                  treeData={displayedTreeData}
+                  initialRootPath={tabId}
+                  lockInitialRoot={true}
+                  showBreadcrumb={false}
+                  initialSelectedHref={initialSelectedHref ?? root?.initialSelectedHref}
+                  onRootLoaded={refreshTabs}
+                  nativeTabNavigation={true}
+                  {onActivateNode}
+                  {activeNodePath}
+                  filterActions={navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
+                  enableReleaseFilterActions={releaseFilterActions && (root?.label === 'Releases' || !!root?.label?.startsWith('Releases: '))}
+                  bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
+                />
+              {/snippet}
+              {#if splitSection && root}
+                <BcxCatalogSplitPanel
+                  root={treeData.items.find((item) => item.path === tabId) ?? root}
+                  {...splitSection}
+                  groups={sectionBrowser}
+                />
+              {:else}
+                {@render sectionBrowser(undefined, undefined)}
+              {/if}
             {/if}
             {/if}
           </div>

@@ -120,7 +120,7 @@ let catalogYears = $derived(
 {/snippet}
 
 {#snippet bandToolbar()}
-  <BcxPreviewItemActions {...bandActionProps} variant="toolbar" toolbar={true} />
+  <BcxPreviewItemActions {...bandActionProps} variant="toolbar" toolbar={true} copyLabelHashtag />
 {/snippet}
 
 <BcxItemDetailsLayout

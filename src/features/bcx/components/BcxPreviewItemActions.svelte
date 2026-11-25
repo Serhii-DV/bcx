@@ -1,3 +1,10 @@
+<script module lang="ts">
+export interface CopyItem {
+  label: string;
+  value: string;
+}
+</script>
+
 <script lang="ts">
 import {
   Check,
@@ -7,6 +14,8 @@ import {
   Ellipsis,
   ExternalLink,
   Eye,
+  Filter,
+  PanelTop,
   Pin,
   Search,
 } from '@lucide/svelte';
@@ -16,12 +25,14 @@ import type { Url } from 'src/core/url';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import BandcampIcon from 'src/lib/components/BandcampIcon.svelte';
 import { copyToClipboard } from 'src/utils/clipboard';
+import { formatTelegramHashtag } from 'src/utils/telegramHashtag';
 import { onDestroy, type Snippet } from 'svelte';
 import { createPinnedPage, samePinnedPage } from '../pinnedNavigation';
 import { pinnedPageFromItem } from '../pinnedPage';
 import { getItemPreviewContext } from '../stores/itemPreview';
 import { changePin, pinnedNavigation } from '../stores/pinnedNavigation';
 import BcxPinButton from './BcxPinButton.svelte';
+import type { ReleaseFilterOption } from './releaseFilter';
 
 let {
   url,
@@ -29,10 +40,12 @@ let {
   name,
   kind,
   copyValue,
+  copyLabelHashtag = false,
   releaseArtist,
   releaseDate,
   releaseTitle,
   releaseYear,
+  additionalCopyItems = [],
   previewItem,
   keepInPreview = false,
   iconOnly = false,
@@ -40,16 +53,21 @@ let {
   variant = 'menu',
   menuLabel,
   relatedActions,
+  filterOptions = [],
+  onFilter,
+  onPreview,
 }: {
   url?: Url;
   image?: string;
   name: string;
   kind: 'release' | 'artist' | 'label' | 'band';
   copyValue: string;
+  copyLabelHashtag?: boolean;
   releaseArtist?: string;
   releaseDate?: string;
   releaseTitle?: string;
   releaseYear?: number;
+  additionalCopyItems?: CopyItem[];
   previewItem?: TreeItem;
   keepInPreview?: boolean;
   iconOnly?: boolean;
@@ -57,8 +75,12 @@ let {
   variant?: 'menu' | 'toolbar';
   menuLabel?: string;
   relatedActions?: Snippet;
+  filterOptions?: ReleaseFilterOption[];
+  onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
+  onFilter?: (query: string) => void;
 } = $props();
 const preview = getItemPreviewContext();
+let menuTrigger = $state<HTMLButtonElement>();
 let container = $state<HTMLDivElement>();
 let failedImage = $state<string>();
 let copied = $state(false);
@@ -114,8 +136,14 @@ let formattedReleaseDate = $derived.by(() => {
       })
     : undefined;
 });
+let labelHashtag = $derived(
+  copyLabelHashtag ? formatTelegramHashtag(copyValue) : undefined,
+);
 let copyItems = $derived([
   { label: copyLabel, value: copyValue },
+  ...(labelHashtag
+    ? [{ label: 'Copy label hashtag', value: labelHashtag }]
+    : []),
   ...(kind === 'release' &&
   releaseYear &&
   Number.isInteger(releaseYear) &&
@@ -142,6 +170,7 @@ let copyItems = $derived([
   ...(kind === 'release' && releaseTitle
     ? [{ label: 'Copy release title', value: releaseTitle }]
     : []),
+  ...additionalCopyItems,
   ...(pageUrl
     ? [
         {
@@ -151,9 +180,7 @@ let copyItems = $derived([
       ]
     : []),
 ]);
-let previewLabel = $derived(
-  keepInPreview ? 'Keep in Preview' : `Preview ${kind}`,
-);
+let previewLabel = $derived(`Preview ${kind}`);
 let search = $derived.by(() => {
   if (!copyValue.trim()) return undefined;
   return {
@@ -185,6 +212,13 @@ async function openPage(event: MouseEvent, destination: string) {
   } catch {
     if (!destroyed) error = 'Could not open the page. Please try again.';
   }
+}
+
+function showItemPreview() {
+  if (!previewItem) return;
+  previewSelected = true;
+  if (onPreview && menuTrigger) onPreview(previewItem, menuTrigger);
+  else preview?.show(previewItem);
 }
 
 async function copy(value: string) {
@@ -257,7 +291,7 @@ async function copy(value: string) {
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
     {/if}
-    {#if preview && previewItem}
+    {#if preview && previewItem && !keepInPreview}
       <button type="button" class="bcx-section-tab" aria-label={`${previewLabel}: ${name}`} title={`${previewLabel}: ${name}`} onclick={() => { if (previewItem) preview.show(previewItem); }}>
         <Eye size={16} aria-hidden="true" /><span>Preview</span>
       </button>
@@ -266,11 +300,11 @@ async function copy(value: string) {
   <DropdownMenu.Root>
     <DropdownMenu.Trigger class={iconOnly ? 'item-button item-menu-trigger' : 'bcx-section-tab'} aria-label={actionTitle} title={`${actionTitle}\n${copyValue}${pageUrl ? `\n${pageUrl}` : ''}`} onclick={(event) => { if (iconOnly) event.stopPropagation(); }} onkeydown={(event) => { if (iconOnly) event.stopPropagation(); }} ondblclick={(event) => { if (iconOnly) event.stopPropagation(); }}>
       {#snippet child({ props })}
-        <button {...props} type="button">
-          {#if copied}
-            <Check size={iconOnly || toolbar ? 16 : 14} class="shrink-0 text-emerald-300" aria-hidden="true" />
-          {:else if iconOnly}
+        <button {...props} bind:this={menuTrigger} type="button">
+          {#if iconOnly}
             <Ellipsis size={16} class="shrink-0" aria-hidden="true" />
+          {:else if copied}
+            <Check size={toolbar ? 16 : 14} class="shrink-0 text-emerald-300" aria-hidden="true" />
           {:else if image && image !== failedImage}
             <img src={image} alt="" class="item-image" onerror={() => { failedImage = image; }} />
           {:else if kind === 'band' || toolbar}
@@ -297,10 +331,16 @@ async function copy(value: string) {
             {/snippet}
           </DropdownMenu.Item>
         {/if}
-        {#if preview && previewItem}
-          <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => { if (previewItem) { previewSelected = true; preview.show(previewItem); } }}>
+        {#if (onPreview || preview) && previewItem && !keepInPreview}
+          <DropdownMenu.Item class="preview-item-menu-action" onSelect={showItemPreview}>
             <Eye size={14} class="shrink-0" aria-hidden="true" />
             <span>{previewLabel}</span>
+          </DropdownMenu.Item>
+        {/if}
+        {#if preview?.open && previewItem}
+          <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => { if (previewItem) preview.open?.(previewItem); }}>
+            <PanelTop size={14} class="shrink-0" aria-hidden="true" />
+            <span>Open in side panel</span>
           </DropdownMenu.Item>
         {/if}
         {#if pinPage}
@@ -308,10 +348,28 @@ async function copy(value: string) {
             <Pin size={14} fill={savedPin ? 'currentColor' : 'none'} aria-hidden="true" /><span>{savedPin ? 'Unpin' : 'Pin'} {pinPage.kind}</span>
           </DropdownMenu.Item>
         {/if}
-        {#if pageUrl || (preview && previewItem)}
+        {#if pageUrl || ((onPreview || preview) && previewItem) || pinPage}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
         {/if}
-        {@render copyMenuItems()}
+        {#if onFilter && filterOptions.length}
+          <DropdownMenu.Group>
+            <DropdownMenu.GroupHeading class="preview-item-menu-heading">Filter</DropdownMenu.GroupHeading>
+            {#each filterOptions as option (option.label)}
+              <DropdownMenu.Item class="preview-item-menu-action" onSelect={() => onFilter?.(option.query)}>
+                <Filter size={14} class="shrink-0" aria-hidden="true" /><span>{option.label}</span>
+              </DropdownMenu.Item>
+            {/each}
+          </DropdownMenu.Group>
+          <DropdownMenu.Separator class="preview-item-menu-separator" />
+        {/if}
+        {#if kind === 'release'}
+          <DropdownMenu.Group>
+            <DropdownMenu.GroupHeading class="preview-item-menu-heading">Copy</DropdownMenu.GroupHeading>
+            {@render copyMenuItems()}
+          </DropdownMenu.Group>
+        {:else}
+          {@render copyMenuItems()}
+        {/if}
         {#if search}
           <DropdownMenu.Separator class="preview-item-menu-separator" />
           {@render searchMenuItems()}
@@ -339,6 +397,7 @@ async function copy(value: string) {
 :global(.preview-item-menu-action) { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.25rem; font-size: 0.8125rem; cursor: pointer; }
 :global(.preview-item-menu-action[data-highlighted]) { background: #293548; outline: none; }
 :global(.preview-item-menu-separator) { height: 1px; margin: 0.25rem; background: #4b5563; }
+:global(.preview-item-menu-heading) { padding: 0.25rem 0.5rem; color: #9ca3af; font-size: 0.75rem; }
 .action-text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 0.125rem; }
 .action-value { color: #9ca3af; font-size: 0.75rem; overflow-wrap: anywhere; white-space: pre-wrap; }
 [role='alert'] { color: #fca5a5; font-size: 0.75rem; }

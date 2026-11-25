@@ -10,20 +10,30 @@ import type { TreeItem } from 'src/features/treeview/TreeItem';
 import type { TreeItemButton } from 'src/features/treeview/TreeItemButton';
 import { ICON_EXTERNAL_LINK, makeIcon } from 'src/features/treeview/utils/icon';
 import { getErrorMessage } from 'src/utils/getErrorMessage';
-import type { Snippet } from 'svelte';
+import { getContext, type Snippet } from 'svelte';
 import { pinnedPageFromItem } from '../pinnedPage';
 import BcxPinButton from './BcxPinButton.svelte';
 import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxReleaseItemActions from './BcxReleaseItemActions.svelte';
 import { createItemUrl } from './itemUrl';
+import { type TreeFilterContext, treeFilterContext } from './treeFilterContext';
 
 interface Props {
   item: TreeItem;
   showActions?: boolean;
+  showButtons?: boolean;
   itemActions?: Snippet<[TreeItem]>;
+  onPreview?: (item: TreeItem, trigger: HTMLElement) => void;
 }
 
-let { item, showActions = true, itemActions }: Props = $props();
+let {
+  item,
+  showActions = true,
+  showButtons = true,
+  itemActions,
+  onPreview,
+}: Props = $props();
+const treeFilter = getContext<TreeFilterContext | undefined>(treeFilterContext);
 let showArtwork = $derived(
   item.showArtwork ?? !!(item.previewInformation || item.bandPreview),
 );
@@ -114,21 +124,20 @@ async function openBrowserPage(url: string) {
 {#snippet treeItemButtons()}
   {#if primaryButtons.length || pinPage || itemActions || item.previewInformation || item.bandPreview}
 <div class="item-buttons">
-  {#each primaryButtons as button}
-    {@render treeItemButton(button)}
-  {/each}
-  {#if pinPage}<BcxPinButton page={pinPage} iconOnly />{/if}
-  {#each browserButtons as button}
-    {@render treeItemButton(button)}
-  {/each}
-  {#if browserButton}{@render treeItemButton(browserButton)}{/if}
-  {#if itemActions}
-    {@render itemActions(item)}
-  {:else if item.bandPreview}
-    <BcxPreviewItemActions url={createItemUrl(item.bandPreview.url)} image={item.bandPreview.image ?? item.image} name={item.bandPreview.name} kind="band" copyValue={item.bandPreview.name} previewItem={item} iconOnly />
-  {/if}
-  {#if item.previewInformation}
-    <BcxReleaseItemActions {item} information={item.previewInformation} iconOnly />
+  {#if item.bandPreview}
+    <BcxPreviewItemActions url={createItemUrl(item.bandPreview.url)} image={item.bandPreview.image ?? item.image} name={item.bandPreview.name} kind="band" copyValue={item.bandPreview.name} previewItem={item} {onPreview} iconOnly />
+  {:else if item.previewInformation}
+    <BcxReleaseItemActions {item} information={item.previewInformation} {onPreview} iconOnly onFilter={treeFilter?.enabled() ? treeFilter.setQuery : undefined} />
+  {:else}
+    {#each primaryButtons as button}
+      {@render treeItemButton(button)}
+    {/each}
+    {#if pinPage}<BcxPinButton page={pinPage} iconOnly />{/if}
+    {#each browserButtons as button}
+      {@render treeItemButton(button)}
+    {/each}
+    {#if browserButton}{@render treeItemButton(browserButton)}{/if}
+    {@render itemActions?.(item)}
   {/if}
 </div>
   {/if}
@@ -181,6 +190,7 @@ async function openBrowserPage(url: string) {
 
 {@render treeItemImage(item)}
 <span class="item-label-content">
+  {#if item.labelPrefix}<span class="item-label-prefix text-gray-400">{item.labelPrefix}</span>{/if}
   <span class="item-label">{item.label}</span>
   {#if item.price}
     <span class="item-price text-gray-300 text-xs">{item.price}</span>
@@ -197,7 +207,7 @@ async function openBrowserPage(url: string) {
 </span>
 {#if showActions}
 <div class="item-actions ml-auto flex gap-1 flex-shrink-0" role="presentation">
-  {@render treeItemButtons()}
+  {#if showButtons}{@render treeItemButtons()}{/if}
   {#if childrenCount > 0}
     <span class="item-count text-gray-400">{childrenCount}</span>
   {/if}
@@ -211,9 +221,10 @@ async function openBrowserPage(url: string) {
   width: 25px;
   height: 25px;
   display: inline-flex;
+  align-self: flex-start;
   align-items: center;
   justify-content: center;
-  margin-top: 0.125rem;
+  margin-top: 0.25rem;
   margin-right: 0.5rem;
 }
 
@@ -265,6 +276,13 @@ async function openBrowserPage(url: string) {
   word-break: break-word;
 }
 
+.item-label-prefix {
+  font-size: 0.75rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
 .item-url {
   font-size: 0.75rem;
   line-height: 1rem;
@@ -281,6 +299,7 @@ async function openBrowserPage(url: string) {
 }
 
 .item-actions {
+  align-self: flex-start;
   padding-right: 5px;
 }
 

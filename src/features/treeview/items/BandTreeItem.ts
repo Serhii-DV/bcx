@@ -7,10 +7,9 @@ import {
   items,
   linkOpen,
   linkOpenPage,
-  searchQuery,
   TreeItemBuilder,
 } from '../TreeItemBuilder';
-import { ICON_INFO, ICON_TAG, ICON_TAGS } from '../utils/icon';
+import { ICON_INFO, ICON_TAGS } from '../utils/icon';
 import { withReleaseCatalog } from './releaseCatalog';
 
 export class BandTreeItem {
@@ -34,7 +33,7 @@ export class BandTreeItem {
         items('Years', []),
       );
     }
-    builder.add(this.createBandTags(band), this.createBandAbout(band));
+    builder.add(this.createBandTags(), this.createBandAbout(band));
 
     const item = builder.build();
     return options.catalogPlaceholders || !band.hasReleases
@@ -42,37 +41,9 @@ export class BandTreeItem {
       : withReleaseCatalog(item, band.metadata.releases, { groupByYear: true });
   }
 
-  static createBandTags(band: Band): TreeItem {
-    const releasesByTag = new Map<string, Set<string>>();
-    const releases = [
-      ...band.metadata.albums.map((album) => ({
-        key: `album:${album.id}`,
-        tags: album.metadata?.keywords ?? [],
-      })),
-      ...band.metadata.trackReleases.map((track) => ({
-        key: `track:${track.id}`,
-        tags: track.metadata?.keywords ?? [],
-      })),
-    ];
-    for (const release of releases) {
-      for (const tag of release.tags) {
-        const matches = releasesByTag.get(tag) ?? new Set<string>();
-        matches.add(release.key);
-        releasesByTag.set(tag, matches);
-      }
-    }
+  static createBandTags(): TreeItem {
     return {
-      ...items(
-        'Tags',
-        [...releasesByTag.keys()].sort().map((tag) => ({
-          ...searchQuery(tag).build(),
-          childrenCount: releasesByTag.get(tag)?.size ?? 0,
-        })),
-      )
-        .withImage(ICON_TAGS)
-        .withChildrenImage(ICON_TAG)
-        .asTree()
-        .build(),
+      ...items('Tags', []).withImage(ICON_TAGS).asTree().build(),
       hasChildren: true,
     };
   }

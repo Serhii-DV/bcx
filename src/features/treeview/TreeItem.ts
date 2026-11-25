@@ -1,3 +1,4 @@
+import type { RawPriceData } from 'src/bandcamp/domain/price';
 import type { BandPreview } from './BandPreview';
 import type { ReleaseCatalog } from './items/releaseCatalog';
 import type { ReleaseInformation, ReleasePreview } from './ReleasePreview';
@@ -31,7 +32,9 @@ export interface TreeItem {
   id?: string;
   entityId?: number;
   label?: string;
+  labelPrefix?: string;
   price?: string;
+  priceGroup?: RawPriceData;
   children?: TreeItem[];
   childrenCount?: number;
   hasChildren?: boolean;

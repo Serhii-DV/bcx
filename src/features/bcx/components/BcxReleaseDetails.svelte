@@ -24,11 +24,14 @@ import {
   ICON_MIC,
   ICON_TAGS,
 } from 'src/features/treeview/utils/icon';
+import { formatTelegramHashtag } from 'src/utils/telegramHashtag';
 import { type Snippet, untrack } from 'svelte';
 import { musicFilterStore } from '../stores/musicFilter';
 import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
-import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
+import BcxPreviewItemActions, {
+  type CopyItem,
+} from './BcxPreviewItemActions.svelte';
 import BcxReleaseItemActions from './BcxReleaseItemActions.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxTreePanel from './BcxTreePanel.svelte';
@@ -77,6 +80,25 @@ let bandLinks = $state<Awaited<ReturnType<typeof loadReleaseBandLinks>>>({
 });
 let bandLinksError = $state('');
 let artistNames = $derived(getReleaseArtistNames(information));
+let additionalCopyItems = $derived.by(() => {
+  const copyItems: CopyItem[] = [];
+  const hashtag = formatTelegramHashtag(information.artist);
+  if (hashtag) copyItems.push({ label: 'Copy artist hashtag', value: hashtag });
+
+  const publisher = information.publisher?.trim();
+  const publisherMatchesArtist = [information.artist, ...artistNames].some(
+    (artist) => artist.trim().toLowerCase() === publisher?.toLowerCase(),
+  );
+  const labelName =
+    bandLinks.publisher?.name.trim() ||
+    (publisherMatchesArtist ? undefined : publisher);
+  const bandPageName = bandLinks.parent?.name.trim() || publisher;
+  if (labelName) copyItems.push({ label: 'Copy label name', value: labelName });
+  else if (bandPageName)
+    copyItems.push({ label: 'Copy band page name', value: bandPageName });
+
+  return copyItems;
+});
 function artistLinks(name: string): BandLinkProfile[] {
   return bandLinks.detectedArtists.filter(
     (band) => band.name.trim().toLowerCase() === name.trim().toLowerCase(),
@@ -235,12 +257,13 @@ let dates = $derived(
 
 {#snippet parentActions()}
   {#if bandLinks.parent}
-    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} menuLabel={bandLinks.parent.name} kind={bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'} copyValue={bandLinks.parent.name} previewItem={bandPreviewItem(bandLinks.parent)} toolbar />
+    {@const kind = bandLinks.publisher?.url.hasSameHostname(bandLinks.parent.url) ? 'label' : 'band'}
+    <BcxPreviewItemActions url={bandLinks.parent.url} image={bandLinks.parent.image} name={bandLinks.parent.name} menuLabel={bandLinks.parent.name} {kind} copyValue={bandLinks.parent.name} copyLabelHashtag={kind === 'label'} previewItem={bandPreviewItem(bandLinks.parent)} toolbar />
   {/if}
 {/snippet}
 
 {#snippet releaseActions()}
-  <BcxReleaseItemActions {item} {information} keepInPreview toolbar variant="toolbar" relatedActions={parentActions} />
+  <BcxReleaseItemActions {item} {information} keepInPreview toolbar variant="toolbar" relatedActions={parentActions} {additionalCopyItems} />
 {/snippet}
 
 {#snippet releaseNotes()}
@@ -303,7 +326,7 @@ let dates = $derived(
   {#if root.pathKey === 'release-info'}
     <div class="release-info-content bcx-info-scroll">{@render releaseInfo()}</div>
   {:else if root.pathKey === 'artists'}
-    <BcxArtistsPanel {root} {onPreview} />
+    <BcxArtistsPanel {root} {onPreview} splitView />
   {:else if root.pathKey === 'credits'}
     <div class="release-info-content">
       <section class="release-notes" aria-label="Release credits"><h4>Credits</h4><p>{information.credits}</p></section>

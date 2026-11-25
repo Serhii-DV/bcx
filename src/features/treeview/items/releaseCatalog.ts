@@ -15,6 +15,7 @@ import { Track } from 'src/bandcamp/domain/track/track';
 import { console } from 'src/utils/console';
 import { AlbumTreeItemFactory } from '../factories/AlbumTreeItemFactory';
 import { TrackTreeItemFactory } from '../factories/TrackTreeItemFactory';
+import { getReleaseArtistNames } from '../ReleasePreview';
 import { formatReleasePrice, getReleasePrice } from '../releasePrice';
 import { TREE_ITEM_LAYOUT, type TreeItem } from '../TreeItem';
 import { items } from '../TreeItemBuilder';
@@ -24,6 +25,7 @@ import {
   ICON_CALENDAR_DAYS,
   ICON_DISC,
   ICON_MIC,
+  ICON_TAG,
 } from '../utils/icon';
 import { createPagedTreeItem } from './createPagedTreeItem';
 import { RELEASE_BATCH_SIZE } from './pagedReleasesTreeItem';
@@ -38,6 +40,8 @@ export interface ReleaseCatalog {
   prices?: Array<RawPriceData | null>;
   addedYearSource?: 'collection' | 'wishlist';
   groupByYear?: boolean;
+  groupPricesByCurrency?: boolean;
+  useReleaseArtworkForArtists?: boolean;
   paginateReleases?: boolean;
   showReleaseDate?: boolean;
 }
@@ -75,6 +79,9 @@ export function withReleaseCatalog(
 export function restoreReleaseCatalog(item: TreeItem): TreeItem {
   const catalog = item.releaseCatalog;
   if (!catalog) return item;
+  const isFanCatalog = !!catalog.addedYearSource;
+  const useReleaseArtwork = catalog.useReleaseArtworkForArtists ?? isFanCatalog;
+  const groupPricesByCurrency = catalog.groupPricesByCurrency ?? !isFanCatalog;
   const savedAlbums = catalog.albums.map((album) =>
     AlbumFactory.fromRawData(album),
   );
@@ -124,6 +131,12 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         : undefined);
     return {
       ...release,
+      keywords: [
+        ...(release.keywords ?? []),
+        ...(release.previewInformation
+          ? getReleaseArtistNames(release.previewInformation)
+          : []),
+      ],
       price: formatReleasePrice(priceByRelease.get(album)),
       timestamp: addedAt
         ? { label: 'Added', dateTime: addedAt }
@@ -132,15 +145,19 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     };
   };
   const artistGroups = [...groupReleasesByArtist(releases)].map(
-    ([name, releases]) => ({
-      ...createReleaseGroup(name, releases, createReleaseItem),
-      includeInFilterSuggestions: true,
-    }),
+    ([name, artistReleases]) => {
+      const artwork = artistReleases[0]?.artwork;
+      return {
+        ...createReleaseGroup(name, artistReleases, createReleaseItem),
+        image:
+          useReleaseArtwork && artwork && artwork.id > 0
+            ? artwork.smallSizeUrl
+            : ICON_MIC,
+        includeInFilterSuggestions: true,
+      };
+    },
   );
-  const artists = items('Artists', artistGroups)
-    .withImage(ICON_MIC)
-    .withChildrenImage(ICON_MIC)
-    .build();
+  const artists = items('Artists', artistGroups).withImage(ICON_MIC).build();
   const collator = new Intl.Collator(undefined, {
     numeric: true,
     sensitivity: 'base',
@@ -186,6 +203,33 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     ),
   ];
 
+  const tagsRoot = item.children?.find((child) => child.label === 'Tags');
+  if (tagsRoot) {
+    const releasesByTag = new Map<string, BandRelease[]>();
+    for (const release of releases) {
+      for (const tag of new Set(release.metadata?.keywords)) {
+        const matches = releasesByTag.get(tag) ?? [];
+        matches.push(release);
+        releasesByTag.set(tag, matches);
+      }
+    }
+    const groups = [...releasesByTag.keys()].sort().map((tag) => ({
+      ...createReleaseGroup(
+        tag,
+        releasesByTag.get(tag) ?? [],
+        createReleaseItem,
+      ),
+      image: ICON_TAG,
+      includeInFilterSuggestions: true,
+    }));
+    roots.push({
+      ...tagsRoot,
+      children: groups,
+      childrenCount: groups.length,
+      hasChildren: true,
+    });
+  }
+
   if ((catalog.groupByYear || catalog.addedYearSource) && releases.length > 0) {
     const createReleaseYears = (years: Map<string, number>): TreeItem => {
       const root = createYearsRoot(
@@ -193,7 +237,6 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         releases,
         (album) => years.get(album.url?.toString() ?? ''),
         createReleaseItem,
-        true,
       );
       if (!root) throw new Error('Release year groups are missing.');
       if (catalog.groupByYear) {
@@ -239,14 +282,13 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         return addedAt ? new Date(addedAt).getUTCFullYear() : undefined;
       },
       createReleaseItem,
-      catalog.addedYearSource === 'wishlist',
     );
     if (addedYears) roots.push(addedYears);
   }
   if (releases.length > 0) {
     const priceGroups = new Map<
       string,
-      { amount: number; currency: string; releases: BandRelease[] }
+      RawPriceData & { releases: BandRelease[] }
     >();
     const unknown: BandRelease[] = [];
     for (const release of releases) {
@@ -268,17 +310,19 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
         : a.currency.localeCompare(b.currency) || a.amount - b.amount,
     );
     for (const [label, group] of orderedPrices) {
+      const { amount, currency, releases } = group;
       const priceGroup = {
-        ...createReleaseGroup(label, group.releases, createReleaseItem),
+        ...createReleaseGroup(label, releases, createReleaseItem),
         image: ICON_BANKNOTE,
+        priceGroup: { amount, currency },
         pathKey: `price-${encodeURIComponent(label).replaceAll('.', '%2E')}`,
       };
-      if (group.amount === 0) {
+      if (!groupPricesByCurrency || amount === 0) {
         groups.push(priceGroup);
       } else {
-        const prices = currencies.get(group.currency) ?? [];
+        const prices = currencies.get(currency) ?? [];
         prices.push(priceGroup);
-        currencies.set(group.currency, prices);
+        currencies.set(currency, prices);
       }
     }
     for (const [currency, prices] of currencies) {
@@ -387,7 +431,6 @@ function createYearsRoot(
   releases: BandRelease[],
   getYear: (album: BandRelease) => number | undefined,
   createReleaseItem: (album: BandRelease) => TreeItem,
-  includeUnknown: boolean = false,
 ): TreeItem | null {
   const releasesByYear = new Map<number, BandRelease[]>();
   const unknown: BandRelease[] = [];
@@ -413,7 +456,7 @@ function createYearsRoot(
       image: ICON_CALENDAR_DAYS,
       pathKey: `year-${year}`,
     }));
-  if (includeUnknown && unknown.length > 0) {
+  if (unknown.length > 0) {
     groups.push({
       ...createReleaseGroup('Unknown year', unknown, createReleaseItem),
       image: ICON_CALENDAR_DAYS,

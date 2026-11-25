@@ -100,12 +100,11 @@ function setNavigationExpanded(expanded: boolean) {
 const mainContentId = $props.id();
 let sectionTreeDataById: Record<string, TreeData> = $state({});
 let releaseVisitedById: Record<string, boolean> = $state({});
-let requestedPreviewSectionId = $state('');
+let requestedPreviewSections = $state<Record<string, boolean>>({});
 let openedPreviews = $state<
   { id: string; item: TreeItem; pinnedPage?: PinnedPage }[]
 >([]);
 let previewVisitedById: Record<string, boolean> = $state({});
-let selectedPreviewItem = $state<TreeItem>();
 let closedPageSectionIds = $state<string[]>([]);
 const additionalPreviews = $derived(
   openedPreviews.filter(({ item }) => !findPagePreviewSection(item)),
@@ -177,7 +176,6 @@ async function closePreview(id: string) {
   );
   const index = destinations.findIndex((section) => section.id === id);
   const pageSection = sections.find((section) => section.id === id);
-  const closed = openedPreviews.find((preview) => preview.id === id);
   if (pageSection) {
     closedPageSectionIds = [...closedPageSectionIds, id];
     openedPreviews = openedPreviews.filter(
@@ -190,16 +188,14 @@ async function closePreview(id: string) {
   const remaining = destinations.filter((section) => section.id !== id);
   const next = remaining[Math.min(index, remaining.length - 1)];
   if (selectedSectionId === id) selectedSectionId = next?.id ?? dashboardTabId;
-  const closedItem = pageSection?.releasePreview ?? closed?.item;
-  if (
-    selectedPreviewItem &&
-    (closedItem
-      ? getItemPreviewId(selectedPreviewItem) === getItemPreviewId(closedItem)
-      : pageSection && findPagePreviewSection(selectedPreviewItem)?.id === id)
-  )
-    selectedPreviewItem = undefined;
   await tick();
   mainNavigation?.focusSelected();
+}
+
+function openItem(item: TreeItem): string {
+  const id = keepPreview(item);
+  selectedSectionId = id;
+  return id;
 }
 
 const selectedPinId = $derived.by(() => {
@@ -292,6 +288,8 @@ const accountSyncJob = $derived(
     : undefined,
 );
 let sectionFilterQueryById: Record<string, string> = $state({});
+let sectionVisibleCountById: Record<string, number> = $state({});
+let sectionTotalCountById: Record<string, number> = $state({});
 let currentSections: SidePanelSection[] | null = null;
 let sectionLoadGeneration = 0;
 const sectionRequests = new Map<string, number>();
@@ -429,11 +427,12 @@ function containsPreviewItems(items: TreeItem[]): boolean {
 }
 
 const showPreview = $derived.by(() => {
+  if (requestedPreviewSections[selectedSectionId]) return true;
   if (additionalPreviews.some((preview) => preview.id === selectedSectionId))
-    return requestedPreviewSectionId === selectedSectionId;
+    return false;
   const section = sections.find((section) => section.id === selectedSectionId);
   if (!section || section.label === 'Following Genres') return false;
-  if (section.releasePreview) return requestedPreviewSectionId === section.id;
+  if (section.releasePreview) return false;
   const data = sectionTreeDataById[section.id];
   return data ? containsPreviewItems(data.items) : true;
 });
@@ -665,7 +664,7 @@ $effect(() => {
   sectionLoadGeneration += 1;
   sectionTreeDataById = {};
   releaseVisitedById = {};
-  requestedPreviewSectionId = '';
+  requestedPreviewSections = {};
   sectionLoadingById = {};
   sectionErrorById = {};
   sectionRootPathById = {};
@@ -768,7 +767,7 @@ $effect(() => {
                   {@render closeAction()}
                 {/if}
               {/if}
-              <BcxItemPreviewPanel visible={showPreview} bind:selectedItem={selectedPreviewItem} onPreview={(item) => keepPreview(item)} onShowPreview={() => (requestedPreviewSectionId = selectedSectionId)}>
+              <BcxItemPreviewPanel sectionId={selectedSectionId} visible={showPreview} onOpen={openItem} onShowPreview={() => (requestedPreviewSections[selectedSectionId] = true)}>
               <div id={`${mainContentId}-${dashboardTabId}`} data-bcx-main-section role="region" aria-label="Dashboard" hidden={selectedSectionId !== dashboardTabId} class="bcx-tab-content bcx-info-scroll">
                 {#if selectedSectionId === dashboardTabId}<BcxDashboard errorMessage={dashboardError} onViewHistory={sections.some((section) => section.id === 'history') ? viewHistory : undefined} />{/if}
               </div>
@@ -806,7 +805,7 @@ $effect(() => {
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
                       {#if section.fanSync || section.fanAccount}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} splitCatalogGroups={section.fanSync?.dataset === 'wishlist' || section.fanSync?.dataset === 'collection'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
@@ -820,6 +819,8 @@ $effect(() => {
                       <BcxTreeBrowserFilter
                         bind:value={sectionFilterQueryById[section.id]}
                         suggestions={getTreeDataForSection(section).filterSuggestions}
+                        visibleCount={sectionVisibleCountById[section.id]}
+                        totalCount={sectionTotalCountById[section.id]}
                         onArrowDown={handleSectionFilterArrowDown}
                       />
                       <div class="bcx-section-tree-browser">
@@ -837,6 +838,8 @@ $effect(() => {
                             treeData={getTreeDataForSection(section)}
                             isLoading={isSectionLoading(section)}
                             filterQuery={sectionFilterQueryById[section.id] ?? ''}
+                            bind:visibleCount={sectionVisibleCountById[section.id]}
+                            bind:totalCount={sectionTotalCountById[section.id]}
                             bind:rootPath={sectionRootPathById[section.id]}
                             showBreadcrumb={false}
                             showFilter={false}

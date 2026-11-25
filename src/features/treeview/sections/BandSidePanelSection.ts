@@ -116,7 +116,7 @@ function withReleasePreviews(
           child.label !== `About ${band.name}` &&
           child.label !== 'Tags',
       ),
-      BandTreeItem.createBandTags(band),
+      BandTreeItem.createBandTags(),
       BandTreeItem.createBandAbout(band),
     ],
   };
@@ -125,6 +125,8 @@ function withReleasePreviews(
     band.metadata.releases,
     {
       groupByYear: true,
+      groupPricesByCurrency: false,
+      useReleaseArtworkForArtists: true,
       paginateReleases: false,
       showReleaseDate: true,
     },

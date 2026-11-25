@@ -3,9 +3,9 @@ import {
   Check,
   ChevronDown,
   Disc,
-  Eye,
   Folder,
   Menu,
+  PanelTop,
   Settings2,
   UserRound,
   X,
@@ -247,7 +247,7 @@ async function selectSubsection(id: string) {
       <span data-sidebar-label class="bcx-navigation-label">{section.label}</span>
     </Sidebar.MenuButton>
     {#if section.onClose && sidebar.open}
-      <button type="button" data-sidebar-action class="bcx-navigation-close" aria-label={`Remove ${section.label} from Preview`} title={`Remove ${section.label} from Preview`} onclick={section.onClose}>
+      <button type="button" data-sidebar-action class="bcx-navigation-close" aria-label={`Close ${section.label}`} title={`Close ${section.label}`} onclick={section.onClose}>
         <X size={14} aria-hidden="true" />
       </button>
     {/if}
@@ -281,9 +281,9 @@ async function selectSubsection(id: string) {
       {/if}
       <BcxPinnedNavigation {value} {contentId} {selectedPinId} portal={navigation?.closest('.bcx-side-panel-shell') ?? undefined} tooltipDisabled={toolsMenuOpen || sectionMenu !== null} onPreview={(page) => { const id = onPinPreview?.(page); if (id) void selectSection(id); }} />
       {#if previewSections.length}
-        <div class="bcx-navigation-preview-heading" aria-hidden="true"><Eye size={12} /><span data-sidebar-label>Preview</span></div>
+        <div class="bcx-navigation-preview-heading" aria-hidden="true"><PanelTop size={12} /><span data-sidebar-label>Open items</span></div>
       {/if}
-      <Sidebar.Menu aria-label="Preview">
+      <Sidebar.Menu aria-label="Open items">
         {#each previewSections as section (section.id)}{@render sectionButton(section)}{/each}
       </Sidebar.Menu>
       <Sidebar.Menu>

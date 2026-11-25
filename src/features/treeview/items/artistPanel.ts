@@ -1,5 +1,6 @@
 import { loadSavedBandLinkProfiles } from '../BandPreview';
 import type { TreeItem } from '../TreeItem';
+import { ICON_MIC } from '../utils/icon';
 
 export async function loadCatalogArtistRows(
   root: TreeItem,
@@ -17,7 +18,9 @@ export async function loadCatalogArtistRows(
     return {
       ...artist,
       query: undefined,
-      image: profile?.image,
+      image:
+        profile?.image ??
+        (artist.image === ICON_MIC ? undefined : artist.image),
       showArtwork: true,
       hasChildren: true,
       href: profile?.url.toString(),

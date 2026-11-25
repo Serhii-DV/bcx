@@ -22,6 +22,18 @@ export type CatalogYearSort =
   | 'oldest'
   | 'most-releases'
   | 'fewest-releases';
+export type CatalogPriceSort = 'low-to-high' | 'high-to-low';
+
+function compareHighestPrice(a: TreeItem, b: TreeItem): number {
+  const first = a.priceGroup;
+  const second = b.priceGroup;
+  if (!first || !second) return Number(!first) - Number(!second);
+  return (
+    Number(second.amount === 0) - Number(first.amount === 0) ||
+    first.currency.localeCompare(second.currency) ||
+    second.amount - first.amount
+  );
+}
 
 export function createCatalogArtistComparator(sort: CatalogGroupSort) {
   const collator = new Intl.Collator(undefined, {
@@ -50,6 +62,7 @@ export function sortCatalogGroups(
   artistSort: CatalogGroupSort,
   releaseYearSort: CatalogYearSort,
   addedYearSort: CatalogYearSort,
+  priceSort: CatalogPriceSort = 'low-to-high',
 ): TreeData {
   const releaseCount = (item: TreeItem) =>
     item.childrenCount ?? item.children?.length ?? 0;
@@ -90,6 +103,12 @@ export function sortCatalogGroups(
                 return newestYear(a, b);
             }
           }),
+        };
+      }
+      if (root.label === 'By Prices' && priceSort === 'high-to-low') {
+        return {
+          ...root,
+          children: [...root.children].sort(compareHighestPrice),
         };
       }
       return root;
