@@ -266,16 +266,17 @@ async function copy(value: string) {
   {#if variant === 'toolbar'}
     {#if pageUrl}
       {@const destination = pageUrl}
-      <a class="bcx-section-tab" href={destination} title={`Open ${name} on Bandcamp\n${destination}`} onclick={(event) => void openPage(event, destination)}>
-        <BandcampIcon size={16} class="shrink-0" aria-hidden="true" /><span>Open</span><ExternalLink size={12} class="shrink-0" aria-hidden="true" />
+      <a class="bcx-section-tab" href={destination} aria-label={iconOnly ? `Open ${name} on Bandcamp` : undefined} title={`Open ${name} on Bandcamp\n${destination}`} onclick={(event) => void openPage(event, destination)}>
+        <BandcampIcon size={16} class="shrink-0" aria-hidden="true" />
+        {#if !iconOnly}<span>Open</span><ExternalLink size={12} class="shrink-0" aria-hidden="true" />{/if}
       </a>
     {/if}
-    {#if pinPage}<BcxPinButton page={pinPage} toolbar={true} />{/if}
+    {#if pinPage}<BcxPinButton page={pinPage} toolbar={true} {iconOnly} />{/if}
     {@render relatedActions?.()}
     <DropdownMenu.Root>
       <DropdownMenu.Trigger class="bcx-section-tab" aria-label={`Copy ${kind} details: ${name}`} title={`Copy ${kind} details: ${name}`}>
         {#if copied}<Check size={16} class="shrink-0 text-emerald-300" aria-hidden="true" />{:else}<Copy size={16} aria-hidden="true" />{/if}
-        <span>Copy</span><ChevronDown size={14} aria-hidden="true" />
+        {#if !iconOnly}<span>Copy</span><ChevronDown size={14} aria-hidden="true" />{/if}
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
         <DropdownMenu.Content class="preview-item-menu" align="start" sideOffset={4} strategy="fixed">{@render copyMenuItems()}</DropdownMenu.Content>
@@ -284,7 +285,8 @@ async function copy(value: string) {
     {#if search}
       <DropdownMenu.Root>
         <DropdownMenu.Trigger class="bcx-section-tab" aria-label={`Search ${kind}: ${name}`} title={`Search ${kind}: ${name}`}>
-          <Search size={16} aria-hidden="true" /><span>Search</span><ChevronDown size={14} aria-hidden="true" />
+          <Search size={16} aria-hidden="true" />
+          {#if !iconOnly}<span>Search</span><ChevronDown size={14} aria-hidden="true" />{/if}
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal to={container?.closest('.bcx-side-panel-shell') ?? undefined}>
           <DropdownMenu.Content class="preview-item-menu" align="start" sideOffset={4} strategy="fixed">{@render searchMenuItems()}</DropdownMenu.Content>

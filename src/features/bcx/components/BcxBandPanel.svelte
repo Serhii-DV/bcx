@@ -11,6 +11,7 @@ import {
   ICON_MENU,
 } from 'src/features/treeview/utils/icon';
 import type { Snippet } from 'svelte';
+import BcxBandActions from './BcxBandActions.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxBandReleaseFilters from './BcxBandReleaseFilters.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
@@ -54,12 +55,15 @@ let {
 } = $props();
 let content = $state<HTMLDivElement>();
 let verticalNavigation = $state(false);
+let compactActions = $state(false);
 
 $effect(() => {
   const element = content;
   if (!element) return;
   const measure = () => {
-    verticalNavigation = element.clientWidth >= 640;
+    const width = element.clientWidth;
+    verticalNavigation = width >= 640;
+    compactActions = width < 480;
   };
   const observer = new ResizeObserver(measure);
   observer.observe(element);
@@ -115,6 +119,7 @@ const filterRoots = $derived(
 const releases = $derived(
   treeData?.items.find((item) => item.label === 'Releases'),
 );
+const releasesPath = $derived(releases?.path ?? 'band-releases');
 const hasReleases = $derived(
   (releases?.childrenCount ?? releases?.children?.length ?? 0) > 0,
 );
@@ -204,7 +209,7 @@ let catalog = $derived.by(() => {
   const emptyReleases: TreeItem = {
     label: 'Releases',
     image: releases?.image ?? ICON_DISC,
-    path: releases?.path ?? 'band-releases',
+    path: releasesPath,
     layout: TREE_ITEM_LAYOUT.TREE,
     showChildrenCount: false,
     children: [
@@ -240,7 +245,11 @@ let catalog = $derived.by(() => {
 </script>
 
 {#snippet aboutContent(item: TreeItem)}
-  <BcxBandDetails about={item} {fallbackLocation} {bandUrl} {loading} {error} />
+  <BcxBandDetails about={item} {fallbackLocation} {bandUrl} {loading} {error} showActions={false} />
+{/snippet}
+
+{#snippet bandActions()}
+  {#if bandAbout}<BcxBandActions about={bandAbout} {bandUrl} iconOnly={compactActions} />{/if}
 {/snippet}
 
 {#snippet releaseFilterControls()}
@@ -263,10 +272,10 @@ let catalog = $derived.by(() => {
   {/if}
   <div bind:this={content} class="band-content" class:vertical-navigation={verticalNavigation}>
     {#if viewActions.length}
-      <BcxSectionTabs tabs={viewActions} value={selectedView} label="Band catalog sections" onValueChange={selectView} compactWhenOverflowing={true} hideCountsWhenOverflowing={true} vertical={verticalNavigation} />
+      <BcxSectionTabs tabs={viewActions} value={selectedView} label="Band catalog sections" onValueChange={selectView} navigationActions={bandAbout ? bandActions : undefined} compactWhenOverflowing={true} hideCountsWhenOverflowing={true} vertical={verticalNavigation} />
     {/if}
     <div class="band-catalog">
-      <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" {initialSelectedHref} {aboutContent} sortInToolbar={true} countBadges={true} {navigationInFilter} releaseFilterActions={true} {releaseItemFilter} releaseFilterControls={hasReleases && filterRoots.length ? releaseFilterControls : undefined} releaseFilterPane={filterPaneOpen ? releaseFilterPane : undefined} showFilterNavigation={!navigationInFilter} onNavigationChange={updateNavigation} />
+      <BcxRootSectionTabs treeData={catalog} label="Band catalog sections" defaultRootPath={releasesPath} {initialSelectedHref} {aboutContent} sortInToolbar={true} countBadges={true} {navigationInFilter} releaseFilterActions={true} {releaseItemFilter} releaseFilterControls={hasReleases && filterRoots.length ? releaseFilterControls : undefined} releaseFilterPane={filterPaneOpen ? releaseFilterPane : undefined} showFilterNavigation={!navigationInFilter} onNavigationChange={updateNavigation} />
     </div>
   </div>
 </div>

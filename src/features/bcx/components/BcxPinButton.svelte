@@ -14,6 +14,7 @@ let error = $state('');
 const saved = $derived(
   $pinnedNavigation.items.find((other) => samePinnedPage(page, other)),
 );
+const rowIcon = $derived(iconOnly && !toolbar);
 const label = $derived(`${saved ? 'Unpin' : 'Pin'} ${page.kind}`);
 const disabled = $derived(
   saving || $pinnedNavigation.loading || !!$pinnedNavigation.error,
@@ -43,7 +44,7 @@ async function activate() {
 </script>
 
 <span class="pin-action" class:toolbar>
-  <button type="button" class={iconOnly ? 'item-button pin-icon-button' : 'bcx-section-tab'} {disabled} title={`${label}: ${page.title}`} aria-label={`${label}: ${page.title}`} aria-pressed={!!saved} onclick={(event) => { if (iconOnly) event.stopPropagation(); void activate(); }} onkeydown={(event) => { if (iconOnly) event.stopPropagation(); }} ondblclick={(event) => { if (iconOnly) event.stopPropagation(); }}>
+  <button type="button" class={rowIcon ? 'item-button pin-icon-button' : 'bcx-section-tab'} {disabled} title={`${label}: ${page.title}`} aria-label={`${label}: ${page.title}`} aria-pressed={!!saved} onclick={(event) => { if (rowIcon) event.stopPropagation(); void activate(); }} onkeydown={(event) => { if (rowIcon) event.stopPropagation(); }} ondblclick={(event) => { if (rowIcon) event.stopPropagation(); }}>
     <Pin size={iconOnly || toolbar ? 16 : 14} fill={saved ? 'currentColor' : 'none'} aria-hidden="true" />{#if !iconOnly}<span>{toolbar ? (saved ? 'Unpin' : 'Pin') : label}</span>{/if}
   </button>
   {#if error}<span role="alert" class="pin-error">{error}<button type="button" class="item-button" onclick={(event) => { event.preventDefault(); event.stopPropagation(); void activate(); }}>Retry</button></span>{/if}

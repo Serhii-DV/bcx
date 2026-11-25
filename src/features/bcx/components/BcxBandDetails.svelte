@@ -4,8 +4,8 @@ import { releaseLink } from 'src/bandcamp/domain/album/releaseNotes';
 import { Url } from 'src/core/url';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { countryFlagCodeFromLocation } from 'src/features/treeview/utils/countryFlag';
+import BcxBandActions from './BcxBandActions.svelte';
 import BcxItemDetailsLayout from './BcxItemDetailsLayout.svelte';
-import BcxPreviewItemActions from './BcxPreviewItemActions.svelte';
 import BcxPreviewLink from './BcxPreviewLink.svelte';
 import { createItemUrl } from './itemUrl';
 
@@ -15,38 +15,18 @@ let {
   bandUrl,
   loading = false,
   error = '',
+  showActions = true,
 }: {
   about: TreeItem;
   fallbackLocation?: string;
   bandUrl?: string;
   loading?: boolean;
   error?: string;
+  showActions?: boolean;
 } = $props();
 let profile = $derived(about.aboutProfile);
 let bandName = $derived(profile?.name ?? about.label ?? 'Band');
 let pageUrl = $derived(createItemUrl(bandUrl ?? profile?.url));
-const bandActionProps = $derived({
-  url: pageUrl,
-  image: profile?.image,
-  name: bandName,
-  kind: 'band' as const,
-  copyValue: bandName,
-  keepInPreview: true,
-  previewItem: pageUrl
-    ? {
-        label: bandName,
-        href: pageUrl.toString(),
-        image: profile?.image,
-        bandPreview: {
-          id: profile?.id,
-          name: bandName,
-          url: pageUrl.toString(),
-          image: profile?.image,
-          cached: false,
-        },
-      }
-    : undefined,
-});
 let biography = $derived(
   profile?.biography
     ?.trim()
@@ -120,7 +100,7 @@ let catalogYears = $derived(
 {/snippet}
 
 {#snippet bandToolbar()}
-  <BcxPreviewItemActions {...bandActionProps} variant="toolbar" toolbar={true} copyLabelHashtag />
+  <BcxBandActions {about} {bandUrl} />
 {/snippet}
 
 <BcxItemDetailsLayout
@@ -134,7 +114,7 @@ let catalogYears = $derived(
   compactImage={true}
   imageScale={2}
   details={bandInformation}
-  actions={bandToolbar}
+  actions={showActions ? bandToolbar : undefined}
   actionsBeforeHeader={true}
   detailsLabel="Detailed band information"
   {loading}

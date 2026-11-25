@@ -236,9 +236,6 @@ async function handleCloseAutoFocus(event: Event) {
 {/snippet}
 
 {#snippet navigationButtons()}
-    {#if navigationActions}
-      <div bind:this={navigationActionsElement} class="bcx-navigation-actions" role="group" aria-label="Page actions">{@render navigationActions()}</div>
-    {/if}
     {#each visibleTabs as tab (tab.id)}
       {#if tab.sortOptions}
         <div class="bcx-sort-tab-group">
@@ -296,6 +293,9 @@ async function handleCloseAutoFocus(event: Event) {
         </Tabs.Trigger>
       {/if}
     {/each}
+    {#if navigationActions}
+      <div bind:this={navigationActionsElement} class="bcx-navigation-actions" role="group" aria-label="Page actions">{@render navigationActions()}</div>
+    {/if}
 {/snippet}
 
 <div bind:this={bar} class="bcx-section-tabs" class:vertical class:compact class:icon-only={iconOnly} class:hide-counts={hideCounts} class:action-navigation={!!onValueChange} class:has-navigation-actions={!!navigationActions} class:wrap-actions={wrapActions} class:actions-only={!tabs.length} role={tabs.length ? undefined : 'group'} aria-label={tabs.length ? undefined : label}>
@@ -548,7 +548,7 @@ async function handleCloseAutoFocus(event: Event) {
     overflow-y: auto;
   }
   .vertical :global(.bcx-visible-tabs) { flex: 0 0 auto; flex-direction: column; flex-wrap: nowrap; min-width: 0; overflow: visible; }
-  .vertical .bcx-navigation-actions { flex-direction: column; align-items: stretch; max-width: 100%; width: 100%; margin-bottom: 4px; }
+  .vertical .bcx-navigation-actions { flex-direction: column; align-items: stretch; max-width: 100%; width: 100%; margin-top: 4px; }
   .vertical .bcx-navigation-actions :global(.bcx-section-tab) { width: 100%; max-width: none; justify-content: flex-start; }
   .vertical.has-navigation-actions :global(.bcx-visible-tabs) { align-items: stretch; }
   .vertical :global(.bcx-visible-tabs > .bcx-section-tab) { max-width: none; justify-content: flex-start; }

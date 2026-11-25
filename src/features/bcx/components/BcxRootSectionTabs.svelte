@@ -138,6 +138,7 @@ let {
   treeData,
   label,
   initialSelectedHref,
+  defaultRootPath,
   sortBands = false,
   aboutContent,
   sectionContent,
@@ -167,6 +168,7 @@ let {
   splitCatalogGroups?: boolean;
   label: string;
   initialSelectedHref?: string;
+  defaultRootPath?: string;
   sortBands?: boolean;
   aboutContent?: Snippet<[TreeItem]>;
   sectionContent?: Snippet<[TreeItem]>;
@@ -569,7 +571,8 @@ function setPriceSort(id: string) {
 
 $effect(() => {
   if (!tabs.some((tab) => tab.id === selectedRoot)) {
-    selectedRoot = tabs[0]?.id ?? '';
+    const defaultTab = tabs.find((tab) => tab.id === defaultRootPath);
+    selectedRoot = defaultTab?.id ?? tabs[0]?.id ?? '';
   }
   if (selectedRoot) visitedRoots[selectedRoot] = true;
 });
