@@ -1,3 +1,7 @@
+<script module lang="ts">
+let filterPaneOpen = $state(false);
+</script>
+
 <script lang="ts">
 import { ListFilter } from '@lucide/svelte';
 import { TreeData } from 'src/features/treeview/TreeData';
@@ -79,7 +83,6 @@ let selections = $state.raw<BandReleaseFilterSelection[]>([]);
 const filterButtonLabel = $derived(
   selections.length ? `Filters, ${selections.length} selected` : 'Filters',
 );
-let filterPaneOpen = $state(false);
 let filterCategory = $state<BandReleaseFilterCategory>('Artists');
 let filterMode = $state<BandReleaseFilterMode>(DEFAULT_FILTER_MODE);
 let filterValueQuery = $state('');
@@ -106,7 +109,6 @@ $effect(() => {
   lastBandIdentity = bandIdentity;
   selections = [];
   appliedFilter = undefined;
-  filterPaneOpen = false;
   filterCategory = 'Artists';
   filterMode = DEFAULT_FILTER_MODE;
   filterValueQuery = '';
