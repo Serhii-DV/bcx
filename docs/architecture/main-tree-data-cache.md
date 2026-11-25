@@ -115,11 +115,12 @@ the selected filter category. The right pane keeps the release list, search,
 and sort. Multi-select matches any selected value within a category and requires
 a match in every active category. Single select is the default and limits the
 selection to one value across all categories.
-Wishlist and Collection use the Artists split layout for By Release Year, By
-Prices, and By Year Added, including an Unknown year group for releases without
-a saved date. Groups remain visible beside the selected group's releases, and
-price lists sort amounts within each currency. Selecting a release updates the
-bottom preview.
+Wishlist and Collection use the same Releases filter pane for Artists, By
+Release Year, By Year Added, and By Prices. By Year Added includes an Unknown
+year option for releases without a saved date. Price lists sort amounts within
+each currency. Collection builds filtered results from all releases in the
+selected sort order and keeps its loaded pages for unfiltered browsing.
+Selecting a release updates the bottom preview.
 
 Following Bands stores every loaded band in its tree snapshot without pagination.
 Snapshot version 15 invalidates older snapshots that predate the Latest added,
@@ -221,11 +222,10 @@ artist values, ignoring case and repeated whitespace, exclude the current URL,
 and retain each distinct saved destination. They open the saved release page and
 show the hosting band's name and image, falling back to its subdomain and release
 artwork. These additional dropdowns follow the artist/label dropdowns.
-Release, Band, Wishlist, and Collection Artists views use `BcxArtistsPanel` for
-artwork rows, filtering, sorting, and artist actions. Catalog views enrich their
-existing artist groups with saved profile information at render time. The main
-Release panel, bottom Release Preview, Band, Wishlist, and Collection keep a
-compact artist list beside the release list at every width.
+The main Release panel and bottom Release Preview use `BcxArtistsPanel` for
+artwork rows, filtering, sorting, and artist actions. These views enrich artist
+groups with saved profile information at render time and keep a compact artist
+list beside the release list at every width.
 A click or Enter loads the selected artist's releases while the artist list
 retains its filter and scroll position. The releases pane starts with an artist
 row that uses the standard band preview and menu for saved profiles, or Copy and
@@ -236,10 +236,8 @@ active browser tab when available, without entering its subitems. Artists withou
 a saved page URL remain selected. Artist, release, and band rows use native
 browser titles for interaction hints in both the shared browser and nested tree
 renderer. This includes Releases, History, Wishlist, Collection, and Following
-Bands, grouped views, and history entries without saved preview data. Catalog
-artists browse only the
-releases in that catalog without applying the global music filter. Release views
-retain their related saved releases. Artist groups keep
+Bands, grouped views, and history entries without saved preview data. Release
+views retain their related saved releases. Artist groups keep
 their release timestamps and lazy loaders. Sorting applies after lazy roots load
 and retains the mounted browser, filter, and current artist. Profile enrichment
 does not change subtree snapshots, cache keys, or expiry.

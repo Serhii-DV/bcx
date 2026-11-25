@@ -174,8 +174,19 @@ let releaseFieldFilter = $derived(
   enableReleaseFilterActions &&
     matchesReleaseFilter({}, itemFilterQuery) !== undefined,
 );
+const hasItemFilter = $derived(!!itemFilter);
+const allLevelItems = $derived.by(() => {
+  if (!hasItemFilter || !currentRootItem?.getAllChildren) return;
+  return generateTreeHierarchy(
+    currentRootItem.getAllChildren(),
+    (currentRootItem.level ?? 0) + 1,
+    currentRootItem.path,
+  );
+});
 const matchingLevelItems = $derived(
-  itemFilter ? currentLevelItems.filter(itemFilter) : currentLevelItems,
+  itemFilter
+    ? (allLevelItems ?? currentLevelItems).filter(itemFilter)
+    : currentLevelItems,
 );
 let filteredLevelItems = $derived(
   releaseFieldFilter

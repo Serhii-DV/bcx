@@ -75,6 +75,7 @@ export interface TreeItem {
     onUpdate?: (value: TreeItem[] | TreeItem | null) => void,
   ) => Promise<TreeItem[] | TreeItem | null>;
   filterSearch?: (query: string) => Promise<TreeItemFilterSearchResult>;
+  getAllChildren?: () => TreeItem[];
   releaseCatalog?: ReleaseCatalog;
   releasePreview?: boolean;
   itemPreview?: boolean;

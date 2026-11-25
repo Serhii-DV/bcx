@@ -19,9 +19,7 @@ import BcxSectionTabs from './BcxSectionTabs.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import {
   type CatalogGroupSort,
-  type CatalogPriceSort,
   type CatalogYearSort,
-  catalogPriceSortOptions,
   catalogYearSortOptions,
   createCatalogGroupSortOptions,
   createRootSectionTabs,
@@ -45,22 +43,6 @@ const splitSections: Readonly<
     { groupLabel: string; itemLabel?: string; emptyMessage: string }
   >
 > = {
-  Tags: {
-    groupLabel: 'Tags',
-    emptyMessage: 'Select a tag to see its releases.',
-  },
-  'Release years': {
-    groupLabel: 'Years',
-    emptyMessage: 'Select a year to see its releases.',
-  },
-  'Added years': {
-    groupLabel: 'Years added',
-    emptyMessage: 'Select a year to see the releases added that year.',
-  },
-  'By Prices': {
-    groupLabel: 'Prices',
-    emptyMessage: 'Select a price to see its releases.',
-  },
   'Followed by Year': {
     groupLabel: 'Years followed',
     itemLabel: 'Followed bands',
@@ -159,14 +141,12 @@ let {
   releaseFilterControls,
   releaseFilterPane,
   releaseItemFilter,
-  splitCatalogGroups = false,
 }: {
   treeData: TreeData;
   releaseFilterActions?: boolean;
   releaseFilterControls?: Snippet;
   releaseFilterPane?: Snippet;
   releaseItemFilter?: (item: TreeItem) => boolean;
-  splitCatalogGroups?: boolean;
   label: string;
   initialSelectedHref?: string;
   defaultRootPath?: string;
@@ -214,7 +194,6 @@ let countrySort = $state<FollowingBandCountrySort>('az');
 let artistSort = $state<CatalogGroupSort>('az');
 let releaseYearSort = $state<CatalogYearSort>('newest');
 let addedYearSort = $state<CatalogYearSort>('newest');
-let priceSort = $state<CatalogPriceSort>('low-to-high');
 const isReleaseCatalog = $derived(
   treeData.items.some(
     (item) => item.releasePreview && item.label === 'Releases',
@@ -225,13 +204,7 @@ const displayedTreeData = $derived.by(() => {
   return sortBands
     ? sortFollowingBandGroups(treeData, yearSort, countrySort)
     : isReleaseCatalog
-      ? sortCatalogGroups(
-          treeData,
-          artistSort,
-          releaseYearSort,
-          addedYearSort,
-          priceSort,
-        )
+      ? sortCatalogGroups(treeData, artistSort, releaseYearSort, addedYearSort)
       : treeData;
 });
 const tabs = $derived.by(() => {
@@ -282,15 +255,6 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
         onSortChange:
           rootLabel === 'Release years' ? setReleaseYearSort : setAddedYearSort,
         sortOptions: catalogYearSortOptions,
-      };
-    }
-    if (splitCatalogGroups && isReleaseCatalog && rootLabel === 'By Prices') {
-      return {
-        ...labeledTab,
-        sortValue: priceSort,
-        sortLabel: 'Sort prices',
-        onSortChange: setPriceSort,
-        sortOptions: catalogPriceSortOptions,
       };
     }
     if (!sortBands) return labeledTab;
@@ -504,10 +468,6 @@ function setAddedYearSort(id: string) {
   if (isCatalogYearSort(id)) addedYearSort = id;
 }
 
-function setPriceSort(id: string) {
-  if (id === 'low-to-high' || id === 'high-to-low') priceSort = id;
-}
-
 $effect(() => {
   if (!tabs.some((tab) => tab.id === selectedRoot)) {
     const defaultTab = tabs.find((tab) => tab.id === defaultRootPath);
@@ -568,7 +528,7 @@ $effect(() => {
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
           {@const isReleaseRoot = root?.label === 'Releases' || !!root?.label?.startsWith('Releases: ')}
           {@const hasReleaseControls = !!root?.releasePreview && isReleaseRoot && !!releaseFilterControls}
-          {@const splitSection = root?.label && ((splitCatalogGroups && root.releasePreview) || (sortBands && root.itemPreview)) ? splitSections[root.label] : undefined}
+          {@const splitSection = sortBands && root?.itemPreview && root.label ? splitSections[root.label] : undefined}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
           {#snippet filterControls()}
             {#if navigationInFilter && !navigationInToolbar}
@@ -578,7 +538,7 @@ $effect(() => {
               {@render releaseFilterControls?.()}
             {/if}
             {#if toolbarSorting && navigationItem?.sortOptions?.length}
-              <BcxSectionSort item={navigationItem} iconOnly={!!splitSection || (splitCatalogGroups && !!root?.releasePreview && root.label === 'Artists')} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
+              <BcxSectionSort item={navigationItem} iconOnly={!!splitSection} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
           {/snippet}
           <div class="bcx-section-tree-browser" class:release-catalog-results={releaseFilterActions && isReleaseRoot}>
@@ -601,7 +561,6 @@ $effect(() => {
               <BcxArtistsPanel
                 root={treeData.items.find((item) => item.path === tabId) ?? root}
                 catalog={true}
-                splitView={splitCatalogGroups}
                 catalogSort={artistSort}
                 filterActions={filterControls}
                 bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}

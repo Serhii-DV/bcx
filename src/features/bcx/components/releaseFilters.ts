@@ -97,7 +97,7 @@ export type ReleaseFilterDefinition = (typeof releaseFilterCategories)[number];
 export const bandReleaseFilterCategories = releaseFilterCategories.filter(
   ({ rootLabel }) => rootLabel !== 'Added years',
 );
-export const wishlistReleaseFilterCategories = releaseFilterCategories.filter(
+export const fanReleaseFilterCategories = releaseFilterCategories.filter(
   ({ rootLabel }) => rootLabel !== 'Tags',
 );
 

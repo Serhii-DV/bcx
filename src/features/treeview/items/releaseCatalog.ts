@@ -170,20 +170,30 @@ export function restoreReleaseCatalog(item: TreeItem): TreeItem {
     orderedReleases: () => BandRelease[],
     lazy = true,
   ): TreeItem => {
-    const create = () =>
-      catalog.paginateReleases === false
-        ? items(label, orderedReleases().map(createReleaseItem))
-            .withImage(ICON_DISC)
-            .build()
-        : createPagedTreeItem({
-            items: orderedReleases(),
-            batchSize: RELEASE_BATCH_SIZE,
-            errorContext: '[Release catalog]',
-            errorMessage: 'Failed to load more releases:',
-            image: ICON_DISC,
-            label,
-            createChildren: (releases) => releases.map(createReleaseItem),
-          });
+    const create = () => {
+      const ordered = orderedReleases();
+      if (catalog.paginateReleases === false) {
+        return items(label, ordered.map(createReleaseItem))
+          .withImage(ICON_DISC)
+          .build();
+      }
+
+      const root = createPagedTreeItem({
+        items: ordered,
+        batchSize: RELEASE_BATCH_SIZE,
+        errorContext: '[Release catalog]',
+        errorMessage: 'Failed to load more releases:',
+        image: ICON_DISC,
+        label,
+        createChildren: (releases) => releases.map(createReleaseItem),
+      });
+      if (ordered.length > RELEASE_BATCH_SIZE) {
+        let allChildren: TreeItem[] | undefined;
+        root.getAllChildren = () =>
+          (allChildren ??= ordered.map(createReleaseItem));
+      }
+      return root;
+    };
     if (!lazy) return create();
     return items(label, [])
       .withImage(ICON_DISC)
