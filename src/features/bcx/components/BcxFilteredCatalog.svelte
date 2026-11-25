@@ -2,34 +2,35 @@
 import { ListFilter } from '@lucide/svelte';
 import { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
-import type { ComponentProps } from 'svelte';
-import BcxReleaseFilters from './BcxReleaseFilters.svelte';
+import { type ComponentProps, untrack } from 'svelte';
+import BcxCatalogFilters from './BcxCatalogFilters.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import {
-  createReleasePredicate,
-  type ReleaseFilterCategory,
-  type ReleaseFilterDefinition,
-  type ReleaseFilterMode,
-  type ReleaseFilterSelection,
-  type ReleaseFilterSorts,
-} from './releaseFilters';
+  type CatalogFilterCategory,
+  type CatalogFilterDefinition,
+  type CatalogFilterMode,
+  type CatalogFilterSelection,
+  type CatalogFilterSorts,
+  createCatalogPredicate,
+} from './catalogFilters';
 
-const DEFAULT_FILTER_MODE: ReleaseFilterMode = 'single';
+const DEFAULT_FILTER_MODE: CatalogFilterMode = 'single';
 
 let {
   treeData,
   categories,
+  sortBands = false,
   catalogIdentity,
   filterPaneOpen = $bindable(false),
   ...tabs
 }: Omit<
   ComponentProps<typeof BcxRootSectionTabs>,
   | 'releaseFilterActions'
-  | 'releaseFilterControls'
-  | 'releaseFilterPane'
-  | 'releaseItemFilter'
+  | 'catalogFilterControls'
+  | 'catalogFilterPane'
+  | 'catalogItemFilter'
 > & {
-  categories: readonly ReleaseFilterDefinition[];
+  categories: readonly CatalogFilterDefinition[];
   catalogIdentity?: string;
   filterPaneOpen?: boolean;
 } = $props();
@@ -45,21 +46,28 @@ const catalog = $derived(
     treeData.layout,
   ),
 );
-const releases = $derived(
-  catalog.items.find((item) => item.label === 'Releases'),
+const resultsRoot = $derived(
+  catalog.items.find((item) =>
+    sortBands
+      ? item.label === 'Latest added'
+      : item.releasePreview && item.label === 'Releases',
+  ),
 );
-const hasReleases = $derived(
-  !!releases?.releasePreview &&
-    (releases.childrenCount ?? releases.children?.length ?? 0) > 0,
+const hasItems = $derived(
+  !!resultsRoot &&
+    (resultsRoot.childrenCount ?? resultsRoot.children?.length ?? 0) > 0,
 );
-let selections = $state.raw<ReleaseFilterSelection[]>([]);
+let selections = $state.raw<CatalogFilterSelection[]>([]);
 const filterButtonLabel = $derived(
   selections.length ? `Filters, ${selections.length} selected` : 'Filters',
 );
-let filterCategory = $state<ReleaseFilterCategory>('Artists');
-let filterMode = $state<ReleaseFilterMode>(DEFAULT_FILTER_MODE);
+const defaultCategory = $derived(categories[0]?.rootLabel ?? 'Artists');
+let filterCategory = $state<CatalogFilterCategory>(
+  untrack(() => defaultCategory),
+);
+let filterMode = $state<CatalogFilterMode>(DEFAULT_FILTER_MODE);
 let filterValueQuery = $state('');
-let filterSorts = $state.raw<ReleaseFilterSorts>({});
+let filterSorts = $state.raw<CatalogFilterSorts>({});
 let applyingFilters = $state(false);
 let filterApplyFailed = $state(false);
 let filterRetry = $state(0);
@@ -68,7 +76,7 @@ let appliedFilter = $state.raw<{
   identity: string | undefined;
   matches: (item: TreeItem) => boolean;
 }>();
-const releaseItemFilter = $derived(
+const catalogItemFilter = $derived(
   selections.length &&
     appliedFilter?.roots === filterRoots &&
     appliedFilter.identity === catalogIdentity
@@ -82,7 +90,7 @@ $effect(() => {
   lastCatalogIdentity = catalogIdentity;
   selections = [];
   appliedFilter = undefined;
-  filterCategory = 'Artists';
+  filterCategory = defaultCategory;
   filterMode = DEFAULT_FILTER_MODE;
   filterValueQuery = '';
   filterSorts = {};
@@ -93,14 +101,14 @@ $effect(() => {
   const selected = selections;
   const identity = catalogIdentity;
   const roots = filterRoots;
-  const shouldApply = selected.length > 0 && hasReleases;
+  const shouldApply = selected.length > 0 && hasItems;
   filterApplyFailed = false;
   applyingFilters = shouldApply;
   if (!selected.length) appliedFilter = undefined;
   if (!shouldApply) return;
 
   let current = true;
-  void createReleasePredicate(roots, selected)
+  void createCatalogPredicate(roots, selected)
     .then((matches) => {
       if (current) appliedFilter = { roots, identity, matches };
     })
@@ -115,15 +123,15 @@ $effect(() => {
   };
 });
 
-function setFilterMode(mode: ReleaseFilterMode) {
+function setFilterMode(mode: CatalogFilterMode) {
   filterMode = mode;
   if (mode === 'single' && selections.length > 1) {
     selections = selections.slice(-1);
   }
 }
 
-function toggleFilter(category: ReleaseFilterCategory, value: string) {
-  const matches = (selection: ReleaseFilterSelection) =>
+function toggleFilter(category: CatalogFilterCategory, value: string) {
+  const matches = (selection: CatalogFilterSelection) =>
     selection.category === category && selection.value === value;
   if (selections.some(matches)) {
     selections = selections.filter((selection) => !matches(selection));
@@ -134,27 +142,28 @@ function toggleFilter(category: ReleaseFilterCategory, value: string) {
 }
 </script>
 
-{#snippet releaseFilterControls()}
-  <button type="button" class="bcx-section-tab release-filters-trigger" aria-expanded={filterPaneOpen} aria-label={filterButtonLabel} title={filterButtonLabel} onclick={() => { filterPaneOpen = !filterPaneOpen; }}>
+{#snippet catalogFilterControls()}
+  <button type="button" class="bcx-section-tab catalog-filters-trigger" aria-expanded={filterPaneOpen} aria-label={filterButtonLabel} title={filterButtonLabel} onclick={() => { filterPaneOpen = !filterPaneOpen; }}>
     <ListFilter size={14} aria-hidden="true" />
-    <span class="release-filters-label">Filters{selections.length ? ` (${selections.length})` : ''}</span>
+    <span class="catalog-filters-label">Filters{selections.length ? ` (${selections.length})` : ''}</span>
   </button>
 {/snippet}
 
-{#snippet releaseFilterPane()}
-  <BcxReleaseFilters roots={filterRoots} {categories} bind:category={filterCategory} bind:query={filterValueQuery} bind:sorts={filterSorts} mode={filterMode} onModeChange={setFilterMode} {selections} applying={applyingFilters} applyFailed={filterApplyFailed} onToggle={toggleFilter} onClear={() => { selections = []; }} onRetry={() => { filterRetry += 1; }} />
+{#snippet catalogFilterPane()}
+  <BcxCatalogFilters roots={filterRoots} {categories} bind:category={filterCategory} bind:query={filterValueQuery} bind:sorts={filterSorts} mode={filterMode} onModeChange={setFilterMode} {selections} applying={applyingFilters} applyFailed={filterApplyFailed} onToggle={toggleFilter} onClear={() => { selections = []; }} onRetry={() => { filterRetry += 1; }} />
 {/snippet}
 
 <BcxRootSectionTabs
   {...tabs}
   treeData={catalog}
-  releaseFilterActions
-  {releaseItemFilter}
-  releaseFilterControls={hasReleases && filterRoots.length ? releaseFilterControls : undefined}
-  releaseFilterPane={filterPaneOpen ? releaseFilterPane : undefined}
+  {sortBands}
+  releaseFilterActions={!sortBands}
+  {catalogItemFilter}
+  catalogFilterControls={hasItems && filterRoots.length ? catalogFilterControls : undefined}
+  catalogFilterPane={filterPaneOpen ? catalogFilterPane : undefined}
 />
 
 <style>
-.bcx-section-tab.release-filters-trigger { flex: none; min-height: 36px; gap: 0.375rem; padding: 6px 8px; border: 1px solid #4b5563; background: #374151; }
-.release-filters-trigger[aria-expanded='true'] { border-color: #38bdf8; }
+.bcx-section-tab.catalog-filters-trigger { flex: none; min-height: 36px; gap: 0.375rem; padding: 6px 8px; border: 1px solid #4b5563; background: #374151; }
+.catalog-filters-trigger[aria-expanded='true'] { border-color: #38bdf8; }
 </style>

@@ -13,8 +13,8 @@ import type { Snippet } from 'svelte';
 import BcxBandActions from './BcxBandActions.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxPanelHeading from './BcxPanelHeading.svelte';
-import BcxReleaseCatalog from './BcxReleaseCatalog.svelte';
-import { bandReleaseFilterCategories } from './releaseFilters';
+import BcxFilteredCatalog from './BcxFilteredCatalog.svelte';
+import { bandReleaseFilterCategories } from './catalogFilters';
 
 let {
   treeData,
@@ -121,7 +121,7 @@ let catalog = $derived.by(() => {
 {/snippet}
 
 <div bind:this={panel} class="band-panel">
-  <BcxReleaseCatalog treeData={catalog} categories={bandReleaseFilterCategories} catalogIdentity={bandIdentity} bind:filterPaneOpen label="Band catalog sections" defaultRootPath={releasesPath} {initialSelectedHref} {aboutContent} heading={panelHeading} navigationInToolbar {navigationInFilter} navigationActions={bandAbout ? bandActions : undefined} compactWhenOverflowing countBadges />
+  <BcxFilteredCatalog treeData={catalog} categories={bandReleaseFilterCategories} catalogIdentity={bandIdentity} bind:filterPaneOpen label="Band catalog sections" defaultRootPath={releasesPath} {initialSelectedHref} {aboutContent} heading={panelHeading} navigationInToolbar {navigationInFilter} navigationActions={bandAbout ? bandActions : undefined} compactWhenOverflowing countBadges />
 </div>
 
 <style>

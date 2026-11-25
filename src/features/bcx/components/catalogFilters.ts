@@ -3,6 +3,7 @@ import {
   ICON_BANKNOTE,
   ICON_CALENDAR,
   ICON_CALENDAR_DAYS,
+  ICON_GLOBE,
   ICON_MIC,
   ICON_TAGS,
 } from 'src/features/treeview/utils/icon';
@@ -89,10 +90,81 @@ const releaseFilterCategories = [
   },
 ] as const;
 
-export type ReleaseFilterCategory =
-  (typeof releaseFilterCategories)[number]['rootLabel'];
+const bandCountSortOptions = [
+  {
+    id: 'most-bands',
+    label: 'Most bands',
+    title: 'Show values with the most followed bands first.',
+  },
+  {
+    id: 'fewest-bands',
+    label: 'Fewest bands',
+    title: 'Show values with the fewest followed bands first.',
+  },
+] as const;
 
-export type ReleaseFilterDefinition = (typeof releaseFilterCategories)[number];
+export const followingBandFilterCategories = [
+  {
+    rootLabel: 'Followed by Year',
+    label: 'By Year',
+    icon: ICON_CALENDAR,
+    sort: createFilterSort(
+      'Sort followed years',
+      [
+        catalogYearSortOptions[0],
+        catalogYearSortOptions[1],
+        ...bandCountSortOptions,
+      ],
+      createCatalogYearComparator,
+    ),
+  },
+  {
+    rootLabel: 'Countries',
+    label: 'By Country',
+    icon: ICON_GLOBE,
+    sort: createFilterSort(
+      'Sort countries',
+      [
+        {
+          id: 'az',
+          label: 'A–Z',
+          title: 'Show countries in alphabetical order.',
+        },
+        {
+          id: 'za',
+          label: 'Z–A',
+          title: 'Show countries in reverse alphabetical order.',
+        },
+        ...bandCountSortOptions,
+      ],
+      (id) => {
+        const compareNames = createCatalogGroupComparator(
+          id === 'za' ? 'za' : 'az',
+        );
+        return (a, b) => {
+          const countA = a.childrenCount ?? a.children?.length ?? 0;
+          const countB = b.childrenCount ?? b.children?.length ?? 0;
+          const countOrder =
+            id === 'most-bands'
+              ? countB - countA
+              : id === 'fewest-bands'
+                ? countA - countB
+                : 0;
+          const unknownOrder =
+            Number(a.label === 'Unknown country') -
+            Number(b.label === 'Unknown country');
+          return countOrder || unknownOrder || compareNames(a, b);
+        };
+      },
+    ),
+  },
+] as const;
+
+export type CatalogFilterDefinition =
+  | (typeof releaseFilterCategories)[number]
+  | (typeof followingBandFilterCategories)[number];
+
+export type CatalogFilterCategory = CatalogFilterDefinition['rootLabel'];
 
 export const bandReleaseFilterCategories = releaseFilterCategories.filter(
   ({ rootLabel }) => rootLabel !== 'Added years',
@@ -101,12 +173,12 @@ export const fanReleaseFilterCategories = releaseFilterCategories.filter(
   ({ rootLabel }) => rootLabel !== 'Tags',
 );
 
-export type ReleaseFilterSorts = Partial<Record<ReleaseFilterCategory, string>>;
+export type CatalogFilterSorts = Partial<Record<CatalogFilterCategory, string>>;
 
-export type ReleaseFilterMode = 'single' | 'multiple';
+export type CatalogFilterMode = 'single' | 'multiple';
 
-export interface ReleaseFilterSelection {
-  category: ReleaseFilterCategory;
+export interface CatalogFilterSelection {
+  category: CatalogFilterCategory;
   value: string;
 }
 
@@ -120,7 +192,7 @@ function readChildren(item: TreeItem): Promise<TreeItem[]> {
     if (!item.loadChildren || item.childrenLoaded) return item.children ?? [];
     const loaded = await item.loadChildren();
     if (Array.isArray(loaded)) return loaded;
-    if (!loaded) throw new Error('Could not load release filter data');
+    if (!loaded) throw new Error('Could not load catalog filter data');
     // Deferring a root can wrap a catalog item that has its own loader.
     return readChildren(loaded);
   };
@@ -132,7 +204,7 @@ function readChildren(item: TreeItem): Promise<TreeItem[]> {
   return pending;
 }
 
-function releaseKey(item: TreeItem): string | undefined {
+function catalogItemKey(item: TreeItem): string | undefined {
   return (
     item.href ??
     (item.previewInformation?.releaseType === 'Track' &&
@@ -142,27 +214,27 @@ function releaseKey(item: TreeItem): string | undefined {
   );
 }
 
-export async function readReleaseFilterGroups(
+export async function readCatalogFilterGroups(
   roots: readonly TreeItem[],
-  category: ReleaseFilterCategory,
+  category: CatalogFilterCategory,
 ): Promise<TreeItem[]> {
   const root = roots.find((item) => item.label === category);
   return root ? readChildren(root) : [];
 }
 
-export async function createReleasePredicate(
+export async function createCatalogPredicate(
   roots: readonly TreeItem[],
-  selections: readonly ReleaseFilterSelection[],
+  selections: readonly CatalogFilterSelection[],
 ): Promise<(item: TreeItem) => boolean> {
-  const keysByCategory = new Map<ReleaseFilterCategory, Set<string>>();
+  const keysByCategory = new Map<CatalogFilterCategory, Set<string>>();
   await Promise.all(
     selections.map(async ({ category, value }) => {
-      const groups = await readReleaseFilterGroups(roots, category);
+      const groups = await readCatalogFilterGroups(roots, category);
       const group = groups.find((item) => item.label === value);
-      const releases = group ? await readChildren(group) : [];
+      const items = group ? await readChildren(group) : [];
       const keys = keysByCategory.get(category) ?? new Set<string>();
-      for (const release of releases) {
-        const key = releaseKey(release);
+      for (const item of items) {
+        const key = catalogItemKey(item);
         if (key !== undefined) keys.add(key);
       }
       keysByCategory.set(category, keys);
@@ -170,7 +242,7 @@ export async function createReleasePredicate(
   );
   const activeCategories = [...keysByCategory.values()];
   return (item) => {
-    const key = releaseKey(item);
+    const key = catalogItemKey(item);
     return key !== undefined && activeCategories.every((keys) => keys.has(key));
   };
 }

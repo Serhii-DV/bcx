@@ -3,16 +3,6 @@ import type { TreeItem } from 'src/features/treeview/TreeItem';
 import { isNode } from 'src/features/treeview/utils';
 import { ICON_INFO } from 'src/features/treeview/utils/icon';
 
-export type FollowingBandYearSort =
-  | 'newest'
-  | 'oldest'
-  | 'most-bands'
-  | 'fewest-bands';
-export type FollowingBandCountrySort =
-  | 'az'
-  | 'za'
-  | 'most-bands'
-  | 'fewest-bands';
 export type CatalogGroupSort =
   | 'az'
   | 'za'
@@ -82,7 +72,7 @@ export const catalogPriceSortOptions = [
   },
 ] as const;
 
-const releaseCount = (item: TreeItem) =>
+const itemCount = (item: TreeItem) =>
   item.childrenCount ?? item.children?.length ?? 0;
 
 export function compareHighestPrice(a: TreeItem, b: TreeItem): number {
@@ -107,16 +97,18 @@ export function createCatalogGroupComparator(sort: CatalogGroupSort) {
       case 'za':
         return -nameOrder;
       case 'most-releases':
-        return releaseCount(b) - releaseCount(a) || nameOrder;
+        return itemCount(b) - itemCount(a) || nameOrder;
       case 'fewest-releases':
-        return releaseCount(a) - releaseCount(b) || nameOrder;
+        return itemCount(a) - itemCount(b) || nameOrder;
       default:
         return nameOrder;
     }
   };
 }
 
-export function createCatalogYearComparator(sort: CatalogYearSort) {
+export function createCatalogYearComparator(
+  sort: CatalogYearSort | 'most-bands' | 'fewest-bands',
+) {
   const newestYear = (a: TreeItem, b: TreeItem) => {
     if (a.label === b.label) return 0;
     if (a.label === 'Unknown year') return 1;
@@ -130,9 +122,11 @@ export function createCatalogYearComparator(sort: CatalogYearSort) {
           ? newestYear(a, b)
           : -newestYear(a, b);
       case 'most-releases':
-        return releaseCount(b) - releaseCount(a) || newestYear(a, b);
+      case 'most-bands':
+        return itemCount(b) - itemCount(a) || newestYear(a, b);
       case 'fewest-releases':
-        return releaseCount(a) - releaseCount(b) || newestYear(a, b);
+      case 'fewest-bands':
+        return itemCount(a) - itemCount(b) || newestYear(a, b);
       default:
         return newestYear(a, b);
     }
@@ -179,13 +173,10 @@ export function sortCatalogGroups(
   );
 }
 
-export function sortFollowingBandGroups(
-  treeData: TreeData,
-  yearSort: FollowingBandYearSort,
-  countrySort: FollowingBandCountrySort,
-): TreeData {
+export function withEarliestFollowed(treeData: TreeData): TreeData {
   const latest = treeData.items.find((root) => root.label === 'Latest added');
-  const earliest = latest && {
+  if (!latest) return treeData;
+  const earliest: TreeItem = {
     ...latest,
     label: 'Earliest followed',
     path: 'earliest-followed',
@@ -195,67 +186,7 @@ export function sortFollowingBandGroups(
       path: `earliest-followed.${index}`,
     })),
   };
-  const collator = new Intl.Collator(undefined, {
-    numeric: true,
-    sensitivity: 'base',
-  });
-  const bandCount = (item: TreeItem) =>
-    item.childrenCount ?? item.children?.length ?? 0;
-  const newestYear = (a: TreeItem, b: TreeItem) =>
-    Number(b.label) - Number(a.label);
-  const countryName = (a: TreeItem, b: TreeItem) => {
-    if (a.label === b.label) return 0;
-    if (a.label === 'Unknown country') return 1;
-    if (b.label === 'Unknown country') return -1;
-    return collator.compare(a.label ?? '', b.label ?? '');
-  };
-
-  return new TreeData(
-    [
-      ...treeData.items.map((root) => {
-        if (root.label === 'Followed by Year') {
-          return {
-            ...root,
-            children: [...(root.children ?? [])].sort((a, b) => {
-              switch (yearSort) {
-                case 'oldest':
-                  return -newestYear(a, b);
-                case 'most-bands':
-                  return bandCount(b) - bandCount(a) || newestYear(a, b);
-                case 'fewest-bands':
-                  return bandCount(a) - bandCount(b) || newestYear(a, b);
-                default:
-                  return newestYear(a, b);
-              }
-            }),
-          };
-        }
-        if (root.label === 'Countries') {
-          return {
-            ...root,
-            children: [...(root.children ?? [])].sort((a, b) => {
-              switch (countrySort) {
-                case 'za':
-                  return a.label === 'Unknown country' ||
-                    b.label === 'Unknown country'
-                    ? countryName(a, b)
-                    : -countryName(a, b);
-                case 'most-bands':
-                  return bandCount(b) - bandCount(a) || countryName(a, b);
-                case 'fewest-bands':
-                  return bandCount(a) - bandCount(b) || countryName(a, b);
-                default:
-                  return countryName(a, b);
-              }
-            }),
-          };
-        }
-        return root;
-      }),
-      ...(earliest ? [earliest] : []),
-    ],
-    treeData.layout,
-  );
+  return new TreeData([...treeData.items, earliest], treeData.layout);
 }
 
 export function createRootSectionTabs(items: TreeItem[], countBadges = false) {

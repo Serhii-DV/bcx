@@ -49,18 +49,21 @@ import BcxDashboard from './BcxDashboard.svelte';
 import BcxDrawerButton from './BcxDrawerButton.svelte';
 import BcxExtensionInfo from './BcxExtensionInfo.svelte';
 import BcxFanDataSync from './BcxFanDataSync.svelte';
+import BcxFilteredCatalog from './BcxFilteredCatalog.svelte';
 import BcxItemPreviewPanel from './BcxItemPreviewPanel.svelte';
 import BcxMainNavigation from './BcxMainNavigation.svelte';
 import BcxPanelHeading from './BcxPanelHeading.svelte';
 import BcxPinnedPage from './BcxPinnedPage.svelte';
-import BcxReleaseCatalog from './BcxReleaseCatalog.svelte';
 import BcxReleasePreview from './BcxReleasePreview.svelte';
 import BcxRootSectionTabs from './BcxRootSectionTabs.svelte';
 import BcxStoragePanel from './BcxStoragePanel.svelte';
 import BcxTreeBreadcrumb from './BcxTreeBreadcrumb.svelte';
 import BcxTreeBrowser from './BcxTreeBrowser.svelte';
 import BcxTreeBrowserFilter from './BcxTreeBrowserFilter.svelte';
-import { fanReleaseFilterCategories } from './releaseFilters';
+import {
+  fanReleaseFilterCategories,
+  followingBandFilterCategories,
+} from './catalogFilters';
 
 interface Props {
   sections: SidePanelSection[];
@@ -821,16 +824,18 @@ $effect(() => {
                     {/if}
                   {:else if sectionTreeDataById[section.id] || selectedSectionId === section.id}
                     {#if section.rootNavigation === 'tabs' && sectionTreeDataById[section.id]}
-                      {#if section.fanSync?.dataset === 'wishlist' || section.fanSync?.dataset === 'collection'}
-                        <BcxReleaseCatalog treeData={sectionTreeDataById[section.id]} categories={fanReleaseFilterCategories} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} heading={panelHeading} navigationInFilter navigationInToolbar compactWhenOverflowing countBadges responsiveSidebar />
+                      {@const dataset = section.fanSync?.dataset}
+                      {@const sortBands = dataset === 'following-bands'}
+                      {#if sortBands || dataset === 'wishlist' || dataset === 'collection'}
+                        <BcxFilteredCatalog treeData={sectionTreeDataById[section.id]} categories={sortBands ? followingBandFilterCategories : fanReleaseFilterCategories} {sortBands} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} heading={panelHeading} navigationInFilter navigationInToolbar compactWhenOverflowing countBadges responsiveSidebar />
                       {:else if section.fanSync || section.fanAccount || section.id === RELEASE_CALENDAR_ID}
-                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
+                        <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                       {:else}
                       {#key sectionTreeDataById[section.id]}
                         {#if section.id.startsWith('band-')}
                           <BcxBandPanel treeData={sectionTreeDataById[section.id]} initialSelectedHref={section.initialSelectedHref} navigationInFilter={true} leadingActions={!browserPanel && !navigationExpanded ? closeAction : undefined} />
                         {:else}
-                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} sortBands={section.label === 'Following Bands'} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
+                          <BcxRootSectionTabs treeData={sectionTreeDataById[section.id]} label={`${section.label} sections`} initialSelectedHref={section.initialSelectedHref} heading={usesToolbarNavigation(section) ? panelHeading : undefined} navigationInFilter={usesFilterNavigation(section)} navigationInToolbar={usesToolbarNavigation(section)} compactWhenOverflowing={usesToolbarNavigation(section)} countBadges={usesToolbarNavigation(section)} responsiveSidebar={true} />
                         {/if}
                       {/key}
                       {/if}

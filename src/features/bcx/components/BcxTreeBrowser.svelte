@@ -79,6 +79,7 @@ interface Props {
   isLoading?: boolean;
   loadingMessage?: string;
   emptyMessage?: string;
+  filteredEmptyMessage?: string;
   enableReleaseFilterActions?: boolean;
   visibleCount?: number;
   totalCount?: number;
@@ -108,6 +109,7 @@ let {
   activeNodePath,
   isLoading = false,
   loadingMessage = 'Loading',
+  filteredEmptyMessage = 'No releases match your filters',
   emptyMessage = 'No items here',
   enableReleaseFilterActions = false,
   visibleCount = $bindable(),
@@ -280,7 +282,7 @@ let emptyStateMessage = $derived.by(() => {
     return filterSearchError;
   }
 
-  if (itemFilter) return 'No releases match your filters';
+  if (itemFilter) return filteredEmptyMessage;
 
   return debouncedFilterQuery.trim()
     ? 'No items match your filter'

@@ -12,7 +12,6 @@ import { type Snippet, tick } from 'svelte';
 import BcxArtistsPanel from './BcxArtistsPanel.svelte';
 import BcxBandDetails from './BcxBandDetails.svelte';
 import BcxCatalogSplitLayout from './BcxCatalogSplitLayout.svelte';
-import BcxCatalogSplitPanel from './BcxCatalogSplitPanel.svelte';
 import BcxSectionFilter from './BcxSectionFilter.svelte';
 import BcxSectionSort from './BcxSectionSort.svelte';
 import BcxSectionTabs from './BcxSectionTabs.svelte';
@@ -23,10 +22,8 @@ import {
   catalogYearSortOptions,
   createCatalogGroupSortOptions,
   createRootSectionTabs,
-  type FollowingBandCountrySort,
-  type FollowingBandYearSort,
   sortCatalogGroups,
-  sortFollowingBandGroups,
+  withEarliestFollowed,
 } from './rootSectionTabs';
 import {
   isSectionItemSelected,
@@ -37,23 +34,12 @@ type SectionTab = Omit<SectionNavigationItem, 'contentId'>;
 
 const artistSortOptions = createCatalogGroupSortOptions('artists');
 
-const splitSections: Readonly<
-  Record<
-    string,
-    { groupLabel: string; itemLabel?: string; emptyMessage: string }
-  >
-> = {
-  'Followed by Year': {
-    groupLabel: 'Years followed',
-    itemLabel: 'Followed bands',
-    emptyMessage: 'Select a year to see the bands you followed that year.',
-  },
-  Countries: {
-    groupLabel: 'Countries',
-    itemLabel: 'Followed bands',
-    emptyMessage: 'Select a country to see its bands.',
-  },
-};
+const followingBandSortLabels = [
+  'Latest added',
+  'Earliest followed',
+  'A–Z',
+  'Z–A',
+];
 
 const tabDescriptions: Record<
   string,
@@ -97,14 +83,6 @@ const tabDescriptions: Record<
   },
   'A–Z': { title: 'Browse followed bands by name, A to Z.' },
   'Z–A': { title: 'Browse followed bands by name, Z to A.' },
-  'Followed by Year': {
-    label: 'By Year',
-    title: 'Browse bands grouped by the year you followed them.',
-  },
-  Countries: {
-    label: 'By Country',
-    title: 'Browse followed bands grouped by country.',
-  },
   Tags: { title: 'Browse releases grouped by tag.' },
   Unavailable: {
     title: 'Browse saved items whose Bandcamp pages are unavailable.',
@@ -138,15 +116,15 @@ let {
   navigationInFilter = false,
   navigationInToolbar = false,
   releaseFilterActions = false,
-  releaseFilterControls,
-  releaseFilterPane,
-  releaseItemFilter,
+  catalogFilterControls,
+  catalogFilterPane,
+  catalogItemFilter,
 }: {
   treeData: TreeData;
   releaseFilterActions?: boolean;
-  releaseFilterControls?: Snippet;
-  releaseFilterPane?: Snippet;
-  releaseItemFilter?: (item: TreeItem) => boolean;
+  catalogFilterControls?: Snippet;
+  catalogFilterPane?: Snippet;
+  catalogItemFilter?: (item: TreeItem) => boolean;
   label: string;
   initialSelectedHref?: string;
   defaultRootPath?: string;
@@ -189,8 +167,6 @@ $effect(() => {
 });
 
 let rootVersion = $state(0);
-let yearSort = $state<FollowingBandYearSort>('newest');
-let countrySort = $state<FollowingBandCountrySort>('az');
 let artistSort = $state<CatalogGroupSort>('az');
 let releaseYearSort = $state<CatalogYearSort>('newest');
 let addedYearSort = $state<CatalogYearSort>('newest');
@@ -202,7 +178,7 @@ const isReleaseCatalog = $derived(
 const displayedTreeData = $derived.by(() => {
   rootVersion;
   return sortBands
-    ? sortFollowingBandGroups(treeData, yearSort, countrySort)
+    ? withEarliestFollowed(treeData)
     : isReleaseCatalog
       ? sortCatalogGroups(treeData, artistSort, releaseYearSort, addedYearSort)
       : treeData;
@@ -257,67 +233,6 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
         sortOptions: catalogYearSortOptions,
       };
     }
-    if (!sortBands) return labeledTab;
-    if (rootLabel === 'Followed by Year') {
-      return {
-        ...labeledTab,
-        sortValue: yearSort,
-        sortLabel: 'Sort followed years',
-        onSortChange: setYearSort,
-        sortOptions: [
-          {
-            id: 'newest',
-            label: 'Newest first',
-            title: 'Show the most recently followed years first.',
-          },
-          {
-            id: 'oldest',
-            label: 'Oldest first',
-            title: 'Show the earliest followed years first.',
-          },
-          {
-            id: 'most-bands',
-            label: 'Most bands',
-            title: 'Show years with the most followed bands first.',
-          },
-          {
-            id: 'fewest-bands',
-            label: 'Fewest bands',
-            title: 'Show years with the fewest followed bands first.',
-          },
-        ],
-      };
-    }
-    if (rootLabel === 'Countries') {
-      return {
-        ...labeledTab,
-        sortValue: countrySort,
-        sortLabel: 'Sort countries',
-        onSortChange: setCountrySort,
-        sortOptions: [
-          {
-            id: 'az',
-            label: 'A–Z',
-            title: 'Show countries in alphabetical order.',
-          },
-          {
-            id: 'za',
-            label: 'Z–A',
-            title: 'Show countries in reverse alphabetical order.',
-          },
-          {
-            id: 'most-bands',
-            label: 'Most bands',
-            title: 'Show countries with the most followed bands first.',
-          },
-          {
-            id: 'fewest-bands',
-            label: 'Fewest bands',
-            title: 'Show countries with the fewest followed bands first.',
-          },
-        ],
-      };
-    }
     return labeledTab;
   });
   if (isReleaseCatalog) {
@@ -352,8 +267,8 @@ const displayTabs = $derived.by<SectionTab[]>(() => {
   }
   if (!sortBands) return labeledTabs;
 
-  const sortRoots = ['Latest added', 'Earliest followed', 'A–Z', 'Z–A'].map(
-    (name) => displayedTreeData.items.find((item) => item.label === name),
+  const sortRoots = followingBandSortLabels.map((name) =>
+    displayedTreeData.items.find((item) => item.label === name),
   );
   if (sortRoots.some((root) => !root?.path)) return labeledTabs;
 
@@ -417,26 +332,6 @@ const localNavigationTabs = $derived(
       }))
     : displayTabs,
 );
-
-function setYearSort(id: string) {
-  if (
-    id === 'newest' ||
-    id === 'oldest' ||
-    id === 'most-bands' ||
-    id === 'fewest-bands'
-  )
-    yearSort = id;
-}
-
-function setCountrySort(id: string) {
-  if (
-    id === 'az' ||
-    id === 'za' ||
-    id === 'most-bands' ||
-    id === 'fewest-bands'
-  )
-    countrySort = id;
-}
 
 function isCatalogGroupSort(id: string): id is CatalogGroupSort {
   return (
@@ -527,21 +422,22 @@ $effect(() => {
         {#if visitedRoots[tabId]}
           {@const root = displayedTreeData.items.find((item) => item.path === tabId)}
           {@const isReleaseRoot = root?.label === 'Releases' || !!root?.label?.startsWith('Releases: ')}
-          {@const hasReleaseControls = !!root?.releasePreview && isReleaseRoot && !!releaseFilterControls}
-          {@const splitSection = sortBands && root?.itemPreview && root.label ? splitSections[root.label] : undefined}
+          {@const isBandRoot = sortBands && !!root?.itemPreview && followingBandSortLabels.includes(root.label ?? '')}
+          {@const isFilterableRoot = (!!root?.releasePreview && isReleaseRoot) || isBandRoot}
+          {@const hasCatalogControls = isFilterableRoot && !!catalogFilterControls}
           {@const navigationItem = navigationItems.find((item) => isSectionItemSelected(item, tabId))}
           {#snippet filterControls()}
             {#if navigationInFilter && !navigationInToolbar}
               <BcxSectionFilter items={navigationItems} {label} value={selectedRoot} onValueChange={selectFilterRoot} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
-            {#if hasReleaseControls}
-              {@render releaseFilterControls?.()}
+            {#if hasCatalogControls}
+              {@render catalogFilterControls?.()}
             {/if}
             {#if toolbarSorting && navigationItem?.sortOptions?.length}
-              <BcxSectionSort item={navigationItem} iconOnly={!!splitSection} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
+              <BcxSectionSort item={navigationItem} onValueChange={(id) => selectSortOption(navigationItem, id)} onCloseAutoFocus={handleControlCloseAutoFocus} />
             {/if}
           {/snippet}
-          <div class="bcx-section-tree-browser" class:release-catalog-results={releaseFilterActions && isReleaseRoot}>
+          <div class="bcx-section-tree-browser" class:filtered-catalog-results={((releaseFilterActions && isReleaseRoot) || hasCatalogControls)}>
             {#if navigationInFilter && (root?.aboutProfile || sectionContent) && (!navigationInToolbar || navigationItem?.sortOptions?.length)}
               <div class="bcx-section-view-toolbar">{@render filterControls()}</div>
             {/if}
@@ -566,7 +462,7 @@ $effect(() => {
                 bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
               />
             {:else}
-              {#snippet sectionBrowser(onActivateNode: ((item: TreeItem) => void) | undefined, activeNodePath: string | undefined)}
+              {#snippet sectionBrowser()}
                 <BcxTreeBrowser
                   treeData={displayedTreeData}
                   initialRootPath={tabId}
@@ -576,26 +472,19 @@ $effect(() => {
                   onRootLoaded={refreshTabs}
                   emptyMessage={root?.label ? tabDescriptions[root.label]?.emptyMessage : undefined}
                   nativeTabNavigation={true}
-                  {onActivateNode}
-                  {activeNodePath}
-                  filterActions={hasReleaseControls || navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
+                  filterActions={hasCatalogControls || navigationInFilter || (toolbarSorting && navigationItem?.sortOptions?.length) ? filterControls : undefined}
                   enableReleaseFilterActions={releaseFilterActions && isReleaseRoot}
-                  itemFilter={isReleaseRoot ? releaseItemFilter : undefined}
+                  itemFilter={isFilterableRoot ? catalogItemFilter : undefined}
+                  filteredEmptyMessage={isBandRoot ? 'No bands match your filters' : undefined}
                   bind:filterQuery={() => navigationInFilter ? sharedFilterQuery : toolbarSorting && navigationItem ? filterQueryById[navigationItem.id] ?? '' : null, (query) => { if (navigationInFilter) sharedFilterQuery = query ?? ''; else if (navigationItem) filterQueryById[navigationItem.id] = query ?? ''; }}
                 />
               {/snippet}
-              {#if splitSection && root}
-                <BcxCatalogSplitPanel
-                  root={treeData.items.find((item) => item.path === tabId) ?? root}
-                  {...splitSection}
-                  groups={sectionBrowser}
-                />
-              {:else if hasReleaseControls}
-                <BcxCatalogSplitLayout groupLabel="Release filters" itemLabel="Release results" groups={selectedRoot === tabId ? releaseFilterPane : undefined}>
-                  {@render sectionBrowser(undefined, undefined)}
+              {#if hasCatalogControls}
+                <BcxCatalogSplitLayout groupLabel={isBandRoot ? 'Band filters' : 'Release filters'} itemLabel={isBandRoot ? 'Band results' : 'Release results'} groups={selectedRoot === tabId ? catalogFilterPane : undefined}>
+                  {@render sectionBrowser()}
                 </BcxCatalogSplitLayout>
               {:else}
-                {@render sectionBrowser(undefined, undefined)}
+                {@render sectionBrowser()}
               {/if}
             {/if}
             {/if}
@@ -675,24 +564,24 @@ $effect(() => {
 :global(.bcx-root-sections[data-navigation='sidebar'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
 :global(.bcx-root-sections[data-navigation='filter'] > .bcx-tab-content) { margin-left: var(--bcx-preview-gutter, 8px); }
 .bcx-section-view-toolbar { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 8px; min-width: 0; margin-bottom: 8px; }
-.release-catalog-results :global(.bcx-browser-toolbar) { container: release-catalog-toolbar / inline-size; }
-@container release-catalog-toolbar (max-width: 27rem) {
-  .release-catalog-results :global(.bcx-browser-filter) { flex-basis: 5rem; }
-  .release-catalog-results :global(.bcx-section-tab.release-filters-trigger),
-  .release-catalog-results :global(.bcx-section-tab.bcx-section-sort) {
+.filtered-catalog-results :global(.bcx-browser-toolbar) { container: filtered-catalog-toolbar / inline-size; }
+@container filtered-catalog-toolbar (max-width: 27rem) {
+  .filtered-catalog-results :global(.bcx-browser-filter) { flex-basis: 5rem; }
+  .filtered-catalog-results :global(.bcx-section-tab.catalog-filters-trigger),
+  .filtered-catalog-results :global(.bcx-section-tab.bcx-section-sort) {
     align-self: flex-start;
     flex: none;
     justify-content: center;
     width: 2rem;
     padding-inline: 0;
   }
-  .release-catalog-results :global(.release-filters-label),
-  .release-catalog-results :global(.bcx-section-sort-label),
-  .release-catalog-results :global(.bcx-section-sort-chevron) { display: none; }
+  .filtered-catalog-results :global(.catalog-filters-label),
+  .filtered-catalog-results :global(.bcx-section-sort-label),
+  .filtered-catalog-results :global(.bcx-section-sort-chevron) { display: none; }
 }
-@container release-catalog-toolbar (max-width: 13rem) {
-  .release-catalog-results :global(.bcx-tree-filter-field:has(.bcx-tree-filter-count):has(.bcx-tree-filter-clear)) { flex-wrap: wrap; }
-  .release-catalog-results :global(.bcx-tree-filter-field:has(.bcx-tree-filter-count):has(.bcx-tree-filter-clear) .bcx-tree-filter-input) { flex-basis: 100%; }
+@container filtered-catalog-toolbar (max-width: 13rem) {
+  .filtered-catalog-results :global(.bcx-tree-filter-field:has(.bcx-tree-filter-count):has(.bcx-tree-filter-clear)) { flex-wrap: wrap; }
+  .filtered-catalog-results :global(.bcx-tree-filter-field:has(.bcx-tree-filter-count):has(.bcx-tree-filter-clear) .bcx-tree-filter-input) { flex-basis: 100%; }
 }
 .about-content { display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0; overflow-y: auto; }
 </style>

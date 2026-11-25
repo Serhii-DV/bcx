@@ -12,7 +12,7 @@
 
 - The Artists tab in the main Release panel and Release Preview shows a filterable, sortable artist list beside the selected artist’s profile and related saved releases. Select an artist with a click or Enter.
 
-- Following Bands shows filterable, sortable years or countries on the left and the selected group’s bands on the right. Select a group with a click or Enter, then select a band to preview it.
+- Following Bands includes By Year and By Country in the Bands Filters pane. Search and sort filter values, select one in Single mode, or combine years and countries in Multiple mode. The Bands list keeps its search, sort, and preview controls.
 
 - The Releases subpanel in Collection and Wishlist now includes Artists, By Release Year, By Year Added, and By Prices in its Filters pane. Search and sort filter values, select one in Single mode, or combine them in Multiple mode. By Year Added includes an Unknown year option for releases without a saved date. Collection filters also match releases beyond the currently loaded page.
 

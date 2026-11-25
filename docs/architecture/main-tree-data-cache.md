@@ -126,11 +126,12 @@ Following Bands stores every loaded band in its tree snapshot without pagination
 Snapshot version 15 invalidates older snapshots that predate the Latest added,
 A–Z, Z–A, and Years root tabs and followed timestamps. Cache keys, TTLs, and
 refresh behavior stay the same.
-The side panel presents the three order roots as one Bands tab with a sort menu,
-and labels the year and country tabs By Year and By Country. These grouped views
-show filterable and sortable groups beside the selected group's bands. A click
-or Enter selects a group, and selecting a band opens the shared preview. The
-cached roots and their paths remain separate.
+The side panel presents the three stored order roots and a derived earliest-first
+order as one Bands tab with a sort menu. The Filters pane uses the Followed by
+Year and Countries roots for its By Year and By Country values. In Multiple
+mode, values within a category are combined and selections across categories
+must both match. Selecting a band opens the shared preview. The cached roots
+and their paths remain separate.
 Snapshot version 24 rebuilds Following Bands with the Followed by Year label and
 a Countries tab. Countries use the last part of each stored location, with
 missing locations grouped under Unknown country. Recognized country names

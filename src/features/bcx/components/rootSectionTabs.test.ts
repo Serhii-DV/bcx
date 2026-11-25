@@ -1,12 +1,11 @@
 import { describe, expect, it, rs } from '@rstest/core';
 import { TreeData } from 'src/features/treeview/TreeData';
 import type { TreeItem } from 'src/features/treeview/TreeItem';
+import { followingBandFilterCategories } from './catalogFilters';
 import {
   createRootSectionTabs,
-  type FollowingBandCountrySort,
-  type FollowingBandYearSort,
   sortCatalogGroups,
-  sortFollowingBandGroups,
+  withEarliestFollowed,
 } from './rootSectionTabs';
 
 describe('createRootSectionTabs', () => {
@@ -99,15 +98,15 @@ describe('createRootSectionTabs', () => {
         ],
       },
     ]);
-    const labels = (
-      year: FollowingBandYearSort,
-      country: FollowingBandCountrySort,
-    ) => {
-      const sorted = sortFollowingBandGroups(grouped, year, country);
-      return sorted.items.map((root) =>
-        root.children?.map((group) => group.label),
+    const labels = (year: string, country: string) =>
+      followingBandFilterCategories.map(({ rootLabel, sort }, index) =>
+        [
+          ...(grouped.items.find((root) => root.label === rootLabel)
+            ?.children ?? []),
+        ]
+          .sort(sort.comparator(index === 0 ? year : country))
+          .map((group) => group.label),
       );
-    };
     expect(labels('newest', 'az')).toEqual([
       ['2025', '2024', '2023'],
       ['Canada', 'Denmark', 'Sweden', 'Unknown country'],
@@ -195,7 +194,7 @@ describe('createRootSectionTabs', () => {
         ],
       },
     ]);
-    const oldest = sortFollowingBandGroups(bands, 'newest', 'az').items.at(-1);
+    const oldest = withEarliestFollowed(bands).items.at(-1);
     expect(oldest?.label).toBe('Earliest followed');
     expect(oldest?.path).toBe('earliest-followed');
     expect(oldest?.children?.map((band) => [band.label, band.path])).toEqual([
